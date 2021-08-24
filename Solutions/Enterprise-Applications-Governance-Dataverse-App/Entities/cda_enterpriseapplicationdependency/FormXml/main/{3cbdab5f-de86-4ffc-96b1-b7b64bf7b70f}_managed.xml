@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{3cbdab5f-de86-4ffc-96b1-b7b64bf7b70f}</formid>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{d5c212f8-5add-41c5-bcf1-81b59bd6a6e4}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{cd14dfe9-035e-4d20-862e-848a4ab0d437}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{173370d0-3119-8681-a7c5-79b7be44828d}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Dependent Application" languagecode="1033" />
+                        </labels>
+                        <control id="cda_dependententerpriseapplicationid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cda_dependententerpriseapplicationid" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{9409e721-9dda-d0b7-3bbb-d0dc97ecab6c}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Prerequisite Application" languagecode="1033" />
+                        </labels>
+                        <control id="cda_prerequisiteenterpriseapplicatiid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cda_prerequisiteenterpriseapplicatiid" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{4e08d9dc-6fd9-4130-a951-531e4d3a4703}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="cda_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cda_name" uniqueid="{db82b357-9850-3552-2265-4aa5aa057603}" disabled="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{73d55426-fcea-4bf0-976d-2d2c815b2d80}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <Navigation>
+        <NavBar></NavBar>
+        <NavBarAreas>
+          <NavBarArea Id="Info">
+            <Titles>
+              <Title LCID="1033" Text="Common" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="Sales">
+            <Titles>
+              <Title LCID="1033" Text="Sales" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="Service">
+            <Titles>
+              <Title LCID="1033" Text="Service" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="Marketing">
+            <Titles>
+              <Title LCID="1033" Text="Marketing" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="ProcessCenter">
+            <Titles>
+              <Title LCID="1033" Text="Process Sessions" />
+            </Titles>
+          </NavBarArea>
+        </NavBarAreas>
+      </Navigation>
+      <controlDescriptions />
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

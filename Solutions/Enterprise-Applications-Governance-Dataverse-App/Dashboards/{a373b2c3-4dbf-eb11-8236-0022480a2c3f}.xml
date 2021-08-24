@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Dashboard xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <LocalizedNames>
+    <LocalizedName description="Dependency Explorer" languagecode="1033" />
+  </LocalizedNames>
+  <FormId>{a373b2c3-4dbf-eb11-8236-0022480a2c3f}</FormId>
+  <IsCustomizable>1</IsCustomizable>
+  <IsDefault>0</IsDefault>
+  <FormXml>
+    <forms type="powerbi">
+      <form>
+        <tabs>
+          <tab showlabel="false" verticallayout="true" id="{0a700233-51dc-416c-b9bb-fad65c1e3fc5}">
+            <labels>
+              <label description="" languagecode="1033" />
+            </labels>
+            <columns>
+              <column width="100%">
+                <sections>
+                  <section showlabel="false" showbar="false" columns="111" id="{ab63130d-6c63-4a41-a1d1-af0f7c681127}">
+                    <labels>
+                      <label description="" languagecode="1033" />
+                    </labels>
+                    <rows>
+                      <row>
+                        <cell colspan="3" rowspan="24" showlabel="false" id="{2749973f-d4e2-4188-be49-a33529fd285e}" availableforphone="false">
+                          <labels>
+                            <label description="" languagecode="1033" />
+                          </labels>
+                          <control id="949c0e99-1322-4b01-acc0-f53e547dd13f" classid="{8C54228C-1B25-4909-A12A-F2B968BB0D62}">
+                            <parameters>
+                              <PowerBIGroupId>ca9ea105-403c-4ee7-80d1-20d1299ea3ac</PowerBIGroupId>
+                              <PowerBIReportId>cfe30776-361f-437b-9585-ddf51c9db3ac</PowerBIReportId>
+                              <TileUrl>https://app.powerbi.com/reportEmbed?w=2&amp;config=eyJjbHVzdGVyVXJsIjoiaHR0cHM6Ly9XQUJJLVVTLUVBU1QtQS1QUklNQVJZLXJlZGlyZWN0LmFuYWx5c2lzLndpbmRvd3MubmV0IiwiZW1iZWRGZWF0dXJlcyI6eyJtb2Rlcm5FbWJlZCI6dHJ1ZSwiY2VydGlmaWVkVGVsZW1ldHJ5RW1iZWQiOnRydWV9fQ%3D%3D&amp;groupId=ca9ea105-403c-4ee7-80d1-20d1299ea3ac&amp;reportId=cfe30776-361f-437b-9585-ddf51c9db3ac</TileUrl>
+                              <Type>2</Type>
+                            </parameters>
+                          </control>
+                        </cell>
+                      </row>
+                    </rows>
+                  </section>
+                </sections>
+              </column>
+            </columns>
+          </tab>
+        </tabs>
+      </form>
+    </forms>
+  </FormXml>
+  <IntroducedVersion>0.0.0.1</IntroducedVersion>
+  <IsTabletEnabled>0</IsTabletEnabled>
+</Dashboard>

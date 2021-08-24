@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{3d25a819-c950-4822-baa2-265bae13ca91}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="cda_name" select="1" icon="1" preview="1">
+        <row name="result" id="cda_environmentid">
+          <cell name="cda_name" width="150" imageproviderfunctionname="" imageproviderwebresource="$webresource:" />
+          <cell name="cda_type" width="100" />
+          <cell name="ownerid" width="100" />
+          <cell name="cda_url" width="300" imageproviderfunctionname="" imageproviderwebresource="$webresource:" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="cda_environment">
+          <attribute name="cda_name" />
+          <order attribute="cda_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="ownerid" />
+          <attribute name="cda_url" />
+          <attribute name="cda_type" />
+          <attribute name="cda_environmentid" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Environments" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

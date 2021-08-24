@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Слой_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 128 105"
+   xml:space="preserve"
+   sodipodi:docname="Application Portfolio Icon.svg"
+   width="128"
+   height="105"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15, custom)"><metadata
+   id="metadata11"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs9" /><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1920"
+   inkscape:window-height="1010"
+   id="namedview7"
+   showgrid="false"
+   inkscape:zoom="6.6015625"
+   inkscape:cx="64"
+   inkscape:cy="100.35503"
+   inkscape:window-x="-7"
+   inkscape:window-y="-7"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Слой_1" />
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#232323;}
+</style>
+<path
+   class="st0"
+   d="M 118.63884,12.176529 H 86.789616 C 86.092914,5.3960373 80.320242,0.1112426 73.353223,0.1112426 H 54.243687 c -6.967019,0 -12.640162,5.2847947 -13.436393,12.0652864 H 9.4557106 C 4.2802111,12.176529 0.1,16.36448 0.1,21.549561 v 74.485691 c 0,5.185078 4.1802111,9.373028 9.3557106,9.373028 H 118.73837 c 5.1755,0 9.35571,-4.18795 9.35571,-9.373028 V 21.549561 c 0,-5.185081 -4.27974,-9.373032 -9.45524,-9.373032 z m 0,87.348682 H 9.4557106 c -1.8910479,0 -3.4835093,-1.59541 -3.4835093,-3.489959 V 21.549561 c 0,-1.894549 1.5924614,-3.489959 3.4835093,-3.489959 H 118.73837 c 1.89105,0 3.48351,1.59541 3.48351,3.489959 v 74.485691 c -0.0995,1.994262 -1.69199,3.489959 -3.58304,3.489959 z M 54.243687,5.6951766 h 19.209065 c 3.881625,0 7.166076,2.791967 7.862778,6.4813524 H 46.480437 c 0.696702,-3.6893854 3.881625,-6.4813524 7.76325,-6.4813524 z"
+   id="path4"
+   style="stroke-width:0.996209" />
+</svg>

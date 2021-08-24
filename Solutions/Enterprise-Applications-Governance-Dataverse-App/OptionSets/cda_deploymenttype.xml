@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<optionset Name="cda_deploymenttype" localizedName="Deployment Type" description="Deployment Type (Method) for an application." xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <OptionSetType>picklist</OptionSetType>
+  <IsGlobal>1</IsGlobal>
+  <IntroducedVersion>1.1.7.5</IntroducedVersion>
+  <IsCustomizable>1</IsCustomizable>
+  <ExternalTypeName></ExternalTypeName>
+  <displaynames>
+    <displayname description="Deployment Type" languagecode="1033" />
+  </displaynames>
+  <Descriptions>
+    <Description description="Deployment Type (Method) for an application." languagecode="1033" />
+  </Descriptions>
+  <options>
+    <option value="754440000" ExternalValue="" Color="#0000ff">
+      <labels>
+        <label description="CI/CD Pipeline" languagecode="1033" />
+      </labels>
+      <Descriptions>
+        <Description description="" languagecode="1033" />
+      </Descriptions>
+    </option>
+    <option value="754440001" ExternalValue="" Color="#0000ff">
+      <labels>
+        <label description="Manual" languagecode="1033" />
+      </labels>
+      <Descriptions>
+        <Description description="" languagecode="1033" />
+      </Descriptions>
+    </option>
+    <option value="754440002" ExternalValue="" Color="#0000ff">
+      <labels>
+        <label description="App Source" languagecode="1033" />
+      </labels>
+      <Descriptions>
+        <Description description="" languagecode="1033" />
+      </Descriptions>
+    </option>
+  </options>
+</optionset>

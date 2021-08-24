@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Workflow WorkflowId="{f70f0839-da5f-4689-b4ea-c295d9f1b320}" Name="Generate Deployment Name" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <XamlFileName>/Workflows/GenerateDeploymentName-F70F0839-DA5F-4689-B4EA-C295D9F1B320.xaml</XamlFileName>
+  <Type>1</Type>
+  <Subprocess>0</Subprocess>
+  <Category>0</Category>
+  <Mode>1</Mode>
+  <Scope>4</Scope>
+  <OnDemand>0</OnDemand>
+  <TriggerOnUpdateAttributeList>cda_releaseid,cda_environmentid</TriggerOnUpdateAttributeList>
+  <TriggerOnCreate>1</TriggerOnCreate>
+  <TriggerOnDelete>0</TriggerOnDelete>
+  <AsyncAutodelete>0</AsyncAutodelete>
+  <SyncWorkflowLogOnFailure>1</SyncWorkflowLogOnFailure>
+  <StateCode>1</StateCode>
+  <StatusCode>2</StatusCode>
+  <CreateStage>40</CreateStage>
+  <UpdateStage>40</UpdateStage>
+  <RunAs>1</RunAs>
+  <IsTransacted>1</IsTransacted>
+  <IntroducedVersion>0.0.0.1</IntroducedVersion>
+  <IsCustomizable>1</IsCustomizable>
+  <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>
+  <PrimaryEntity>cda_deployment</PrimaryEntity>
+  <LocalizedNames>
+    <LocalizedName languagecode="1033" description="Generate Deployment Name" />
+  </LocalizedNames>
+</Workflow>

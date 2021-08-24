@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{05b0f2cf-564b-4b3f-ae69-f3e80baa7443}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="cda_name" select="1" icon="1" preview="1">
+        <row name="result" id="cda_enterpriseapplicationid">
+          <cell name="cda_name" width="200" imageproviderfunctionname="" imageproviderwebresource="$webresource:" />
+          <cell name="cda_enterpriseapplicationgroupid" width="100" imageproviderfunctionname="" imageproviderwebresource="$webresource:" />
+          <cell name="a_afeaa3ddd4b9eb118236000d3a5a55ad.cda_applicationportfolioid" width="100" disableSorting="1" />
+          <cell name="ownerid" width="100" />
+          <cell name="cda_developmentenvironmentid" width="100" />
+          <cell name="cda_solutionname" width="100" />
+          <cell name="cda_defaultdeploymentorder" width="100" />
+          <cell name="cda_defaultdeploymenttype" width="100" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="cda_enterpriseapplication">
+          <attribute name="cda_name" />
+          <order attribute="cda_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <link-entity alias="a_afeaa3ddd4b9eb118236000d3a5a55ad" name="cda_enterpriseapplicationgroup" from="cda_enterpriseapplicationgroupid" to="cda_enterpriseapplicationgroupid" link-type="outer" visible="false">
+            <attribute name="cda_applicationportfolioid" />
+          </link-entity>
+          <attribute name="cda_enterpriseapplicationgroupid" />
+          <attribute name="cda_developmentenvironmentid" />
+          <attribute name="cda_solutionname" />
+          <attribute name="ownerid" />
+          <attribute name="cda_defaultdeploymenttype" />
+          <attribute name="cda_defaultdeploymentorder" />
+          <attribute name="cda_enterpriseapplicationid" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Applications" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

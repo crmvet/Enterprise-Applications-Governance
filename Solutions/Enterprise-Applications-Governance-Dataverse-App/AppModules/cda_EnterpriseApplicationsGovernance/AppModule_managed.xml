@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AppModule>
+  <UniqueName>cda_EnterpriseApplicationsGovernance</UniqueName>
+  <IntroducedVersion>0.0.0.1</IntroducedVersion>
+  <WebResourceId>040e1f25-23c2-eb11-bacc-000d3a338fbf</WebResourceId>
+  <OptimizedFor></OptimizedFor>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <FormFactor>1</FormFactor>
+  <ClientType>4</ClientType>
+  <NavigationType>0</NavigationType>
+  <AppModuleComponents>
+    <AppModuleComponent type="62" schemaName="cda_EnterpriseApplicationsGovernance" />
+    <AppModuleComponent type="60" id="{a373b2c3-4dbf-eb11-8236-0022480a2c3f}" />
+    <AppModuleComponent type="1" schemaName="cda_enterpriseapplication" />
+    <AppModuleComponent type="60" id="{0c9ff1a2-13ce-4b23-98ab-c280d70858ec}" />
+    <AppModuleComponent type="1" schemaName="cda_enterpriseapplicationgroup" />
+    <AppModuleComponent type="1" schemaName="cda_enterpriseapplicationportfolio" />
+    <AppModuleComponent type="1" schemaName="cda_enterpriseapplicationdependency" />
+    <AppModuleComponent type="60" id="{3cbdab5f-de86-4ffc-96b1-b7b64bf7b70f}" />
+    <AppModuleComponent type="1" schemaName="cda_deployment" />
+    <AppModuleComponent type="1" schemaName="cda_environment" />
+    <AppModuleComponent type="1" schemaName="cda_enterpriseapplicationrelease" />
+  </AppModuleComponents>
+  <AppModuleRoleMaps>
+    <Role id="{6fc2dcf4-41ee-eb11-bacb-00224808eefb}" />
+    <Role id="{0b22d629-45ee-eb11-bacb-00224808eefb}" />
+    <Role id="{627090ff-40a3-4053-8790-584edc5be201}" />
+    <Role id="{119f245c-3cc8-4b62-b31c-d1a046ced15d}" />
+  </AppModuleRoleMaps>
+  <LocalizedNames>
+    <LocalizedName description="Enterprise Applications Governance" languagecode="1033" />
+  </LocalizedNames>
+</AppModule>

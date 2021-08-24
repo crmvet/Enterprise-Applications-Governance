@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>0</isdefault>
+    <savedqueryid>{1eb37d4c-8b91-45a7-b89f-72ae2cf4a1db}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="cda_name" select="1" icon="1" preview="1">
+        <row name="result" id="cda_deploymentid">
+          <cell name="cda_name" width="300" />
+          <cell name="cda_releaseid" width="100" />
+          <cell name="cda_environmentid" width="100" />
+          <cell name="cda_actualend" width="100" />
+          <cell name="cda_deploymenttypeused" width="100" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="cda_deployment">
+          <attribute name="cda_name" />
+          <order attribute="cda_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="1" />
+          </filter>
+          <attribute name="cda_releaseid" />
+          <attribute name="cda_environmentid" />
+          <attribute name="cda_deploymenttypeused" />
+          <attribute name="cda_actualend" />
+          <attribute name="cda_deploymentid" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Inactive Deployments" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

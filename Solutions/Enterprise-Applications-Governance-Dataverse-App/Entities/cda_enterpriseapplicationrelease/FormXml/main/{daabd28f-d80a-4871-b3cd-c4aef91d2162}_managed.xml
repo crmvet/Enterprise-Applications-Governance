@@ -1,0 +1,308 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{daabd28f-d80a-4871-b3cd-c4aef91d2162}</formid>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{eed2dc03-f985-460e-bf5d-8dbd2aa9c164}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{d140eaa4-3750-47eb-b1e8-b7f21eb91742}" name="{d140eaa4-3750-47eb-b1e8-b7f21eb91742}" columns="11" locklevel="0" labelwidth="130" celllabelalignment="Left" celllabelposition="Left">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{c5ad7090-8a08-494a-1d40-a69e557b63c0}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Application" languagecode="1033" />
+                        </labels>
+                        <control id="cda_enterpriseapplicationid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cda_enterpriseapplicationid" disabled="false" />
+                      </cell>
+                      <cell id="{dadc3925-d697-dc2b-6a89-04a4dc39a29a}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Version" languagecode="1033" />
+                        </labels>
+                        <control id="cda_version" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cda_version" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{ce096d21-f071-437f-90c4-1f322d116eac}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="cda_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cda_name" />
+                      </cell>
+                      <cell id="{84ed93c5-87bd-424c-99a2-1ab1a9b48455}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+                <section name="PublicReleaseNotes" showlabel="true" showbar="false" locklevel="0" id="{a5474518-5a51-e126-b326-dc269d2ca30e}" IsUserDefined="0" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Left" height="auto">
+                  <labels>
+                    <label description="Public Release Notes" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{64144590-5911-1741-0be1-71b05872d839}" showlabel="false" locklevel="0" rowspan="20">
+                        <labels>
+                          <label description="Public Release Notes" languagecode="1033" />
+                        </labels>
+                        <control id="cda_publicreleasenotes" classid="{F9A8A302-114E-466A-B582-6771B2AE0D92}" datafieldname="cda_publicreleasenotes" disabled="false" uniqueid="{445c5ab6-0668-8ca4-e988-391698ae3146}" />
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                  </rows>
+                </section>
+                <section name="InternalReleaseNotes" showlabel="true" showbar="false" locklevel="0" id="{c343b729-1eb7-167c-ba59-63a484ad4b63}" IsUserDefined="0" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Left" height="auto">
+                  <labels>
+                    <label description="Internal Release Notes" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{12d27485-658e-b223-aabc-a4aabb43cd0a}" showlabel="false" locklevel="0" auto="true" rowspan="5">
+                        <labels>
+                          <label description="Internal Release Notes" languagecode="1033" />
+                        </labels>
+                        <control id="cda_internalreleasenotes" classid="{E0DECE4B-6FC8-4a8f-A065-082708572369}" datafieldname="cda_internalreleasenotes" disabled="false" uniqueid="{71a76c91-01c8-8aea-3d27-01e6c78426c4}" />
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row height="auto" />
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+        <tab name="AffectedApps" id="{2ee9d5a1-d687-aed5-0071-881947616158}" IsUserDefined="0" locklevel="0" showlabel="true" expanded="true">
+          <labels>
+            <label description="Affected Apps" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section name="AffectedApps" showlabel="false" showbar="false" locklevel="0" id="{66b1538d-23e8-8351-2b5e-c18911aad21c}" IsUserDefined="0" layout="varwidth" columns="1" labelwidth="115" height="auto" celllabelalignment="Left" celllabelposition="Left">
+                  <labels>
+                    <label description="Affected Apps" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{0ea78e93-08a6-03d3-1c4a-a93574548329}" showlabel="false" colspan="1" auto="true" rowspan="4">
+                        <labels>
+                          <label description="Affected Apps" languagecode="1033" />
+                        </labels>
+                        <control id="AffectedApps" classid="{E7A81278-8635-4d9e-8D4D-59480B391C5B}" indicationOfSubgrid="true" uniqueid="{15e11980-e1ec-a273-405e-5c610dc0a808}">
+                          <parameters>
+                            <ViewId>{05B0F2CF-564B-4B3F-AE69-F3E80BAA7443}</ViewId>
+                            <IsUserView>false</IsUserView>
+                            <RelationshipName />
+                            <TargetEntityType>cda_enterpriseapplication</TargetEntityType>
+                            <AutoExpand>Auto</AutoExpand>
+                            <EnableQuickFind>false</EnableQuickFind>
+                            <EnableViewPicker>false</EnableViewPicker>
+                            <ViewIds>{05B0F2CF-564B-4B3F-AE69-F3E80BAA7443}</ViewIds>
+                            <EnableJumpBar>false</EnableJumpBar>
+                            <ChartGridMode>All</ChartGridMode>
+                            <VisualizationId />
+                            <IsUserChart>false</IsUserChart>
+                            <EnableChartPicker>true</EnableChartPicker>
+                            <RecordsPerPage>10</RecordsPerPage>
+                            <HeaderColorCode>#F3F3F3</HeaderColorCode>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row height="auto" />
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+        <tab name="Deployments" id="{d4382478-6d87-1ed2-a8c2-3caae5d16b58}" IsUserDefined="0" locklevel="0" showlabel="true" expanded="true">
+          <labels>
+            <label description="Deployments" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section name="PlannedDeployments" showlabel="true" showbar="false" locklevel="0" id="{6015d398-067b-c669-b947-8256b961ba9a}" IsUserDefined="0" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Left">
+                  <labels>
+                    <label description="Planned Deployments" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{23838be4-8881-6878-9ad7-64390b92d658}" showlabel="false" colspan="1" auto="false" rowspan="6">
+                        <labels>
+                          <label description="Planned Deployments" languagecode="1033" />
+                        </labels>
+                        <control id="PlannedDeployments" classid="{E7A81278-8635-4d9e-8D4D-59480B391C5B}" indicationOfSubgrid="true">
+                          <parameters>
+                            <ViewId>{142D94E9-34A3-4644-BBF6-03B0F30A0D83}</ViewId>
+                            <IsUserView>false</IsUserView>
+                            <RelationshipName>cda_cda_earelease_cda_deployment</RelationshipName>
+                            <TargetEntityType>cda_deployment</TargetEntityType>
+                            <AutoExpand>Fixed</AutoExpand>
+                            <EnableQuickFind>false</EnableQuickFind>
+                            <EnableViewPicker>false</EnableViewPicker>
+                            <ViewIds>{142D94E9-34A3-4644-BBF6-03B0F30A0D83}</ViewIds>
+                            <EnableJumpBar>false</EnableJumpBar>
+                            <ChartGridMode>All</ChartGridMode>
+                            <VisualizationId />
+                            <IsUserChart>false</IsUserChart>
+                            <EnableChartPicker>true</EnableChartPicker>
+                            <RecordsPerPage>4</RecordsPerPage>
+                            <HeaderColorCode>#F3F3F3</HeaderColorCode>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                  </rows>
+                </section>
+                <section name="DeploymentsHistory" showlabel="true" showbar="false" locklevel="0" id="{279b9735-9c87-e83d-dc1d-5aa0755653e7}" IsUserDefined="0" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Left">
+                  <labels>
+                    <label description="Deployments History" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{6eba1674-a1b5-e12b-431a-204a6257d11e}" showlabel="false" colspan="1" auto="false" rowspan="6">
+                        <labels>
+                          <label description="Deployment History" languagecode="1033" />
+                        </labels>
+                        <control id="DeploymentHistory" classid="{E7A81278-8635-4d9e-8D4D-59480B391C5B}" indicationOfSubgrid="true" uniqueid="{90ed40db-47e6-5aa1-4994-c16480127748}">
+                          <parameters>
+                            <ViewId>{1EB37D4C-8B91-45A7-B89F-72AE2CF4A1DB}</ViewId>
+                            <IsUserView>false</IsUserView>
+                            <RelationshipName>cda_cda_earelease_cda_deployment</RelationshipName>
+                            <TargetEntityType>cda_deployment</TargetEntityType>
+                            <AutoExpand>Fixed</AutoExpand>
+                            <EnableQuickFind>false</EnableQuickFind>
+                            <EnableViewPicker>false</EnableViewPicker>
+                            <ViewIds>{142D94E9-34A3-4644-BBF6-03B0F30A0D83}</ViewIds>
+                            <EnableJumpBar>false</EnableJumpBar>
+                            <ChartGridMode>All</ChartGridMode>
+                            <VisualizationId />
+                            <IsUserChart>false</IsUserChart>
+                            <EnableChartPicker>true</EnableChartPicker>
+                            <RecordsPerPage>4</RecordsPerPage>
+                            <HeaderColorCode>#F3F3F3</HeaderColorCode>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <Navigation>
+        <NavBar></NavBar>
+        <NavBarAreas>
+          <NavBarArea Id="Info">
+            <Titles>
+              <Title LCID="1033" Text="Common" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="Sales">
+            <Titles>
+              <Title LCID="1033" Text="Sales" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="Service">
+            <Titles>
+              <Title LCID="1033" Text="Service" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="Marketing">
+            <Titles>
+              <Title LCID="1033" Text="Marketing" />
+            </Titles>
+          </NavBarArea>
+          <NavBarArea Id="ProcessCenter">
+            <Titles>
+              <Title LCID="1033" Text="Process Sessions" />
+            </Titles>
+          </NavBarArea>
+        </NavBarAreas>
+      </Navigation>
+      <controlDescriptions>
+        <controlDescription forControl="{445c5ab6-0668-8ca4-e988-391698ae3146}">
+          <customControl id="{E0DECE4B-6FC8-4a8f-A065-082708572369}">
+            <parameters>
+              <datafieldname>cda_publicreleasenotes</datafieldname>
+            </parameters>
+          </customControl>
+          <customControl formFactor="0" name="MscrmControls.RichTextEditor.RichTextEditorControl">
+            <parameters>
+              <value>cda_publicreleasenotes</value>
+            </parameters>
+          </customControl>
+          <customControl formFactor="1" name="MscrmControls.RichTextEditor.RichTextEditorControl">
+            <parameters>
+              <value>cda_publicreleasenotes</value>
+            </parameters>
+          </customControl>
+          <customControl formFactor="2" name="MscrmControls.RichTextEditor.RichTextEditorControl">
+            <parameters>
+              <value>cda_publicreleasenotes</value>
+            </parameters>
+          </customControl>
+        </controlDescription>
+      </controlDescriptions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

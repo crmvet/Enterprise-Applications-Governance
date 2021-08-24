@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{4c5d7ae9-e332-4a87-8b59-6627fd59871f}</formid>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{ffbb2796-98b9-447a-b020-fcab8fc4e4f2}" IsUserDefined="1">
+          <labels>
+            <label description="" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{b1b6eabb-0b4b-4064-a219-6156449281ab}">
+                  <labels>
+                    <label description="GENERAL" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{411204e3-e58e-41aa-b9b3-b4e11cf1c6e6}" showlabel="true" locklevel="0" visible="false">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="cda_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cda_name" uniqueid="{2768c2a5-d9a3-d04d-1d43-2eeb3dab05ba}" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{e51400c2-9c8a-0568-25ab-38d8dd55489e}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Application" languagecode="1033" />
+                        </labels>
+                        <control id="cda_enterpriseapplicationid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cda_enterpriseapplicationid" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{484c6870-d4e3-ab5d-36c3-ee1686525077}" showlabel="true" locklevel="0">
+                        <labels>
+                          <label description="Version" languagecode="1033" />
+                        </labels>
+                        <control id="cda_version" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cda_version" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{ad209670-4544-4875-a8d3-9f958a990638}" showlabel="true" locklevel="1" visible="false">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" uniqueid="{38265123-8891-338a-b705-6e118a63ea82}" disabled="false">
+                          <parameters>
+                            <AutoResolve>true</AutoResolve>
+                            <DisableMru>false</DisableMru>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+  </systemform>
+</forms>

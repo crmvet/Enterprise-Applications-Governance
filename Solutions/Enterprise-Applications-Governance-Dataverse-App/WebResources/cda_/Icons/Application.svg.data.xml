@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WebResource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <WebResourceId>{9c120a06-20c2-eb11-bacc-000d3a338fbf}</WebResourceId>
+  <Name>cda_/Icons/Application.svg</Name>
+  <DisplayName>Application SVG</DisplayName>
+  <LanguageCode>1033</LanguageCode>
+  <WebResourceType>11</WebResourceType>
+  <IntroducedVersion>0.0.0.1</IntroducedVersion>
+  <IsEnabledForMobileClient>1</IsEnabledForMobileClient>
+  <IsAvailableForMobileOffline>1</IsAvailableForMobileOffline>
+  <DependencyXml>&lt;Dependencies&gt;&lt;Dependency componentType="WebResource"/&gt;&lt;/Dependencies&gt;</DependencyXml>
+  <IsCustomizable>1</IsCustomizable>
+  <CanBeDeleted>1</CanBeDeleted>
+  <IsHidden>0</IsHidden>
+  <FileName>/WebResources/cda_IconsApplicationsvg9C120A06-20C2-EB11-BACC-000D3A338FBF</FileName>
+</WebResource>

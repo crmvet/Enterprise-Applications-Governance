@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{142d94e9-34a3-4644-bbf6-03b0f30a0d83}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="cda_name" select="1" icon="1" preview="1">
+        <row name="result" id="cda_deploymentid">
+          <cell name="cda_name" width="300" />
+          <cell name="cda_environmentid" width="100" />
+          <cell name="a_67383e55c0bdeb1182360022480a2c3f.cda_enterpriseapplicationid" width="100" disableSorting="1" />
+          <cell name="cda_releaseid" width="100" />
+          <cell name="ownerid" width="100" />
+          <cell name="cda_scheduledstart" width="100" />
+          <cell name="cda_actualstart" width="100" />
+          <cell name="cda_scheduledend" width="100" />
+          <cell name="cda_actualend" width="100" />
+          <cell name="statecode" width="100" />
+          <cell name="cda_deploymenttypeplanned" width="100" />
+          <cell name="cda_deploymenttypeused" width="100" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="cda_deployment">
+          <attribute name="cda_name" />
+          <order attribute="cda_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <link-entity alias="a_67383e55c0bdeb1182360022480a2c3f" name="cda_enterpriseapplicationrelease" from="cda_enterpriseapplicationreleaseid" to="cda_releaseid" link-type="outer" visible="false">
+            <attribute name="cda_enterpriseapplicationid" />
+          </link-entity>
+          <attribute name="cda_releaseid" />
+          <attribute name="cda_environmentid" />
+          <attribute name="statecode" />
+          <attribute name="cda_scheduledstart" />
+          <attribute name="cda_scheduledend" />
+          <attribute name="ownerid" />
+          <attribute name="cda_actualstart" />
+          <attribute name="cda_actualend" />
+          <attribute name="cda_deploymenttypeused" />
+          <attribute name="cda_deploymenttypeplanned" />
+          <attribute name="cda_deploymentid" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>0.0.0.1</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Deployments" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
