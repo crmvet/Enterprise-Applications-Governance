@@ -6,7 +6,7 @@
       <LocalizedName description="Enterprise Applications Governance" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
-    <Version>1.1.7.7</Version>
+    <Version>1.1.7.8</Version>
     <Managed>2</Managed>
     <Publisher>
       <UniqueName>CitizenDevelopmentAcademy</UniqueName>
@@ -102,6 +102,11 @@
       <RootComponent type="62" schemaName="cda_EnterpriseApplicationsGovernance" behavior="0" />
       <RootComponent type="80" schemaName="cda_EnterpriseApplicationsGovernance" behavior="0" />
     </RootComponents>
-    <MissingDependencies></MissingDependencies>
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="66" schemaName="MscrmControls.RichTextEditor.RichTextEditorControl" displayName="MscrmControls.RichTextEditor.RichTextEditorControl" solution="msdyn_RichTextEditor (1.0.0.1069)" />
+        <Dependent type="60" displayName="Information" parentDisplayName="Release" id="{daabd28f-d80a-4871-b3cd-c4aef91d2162}" />
+      </MissingDependency>
+    </MissingDependencies>
   </SolutionManifest>
 </ImportExportXml>
