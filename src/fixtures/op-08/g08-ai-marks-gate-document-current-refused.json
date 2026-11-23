@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-marks-gate-document-current-refused",
+  "description": "An AI client for the owner sets a runbook document link (document type with Current Needs Person) to current. RA-03: marking a gate-relevant document current needs a person on a confirmation card, on every AI path, not only in the MCP tool.",
+  "workingDefaults": [
+    9
+  ],
+  "ruleIds": [
+    "G-08"
+  ],
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "document-link",
+    "operation": "update",
+    "rowId": "fixture-doc-1",
+    "after": {
+      "status": "document-current"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft",
+      "documentType": "runbook"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "ai.status-not-allowed",
+          "ruleId": "G-08"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "ai.status-not-allowed",
+        "severity": "error",
+        "ref": "document-current"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 8): the six types with requiresApproval false (intake, priority, design, tier, ownership, portfolio) still go on one card to their accountable holder. Only lowest-tier intake is on the locked engine acceptance list."
+  ],
+  "entity": "decision-type",
+  "rows": [
+    {
+      "key": "intake",
+      "label": "Intake",
+      "defaultSubjectKind": "intake-request",
+      "requiresApproval": false,
+      "outcomes": [
+        { "key": "accept", "label": "Accept" },
+        { "key": "park", "label": "Park" },
+        { "key": "redirect", "label": "Redirect to reuse" },
+        { "key": "decline", "label": "Decline" }
+      ]
+    },
+    {
+      "key": "priority",
+      "label": "Priority",
+      "defaultSubjectKind": "intake-request",
+      "requiresApproval": false,
+      "outcomes": [
+        { "key": "fund", "label": "Fund" },
+        { "key": "defer", "label": "Defer" },
+        { "key": "stop", "label": "Stop" }
+      ]
+    },
+    {
+      "key": "design",
+      "label": "Design",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": false,
+      "needsOptionsConsidered": true,
+      "outcomes": [{ "key": "approve", "label": "Approve" }, { "key": "rework", "label": "Rework" }]
+    },
+    {
+      "key": "data-use",
+      "label": "Data use",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "allow", "label": "Allow" }, { "key": "deny", "label": "Deny" }]
+    },
+    {
+      "key": "tier",
+      "label": "Tier",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": false,
+      "outcomes": [
+        { "key": "confirm", "label": "Confirm" },
+        { "key": "raise", "label": "Raise" },
+        { "key": "lower", "label": "Lower" }
+      ]
+    },
+    {
+      "key": "risk-acceptance",
+      "label": "Risk acceptance",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "decline", "label": "Decline" }]
+    },
+    {
+      "key": "acceptance",
+      "label": "Acceptance",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+    },
+    {
+      "key": "change-authorization",
+      "label": "Change authorization",
+      "defaultSubjectKind": "change-request",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "authorize", "label": "Authorize" }, { "key": "reject", "label": "Reject" }]
+    },
+    {
+      "key": "go-live",
+      "label": "Go-live",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [
+        { "key": "go", "label": "Go", "nextLifecycleStageKey": "operate" },
+        { "key": "no-go", "label": "No go" }
+      ]
+    },
+    {
+      "key": "ownership",
+      "label": "Ownership",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": false,
+      "outcomes": [{ "key": "assign", "label": "Assign" }, { "key": "end", "label": "End" }]
+    },
+    {
+      "key": "portfolio",
+      "label": "Portfolio",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": false,
+      "outcomes": [
+        { "key": "keep", "label": "Keep" },
+        { "key": "invest", "label": "Invest" },
+        { "key": "replace", "label": "Replace" },
+        { "key": "retire", "label": "Retire" }
+      ]
+    },
+    {
+      "key": "exception",
+      "label": "Exception",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "needsOptionsConsidered": true,
+      "outcomes": [{ "key": "grant", "label": "Grant" }, { "key": "deny", "label": "Deny" }]
+    },
+    {
+      "key": "retirement",
+      "label": "Retirement",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [
+        { "key": "retire", "label": "Retire", "nextLifecycleStageKey": "retire" },
+        { "key": "keep", "label": "Keep" }
+      ]
+    },
+    {
+      "key": "autonomy-level",
+      "label": "Autonomy level",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "agree", "label": "Agree" }, { "key": "decline", "label": "Decline" }]
+    },
+    {
+      "key": "configuration-change",
+      "label": "Configuration change",
+      "defaultSubjectKind": "configuration-draft",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+    },
+    {
+      "key": "gate-policy-change",
+      "label": "Gate policy change",
+      "defaultSubjectKind": "configuration-draft",
+      "requiresApproval": true,
+      "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+    }
+  ]
+}

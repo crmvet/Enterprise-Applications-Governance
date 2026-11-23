@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g12-binding-to-group-allowed-in-activation",
+  "description": "Inside activation, a Role Group Binding names a group. Allowed.",
+  "ruleIds": [
+    "G-12"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "role-group-binding",
+    "operation": "create",
+    "after": {
+      "key": "pmo-binding",
+      "roleKey": "pmo",
+      "entraGroupObjectId": "00000000-0000-4000-8000-000000000053"
+    },
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "configurationSetKind": "working",
+    "bindingPrincipalKind": "group"
+  },
+  "expected": {
+    "outcome": "allowed",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

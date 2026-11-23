@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v29-cadence-gap-warning",
+  "description": "A draft retires the tier 2 owner check cadence. The owner check then has a cadence at tiers 1 and 3 only, so V29 warns, and the set stays valid.",
+  "ruleIds": [
+    "V29"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "review-cadence",
+        "key": "owner-check-tier-2"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    },
+    "reasons": [
+      {
+        "code": "cadence.coverage",
+        "severity": "warning",
+        "ruleId": "V29",
+        "entity": "Review Type",
+        "ref": "owner-check"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

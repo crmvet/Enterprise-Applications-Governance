@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-deployment-record-engine-update-refused",
+  "description": "Class F, O14: final at insert, for the engine too. An engine-nested write of the flags on a recorded deployment is refused: the flags are facts at write time and never recomputed (document 22, section 8.3).",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "deployment-record",
+    "operation": "update",
+    "rowId": "fixture-deployment-1",
+    "after": {
+      "isMissingApproval": false
+    }
+  },
+  "facts": {
+    "before": {
+      "result": "deployment-succeeded",
+      "resultMeaning": "succeeded",
+      "isMissingApproval": true
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

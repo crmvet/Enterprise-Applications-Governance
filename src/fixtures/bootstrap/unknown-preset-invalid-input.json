@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "unknown-preset-invalid-input",
+  "description": "The apply names a preset that does not exist.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "presetKey": "made-up-preset",
+    "noVersionExists": true,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "invalid-input"
+  }
+}

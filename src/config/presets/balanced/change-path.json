@@ -1,0 +1,12 @@
+{
+  "entity": "change-path",
+  "rows": [
+    { "key": "pipeline-only", "label": "Pipeline only", "allowedRouteKeys": ["pipeline-step"] },
+    { "key": "pipeline-or-ai-tool", "label": "Pipeline or AI tool", "allowedRouteKeys": ["pipeline-step", "ai-tool"] },
+    {
+      "key": "any-route",
+      "label": "Any route",
+      "allowedRouteKeys": ["pipeline-step", "ai-tool", "person-in-app", "other"]
+    }
+  ]
+}

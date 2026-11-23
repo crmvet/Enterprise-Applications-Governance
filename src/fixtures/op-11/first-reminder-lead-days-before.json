@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "first-reminder-lead-days-before",
+  "description": "A tier 2 owner check due on 2026-12-06 gets its first reminder 14 days before, which is today. The next action is the repeat 7 days later.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "dueOnUtc": "2026-12-06T00:00:00Z",
+    "reviewTypeKey": "owner-check",
+    "tierKey": "tier-2"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "review",
+      "cadenceKey": "owner-check-tier-2",
+      "dueOnUtc": "2026-12-06T00:00:00Z",
+      "isOverdue": false,
+      "actions": [
+        {
+          "action": "remind",
+          "ruleKey": "review-reminder",
+          "reminderNumber": 1,
+          "escalated": false,
+          "channelKey": "teams"
+        }
+      ],
+      "nextActionOnUtc": "2026-11-29T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Review Cadence",
+        "key": "owner-check-tier-2",
+        "role": "matched"
+      },
+      {
+        "entity": "Reminder Rule",
+        "key": "review-reminder",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "delete-submitted-intake-refused",
+  "description": "The requester deletes a submitted intake request. Only a draft can be deleted; withdraw it instead.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "delete",
+    "rowId": "fixture-intake-1"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "submitted",
+      "createdByPrincipal": "fixture-person-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "record.delete-not-allowed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

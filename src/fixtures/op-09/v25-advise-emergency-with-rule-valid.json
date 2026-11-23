@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v25-advise-emergency-with-rule-valid",
+  "description": "The same row at advise with an emergency rule. V25 passes.",
+  "ruleIds": [
+    "V25"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "gate-policy",
+        "key": "gp-emergency-test--tier-1",
+        "values": {
+          "gateLevel": "advise",
+          "emergencyRule": {
+            "passWithoutApproval": true,
+            "approvalDueWorkingDays": 2,
+            "reviewTypeKey": "post-change"
+          }
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-artifact-version-same-digest-again-allowed",
+  "description": "Class F, O13: writing a fill-once column again with the value it holds changes nothing. Allowed.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "artifact-version",
+    "operation": "update",
+    "rowId": "fixture-artifact-1",
+    "after": {
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  },
+  "facts": {
+    "before": {
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

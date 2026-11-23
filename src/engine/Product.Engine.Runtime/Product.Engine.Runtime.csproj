@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Engine runtime (document 25, sections 3.1 and 3.3).
+    Plan, fetch, evaluate. Storage ports and the snapshot cache with the version probe.
+    The in-memory store adapter for tests and the local harness lives in Product.Engine.Testing,
+    so a host that references only this assembly cannot bind it (RuntimeDependencyRuleTests).
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>$(EngineTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Engine.Core\Product.Engine.Core.csproj" />
+    <ProjectReference Include="..\Product.Engine.Configuration\Product.Engine.Configuration.csproj" />
+  </ItemGroup>
+</Project>

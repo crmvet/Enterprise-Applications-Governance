@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "triggered-requirement-of-other-gate-ignored",
+  "description": "A triggered requirement of another gate does not apply here: it belongs to the design gate.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-1",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "triggeredGateRequirementKeys": [
+      "design-adr-tier-3"
+    ]
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": true,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": true,
+          "guidelineKey": "g9",
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

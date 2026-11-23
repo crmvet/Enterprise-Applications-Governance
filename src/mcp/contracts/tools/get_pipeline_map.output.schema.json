@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_pipeline_map output",
+  "description": "The response envelope. On success, data lists the pipelines with their map entries. Labels are text people or tools typed.",
+  "x-tool": "get_pipeline_map",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "pipelines"
+      ],
+      "properties": {
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "pipelineReferenceId",
+              "linkKind",
+              "externalId",
+              "label",
+              "url",
+              "isMoved",
+              "movedToUrl",
+              "lastSeenOn",
+              "entries"
+            ],
+            "properties": {
+              "pipelineReferenceId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O16 Pipeline Reference"
+              },
+              "linkKind": {
+                "$ref": "../common.schema.json#/$defs/labelledKey",
+                "description": "The Link Kind (C37)."
+              },
+              "externalId": {
+                "type": "string",
+                "description": "The pipeline's ID in its own tool."
+              },
+              "label": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The pipeline's name when last seen.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "url": {
+                "$ref": "../common.schema.json#/$defs/url"
+              },
+              "isMoved": {
+                "type": "boolean",
+                "description": "True when the pipeline moved, for example after a repository migration."
+              },
+              "movedToUrl": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lastSeenOn": {
+                "description": "When a record step last reported this pipeline.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "businessApplicationId",
+                    "applicationName",
+                    "deploymentTargetId",
+                    "targetLabel",
+                    "targetStageKey",
+                    "stageOrder"
+                  ],
+                  "properties": {
+                    "businessApplicationId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O02 Business Application"
+                    },
+                    "applicationName": {
+                      "type": "string",
+                      "description": "The application name.",
+                      "x-untrusted": true
+                    },
+                    "deploymentTargetId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O15 Deployment Target"
+                    },
+                    "targetLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "The target's name when last seen.",
+                          "x-untrusted": true
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "targetStageKey": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/key",
+                          "x-entity": "C34 Target Stage"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "stageOrder": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One pipeline deploys this application, to test and then production.",
+      "data": {
+        "pipelines": [
+          {
+            "pipelineReferenceId": "d5000000-0000-4000-8000-000000000001",
+            "linkKind": {
+              "key": "azure-pipeline",
+              "label": "Azure pipeline"
+            },
+            "externalId": "pipeline-42",
+            "label": "Visit planner release",
+            "url": "https://pipelines.example.org/definitions/42",
+            "isMoved": false,
+            "movedToUrl": null,
+            "lastSeenOn": "2026-12-04T07:10:00Z",
+            "entries": [
+              {
+                "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+                "applicationName": "Field visit planner",
+                "deploymentTargetId": "d4000000-0000-4000-8000-000000000001",
+                "targetLabel": "Test environment",
+                "targetStageKey": "test",
+                "stageOrder": 1
+              },
+              {
+                "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+                "applicationName": "Field visit planner",
+                "deploymentTargetId": "d4000000-0000-4000-8000-000000000002",
+                "targetLabel": "Production environment",
+                "targetStageKey": "production",
+                "stageOrder": 2
+              }
+            ]
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "pipelines[].label",
+        "pipelines[].entries[].applicationName",
+        "pipelines[].entries[].targetLabel"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

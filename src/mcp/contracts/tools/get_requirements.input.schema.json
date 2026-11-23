@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_requirements input",
+  "description": "What does my tier need? The gates, approvals, documents, reviews and gate levels that apply. With an application ID it also says which are already met. Approvals come from the single most specific matching rule group. A portfolio-scoped row wins over an unscoped one. Give exactly one of businessApplicationId and scope. Writes nothing.",
+  "x-tool": "get_requirements",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application to check."
+    },
+    "scope": {
+      "type": "object",
+      "description": "A scope to check without an application.",
+      "required": [
+        "tierKey"
+      ],
+      "properties": {
+        "tierKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C08 Tier",
+          "description": "The tier."
+        },
+        "applicationKindKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C15 Application Kind",
+          "description": "The application kind."
+        },
+        "lifecycleStageKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C12 Lifecycle Stage",
+          "description": "The lifecycle stage."
+        },
+        "changeTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C20 Change Type",
+          "description": "The change type."
+        },
+        "portfolioId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O01 Portfolio",
+          "description": "The portfolio, for portfolio-scoped rows."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "businessApplicationId"
+      ]
+    },
+    {
+      "required": [
+        "scope"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "scope": {
+        "tierKey": "tier-3",
+        "applicationKindKey": "agent"
+      }
+    }
+  ]
+}

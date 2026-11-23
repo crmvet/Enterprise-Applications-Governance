@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g01-ai-client-creates-role-binding-refused",
+  "description": "An AI client acting for a configuration admin creates a Role Group Binding directly. Refused: an AI edit never changes live behavior by itself; it proposes a draft instead.",
+  "ruleIds": [
+    "G-01"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "role-group-binding",
+    "operation": "create",
+    "after": {
+      "key": "pmo-binding",
+      "roleKey": "pmo",
+      "entraGroupObjectId": "00000000-0000-4000-8000-000000000051"
+    }
+  },
+  "facts": {
+    "configurationSetKind": "working",
+    "bindingPrincipalKind": "group"
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "config.activation-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

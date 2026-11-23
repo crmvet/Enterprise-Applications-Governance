@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g07-audit-entry-created-by-caller-refused",
+  "description": "A platform admin writes an Audit Entry directly. Only the engine writes audit entries, as an effect of the write they record.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "audit-entry",
+    "operation": "create",
+    "after": {
+      "operation": "made up",
+      "entityName": "Decision"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

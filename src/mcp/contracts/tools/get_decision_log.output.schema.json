@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_decision_log output",
+  "description": "The response envelope. On success, data lists decisions, newest first, with who decided, why and the chain. statement and reason are text people typed.",
+  "x-tool": "get_decision_log",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "decisionId",
+              "decisionType",
+              "subjectKind",
+              "subjectId",
+              "statement",
+              "reason",
+              "outcome",
+              "status",
+              "decider",
+              "decidedOn",
+              "supersedes",
+              "supersededBy",
+              "amends",
+              "approvalsSummary",
+              "configurationSetVersion",
+              "recordUrl"
+            ],
+            "properties": {
+              "decisionId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O09 Decision"
+              },
+              "decisionType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey",
+                "description": "The Decision Type (C18)."
+              },
+              "subjectKind": {
+                "$ref": "../common.schema.json#/$defs/decisionSubjectKind"
+              },
+              "subjectId": {
+                "$ref": "../common.schema.json#/$defs/id"
+              },
+              "statement": {
+                "type": "string",
+                "description": "One sentence: what was decided.",
+                "x-untrusted": true
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why.",
+                "x-untrusted": true
+              },
+              "outcome": {
+                "description": "The Decision Outcome (C19).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The decision status by meaning."
+              },
+              "decider": {
+                "description": "Who decided. Null while Proposed.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decidedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "supersedes": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "supersededBy": {
+                "description": "Derived from the later decision.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "amends": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "approvalsSummary": {
+                "$ref": "../common.schema.json#/$defs/approvalsSummary"
+              },
+              "configurationSetVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The configuration set version the decision was judged by."
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/url"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One accepted decision for this application.",
+      "data": {
+        "items": [
+          {
+            "decisionId": "60000000-0000-4000-8000-000000000013",
+            "decisionType": {
+              "key": "tier",
+              "label": "Tier"
+            },
+            "subjectKind": "business-application",
+            "subjectId": "10000000-0000-4000-8000-000000000001",
+            "statement": "Field visit planner is tier 2.",
+            "reason": "It holds customer addresses.",
+            "outcome": {
+              "key": "accept",
+              "label": "Accept"
+            },
+            "status": {
+              "label": "Accepted",
+              "meaning": "accepted"
+            },
+            "decider": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Owner (sample)"
+            },
+            "decidedOn": "2026-11-20T14:00:00Z",
+            "supersedes": null,
+            "supersededBy": null,
+            "amends": null,
+            "approvalsSummary": {
+              "required": 1,
+              "approved": 1,
+              "rejected": 0,
+              "pending": 0
+            },
+            "configurationSetVersion": 3,
+            "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000013"
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].statement",
+        "items[].reason"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

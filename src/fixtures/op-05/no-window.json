@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-05",
+  "case": "no-window",
+  "description": "A change request with no window gives no-window. OP-04 then sets no outside-window flag.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "eventUtc": "2026-11-22T09:00:00Z"
+  },
+  "expected": {
+    "outcome": "no-window",
+    "payload": {
+      "state": "no-window",
+      "minutesOutside": 0
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "window.none",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

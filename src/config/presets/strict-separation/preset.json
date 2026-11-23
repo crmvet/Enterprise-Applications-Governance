@@ -1,0 +1,24 @@
+{
+  "$comment": [
+    "Strict separation overlay (document 21, section 6.6; D-20 strict separation). The operations are in patch.json.",
+    "It conflicts with small-team (V43)."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "strict-separation",
+  "label": "Strict separation",
+  "description": "Different people for proposer and approver, for the instructing and the accepting configuration admin, and for the AI lead and the platform admin. Two change board members decide an exception about a change.",
+  "presetKind": "overlay",
+  "extends": null,
+  "conflictsWith": ["small-team"],
+  "areas": ["people"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "setupNotes": [
+    {
+      "text": "Bind the AI lead and the platform admin roles to different Entra groups, with different members."
+    },
+    {
+      "text": "Name at least two configuration admins and at least two change board members, so every configuration change and every exception about a change can be accepted."
+    }
+  ]
+}

@@ -1,0 +1,804 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_application_card output",
+  "description": "The response envelope. On success, data holds the application and each section asked for. Sections not asked for are left out.",
+  "x-tool": "get_application_card",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "application"
+      ],
+      "properties": {
+        "application": {
+          "$ref": "#/$defs/application"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/ownerAssignment"
+          },
+          "description": "The owner assignments."
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          },
+          "description": "The technical components, as links."
+        },
+        "dependencies": {
+          "type": "object",
+          "required": [
+            "dependsOnCount",
+            "usedByCount",
+            "top"
+          ],
+          "properties": {
+            "dependsOnCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How many dependencies this application has."
+            },
+            "usedByCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How many dependants it has."
+            },
+            "top": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/dependencyEdge"
+              },
+              "description": "The most important edges."
+            }
+          },
+          "additionalProperties": false
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision"
+          },
+          "description": "The latest five decisions.",
+          "maxItems": 5
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/change"
+          },
+          "description": "Open change requests."
+        },
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deployment"
+          },
+          "description": "The latest deployment per target."
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/document"
+          },
+          "description": "Status per required document type."
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/review"
+          },
+          "description": "Reviews due, and the last one done per type."
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveryLink"
+          },
+          "description": "Delivery links."
+        }
+      },
+      "additionalProperties": false
+    },
+    "application": {
+      "type": "object",
+      "required": [
+        "businessApplicationId",
+        "name",
+        "purpose",
+        "status",
+        "kind",
+        "tier",
+        "stage",
+        "buildPath",
+        "usesAi",
+        "agreedAutonomyLevel",
+        "nextReviewOn"
+      ],
+      "properties": {
+        "businessApplicationId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O02 Business Application"
+        },
+        "name": {
+          "type": "string",
+          "description": "The application name.",
+          "x-untrusted": true
+        },
+        "purpose": {
+          "type": "string",
+          "description": "What the application is for.",
+          "x-untrusted": true
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The registration status: draft, registered or archived by meaning."
+        },
+        "kind": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "tier": {
+          "description": "The current tier. Null before a tier decision.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "key",
+                "label",
+                "decisionId"
+              ],
+              "properties": {
+                "key": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C08 Tier"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "decisionId": {
+                  "description": "The accepted tier decision.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O09 Decision"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage": {
+          "description": "The current lifecycle stage.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "key",
+                "label",
+                "since",
+                "decisionId"
+              ],
+              "properties": {
+                "key": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C12 Lifecycle Stage"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "since": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dateTime"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "decisionId": {
+                  "description": "The accepted stage decision.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O09 Decision"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "buildPath": {
+          "description": "From the build-path value list.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usesAi": {
+          "description": "The owner's statement that it uses AI.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "agreedAutonomyLevel": {
+          "description": "For agents: the autonomy level agreed by decision.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextReviewOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "technicalComponentId",
+        "kind",
+        "externalId",
+        "url",
+        "labelAsSeen",
+        "lastSeenOn"
+      ],
+      "properties": {
+        "technicalComponentId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O03 Technical Component"
+        },
+        "kind": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The Component Kind (C16)."
+        },
+        "externalId": {
+          "type": "string",
+          "description": "The tool's own ID."
+        },
+        "url": {
+          "$ref": "../common.schema.json#/$defs/url"
+        },
+        "labelAsSeen": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The item's name when last seen.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastSeenOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencyEdge": {
+      "type": "object",
+      "required": [
+        "direction",
+        "businessApplicationId",
+        "technicalComponentId",
+        "name",
+        "dependencyType",
+        "criticality"
+      ],
+      "properties": {
+        "direction": {
+          "enum": [
+            "depends-on",
+            "used-by"
+          ]
+        },
+        "businessApplicationId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O02 Business Application"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "technicalComponentId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O03 Technical Component"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "The other application or component.",
+          "x-untrusted": true
+        },
+        "dependencyType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The Dependency Type (C17)."
+        },
+        "criticality": {
+          "description": "From the criticality value list.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "decisionId",
+        "decisionType",
+        "statement",
+        "outcome",
+        "status",
+        "decidedOn"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "statement": {
+          "type": "string",
+          "description": "One sentence: decided what.",
+          "x-untrusted": true
+        },
+        "outcome": {
+          "description": "The Decision Outcome (C19).",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "change": {
+      "type": "object",
+      "required": [
+        "changeRequestId",
+        "title",
+        "changeType",
+        "status",
+        "windowStart",
+        "windowEnd"
+      ],
+      "properties": {
+        "changeRequestId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O11 Change Request"
+        },
+        "title": {
+          "type": "string",
+          "description": "A short name for the change.",
+          "x-untrusted": true
+        },
+        "changeType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "windowStart": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "windowEnd": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "required": [
+        "deploymentRecordId",
+        "deploymentTargetId",
+        "targetLabel",
+        "targetStageKey",
+        "artifactName",
+        "artifactVersion",
+        "result",
+        "finishedOn"
+      ],
+      "properties": {
+        "deploymentRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O14 Deployment Record"
+        },
+        "deploymentTargetId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O15 Deployment Target"
+        },
+        "targetLabel": {
+          "type": "string",
+          "description": "The target's name when last seen.",
+          "x-untrusted": true
+        },
+        "targetStageKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C34 Target Stage"
+        },
+        "artifactName": {
+          "type": "string",
+          "description": "The artifact's name.",
+          "x-untrusted": true
+        },
+        "artifactVersion": {
+          "type": "string",
+          "description": "The artifact's version text."
+        },
+        "result": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The deployment result by meaning."
+        },
+        "finishedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "document": {
+      "type": "object",
+      "required": [
+        "documentType",
+        "status",
+        "documentLinkId",
+        "url",
+        "lastCheckedOn",
+        "staleOn"
+      ],
+      "properties": {
+        "documentType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The Document Type (C22)."
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Draft, current, stale or missing by meaning. Missing is computed, never stored."
+        },
+        "documentLinkId": {
+          "description": "Null when the document is missing.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O19 Document Link"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastCheckedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "staleOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "reviewId",
+        "reviewType",
+        "status",
+        "dueOn",
+        "doneOn"
+      ],
+      "properties": {
+        "reviewId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O21 Review"
+        },
+        "reviewType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "dueOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "doneOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "deliveryLink": {
+      "type": "object",
+      "required": [
+        "deliveryLinkId",
+        "linkKind",
+        "url",
+        "label",
+        "lastSeenOn"
+      ],
+      "properties": {
+        "deliveryLinkId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O18 Delivery Link"
+        },
+        "linkKind": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The Link Kind (C37)."
+        },
+        "url": {
+          "$ref": "../common.schema.json#/$defs/url"
+        },
+        "label": {
+          "type": "string",
+          "description": "A short label.",
+          "x-untrusted": true
+        },
+        "lastSeenOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Field visit planner is a live tier 2 app. Its runbook is missing.",
+      "data": {
+        "application": {
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "name": "Field visit planner",
+          "purpose": "Plans site visits for field staff.",
+          "status": {
+            "label": "Registered",
+            "meaning": "registered"
+          },
+          "kind": {
+            "key": "power-platform-app",
+            "label": "Power Platform app"
+          },
+          "tier": {
+            "key": "tier-2",
+            "label": "Tier 2",
+            "decisionId": "60000000-0000-4000-8000-000000000001"
+          },
+          "stage": {
+            "key": "live",
+            "label": "Live",
+            "since": "2026-03-01T10:00:00Z",
+            "decisionId": "60000000-0000-4000-8000-000000000002"
+          },
+          "buildPath": {
+            "key": "citizen",
+            "label": "Citizen"
+          },
+          "usesAi": false,
+          "agreedAutonomyLevel": null,
+          "nextReviewOn": "2027-03-01"
+        },
+        "owners": [
+          {
+            "ownerAssignmentId": "50000000-0000-4000-8000-000000000001",
+            "ownerRoleKey": "business-owner",
+            "label": "Business owner",
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Business owner (sample)"
+            },
+            "isDeputy": false,
+            "deputyFor": null,
+            "startOn": "2026-01-05",
+            "endOn": null,
+            "ownershipDecisionId": "60000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "documents": [
+          {
+            "documentType": {
+              "key": "wiki-page",
+              "label": "Wiki page"
+            },
+            "status": {
+              "label": "Current",
+              "meaning": "current"
+            },
+            "documentLinkId": "e0000000-0000-4000-8000-000000000001",
+            "url": "https://wiki.example.org/field-visit-planner",
+            "lastCheckedOn": "2026-10-01",
+            "staleOn": "2027-04-01"
+          },
+          {
+            "documentType": {
+              "key": "runbook",
+              "label": "Runbook"
+            },
+            "status": {
+              "label": "Missing",
+              "meaning": "missing"
+            },
+            "documentLinkId": null,
+            "url": null,
+            "lastCheckedOn": null,
+            "staleOn": null
+          }
+        ]
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/10000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "application.name",
+        "application.purpose"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

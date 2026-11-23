@@ -1,0 +1,119 @@
+{
+  "description": "The fixed error codes every tool returns with ok false, in the error object of the response envelope. Codes never change and are never reused. Source: document 24, section 3.5. HTTP status follows document 25, section 7.",
+  "retryableMeans": "True when the same call, unchanged, may succeed later. False when something must change first: sign in, fix the input, re-read the record, get a role, or wait for an admin to fix the configuration.",
+  "engineReasonsMeans": "Examples of engine reason codes (document 25) that map to the code. Not a full list. A trailing .* means every code with that prefix.",
+  "codes": [
+    {
+      "code": "not_signed_in",
+      "meaning": "No valid token. The HTTP layer returns 401 with the protected resource metadata link.",
+      "retryable": false,
+      "httpStatus": 401,
+      "clientAction": "Sign in through the MCP client, then call again."
+    },
+    {
+      "code": "not_authorized",
+      "meaning": "Valid token, but the caller lacks the role, the owner role, or the row access. A missing scope also returns 403.",
+      "retryable": false,
+      "httpStatus": 403,
+      "clientAction": "Tell the person which role or ownership the call needs. Do not retry.",
+      "engineReasons": [
+        "config.not-configuration-admin"
+      ]
+    },
+    {
+      "code": "ai_cannot_do_this",
+      "meaning": "The write would set a state that only a person or the approval runner may set. AI never approves.",
+      "retryable": false,
+      "httpStatus": 403,
+      "clientAction": "Do not retry. Point the person to the approval card or to the page where a person acts.",
+      "engineReasons": [
+        "decision.accept-by-engine-only",
+        "approval.outcome-writer",
+        "register.decision-required",
+        "config.activation-only"
+      ]
+    },
+    {
+      "code": "rule_violation",
+      "meaning": "A configuration rule refused the write, for example a gate requirement or a window rule. ruleKey names the refusing row.",
+      "retryable": false,
+      "httpStatus": 422,
+      "clientAction": "Explain the rule to the person. Change the input, or start the decision the rule needs.",
+      "engineReasons": [
+        "link.wrong-category",
+        "link.url-pattern"
+      ]
+    },
+    {
+      "code": "validation",
+      "meaning": "An input is missing, malformed or not an allowed key.",
+      "retryable": false,
+      "httpStatus": 400,
+      "clientAction": "Fix the field named in error.field, then call again.",
+      "engineReasons": [
+        "input.*"
+      ]
+    },
+    {
+      "code": "not_found",
+      "meaning": "The ID or key does not exist, or the caller cannot see it.",
+      "retryable": false,
+      "httpStatus": 404,
+      "clientAction": "Check the ID or key, for example with find_applications.",
+      "engineReasons": [
+        "ref.not-found"
+      ]
+    },
+    {
+      "code": "conflict",
+      "meaning": "The record changed since it was read, the baseVersionNumber is stale, or a clientRequestId was reused with a different payload.",
+      "retryable": false,
+      "httpStatus": 409,
+      "clientAction": "Read the record again, then call again with the fresh state.",
+      "engineReasons": [
+        "request.*",
+        "audit.append-only",
+        "config.base-moved"
+      ]
+    },
+    {
+      "code": "locked",
+      "meaning": "The write touches a locked setting or an engine contract value.",
+      "retryable": false,
+      "httpStatus": 422,
+      "clientAction": "Do not retry. A locked value does not change through any tool.",
+      "engineReasons": [
+        "setting.locked-changed",
+        "setting.ai-approval-lock-off"
+      ]
+    },
+    {
+      "code": "rate_limited",
+      "meaning": "The Tool Policy limit of calls per person per hour was reached. The error carries retryAfterSeconds.",
+      "retryable": true,
+      "httpStatus": 429,
+      "clientAction": "Wait for retryAfterSeconds, then call again."
+    },
+    {
+      "code": "upstream_unavailable",
+      "meaning": "A Microsoft API the tool needs did not answer, for example the inventory or Microsoft Graph.",
+      "retryable": true,
+      "httpStatus": 503,
+      "clientAction": "Wait a little, then call again. For the gap check, compare_inventory_list is the fallback."
+    },
+    {
+      "code": "configuration_unavailable",
+      "meaning": "The engine cannot load a valid active configuration version, or a rule row it needs is missing, such as a gate policy row. Governed writes are refused. There is no built-in fallback.",
+      "retryable": false,
+      "httpStatus": 503,
+      "clientAction": "Tell the person the configuration is broken and a configuration admin must fix it. get_configuration_health shows the cause.",
+      "engineReasons": [
+        "engine.unavailable",
+        "snapshot.*",
+        "gate-policy.missing",
+        "rule-group.ambiguous",
+        "decision-right.accountable"
+      ]
+    }
+  ]
+}

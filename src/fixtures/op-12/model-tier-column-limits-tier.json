@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "model-tier-column-limits-tier",
+  "description": "A model with a Tier column (the highest tier it applies to) and no tier condition: a tier 3 change fails it. The failure has no condition index, because it comes from the column, not from Conditions Json.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "tier-2-labels",
+        "values": {
+          "label": "Tier 2 labels",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels only"
+            }
+          ],
+          "tierKey": "tier-2",
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 3,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "tier-2-labels",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "tier-2-labels",
+          "conditionKind": "max-tier-rank",
+          "why": "the model applies up to tier `tier-2` (rank 2), and the main application's tier rank is 3"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "tier-2-labels"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "tier-2-labels",
+        "role": "skipped"
+      }
+    ]
+  }
+}

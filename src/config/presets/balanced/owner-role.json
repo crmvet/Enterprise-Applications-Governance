@@ -1,0 +1,19 @@
+{
+  "entity": "owner-role",
+  "rows": [
+    {
+      "key": "business-owner",
+      "label": "Business owner",
+      "partyKey": "business",
+      "requiresDeputy": true,
+      "maximumHolders": 1
+    },
+    { "key": "sponsor", "label": "Sponsor", "partyKey": "business" },
+    { "key": "data-owner", "label": "Data owner", "partyKey": "business", "requiresDeputy": true },
+    { "key": "process-owner", "label": "Process owner", "partyKey": "business", "requiresDeputy": true },
+    { "key": "technical-owner", "label": "Technical owner", "partyKey": "it", "requiresDeputy": true },
+    { "key": "support-owner", "label": "Support owner", "partyKey": "it", "requiresDeputy": true },
+    { "key": "security-owner", "label": "Security owner", "partyKey": "it" },
+    { "key": "builder", "label": "Builder", "partyKey": "citizen-developers" }
+  ]
+}

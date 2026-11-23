@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g16-non-admin-creates-draft-refused",
+  "description": "A PMO member starts a Configuration Draft. Only a person whose role can change configuration works on a draft.",
+  "ruleIds": [
+    "G-16"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "pmo"
+      ]
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "create",
+    "after": {
+      "changeJson": {
+        "operations": []
+      },
+      "proposalRationale": "Try it."
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "config.not-configuration-admin",
+          "ruleId": "G-16"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "config.not-configuration-admin",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

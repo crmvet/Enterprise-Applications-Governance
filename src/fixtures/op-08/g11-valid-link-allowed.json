@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g11-valid-link-allowed",
+  "description": "A delivery link of kind GitHub issue with a matching URL. Allowed.",
+  "ruleIds": [
+    "G-11"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "delivery-link",
+    "operation": "create",
+    "after": {
+      "linkKind": "github-issue",
+      "url": "https://github.com/example-org/example-repo/issues/12",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Link Kind",
+        "key": "github-issue",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "balanced-bootstrapped",
+  "description": "At install, a person with install rights applies Balanced. No version exists, so the bootstrap rule accepts version 1 directly for that person: the working set, every live row, version 1 with its applied presets, the accepted configuration change decision and an Audit Entry.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "presetKey": "balanced",
+    "noVersionExists": true,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "bootstrapped",
+    "payload": {
+      "versionNumber": 1,
+      "appliedPresets": [
+        {
+          "presetKey": "balanced"
+        }
+      ],
+      "errorCount": 0,
+      "effects": [
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Set",
+          "operation": "create",
+          "key": "working-set",
+          "columns": {
+            "setKind": "working",
+            "basedOnPresetKey": "balanced",
+            "isInForce": true,
+            "currentVersionNumber": 1
+          }
+        },
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Set Version",
+          "operation": "create",
+          "columns": {
+            "versionNumber": 1,
+            "instructedBy": "fixture-person-1",
+            "publishedOn": "2026-11-22T09:00:00Z"
+          }
+        },
+        {
+          "kind": "activate-configuration",
+          "entity": "Decision",
+          "operation": "create",
+          "columns": {
+            "decisionType": "configuration-change",
+            "status": "decision-accepted",
+            "decider": "fixture-person-1"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "operation": "create",
+          "columns": {
+            "operation": "configuration-activated",
+            "changedValuesJson": {
+              "versionNumber": 1,
+              "bootstrap": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}

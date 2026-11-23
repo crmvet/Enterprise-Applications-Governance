@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "role-config-admin-valid",
+  "description": "A draft adds a configuration deputy role without Can Change Configuration, and keeps a retired role that still has the flag. Only active roles grant anything, and the one active role with the flag is the configuration admin role, so the engine check role.config-admin passes.",
+  "tags": [
+    "engine-check"
+  ],
+  "workingDefaults": [
+    1,
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "role",
+        "key": "configuration-deputy",
+        "values": {
+          "label": "Configuration deputy",
+          "partyKey": "it",
+          "duties": "Prepares configuration drafts for the configuration admin. Accepts nothing."
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "role",
+        "key": "old-configuration-owner",
+        "values": {
+          "label": "Old configuration owner",
+          "partyKey": "it",
+          "duties": "Retired. Replaced by the configuration admin role.",
+          "canChangeConfiguration": true,
+          "isActive": false
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    },
+    "reasonsMatch": "exact"
+  }
+}

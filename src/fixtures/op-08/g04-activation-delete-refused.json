@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g04-activation-delete-refused",
+  "description": "Even activation never deletes a configuration row. It retires it (Is Active no) instead.",
+  "ruleIds": [
+    "G-04"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "tier",
+    "operation": "delete",
+    "rowId": "fixture-tier-row-3",
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "configurationSetKind": "working",
+    "before": {
+      "key": "tier-3"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "config.in-use",
+        "severity": "error",
+        "ref": "tier-3"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

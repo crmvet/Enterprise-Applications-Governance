@@ -1,0 +1,5 @@
+{
+  "groupBy": "stage",
+  "includeOwnerGaps": true,
+  "top": 50
+}

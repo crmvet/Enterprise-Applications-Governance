@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "playbook chapter resource content",
+  "description": "The JSON text of playbook://chapter/<n>: the chapter title and its link only. The playbook lives as wiki or web pages outside the product (D-17).",
+  "x-resource": "playbook-chapter",
+  "type": "object",
+  "required": [
+    "uri",
+    "chapter",
+    "title",
+    "url",
+    "guidelineNumbers",
+    "asOf"
+  ],
+  "properties": {
+    "uri": {
+      "type": "string",
+      "pattern": "^playbook://chapter/[1-9][0-9]{0,2}$"
+    },
+    "chapter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 999,
+      "description": "The chapter number."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The chapter title."
+    },
+    "url": {
+      "description": "Opens the chapter. Null until the hub location is set.",
+      "anyOf": [
+        {
+          "$ref": "../common.schema.json#/$defs/url"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "guidelineNumbers": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/guidelineNumber"
+      },
+      "uniqueItems": true,
+      "description": "The guidelines whose Chapter is this chapter (C39)."
+    },
+    "asOf": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "When the data was read."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "uri": "playbook://chapter/2",
+      "chapter": 2,
+      "title": "Owners and deputies",
+      "url": null,
+      "guidelineNumbers": [
+        "G2"
+      ],
+      "asOf": "2026-11-22T09:00:00Z"
+    }
+  ]
+}

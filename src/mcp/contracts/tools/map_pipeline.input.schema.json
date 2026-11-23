@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "map_pipeline input",
+  "description": "Maps one of the client's pipelines to the applications and targets it deploys. A link only. The product never builds, hosts or runs a pipeline. The link kind must be of the pipeline category.",
+  "x-tool": "map_pipeline",
+  "type": "object",
+  "required": [
+    "linkKindKey",
+    "externalId",
+    "url",
+    "entries"
+  ],
+  "properties": {
+    "pipelineReferenceId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O16 Pipeline Reference",
+      "description": "Update this pipeline reference. Leave out to add one."
+    },
+    "linkKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C37 Link Kind",
+      "description": "A link kind of the pipeline category."
+    },
+    "externalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "The pipeline's ID in its own tool."
+    },
+    "url": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "Opens the pipeline in its own tool. Checked against the link kind's Url Pattern."
+    },
+    "labelAsSeen": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The pipeline's name in its tool."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "businessApplicationId",
+          "deploymentTargetId",
+          "stageOrder"
+        ],
+        "properties": {
+          "businessApplicationId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O02 Business Application"
+          },
+          "deploymentTargetId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O15 Deployment Target"
+          },
+          "stageOrder": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The stage order of this target in the pipeline, starting at 1."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Which application the pipeline deploys to which target, in which stage order."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "linkKindKey": "azure-pipeline",
+      "externalId": "pipeline-42",
+      "url": "https://pipelines.example.org/definitions/42",
+      "labelAsSeen": "Visit planner release",
+      "entries": [
+        {
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "deploymentTargetId": "d4000000-0000-4000-8000-000000000001",
+          "stageOrder": 1
+        },
+        {
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "deploymentTargetId": "d4000000-0000-4000-8000-000000000002",
+          "stageOrder": 2
+        }
+      ],
+      "clientRequestId": "req-0301"
+    }
+  ]
+}

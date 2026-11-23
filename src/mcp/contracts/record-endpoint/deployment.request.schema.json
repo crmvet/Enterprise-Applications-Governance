@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Record endpoint: deployment request",
+  "description": "The body a pipeline record step sends to the record endpoint. It is the record_deployment contract: every field is that tool's field, plus two the pipeline can report. Give exactly one of deploymentTargetId and targetExternalId, and at most one of pipelineReferenceId and pipelineExternalId. The route, the flags and the gate level are set by the engine.",
+  "$comment": "WORKING DEFAULT (open design question 12). Pipelines do not use MCP. They call the record endpoint with this contract, as a workload identity that holds the deployment recorder role through a Workload Grant (C42). WORKING DEFAULT (open design question 7). Reported code approvals are evidence only. AI-only code approvals never count as authorization, and the shipped gate default flags them.",
+  "type": "object",
+  "required": [
+    "idempotencyKey",
+    "artifactName",
+    "artifactVersion",
+    "finishedOn",
+    "resultMeaning"
+  ],
+  "properties": {
+    "idempotencyKey": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/idempotencyKey"
+    },
+    "businessApplicationId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/businessApplicationId"
+    },
+    "artifactName": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/artifactName"
+    },
+    "artifactVersion": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/artifactVersion"
+    },
+    "artifactKindKey": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/artifactKindKey"
+    },
+    "digest": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/digest"
+    },
+    "sourceCommit": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/sourceCommit"
+    },
+    "sourceRepositoryUrl": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/sourceRepositoryUrl"
+    },
+    "deploymentTargetId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/deploymentTargetId"
+    },
+    "targetExternalId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/targetExternalId"
+    },
+    "changeRequestId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/changeRequestId"
+    },
+    "pipelineReferenceId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/pipelineReferenceId"
+    },
+    "runUrl": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/runUrl"
+    },
+    "startedOn": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/startedOn"
+    },
+    "finishedOn": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/finishedOn"
+    },
+    "resultMeaning": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/resultMeaning"
+    },
+    "versionBefore": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/versionBefore"
+    },
+    "versionAfter": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/versionAfter"
+    },
+    "deployedByObjectId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/deployedByObjectId"
+    },
+    "mergeActorObjectId": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/mergeActorObjectId"
+    },
+    "mergeActorKind": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/mergeActorKind"
+    },
+    "stageOrderRun": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/stageOrderRun"
+    },
+    "codeApprovalKind": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/codeApprovalKind"
+    },
+    "reportedApprovals": {
+      "$ref": "../tools/record_deployment.input.schema.json#/properties/reportedApprovals"
+    },
+    "pipelineExternalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "The pipeline's ID in its own tool, matched to the Pipeline Reference External Id. An unknown pipeline is created with a not mapped note for the platform admin."
+    },
+    "startedByAiClient": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The AI client that queued the run for a person, if any, as reported."
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "deploymentTargetId"
+      ],
+      "not": {
+        "required": [
+          "targetExternalId"
+        ]
+      }
+    },
+    {
+      "required": [
+        "targetExternalId"
+      ],
+      "not": {
+        "required": [
+          "deploymentTargetId"
+        ]
+      }
+    }
+  ],
+  "not": {
+    "required": [
+      "pipelineReferenceId",
+      "pipelineExternalId"
+    ]
+  },
+  "examples": [
+    {
+      "idempotencyKey": "run-2001-stage-prod-attempt-1",
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "artifactName": "FieldVisitPlanner",
+      "artifactVersion": "1.4.1.0",
+      "artifactKindKey": "power-platform-solution",
+      "sourceCommit": "3f9c2ab",
+      "targetExternalId": "env-prod-0001",
+      "pipelineExternalId": "pipeline-42",
+      "runUrl": "https://pipelines.example.org/runs/2001",
+      "startedOn": "2026-12-04T07:00:00Z",
+      "finishedOn": "2026-12-04T07:10:00Z",
+      "resultMeaning": "succeeded",
+      "stageOrderRun": [
+        "build",
+        "test",
+        "production"
+      ],
+      "codeApprovalKind": "person",
+      "reportedApprovals": [
+        {
+          "approverObjectId": "20000000-0000-4000-8000-000000000002",
+          "approverKind": "person",
+          "approvedOn": "2026-12-03T16:00:00Z",
+          "sourceUrl": "https://code.example.org/pulls/88"
+        }
+      ]
+    }
+  ]
+}

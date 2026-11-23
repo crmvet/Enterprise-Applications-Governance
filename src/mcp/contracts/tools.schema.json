@@ -1,0 +1,476 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MCP tool index",
+  "description": "Schema for tools.json, the index of the product's MCP tools. It also encodes two rules: a read tool has AI write state read-only and the read-only hint, and no tool name starts with a verb for an act that only people or the engine perform.",
+  "type": "object",
+  "required": [
+    "description",
+    "toolCount",
+    "toolsets",
+    "aiWriteStates",
+    "aiRules",
+    "notTools",
+    "relations",
+    "humanRoleKeys",
+    "workloadRoleKeys",
+    "tools"
+  ],
+  "properties": {
+    "$comment": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "toolCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "toolsets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "covers"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/toolsetKey"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "covers": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aiWriteStates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "state",
+          "meaning"
+        ],
+        "properties": {
+          "state": {
+            "$ref": "#/$defs/aiWriteState"
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aiRules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "notTools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "act",
+          "why",
+          "insteadWhere"
+        ],
+        "properties": {
+          "act": {
+            "type": "string",
+            "minLength": 1
+          },
+          "why": {
+            "type": "string",
+            "minLength": 1
+          },
+          "insteadWhere": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "relations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "meaning"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/relation"
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "humanRoleKeys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/roleKey"
+      }
+    },
+    "workloadRoleKeys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "deployment-recorder",
+          "approval-writer"
+        ]
+      },
+      "description": "Workload roles call no MCP tool."
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/tool"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "toolsetKey": {
+      "enum": [
+        "session",
+        "portfolio",
+        "intake",
+        "decisions",
+        "change",
+        "deployment",
+        "documentation",
+        "gapcheck",
+        "configuration",
+        "links"
+      ],
+      "description": "The shipped toolset keys (the toolset value list)."
+    },
+    "aiWriteState": {
+      "enum": [
+        "read-only",
+        "draft",
+        "proposed",
+        "submitted",
+        "as-reported",
+        "link",
+        "candidate",
+        "withdrawn"
+      ],
+      "description": "Max AI State values (document 24, section 15), in kebab-case."
+    },
+    "roleKey": {
+      "enum": [
+        "requester",
+        "maker",
+        "application-owner",
+        "data-owner",
+        "architect",
+        "security-reviewer",
+        "change-manager",
+        "change-board",
+        "pmo",
+        "ai-lead",
+        "platform-admin",
+        "configuration-admin",
+        "auditor",
+        "reader"
+      ],
+      "description": "The 14 shipped human role keys (C29)."
+    },
+    "relation": {
+      "enum": [
+        "anyone-signed-in",
+        "any-role",
+        "owner-of-application",
+        "technical-owner-of-application",
+        "owner-of-subject-application",
+        "intake-requester",
+        "leaving-person",
+        "owner-of-leaving-persons-application",
+        "record-requester-or-creator",
+        "decision-right-responsible-or-consulted",
+        "document-owner",
+        "writer-of-evidence-subject"
+      ],
+      "description": "Access that depends on the caller's relation to the record, not on a role alone."
+    },
+    "entityId": {
+      "type": "string",
+      "pattern": "^[COL][0-9]{2}$",
+      "description": "A document 20 entity ID, such as O07 or C46."
+    },
+    "contractPath": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^tools/[a-z][a-z0-9_]*\\.(input|output)\\.schema\\.json$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "tool": {
+      "type": "object",
+      "required": [
+        "number",
+        "name",
+        "toolset",
+        "access",
+        "question",
+        "writes",
+        "aiWriteStates",
+        "aiWriteStateText",
+        "defaultRoles",
+        "release",
+        "annotations",
+        "inputSchema",
+        "outputSchema"
+      ],
+      "properties": {
+        "$comment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The stable tool number from document 24."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+          "not": {
+            "pattern": "^(approve|reject|accept|authorize|authorise|activate|assign|unassign|grant|revoke|delete|remove|purge|set)(_|$)"
+          },
+          "description": "Lowercase snake_case, verb first. No verb for an act that only people or the engine perform."
+        },
+        "toolset": {
+          "$ref": "#/$defs/toolsetKey"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The question the tool answers."
+        },
+        "writes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/entityId"
+          },
+          "description": "The entities the tool writes. A read tool may log to O24 or L05."
+        },
+        "aiWriteStates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/aiWriteState"
+          }
+        },
+        "aiWriteStateText": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The AI write state as document 24, section 6.1 words it."
+        },
+        "aiMaySubmit": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Tool Policy AI May Submit: one value per subject kind."
+        },
+        "defaultRoles": {
+          "type": "object",
+          "required": [
+            "roleKeys",
+            "relations",
+            "text"
+          ],
+          "properties": {
+            "roleKeys": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/roleKey"
+              },
+              "description": "Product roles (C29) that may call the tool."
+            },
+            "relations": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/relation"
+              },
+              "description": "Callers allowed by their relation to the record."
+            },
+            "alsoRequires": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "inventory-entra-role"
+                ]
+              },
+              "description": "Extra conditions every caller must meet."
+            },
+            "appRoles": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Za-z]*\\.[A-Z][A-Za-z]*$"
+              },
+              "description": "App roles for app-only callers on the record endpoint."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The default roles as document 24, section 6.1 words them."
+            }
+          },
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "properties": {
+                "roleKeys": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "properties": {
+                "relations": {
+                  "minItems": 1
+                }
+              }
+            }
+          ]
+        },
+        "release": {
+          "enum": [
+            "R1",
+            "Later"
+          ]
+        },
+        "releaseNote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "annotations": {
+          "type": "object",
+          "required": [
+            "readOnlyHint",
+            "destructiveHint"
+          ],
+          "properties": {
+            "readOnlyHint": {
+              "type": "boolean"
+            },
+            "destructiveHint": {
+              "const": false,
+              "description": "No tool is destructive, because no tool deletes."
+            },
+            "idempotentHint": {
+              "type": "boolean",
+              "description": "True for save_, record_ and link_ tools. It holds only when clientRequestId is set."
+            }
+          },
+          "additionalProperties": false
+        },
+        "inputSchema": {
+          "$ref": "#/$defs/contractPath"
+        },
+        "outputSchema": {
+          "$ref": "#/$defs/contractPath"
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "access": {
+            "const": "read"
+          }
+        },
+        "required": [
+          "access"
+        ]
+      },
+      "then": {
+        "properties": {
+          "aiWriteStates": {
+            "const": [
+              "read-only"
+            ]
+          },
+          "annotations": {
+            "properties": {
+              "readOnlyHint": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "aiWriteStates": {
+            "not": {
+              "contains": {
+                "const": "read-only"
+              }
+            }
+          },
+          "annotations": {
+            "required": [
+              "idempotentHint"
+            ],
+            "properties": {
+              "readOnlyHint": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "done-review-without-cadence",
+  "description": "The security review has no cadence: it is triggered, not periodic. A done one gives no next due date, and the answer says why.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "doneOnUtc": "2026-11-01T10:00:00Z",
+    "reviewTypeKey": "security-review",
+    "tierKey": "tier-3"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "review",
+      "isOverdue": false,
+      "actions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "review.no-cadence",
+        "severity": "info",
+        "entity": "Review Type",
+        "ref": "security-review"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "$comment": "WORKING DEFAULT (open design question 12). Pipelines do not use MCP. They call the record endpoint with this contract, as a workload identity that holds the deployment recorder role through a Workload Grant (C42). Document 24, sections 4.5, 4.6 and 9.2; document 23, P05; document 25, sections 7, 8 and 11.4.",
+  "description": "The record endpoint contract for pipeline record steps. A pipeline has no model choosing tools, so it does not use MCP. It calls one plain HTTPS endpoint with the same contract as record_deployment, and corrections with the same contract as record_deployment_correction. The response body is the same envelope the MCP tool returns.",
+  "failSoft": "Record steps fail soft (I-189): on any error, timeout or non-2xx status the step writes a warning to the run log and never fails the deployment. A retry with the same idempotencyKey is always safe. Stopping a deployment is the later check step's job (check_change_approval, after D-03), never the record step's.",
+  "authentication": {
+    "tokenKind": "app-only",
+    "appRole": "Deployment.Record",
+    "workloadRole": "deployment-recorder",
+    "holdsRoleThrough": "A Workload Grant (C42) per pipeline identity, with a reason, the deciding decision and an expiry (workload-grant-max-days). Workload identity federation, no secret. On Dataverse, an application user that holds the role directly.",
+    "notAccepted": [
+      "Delegated user tokens: people record deployments through record_deployment on MCP or on the page.",
+      "Agent identities: they never get a Workload Grant.",
+      "Any other app role."
+    ]
+  },
+  "idempotency": "idempotencyKey in the body is the upsert key of the Deployment Record (unique). The Idempotency-Key header of the Azure binding (document 25, section 12.1) is optional; when sent it must equal idempotencyKey.",
+  "endpoints": [
+    {
+      "operation": "record-deployment",
+      "method": "POST",
+      "azurePath": "/api/deployments",
+      "dataverseCustomApi": "<prefix>_RecordDeployment",
+      "toolContract": "record_deployment",
+      "requestSchema": "record-endpoint/deployment.request.schema.json",
+      "responseSchema": "record-endpoint/deployment.response.schema.json",
+      "statuses": [
+        {
+          "status": 201,
+          "when": "A new record was written. data.created is true."
+        },
+        {
+          "status": 200,
+          "when": "A retry matched the idempotency key, or validateOnly was true. data.created is false. Nothing new was written."
+        },
+        {
+          "status": 400,
+          "errorCode": "validation",
+          "when": "The body does not match the request schema, or a key is not allowed."
+        },
+        {
+          "status": 401,
+          "errorCode": "not_signed_in",
+          "when": "No valid app-only token."
+        },
+        {
+          "status": 403,
+          "errorCode": "not_authorized",
+          "when": "The token lacks the Deployment.Record app role, the identity has no valid Workload Grant, or the token is a delegated user token."
+        },
+        {
+          "status": 404,
+          "errorCode": "not_found",
+          "when": "A given row ID does not exist, such as changeRequestId."
+        },
+        {
+          "status": 409,
+          "errorCode": "conflict",
+          "when": "The idempotency key was reused with a different body."
+        },
+        {
+          "status": 422,
+          "errorCode": "rule_violation",
+          "when": "A configuration rule refused the write, such as a URL that matches a forbidden pattern."
+        },
+        {
+          "status": 429,
+          "errorCode": "rate_limited",
+          "when": "Too many calls. The error carries retryAfterSeconds."
+        },
+        {
+          "status": 503,
+          "errorCode": "configuration_unavailable",
+          "when": "No valid active configuration, or no gate policy row matches. There is no built-in fallback."
+        }
+      ]
+    },
+    {
+      "operation": "record-deployment-correction",
+      "method": "POST",
+      "azurePath": "/api/deployments/corrections",
+      "dataverseCustomApi": "<prefix>_RecordDeploymentCorrection",
+      "toolContract": "record_deployment_correction",
+      "requestSchema": "record-endpoint/deployment-correction.request.schema.json",
+      "responseSchema": "record-endpoint/deployment-correction.response.schema.json",
+      "statuses": [
+        {
+          "status": 201,
+          "when": "A new record was written. data.created is true."
+        },
+        {
+          "status": 200,
+          "when": "A retry matched the idempotency key, or validateOnly was true. data.created is false. Nothing new was written."
+        },
+        {
+          "status": 400,
+          "errorCode": "validation",
+          "when": "The body does not match the request schema, or a key is not allowed."
+        },
+        {
+          "status": 401,
+          "errorCode": "not_signed_in",
+          "when": "No valid app-only token."
+        },
+        {
+          "status": 403,
+          "errorCode": "not_authorized",
+          "when": "The token lacks the Deployment.Record app role, the identity has no valid Workload Grant, or the token is a delegated user token."
+        },
+        {
+          "status": 404,
+          "errorCode": "not_found",
+          "when": "A given row ID does not exist, such as changeRequestId."
+        },
+        {
+          "status": 409,
+          "errorCode": "conflict",
+          "when": "The idempotency key was reused with a different body."
+        },
+        {
+          "status": 422,
+          "errorCode": "rule_violation",
+          "when": "A configuration rule refused the write, such as a URL that matches a forbidden pattern."
+        },
+        {
+          "status": 429,
+          "errorCode": "rate_limited",
+          "when": "Too many calls. The error carries retryAfterSeconds."
+        },
+        {
+          "status": 503,
+          "errorCode": "configuration_unavailable",
+          "when": "No valid active configuration, or no gate policy row matches. There is no built-in fallback."
+        }
+      ]
+    }
+  ]
+}

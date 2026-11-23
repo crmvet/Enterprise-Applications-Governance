@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "named-model-of-other-type-no-candidate",
+  "description": "The requester names a model that belongs to another change type: it cannot make this change standard.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "normal-labels",
+        "values": {
+          "label": "Normal labels",
+          "changeTypeKey": "normal",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "target-stages-in",
+              "value": [
+                "test",
+                "production"
+              ]
+            },
+            {
+              "conditionKind": "max-affected-applications",
+              "value": 1
+            },
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app",
+                "model-driven-app"
+              ]
+            },
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 120
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard",
+    "standardChangeModelKey": "normal-labels"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 2,
+      "targetStageKeys": [
+        "production"
+      ],
+      "affectedApplicationCount": 1,
+      "componentKindKeys": [
+        "canvas-app"
+      ],
+      "windowMinutes": 60,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "normal-labels",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": []
+    },
+    "reasons": [
+      {
+        "code": "standard-model.no-candidate",
+        "ref": "normal-labels"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "unknown-review-type-invalid-input",
+  "description": "A review type that is not in the configuration in force is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "doneOnUtc": "2026-11-01T10:00:00Z",
+    "reviewTypeKey": "audit",
+    "tierKey": "tier-1"
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

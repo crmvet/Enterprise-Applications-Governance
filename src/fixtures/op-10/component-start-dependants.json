@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "component-start-dependants",
+  "description": "What breaks if component X retires? A is hosted on it, and B calls the API of A. A walk can start from a component, as get_dependency_impact allows (a proposal).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startComponentId": "fixture-component-x",
+    "direction": "dependants",
+    "maxDepth": 3
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-a",
+        "toComponentId": "fixture-component-x",
+        "dependencyTypeKey": "hosted-on"
+      },
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "calls-api-of"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startComponentId": "fixture-component-x",
+      "direction": "dependants",
+      "maxDepthApplied": 3,
+      "reached": [
+        {
+          "applicationId": "fixture-app-a",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-component-x",
+            "fixture-app-a"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 2,
+          "dependencyTypeKeys": [
+            "calls-api-of",
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-component-x",
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

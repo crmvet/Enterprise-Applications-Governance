@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "enforce-check-stops-missing-approval",
+  "description": "Tier 3 production is enforce, fail closed, in Balanced. A deploy whose change lacks its approval is stopped, and the fail mode comes back for the check step to cache.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "check",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "pending",
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "stop",
+    "payload": {
+      "gateLevel": "enforce",
+      "verdict": "stop",
+      "isMissingApproval": true,
+      "failMode": "fail-closed",
+      "gatePolicyKey": "gp-prod-tier-3--normal"
+    },
+    "reasons": [
+      {
+        "code": "gate.missing-approval"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

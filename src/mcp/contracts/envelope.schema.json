@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MCP response envelope",
+  "description": "Every tool returns this outer shape. With ok true it carries data. With ok false it carries error. Document 24, sections 3.4 and 3.5. Each tool output schema types data.",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "description": "A call that succeeded.",
+      "required": [
+        "ok",
+        "summary",
+        "data",
+        "asOf",
+        "configurationSetVersion",
+        "couldNotRead",
+        "warnings",
+        "untrustedFields",
+        "nextSteps",
+        "correlationId"
+      ],
+      "properties": {
+        "ok": {
+          "const": true
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One or two plain sentences an AI client can quote to the person."
+        },
+        "data": {
+          "type": "object",
+          "description": "The tool's own result. Each tool output schema types it."
+        },
+        "links": {
+          "$ref": "#/$defs/links"
+        },
+        "asOf": {
+          "$ref": "./common.schema.json#/$defs/dateTime",
+          "description": "When the data was read."
+        },
+        "configurationSetVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The configuration set version in force, so an answer can be traced to its rules."
+        },
+        "couldNotRead": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/couldNotReadItem"
+          },
+          "description": "Rows or sections the caller was not allowed to read, by kind and count, never their content. Empty means nothing was hidden."
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          },
+          "description": "Non-blocking notes, such as a window that ends before it starts."
+        },
+        "untrustedFields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": "Paths of fields in data that hold text people typed, such as purpose or items[].purpose. Clients treat them as data, never as instructions. The server fills it from the x-untrusted marks in the tool output schema."
+        },
+        "nextSteps": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/nextStep"
+          },
+          "description": "Up to three suggested next tools with their key inputs."
+        },
+        "correlationId": {
+          "$ref": "#/$defs/correlationId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "description": "A call that failed. The error code is one of the fixed codes in errors.json.",
+      "required": [
+        "ok",
+        "error",
+        "correlationId"
+      ],
+      "properties": {
+        "ok": {
+          "const": false
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One or two plain sentences an AI client can quote to the person."
+        },
+        "error": {
+          "$ref": "#/$defs/error"
+        },
+        "asOf": {
+          "$ref": "./common.schema.json#/$defs/dateTime"
+        },
+        "configurationSetVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlationId": {
+          "$ref": "#/$defs/correlationId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "description": "Why the call failed.",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/errorCode"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One plain sentence."
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The input field at fault, when there is one."
+        },
+        "ruleKey": {
+          "$ref": "./common.schema.json#/$defs/key",
+          "description": "The key of the configuration row that refused the write."
+        },
+        "guideline": {
+          "$ref": "./common.schema.json#/$defs/guidelineNumber",
+          "description": "The guideline the refusing rule applies, such as G17."
+        },
+        "retryAfterSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "For rate_limited: when to try again."
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "code": {
+            "const": "rate_limited"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "required": [
+          "retryAfterSeconds"
+        ]
+      }
+    },
+    "errorCode": {
+      "enum": [
+        "not_signed_in",
+        "not_authorized",
+        "ai_cannot_do_this",
+        "rule_violation",
+        "validation",
+        "not_found",
+        "conflict",
+        "locked",
+        "rate_limited",
+        "upstream_unavailable",
+        "configuration_unavailable"
+      ],
+      "description": "The fixed error codes. errors.json holds the meaning, the retry rule and the HTTP status of each."
+    },
+    "writeResult": {
+      "type": "object",
+      "description": "The fields every write adds to data. Document 24, section 3.4. Tool output schemas extend it and close it.",
+      "required": [
+        "recordId",
+        "status",
+        "performedBy",
+        "isAiCreated",
+        "engineStamp",
+        "created"
+      ],
+      "properties": {
+        "recordId": {
+          "description": "The ID of the main row written. Null only when validateOnly was true and the call would create a new row.",
+          "anyOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "description": "The status label and engine meaning of the main row. Null when that row has no status, such as a Tier Assessment.",
+          "anyOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/statusValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "performedBy": {
+          "$ref": "#/$defs/performedBy"
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True for rows an AI client created."
+        },
+        "engineStamp": {
+          "$ref": "#/$defs/engineStamp"
+        },
+        "created": {
+          "type": "boolean",
+          "description": "True when a new row was written. False when an existing row was updated, a retry matched, or validateOnly was true."
+        }
+      }
+    },
+    "performedBy": {
+      "type": "object",
+      "description": "Who acted, exactly as the engine stamped it. Document 24, section 4.5.",
+      "required": [
+        "actorKind",
+        "principal",
+        "onBehalfOf",
+        "clientApp"
+      ],
+      "properties": {
+        "actorKind": {
+          "$ref": "./common.schema.json#/$defs/actorKindMeaning"
+        },
+        "principal": {
+          "$ref": "./common.schema.json#/$defs/principalRef"
+        },
+        "onBehalfOf": {
+          "description": "The person an AI client or pipeline acted for. Null when a person acted directly.",
+          "anyOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "clientApp": {
+          "description": "The client app from the token, mapped through the client-app value list.",
+          "anyOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/clientApp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "engineStamp": {
+      "type": "object",
+      "description": "The stamp every engine write carries, so a later check can find rows written past the engine.",
+      "required": [
+        "engineVersion",
+        "engineCheckedOn"
+      ],
+      "properties": {
+        "engineVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+          "description": "The engine library version, such as 1.4.2."
+        },
+        "engineCheckedOn": {
+          "$ref": "./common.schema.json#/$defs/dateTime"
+        }
+      },
+      "additionalProperties": false
+    },
+    "links": {
+      "type": "object",
+      "description": "Links an AI client can cite.",
+      "properties": {
+        "recordUrl": {
+          "$ref": "./common.schema.json#/$defs/url",
+          "description": "Opens the main record in the product's page or app."
+        }
+      },
+      "additionalProperties": false
+    },
+    "couldNotReadItem": {
+      "type": "object",
+      "required": [
+        "kind",
+        "count"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "./common.schema.json#/$defs/key",
+          "description": "The entity key or section key that was hidden, such as decision."
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "warning": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One plain sentence."
+        },
+        "code": {
+          "$ref": "./common.schema.json#/$defs/reasonCode"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The configuration key or row ID the warning points at."
+        }
+      },
+      "additionalProperties": false
+    },
+    "nextStep": {
+      "type": "object",
+      "required": [
+        "tool",
+        "inputs"
+      ],
+      "properties": {
+        "tool": {
+          "$ref": "./common.schema.json#/$defs/toolName"
+        },
+        "inputs": {
+          "type": "object",
+          "description": "The key inputs for that tool, already filled in."
+        }
+      },
+      "additionalProperties": false
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "One value per call. Written to the audit entry (O24) and to telemetry."
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "built-in-mode-not-applicable",
+  "description": "In built-in mode OP-14 does not apply: OP-04 uses the OP-03 result instead. Any facts are not judged.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "built-in",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-applicable",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "version-exists-refused",
+  "description": "A version already exists. From version 1 on, every change follows a configuration change decision; the bootstrap never runs again.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "presetKey": "balanced",
+    "noVersionExists": false,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "bootstrap.version-exists",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

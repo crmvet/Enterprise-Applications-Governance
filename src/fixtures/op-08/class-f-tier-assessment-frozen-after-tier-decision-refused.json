@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-tier-assessment-frozen-after-tier-decision-refused",
+  "description": "Class F, O08: frozen when Tier Decision is set (model note of O08). Changing the answers afterwards is refused, so the tier decision keeps the answers it rested on.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "tier-assessment",
+    "operation": "update",
+    "rowId": "fixture-assessment-1",
+    "after": {
+      "answersJson": [
+        {
+          "question": "data-sensitivity",
+          "answer": "public"
+        }
+      ]
+    }
+  },
+  "facts": {
+    "before": {
+      "tierDecision": "fixture-decision-5"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

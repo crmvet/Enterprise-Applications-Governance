@@ -1,0 +1,79 @@
+{
+  "$comment": [
+    "Small team as operations by key (document 21, section 6.5). Overlays apply after the full preset's wildcards expand.",
+    "A tier 3 proposer may approve their own decision only with an accepted exception decision on record (document 28, Q10).",
+    "The change manager also decides exceptions about a change, so no change board is needed. Tier 3 changes and emergencies already go to the change manager in Balanced (document 28, Q11).",
+    "deployer-not-sole-approver stays at flag. It is stated here on purpose, so the overlay's level does not depend on the full preset under it."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "small-team",
+    "presetKind": "overlay",
+    "extends": null,
+    "conflictsWith": ["strict-separation"]
+  },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "no-self-approval-tier-3",
+      "values": {
+        "label": "No self-approval at tier 3 without an exception",
+        "enforcement": "exception-decision",
+        "exceptionDecisionTypeKey": "exception"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "change-exception-standard",
+      "values": {
+        "label": "Change manager decides an exception about a standard change",
+        "approverRoleKey": "change-manager"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "change-exception-normal",
+      "values": {
+        "label": "Change manager decides an exception about a normal change",
+        "approverRoleKey": "change-manager"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "change-exception-emergency",
+      "values": {
+        "label": "Change manager decides an exception about an emergency change",
+        "approverRoleKey": "change-manager"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "change-exception-standard-a",
+      "values": { "roleKey": "change-manager" }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "change-exception-normal-a",
+      "values": { "roleKey": "change-manager" }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "change-exception-emergency-a",
+      "values": { "roleKey": "change-manager" }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "deployer-not-sole-approver",
+      "values": { "enforcement": "flag" }
+    }
+  ]
+}

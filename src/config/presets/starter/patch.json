@@ -1,0 +1,54 @@
+{
+  "$comment": [
+    "Starter as changes to Balanced (document 21, section 6.3). The build applies these operations to Balanced's source rows before wildcards expand, so gp-test is still the wildcard row here.",
+    "Every gate value is a preset value, not a decision: the change gate (D-03) is still open.",
+    "An upsert merges fields and cannot clear one. gp-prod-tier-3 carries a fail mode, which belongs only at enforce (V24), so it is retired and gp-prod-tier-3-flag replaces it.",
+    "Emergency rows already match Starter: record in test (gp-emergency-test) and flag in production with the emergency rule (gp-emergency-prod-tier-1 to gp-emergency-prod-tier-3).",
+    "Self-approval at tier 3 needs an accepted exception decision (document 28, Q10). An exception about an application goes to the architect and an exception about a change to the change board, as in Balanced."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "starter",
+    "presetKind": "full",
+    "extends": "balanced",
+    "conflictsWith": []
+  },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-test",
+      "values": { "label": "Test: record", "gateLevel": "record" }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-prod-tier-2",
+      "values": { "label": "Production tier 2: flag", "gateLevel": "flag" }
+    },
+    { "op": "retire", "entity": "gate-policy", "key": "gp-prod-tier-3" },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-prod-tier-3-flag",
+      "values": {
+        "label": "Production tier 3: flag",
+        "tierKey": "tier-3",
+        "changeTypeKey": "*",
+        "targetStageKey": "production",
+        "gateLevel": "flag"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "no-self-approval-tier-3",
+      "values": {
+        "label": "No self-approval at tier 3 without an exception",
+        "enforcement": "exception-decision",
+        "exceptionDecisionTypeKey": "exception"
+      }
+    }
+  ]
+}

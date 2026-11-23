@@ -1,0 +1,127 @@
+{
+  "ok": true,
+  "summary": "48 applications across all portfolios. Four owner roles have no holder or no deputy.",
+  "data": {
+    "buckets": [
+      {
+        "key": "idea",
+        "label": "Idea",
+        "count": 3
+      },
+      {
+        "key": "intake-and-triage",
+        "label": "Intake and triage",
+        "count": 4
+      },
+      {
+        "key": "prioritize-and-fund",
+        "label": "Prioritize and fund",
+        "count": 2
+      },
+      {
+        "key": "design-and-review",
+        "label": "Design and architecture review",
+        "count": 3
+      },
+      {
+        "key": "risk-and-tier",
+        "label": "Risk and tier",
+        "count": 2
+      },
+      {
+        "key": "build",
+        "label": "Build",
+        "count": 5
+      },
+      {
+        "key": "test",
+        "label": "Test",
+        "count": 3
+      },
+      {
+        "key": "change-and-release",
+        "label": "Change and release",
+        "count": 2
+      },
+      {
+        "key": "operate",
+        "label": "Operate",
+        "count": 21
+      },
+      {
+        "key": "review",
+        "label": "Review",
+        "count": 2
+      },
+      {
+        "key": "retire",
+        "label": "Retire",
+        "count": 1
+      }
+    ],
+    "ownerGaps": 4,
+    "reviewsOverdue": 3,
+    "documentsMissingOrStale": 7,
+    "draftsOlderThanDays": 2,
+    "ownerGapList": [
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "name": "Inspection Scheduler",
+        "portfolio": {
+          "portfolioId": "a0000000-0000-4000-8000-000000000001",
+          "name": "Field operations"
+        },
+        "ownerRoleKey": "business-owner",
+        "missing": "deputy",
+        "holderDirectoryState": "enabled"
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000007",
+        "name": "Safety Findings Tracker",
+        "portfolio": {
+          "portfolioId": "a0000000-0000-4000-8000-000000000001",
+          "name": "Field operations"
+        },
+        "ownerRoleKey": "business-owner",
+        "missing": "holder",
+        "holderDirectoryState": null
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000013",
+        "name": "Travel Requests",
+        "portfolio": {
+          "portfolioId": "a0000000-0000-4000-8000-000000000004",
+          "name": "People and workplace"
+        },
+        "ownerRoleKey": "business-owner",
+        "missing": "deputy",
+        "holderDirectoryState": "disabled"
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000014",
+        "name": "Desk Booking",
+        "portfolio": {
+          "portfolioId": "a0000000-0000-4000-8000-000000000004",
+          "name": "People and workplace"
+        },
+        "ownerRoleKey": "technical-owner",
+        "missing": "holder",
+        "holderDirectoryState": null
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "ownerGapList[].name"
+  ],
+  "nextSteps": [
+    {
+      "tool": "run_owner_check",
+      "inputs": {}
+    }
+  ],
+  "correlationId": "harness-0005"
+}

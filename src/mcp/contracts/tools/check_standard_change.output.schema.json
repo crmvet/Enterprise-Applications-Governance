@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_standard_change output",
+  "description": "The response envelope. On success, data says whether the change qualifies, the model, and the conditions that failed. A qualifying change is still applied only by the engine on submit.",
+  "x-tool": "check_standard_change",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "qualifies",
+        "model",
+        "failedConditions"
+      ],
+      "properties": {
+        "qualifies": {
+          "type": "boolean",
+          "description": "True when every condition of a model holds."
+        },
+        "model": {
+          "description": "The model that fits, or the closest one checked. Null when no model is listed for this tier and change.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "key",
+                "label",
+                "approvedByDecisionId"
+              ],
+              "properties": {
+                "key": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C21 Standard Change Model"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "approvedByDecisionId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision",
+                  "description": "The decision in which a person approved the model."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "failedConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "condition",
+              "why"
+            ],
+            "properties": {
+              "condition": {
+                "$ref": "../common.schema.json#/$defs/standardChangeConditionKind"
+              },
+              "why": {
+                "type": "string",
+                "description": "One plain sentence from the engine."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The conditions that do not hold. Empty when the change qualifies."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change does not fit a standard model: it touches a component other apps depend on.",
+      "data": {
+        "qualifies": false,
+        "model": {
+          "key": "form-field-change",
+          "label": "Form field change",
+          "approvedByDecisionId": "60000000-0000-4000-8000-000000000014"
+        },
+        "failedConditions": [
+          {
+            "condition": "component-kinds-within",
+            "why": "The change touches a shared flow that other applications depend on."
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

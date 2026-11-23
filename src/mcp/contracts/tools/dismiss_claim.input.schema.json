@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dismiss_claim input",
+  "description": "Records that a found item is not a business application, with the reason. Reversible: undo moves the claim back to open.",
+  "x-tool": "dismiss_claim",
+  "type": "object",
+  "required": [
+    "claimId",
+    "reason"
+  ],
+  "properties": {
+    "claimId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O23 Claim",
+      "description": "The claim."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Why it is not a business application, or why the dismissal is undone."
+    },
+    "reasonKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "From the dismiss reason value list."
+    },
+    "undo": {
+      "type": "boolean",
+      "default": false,
+      "description": "True moves a dismissed claim back to open."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "claimId": "c0000000-0000-4000-8000-000000000004",
+      "reason": "A personal test app with no users.",
+      "reasonKey": "personal-test",
+      "clientRequestId": "req-0505"
+    }
+  ]
+}

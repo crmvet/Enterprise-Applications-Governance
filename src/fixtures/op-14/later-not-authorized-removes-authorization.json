@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "later-not-authorized-removes-authorization",
+  "description": "An ITSM step reported authorized, and later not authorized: the change is not authorized.",
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      },
+      {
+        "factId": "fixture-fact-2",
+        "sourceKind": "itsm-step",
+        "state": "not-authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T12:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": [],
+      "decidingFactId": "fixture-fact-2"
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.revoked",
+        "ref": "fixture-fact-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

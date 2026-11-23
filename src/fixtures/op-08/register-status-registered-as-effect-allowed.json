@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "register-status-registered-as-effect-allowed",
+  "description": "The update-subject effect of an accepted decision registers the application.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "update",
+    "rowId": "fixture-app-1",
+    "after": {
+      "status": "app-registered"
+    },
+    "nestedEffect": "update-subject"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "registered",
+        "performedByActorKind": "engine"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

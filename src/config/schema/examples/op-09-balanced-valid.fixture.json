@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "balanced-valid",
+  "description": "The Balanced preset alone has no validation error. Warnings, such as the empty guideline hub URL, are allowed.",
+  "tags": ["preset"],
+  "snapshot": { "presetKey": "balanced" },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": { "outcome": "valid", "payload": { "isValid": true } }
+}

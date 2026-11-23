@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_intake_draft input",
+  "description": "Starts or edits an intake request: a new idea, or an application already built that needs registering. The row is always Draft. The requester is always the caller. Only the requester may edit, and only while it is draft. An AI client can never set the status.",
+  "x-tool": "save_intake_draft",
+  "type": "object",
+  "required": [
+    "title",
+    "need"
+  ],
+  "properties": {
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "Edit this existing draft. Leave out to start a new one."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "A short name for the request."
+    },
+    "need": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "description": "The business need in plain words."
+    },
+    "proposedKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C15 Application Kind",
+      "description": "The application kind the requester expects."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application this request is about, when it already exists."
+    },
+    "expectedBenefit": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "The benefit claimed at intake."
+    },
+    "usesAi": {
+      "type": "boolean",
+      "description": "The requester's statement that it will use AI."
+    },
+    "horizonKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "Now, next or later, from the horizon value list."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "title": "Field visit planner",
+      "need": "Field staff plan site visits in a spreadsheet. We want an app.",
+      "proposedKindKey": "power-platform-app",
+      "usesAi": false,
+      "horizonKey": "next",
+      "clientRequestId": "req-0001"
+    }
+  ]
+}

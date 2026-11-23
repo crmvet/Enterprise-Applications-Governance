@@ -1,0 +1,23 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 9): runbook and architecture-decision-record have currentNeedsPerson true because a gate requires them. An AI client marking them current sends the person a confirmation card."
+  ],
+  "entity": "document-type",
+  "rows": [
+    { "key": "wiki-page", "label": "Wiki page", "defaultLinkKindKey": "ado-wiki-page", "freshnessDays": 365 },
+    {
+      "key": "runbook",
+      "label": "Runbook",
+      "defaultLinkKindKey": "ado-wiki-page",
+      "freshnessDays": 180,
+      "currentNeedsPerson": true
+    },
+    {
+      "key": "architecture-decision-record",
+      "label": "Architecture decision record",
+      "defaultLinkKindKey": "repository-file",
+      "currentNeedsPerson": true
+    },
+    { "key": "support-guide", "label": "Support guide", "defaultLinkKindKey": "sharepoint-page", "freshnessDays": 365 }
+  ]
+}

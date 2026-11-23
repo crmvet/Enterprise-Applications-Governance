@@ -1,0 +1,96 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 1): engineMeaning is a fixed engine meaning. The label stays configurable."
+  ],
+  "entity": "lifecycle-stage",
+  "rows": [
+    {
+      "key": "idea",
+      "label": "Idea",
+      "stageNumber": 0,
+      "stageRank": 0,
+      "engineMeaning": "pre-live",
+      "leadingOwnerRoleKey": "business-owner"
+    },
+    {
+      "key": "intake-and-triage",
+      "label": "Intake and triage",
+      "stageNumber": 1,
+      "stageRank": 1,
+      "engineMeaning": "pre-live",
+      "leadingRoleKey": "platform-admin"
+    },
+    {
+      "key": "prioritize-and-fund",
+      "label": "Prioritize and fund",
+      "stageNumber": 2,
+      "stageRank": 2,
+      "engineMeaning": "pre-live",
+      "leadingRoleKey": "pmo"
+    },
+    {
+      "key": "design-and-review",
+      "label": "Design and architecture review",
+      "stageNumber": 3,
+      "stageRank": 3,
+      "engineMeaning": "pre-live",
+      "leadingRoleKey": "architect"
+    },
+    {
+      "key": "risk-and-tier",
+      "label": "Risk and tier",
+      "stageNumber": 4,
+      "stageRank": 4,
+      "engineMeaning": "pre-live",
+      "leadingRoleKey": "platform-admin"
+    },
+    {
+      "key": "build",
+      "label": "Build",
+      "stageNumber": 5,
+      "stageRank": 5,
+      "engineMeaning": "pre-live",
+      "leadingOwnerRoleKey": "builder"
+    },
+    {
+      "key": "test",
+      "label": "Test",
+      "stageNumber": 6,
+      "stageRank": 6,
+      "engineMeaning": "pre-live",
+      "leadingOwnerRoleKey": "builder"
+    },
+    {
+      "key": "change-and-release",
+      "label": "Change and release",
+      "stageNumber": 7,
+      "stageRank": 7,
+      "engineMeaning": "pre-live",
+      "leadingRoleKey": "platform-admin"
+    },
+    {
+      "key": "operate",
+      "label": "Operate",
+      "stageNumber": 8,
+      "stageRank": 8,
+      "engineMeaning": "live",
+      "leadingOwnerRoleKey": "technical-owner"
+    },
+    {
+      "key": "review",
+      "label": "Review",
+      "stageNumber": 9,
+      "stageRank": 9,
+      "engineMeaning": "live",
+      "leadingRoleKey": "pmo"
+    },
+    {
+      "key": "retire",
+      "label": "Retire",
+      "stageNumber": 10,
+      "stageRank": 10,
+      "engineMeaning": "retired",
+      "leadingRoleKey": "platform-admin"
+    }
+  ]
+}

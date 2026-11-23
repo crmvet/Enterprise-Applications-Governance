@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_role_holders output",
+  "description": "The response envelope. On success, data lists the bound groups and their members, read from Entra as the person.",
+  "x-tool": "get_role_holders",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "role",
+        "groups",
+        "members",
+        "readFrom",
+        "note"
+      ],
+      "properties": {
+        "role": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/directoryObject"
+          },
+          "description": "The Entra groups bound to the role (C30)."
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/directoryObject"
+          },
+          "description": "The members Graph lets the person see."
+        },
+        "readFrom": {
+          "const": "Entra, live",
+          "description": "Members are read live and never stored."
+        },
+        "note": {
+          "description": "A plain note, such as the Dataverse group team delay of up to 8 hours.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change board role is held through one group with two members.",
+      "data": {
+        "role": {
+          "key": "change-board",
+          "label": "Change board"
+        },
+        "groups": [
+          {
+            "objectId": "30000000-0000-4000-8000-000000000001",
+            "displayLabel": "Change board (sample)"
+          }
+        ],
+        "members": [
+          {
+            "objectId": "20000000-0000-4000-8000-000000000002",
+            "displayLabel": "Business owner (sample)"
+          },
+          {
+            "objectId": "20000000-0000-4000-8000-000000000003",
+            "displayLabel": "Deputy owner (sample)"
+          }
+        ],
+        "readFrom": "Entra, live",
+        "note": null
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

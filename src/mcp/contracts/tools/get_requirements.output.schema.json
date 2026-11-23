@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_requirements output",
+  "description": "The response envelope. On success, data lists what applies. Each requirement has met only when an application was given.",
+  "$comment": "WORKING DEFAULT (open design question 1). requirementKind, approvalMode, gateLevel and failMode are fixed engine meanings. Labels stay configurable.",
+  "x-tool": "get_requirements",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "gates",
+        "approvals",
+        "documents",
+        "reviews",
+        "gatePolicy"
+      ],
+      "properties": {
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "gateKey",
+              "requirements"
+            ],
+            "properties": {
+              "gateKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C13 Gate"
+              },
+              "requirements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/requirement"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalNeeded",
+            "required": [
+              "decisionTypeKey"
+            ]
+          }
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "documentTypeKey",
+              "fromStageKey"
+            ],
+            "properties": {
+              "documentTypeKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C22 Document Type"
+              },
+              "fromStageKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C12 Lifecycle Stage",
+                "description": "The stage from which the document is required."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "reviewTypeKey",
+              "intervalDays"
+            ],
+            "properties": {
+              "reviewTypeKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C24 Review Type"
+              },
+              "intervalDays": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Days between reviews at this tier."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "gatePolicy": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "targetStageKey",
+              "changeTypeKey",
+              "gateLevel",
+              "failMode"
+            ],
+            "properties": {
+              "targetStageKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C34 Target Stage"
+              },
+              "changeTypeKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C20 Change Type"
+              },
+              "gateLevel": {
+                "$ref": "../common.schema.json#/$defs/gateLevel"
+              },
+              "failMode": {
+                "$ref": "../common.schema.json#/$defs/failMode"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "requirement": {
+      "type": "object",
+      "required": [
+        "requirementKind",
+        "guideline"
+      ],
+      "properties": {
+        "requirementKind": {
+          "$ref": "../common.schema.json#/$defs/requirementKind"
+        },
+        "decisionTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C18 Decision Type"
+        },
+        "documentTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C22 Document Type"
+        },
+        "reviewTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C24 Review Type"
+        },
+        "guideline": {
+          "description": "The guideline the requirement applies.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/guidelineNumber"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "met": {
+          "type": "boolean",
+          "description": "True when the application meets it. Only present when an application was given."
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "requirementKind": {
+              "const": "decision-accepted"
+            }
+          },
+          "required": [
+            "decisionTypeKey"
+          ]
+        },
+        {
+          "properties": {
+            "requirementKind": {
+              "const": "document-current"
+            }
+          },
+          "required": [
+            "documentTypeKey"
+          ]
+        },
+        {
+          "properties": {
+            "requirementKind": {
+              "const": "review-done"
+            }
+          },
+          "required": [
+            "reviewTypeKey"
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Tier 3 agents need a design decision, a runbook and a quarterly review.",
+      "data": {
+        "gates": [
+          {
+            "gateKey": "design",
+            "requirements": [
+              {
+                "requirementKind": "decision-accepted",
+                "decisionTypeKey": "design",
+                "guideline": "G4"
+              }
+            ]
+          }
+        ],
+        "approvals": [
+          {
+            "decisionTypeKey": "change-authorization",
+            "approverRoleKey": "change-manager",
+            "approvalMode": "first-to-respond",
+            "minimumCount": 1
+          }
+        ],
+        "documents": [
+          {
+            "documentTypeKey": "runbook",
+            "fromStageKey": "change-and-release"
+          }
+        ],
+        "reviews": [
+          {
+            "reviewTypeKey": "owner-check",
+            "intervalDays": 90
+          }
+        ],
+        "gatePolicy": [
+          {
+            "targetStageKey": "production",
+            "changeTypeKey": "normal",
+            "gateLevel": "flag",
+            "failMode": "fail-open"
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "description": "Which JSON files tools/json-check.mjs validates against which schema. Paths are relative to src/. A schema path may end with a JSON pointer, for example config/schema/x.schema.json#/$defs/y. An entry whose schema file does not exist yet is reported as pending, unless files already match it.",
+  "entries": [
+    {
+      "schema": "config/schema/fixture.schema.json",
+      "include": ["fixtures/**/*.json"],
+      "exclude": ["fixtures/presets/**", "fixtures/replay/**"],
+      "note": "Fixtures, one file per case (document 25, section 10). fixtures/presets holds preset files and fixtures/replay replay records, not fixtures."
+    },
+    {
+      "schema": "config/schema/replay-record.schema.json",
+      "include": ["fixtures/replay/**/*.json"],
+      "exclude": [],
+      "note": "Replay records for the replay tool (document 25, section 9): a recorded request and result, replayed against its snapshot version. Fictional data."
+    },
+    {
+      "schema": "config/schema/fixture.schema.json",
+      "include": ["config/schema/examples/*.fixture.json"],
+      "exclude": [],
+      "note": "Example fixtures that show the fixture format."
+    },
+    {
+      "schema": "config/schema/config-bundle.schema.json",
+      "include": ["config/build/*.bundle.json"],
+      "exclude": [],
+      "note": "Built bundles. Generated and ignored by git, validated when present."
+    },
+    {
+      "schema": "config/schema/config-bundle.schema.json",
+      "include": ["config/schema/examples/*.bundle.json", "config/schema/examples/*.patch.json"],
+      "exclude": [],
+      "note": "The document 21 examples, word for word: the section 12 bundle and the section 8.2 patch."
+    },
+    {
+      "schema": "config/schema/config-bundle.schema.json#/$defs/presetFile",
+      "include": ["config/presets/*/preset.json", "fixtures/presets/*/preset.json"],
+      "exclude": [],
+      "note": "Preset manifests, C03. fixtures/presets holds fictional presets that only fixtures use."
+    },
+    {
+      "schema": "config/schema/config-bundle.schema.json#/$defs/presetPatch",
+      "include": ["config/presets/*/patch.json", "fixtures/presets/*/patch.json"],
+      "exclude": [],
+      "note": "Presets written as a patch: overlays, and full presets with extends."
+    },
+    {
+      "schema": "config/schema/config-bundle.schema.json#/$defs/entityFile",
+      "include": ["config/presets/*/*.json", "fixtures/presets/*/*.json"],
+      "exclude": ["config/presets/*/preset.json", "config/presets/*/patch.json", "fixtures/presets/*/preset.json", "fixtures/presets/*/patch.json"],
+      "note": "One file per entity of a preset."
+    },
+    {
+      "schema": "config/schema/client-binding-patch.schema.json",
+      "include": [],
+      "exclude": [],
+      "note": "Client binding patches never live in src/. The schema still compiles."
+    },
+    {
+      "schema": "mcp/contracts/tools.schema.json",
+      "include": ["mcp/contracts/tools.json"],
+      "exclude": [],
+      "note": "The MCP tool catalog: 51 tools, annotations and default roles (document 24)."
+    },
+    {
+      "schema": "mcp/contracts/errors.schema.json",
+      "include": ["mcp/contracts/errors.json"],
+      "exclude": [],
+      "note": "The MCP error codes (document 24)."
+    },
+    {
+      "schema": "config/schema/config-bundle.schema.json#/$defs/entityFile",
+      "include": ["mcp/contracts/tool-policy.seed.json"],
+      "exclude": [],
+      "note": "Tool Policy seed rows (proposed C41), one per MCP tool (document 24, section 2.3). Validated as a preset entity file."
+    },
+    {
+      "schema": "mcp/contracts/resources.schema.json",
+      "include": ["mcp/contracts/resources.json"],
+      "exclude": [],
+      "note": "The three R1 MCP resources (document 24, section 6.12)."
+    },
+    {
+      "schema": "mcp/contracts/record-endpoint.schema.json",
+      "include": ["mcp/contracts/record-endpoint.json"],
+      "exclude": [],
+      "note": "The record endpoint contract for pipeline record steps (document 24, sections 4.6 and 9.2)."
+    },
+    {
+      "schema": "mcp/contracts/record-endpoint/deployment.request.schema.json",
+      "include": ["samples/pipeline-steps/*/fixtures/deployment.json"],
+      "exclude": [],
+      "note": "The body each pipeline record step sample sends. Fictional data. The local test also posts each one to the stub."
+    },
+    {
+      "schema": "mcp/contracts/record-endpoint/deployment-correction.request.schema.json",
+      "include": ["samples/pipeline-steps/test/fixtures/deployment-correction.json"],
+      "exclude": [],
+      "note": "A correction body for the stub test of the corrections endpoint. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_portfolio_summary.input.schema.json",
+      "include": ["ui/harness/fixtures/get_portfolio_summary/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_portfolio_summary. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_portfolio_summary.output.schema.json",
+      "include": ["ui/harness/fixtures/get_portfolio_summary/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_portfolio_summary. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_application_card.input.schema.json",
+      "include": ["ui/harness/fixtures/get_application_card/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_application_card. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_application_card.output.schema.json",
+      "include": ["ui/harness/fixtures/get_application_card/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_application_card. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_application_owners.input.schema.json",
+      "include": ["ui/harness/fixtures/get_application_owners/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_application_owners. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_application_owners.output.schema.json",
+      "include": ["ui/harness/fixtures/get_application_owners/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_application_owners. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_dependency_impact.input.schema.json",
+      "include": ["ui/harness/fixtures/get_dependency_impact/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_dependency_impact. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_dependency_impact.output.schema.json",
+      "include": ["ui/harness/fixtures/get_dependency_impact/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_dependency_impact. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_change_schedule.input.schema.json",
+      "include": ["ui/harness/fixtures/get_change_schedule/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_change_schedule. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_change_schedule.output.schema.json",
+      "include": ["ui/harness/fixtures/get_change_schedule/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_change_schedule. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_deployments.input.schema.json",
+      "include": ["ui/harness/fixtures/get_deployments/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_deployments. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_deployments.output.schema.json",
+      "include": ["ui/harness/fixtures/get_deployments/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_deployments. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_configuration.input.schema.json",
+      "include": ["ui/harness/fixtures/get_configuration/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_configuration. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_configuration.output.schema.json",
+      "include": ["ui/harness/fixtures/get_configuration/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_configuration. Fictional data."
+    }
+  ]
+}

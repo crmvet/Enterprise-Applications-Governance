@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "sequential-later-step-waits",
+  "description": "Security answered before the business owner. A sequential requirement counts only after the earlier one is satisfied, so the decision stays pending.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "go-live",
+      "tierKey": "tier-3"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "go-live-tier-3-owner",
+        "approverOwnerRoleKey": "business-owner",
+        "isConsultation": false,
+        "approvalMode": "sequential",
+        "sequence": 1,
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": false
+      },
+      {
+        "source": "approval-rule",
+        "ruleKey": "go-live-tier-3-security",
+        "approverRoleKey": "security-reviewer",
+        "isConsultation": false,
+        "approvalMode": "sequential",
+        "sequence": 2,
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "go-live-tier-3-owner",
+        "outcome": "pending",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      },
+      {
+        "approvalRecordId": "r2",
+        "ruleKey": "go-live-tier-3-security",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "pending",
+    "payload": {
+      "overall": "pending",
+      "requirements": [
+        {
+          "requirementKey": "go-live-tier-3-owner",
+          "state": "pending",
+          "pendingRecordIds": [
+            "r1"
+          ]
+        },
+        {
+          "requirementKey": "go-live-tier-3-security",
+          "state": "pending",
+          "nonCountingRecords": [
+            {
+              "approvalRecordId": "r2",
+              "reasonCodes": [
+                "approval.sequence-waiting"
+              ]
+            }
+          ]
+        }
+      ],
+      "countsByRecord": {
+        "r1": false,
+        "r2": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.sequence-waiting",
+        "severity": "info",
+        "ref": "r2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

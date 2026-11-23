@@ -1,0 +1,12 @@
+{
+  "entity": "party",
+  "rows": [
+    { "key": "business", "label": "Business" },
+    { "key": "it", "label": "IT" },
+    { "key": "ai", "label": "AI" },
+    { "key": "citizen-developers", "label": "Citizen developers" },
+    { "key": "pmo", "label": "PMO" },
+    { "key": "change-control", "label": "Change control" },
+    { "key": "architects", "label": "Architects" }
+  ]
+}

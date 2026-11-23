@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "max-affected-applications-not-met",
+  "description": "A model with one max-affected-applications condition: the change goes past it, so it does not qualify, and the failed condition is listed with its index.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-max-affected-applications",
+        "values": {
+          "label": "Model only-max-affected-applications",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-affected-applications",
+              "value": 2
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "affectedApplicationCount": 3
+    },
+    "models": [
+      {
+        "modelKey": "only-max-affected-applications",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "only-max-affected-applications",
+          "conditionIndex": 0,
+          "conditionKind": "max-affected-applications",
+          "why": "the change affects 3 applications, more than 2"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-max-affected-applications"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "only-max-affected-applications",
+        "role": "skipped"
+      }
+    ]
+  }
+}

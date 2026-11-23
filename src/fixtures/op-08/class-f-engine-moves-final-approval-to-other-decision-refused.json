@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-engine-moves-final-approval-to-other-decision-refused",
+  "description": "The engine sets Decision to another decision on an approved record, so the approval would count for a decision it was never given for. Class F: the record is frozen once Outcome Meaning leaves pending (document 22, section 2.3 and section 8.2). Refused.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "decision": "fixture-decision-2"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-approved",
+      "outcomeMeaning": "approved",
+      "decision": "fixture-decision-1",
+      "approver": "fixture-person-3",
+      "approverActorMeaning": "person",
+      "approverPrincipalKind": "user",
+      "approverHoldsRequiredRole": false
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

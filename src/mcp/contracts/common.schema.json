@@ -1,0 +1,742 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MCP contract shared types",
+  "description": "Shared types for the MCP tool contracts: IDs, keys, dates, paging, labels, principals and the engine meaning lists. Field names follow document 20, section 3.3. Configuration references travel as keys. Operational references travel as IDs.",
+  "$comment": "WORKING DEFAULT (open design question 1). The engine meaning lists below are fixed values the engine reads. Every label stays configurable and maps to one meaning. Document 20, section 2.4.",
+  "$defs": {
+    "guid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description": "An Entra object ID or application ID, written as a GUID."
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description": "The ID of an operational row. Configuration rows never travel as IDs, only as keys."
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$",
+      "description": "A configuration key. Lowercase letters, digits and hyphens, 1 to 64 characters, starting with a letter. Document 20, section 3.2."
+    },
+    "toolName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "A tool name: lowercase snake_case, verb first."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "maxLength": 2048,
+      "description": "An HTTPS URL."
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "An ISO date, such as 2026-11-22."
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "An ISO date and time in UTC, ending in Z."
+    },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)+$",
+      "maxLength": 100,
+      "description": "An engine reason code: lowercase, dot-separated, never reused. Document 25, section 7."
+    },
+    "guidelineNumber": {
+      "type": "string",
+      "pattern": "^G[1-9][0-9]{0,2}$",
+      "description": "A guideline number, such as G17 (C39 Guideline)."
+    },
+    "clientRequestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "The caller's own ID for this request. A retry with the same value returns the first result and writes nothing new. A reused value with a different payload returns conflict."
+    },
+    "validateOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "True runs every rule and returns what would be written, without writing. Lets an AI client show the person the result first."
+    },
+    "top": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 25,
+      "x-max-from-setting": "mcp-page-size-max",
+      "description": "Page size. The server caps it at the mcp-page-size-max setting (100 by default)."
+    },
+    "skipToken": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "The token from the previous page. It encodes the query, not server state."
+    },
+    "nextSkipToken": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "Pass this value as skipToken to get the next page. Absent on the last page."
+    },
+    "labelledKey": {
+      "type": "object",
+      "required": [
+        "key",
+        "label"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "label": {
+          "type": "string",
+          "description": "The configured label people see."
+        }
+      },
+      "additionalProperties": false,
+      "description": "A configuration row by key, with its label."
+    },
+    "directoryObject": {
+      "type": "object",
+      "required": [
+        "objectId",
+        "displayLabel"
+      ],
+      "properties": {
+        "objectId": {
+          "$ref": "#/$defs/guid"
+        },
+        "displayLabel": {
+          "type": "string",
+          "description": "A name to show people. Refreshed when seen."
+        }
+      },
+      "additionalProperties": false,
+      "description": "An Entra object by ID, with a label. Read live, never a copy of the directory."
+    },
+    "principalRef": {
+      "type": "object",
+      "required": [
+        "objectId",
+        "displayLabel"
+      ],
+      "properties": {
+        "objectId": {
+          "$ref": "#/$defs/guid"
+        },
+        "displayLabel": {
+          "type": "string",
+          "description": "A name to show people. An erased person shows as former user."
+        },
+        "principalKind": {
+          "$ref": "#/$defs/principalKind"
+        }
+      },
+      "additionalProperties": false,
+      "description": "A Principal Reference (O05): an Entra object ID with a label."
+    },
+    "clientApp": {
+      "type": "object",
+      "required": [
+        "appId",
+        "label"
+      ],
+      "properties": {
+        "appId": {
+          "$ref": "#/$defs/guid"
+        },
+        "label": {
+          "type": "string",
+          "description": "The label from the client-app value list, such as Claude Code."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The MCP client or application that made the call."
+    },
+    "statusValue": {
+      "type": "object",
+      "required": [
+        "label",
+        "meaning"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "The configured status label."
+        },
+        "meaning": {
+          "$ref": "#/$defs/statusMeaning"
+        }
+      },
+      "additionalProperties": false,
+      "description": "A status label and its engine meaning, such as { label: \"Draft\", meaning: \"draft\" }. Logic reads the meaning, never the label."
+    },
+    "statusMeaning": {
+      "enum": [
+        "draft",
+        "submitted",
+        "in-progress",
+        "completed",
+        "rejected",
+        "withdrawn",
+        "cancelled",
+        "proposed",
+        "accepted",
+        "superseded",
+        "registered",
+        "archived",
+        "pending",
+        "approved",
+        "expired",
+        "recommendation-only",
+        "current",
+        "stale",
+        "missing",
+        "open",
+        "claimed",
+        "dismissed",
+        "succeeded",
+        "partly-succeeded",
+        "failed",
+        "not-deployed",
+        "due",
+        "done",
+        "activated",
+        "discarded"
+      ],
+      "description": "Any status engine meaning. Each entity uses its own list."
+    },
+    "recordStatusMeaning": {
+      "enum": [
+        "draft",
+        "submitted",
+        "in-progress",
+        "completed",
+        "rejected",
+        "withdrawn",
+        "cancelled"
+      ],
+      "description": "Record status meaning, for an Intake Request (O07) or a Change Request (O11)."
+    },
+    "decisionStatusMeaning": {
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "superseded",
+        "withdrawn"
+      ],
+      "description": "Decision status meaning, for a Decision (O09)."
+    },
+    "registrationStatusMeaning": {
+      "enum": [
+        "draft",
+        "registered",
+        "archived"
+      ],
+      "description": "Registration status meaning, for a Business Application (O02)."
+    },
+    "approvalOutcomeMeaning": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "expired",
+        "cancelled",
+        "recommendation-only"
+      ],
+      "description": "Approval outcome meaning, for an Approval Record (O10)."
+    },
+    "documentStatusMeaning": {
+      "enum": [
+        "draft",
+        "current",
+        "stale",
+        "missing"
+      ],
+      "description": "Document status meaning, for a Document Link (O19). Missing is computed and never stored."
+    },
+    "claimStatusMeaning": {
+      "enum": [
+        "open",
+        "claimed",
+        "dismissed"
+      ],
+      "description": "Claim status meaning, for a Claim (O23)."
+    },
+    "deploymentResultMeaning": {
+      "enum": [
+        "succeeded",
+        "partly-succeeded",
+        "failed",
+        "not-deployed"
+      ],
+      "description": "Deployment result meaning, for a Deployment Record (O14)."
+    },
+    "reviewStatusMeaning": {
+      "enum": [
+        "due",
+        "done",
+        "cancelled"
+      ],
+      "description": "Review status meaning, for a Review (O21)."
+    },
+    "draftStatusMeaning": {
+      "enum": [
+        "draft",
+        "submitted",
+        "activated",
+        "discarded"
+      ],
+      "description": "Draft status meaning, for a Configuration Draft (C46)."
+    },
+    "lifecycleMeaning": {
+      "enum": [
+        "pre-live",
+        "live",
+        "retired"
+      ],
+      "description": "Lifecycle meaning of a Lifecycle Stage (C12)."
+    },
+    "actorKindMeaning": {
+      "enum": [
+        "person",
+        "ai-client-for-person",
+        "agent-identity",
+        "pipeline",
+        "approval-runner",
+        "engine"
+      ],
+      "description": "Actor kind meaning (C38). It comes from the entry point and the token, never from a caller field."
+    },
+    "principalKind": {
+      "enum": [
+        "user",
+        "group",
+        "agent-identity",
+        "agent-user",
+        "service-principal",
+        "managed-identity"
+      ],
+      "description": "Principal kind (O05). Only a user can approve. Roles bind only to groups."
+    },
+    "approvalMode": {
+      "enum": [
+        "everyone-must-approve",
+        "first-to-respond",
+        "sequential"
+      ],
+      "description": "Approval mode (C32)."
+    },
+    "gateLevel": {
+      "enum": [
+        "off",
+        "record",
+        "flag",
+        "advise",
+        "enforce"
+      ],
+      "description": "Gate level (C33)."
+    },
+    "failMode": {
+      "enum": [
+        "fail-open",
+        "fail-closed"
+      ],
+      "description": "Fail mode (C33)."
+    },
+    "requirementKind": {
+      "enum": [
+        "decision-accepted",
+        "document-current",
+        "review-done"
+      ],
+      "description": "Requirement kind (C14): how the engine tests a gate requirement."
+    },
+    "directoryState": {
+      "enum": [
+        "enabled",
+        "disabled",
+        "deleted",
+        "unknown"
+      ],
+      "description": "Directory State (O05), as last read from Entra by the owner check."
+    },
+    "bucket": {
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "count"
+      ],
+      "properties": {
+        "key": {
+          "description": "The key of the group. Null for rows with no value, such as an application with no tier yet.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/key"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "One counted group."
+    },
+    "approvalNeeded": {
+      "type": "object",
+      "description": "One approval a decision needs, resolved from the single most specific Approval Rule group (C32). Exactly one of approverRoleKey and approverOwnerRoleKey.",
+      "required": [
+        "approvalMode",
+        "minimumCount"
+      ],
+      "properties": {
+        "decisionTypeKey": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C18 Decision Type"
+        },
+        "approverRoleKey": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C29 Role"
+        },
+        "approverOwnerRoleKey": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C28 Owner Role"
+        },
+        "approvalMode": {
+          "$ref": "#/$defs/approvalMode"
+        },
+        "minimumCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many counted approvals the rule needs. Zero only for the locked list the engine may accept without a card."
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "approverRoleKey"
+          ]
+        },
+        {
+          "required": [
+            "approverOwnerRoleKey"
+          ]
+        }
+      ]
+    },
+    "ownerAssignment": {
+      "type": "object",
+      "required": [
+        "ownerAssignmentId",
+        "ownerRoleKey",
+        "label",
+        "principal",
+        "isDeputy",
+        "deputyFor",
+        "startOn",
+        "endOn",
+        "ownershipDecisionId"
+      ],
+      "properties": {
+        "ownerAssignmentId": {
+          "$ref": "#/$defs/id",
+          "x-entity": "O06 Owner Assignment",
+          "description": "Pass it as endAssignmentId to propose_owner_change."
+        },
+        "ownerRoleKey": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C28 Owner Role"
+        },
+        "label": {
+          "type": "string",
+          "description": "The owner role label."
+        },
+        "principal": {
+          "$ref": "#/$defs/principalRef"
+        },
+        "isDeputy": {
+          "type": "boolean"
+        },
+        "deputyFor": {
+          "description": "The main assignment this deputy covers.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id",
+              "x-entity": "O06 Owner Assignment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "startOn": {
+          "description": "When the assignment starts. Null while it waits for its ownership decision.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "endOn": {
+          "description": "When it ends. Null while current.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownershipDecisionId": {
+          "description": "The decision that made the assignment.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "description": "One principal holding one owner role for one application (O06)."
+    },
+    "ownerGap": {
+      "type": "object",
+      "required": [
+        "ownerRoleKey",
+        "missing"
+      ],
+      "properties": {
+        "ownerRoleKey": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C28 Owner Role"
+        },
+        "missing": {
+          "enum": [
+            "holder",
+            "deputy"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "description": "An owner role with no holder or no deputy."
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The sender's retry key, such as run ID plus stage plus attempt. A retry with the same key returns the existing record and writes nothing new (I-189)."
+    },
+    "evidenceInput": {
+      "type": "object",
+      "required": [
+        "linkKindKey",
+        "url",
+        "label"
+      ],
+      "properties": {
+        "linkKindKey": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C37 Link Kind",
+          "description": "A link kind of the evidence category."
+        },
+        "url": {
+          "$ref": "#/$defs/url",
+          "description": "Opens the proof. Checked against the link kind's Url Pattern and the forbidden URL patterns."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "A short label."
+        }
+      },
+      "additionalProperties": false,
+      "description": "One link to proof held elsewhere. It becomes an Evidence Link (O20)."
+    },
+    "deploymentFlags": {
+      "type": "object",
+      "required": [
+        "outsideWindow",
+        "otherPath",
+        "missingApproval",
+        "aiOnlyCodeApproval"
+      ],
+      "properties": {
+        "outsideWindow": {
+          "type": "boolean",
+          "description": "Finished outside the linked change's window."
+        },
+        "otherPath": {
+          "type": "boolean",
+          "description": "The route is not an allowed route of the target's change path."
+        },
+        "missingApproval": {
+          "type": "boolean",
+          "description": "No authorization where the policy expects one."
+        },
+        "aiOnlyCodeApproval": {
+          "type": "boolean",
+          "description": "The only reported code approval came from an AI. It never counts as authorization."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The flags the engine computes on a Deployment Record (O14). Callers never set them."
+    },
+    "approvalsSummary": {
+      "type": "object",
+      "required": [
+        "required",
+        "approved",
+        "rejected",
+        "pending"
+      ],
+      "properties": {
+        "required": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Counted approvals the rules need."
+        },
+        "approved": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Counted approvals received."
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pending": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Counts of the approval records of one decision."
+    },
+    "decisionSubjectKind": {
+      "enum": [
+        "business-application",
+        "intake-request",
+        "change-request",
+        "deployment-record",
+        "technical-component",
+        "claim",
+        "review",
+        "configuration-draft"
+      ],
+      "description": "The kind of record a Decision (O09) is about."
+    },
+    "reviewTrigger": {
+      "enum": [
+        "cadence",
+        "tier-answer-trigger",
+        "owner-check",
+        "request"
+      ],
+      "description": "Why a Review (O21) became due."
+    },
+    "findingKind": {
+      "enum": [
+        "unregistered",
+        "vanished"
+      ],
+      "description": "Finding kind of a Claim (O23)."
+    },
+    "changeManagementMode": {
+      "enum": [
+        "built-in",
+        "linked"
+      ],
+      "description": "Change management mode (D-08): built in, or linked to the client's ITSM tool."
+    },
+    "deploymentRouteMeaning": {
+      "enum": [
+        "pipeline-step",
+        "ai-tool",
+        "person-in-app",
+        "other"
+      ],
+      "description": "Deployment route meaning (C36). Set by the engine from the entry point."
+    },
+    "deploymentRoute": {
+      "type": "object",
+      "required": [
+        "key",
+        "meaning"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key",
+          "x-entity": "C36 Deployment Route"
+        },
+        "meaning": {
+          "$ref": "#/$defs/deploymentRouteMeaning"
+        }
+      },
+      "additionalProperties": false,
+      "description": "How a deployment record arrived."
+    },
+    "codeApprovalKind": {
+      "enum": [
+        "person",
+        "ai-only",
+        "none",
+        "unknown"
+      ],
+      "description": "Who approved the code merge, as reported. Evidence only, never authorization."
+    },
+    "standardChangeConditionKind": {
+      "enum": [
+        "max-tier-rank",
+        "target-stages-in",
+        "max-affected-applications",
+        "component-kinds-within",
+        "max-window-minutes",
+        "stated"
+      ],
+      "description": "A condition kind of a Standard Change Model (C21), document 25, OP-12."
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 over the canonical JSON of a snapshot, as lowercase hex."
+    },
+    "entityKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$",
+      "description": "An entity key: the kebab-case form of a logical entity name, such as gate-policy."
+    },
+    "keyPath": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}(/[a-z][a-z0-9-]{0,63})?$",
+      "description": "A configuration key, or for a child row the parent key, a slash, then the child key."
+    }
+  }
+}

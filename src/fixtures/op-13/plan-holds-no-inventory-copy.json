@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "plan-holds-no-inventory-copy",
+  "description": "The whole plan, matched exactly: one registered item is listed only by its component ID, and one unregistered item only with the fields a claim stores. No other inventory property, and no list of everything seen (document 22, section 9.1).",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Expense app"
+      },
+      {
+        "externalId": "00000000-0000-0000-0000-000000000103",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Holiday tracker"
+      }
+    ]
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-1",
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "gapCheckRunId": "fixture-run-2",
+      "evidenceLevel": "as-reported",
+      "componentLastSeen": [
+        "fixture-component-1"
+      ],
+      "newClaims": [
+        {
+          "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000103",
+          "findingKind": "unregistered",
+          "statusMeaning": "open",
+          "externalId": "00000000-0000-0000-0000-000000000103",
+          "sourceType": "microsoft.powerapps/canvasapps",
+          "componentKindKey": "canvas-app",
+          "estateKey": "power-platform-inventory",
+          "labelAsSeen": "Holiday tracker",
+          "lastSeenRunId": "fixture-run-2",
+          "lastSeenOnUtc": "2026-11-22T09:00:00Z",
+          "timesSeen": 1
+        }
+      ],
+      "updatedClaims": [],
+      "vanishedClaims": [],
+      "counts": {
+        "itemsSeen": 2,
+        "newClaims": 1,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

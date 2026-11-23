@@ -1,0 +1,18 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 8): the standard change type has requiresStandardModel true. The engine records its authorization only when an active model, approved once by a person, fits the change."
+  ],
+  "entity": "change-type",
+  "rows": [
+    { "key": "standard", "label": "Standard", "requiresAuthorization": false, "requiresStandardModel": true },
+    { "key": "normal", "label": "Normal", "requiresAuthorization": true },
+    {
+      "key": "emergency",
+      "label": "Emergency",
+      "requiresAuthorization": true,
+      "allowsAuthorizationAfter": true,
+      "requiresReviewAfter": true,
+      "reviewDueDays": 5
+    }
+  ]
+}

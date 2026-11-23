@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "duplicate-claim-key-invalid-input",
+  "description": "Claim Key is unique (O23), so two claim facts with one key are refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000104",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Budget sheet"
+      }
+    ]
+  },
+  "facts": {
+    "claims": [
+      {
+        "claimId": "fixture-claim-4",
+        "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000104",
+        "statusMeaning": "open",
+        "findingKind": "unregistered",
+        "timesSeen": 1
+      },
+      {
+        "claimId": "fixture-claim-44",
+        "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000104",
+        "statusMeaning": "dismissed",
+        "findingKind": "unregistered",
+        "timesSeen": 1
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

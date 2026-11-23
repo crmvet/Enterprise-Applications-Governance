@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "no-applicable-question-unavailable",
+  "description": "With every tier question retired, no tier can be computed. The engine refuses and reports a broken configuration.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "tier-question",
+        "key": "agent-autonomy"
+      },
+      {
+        "op": "retire",
+        "entity": "tier-question",
+        "key": "data-change"
+      },
+      {
+        "op": "retire",
+        "entity": "tier-question",
+        "key": "failure-impact"
+      },
+      {
+        "op": "retire",
+        "entity": "tier-question",
+        "key": "reach"
+      },
+      {
+        "op": "retire",
+        "entity": "tier-question",
+        "key": "sensitivity"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "tier.no-applicable-questions",
+        "severity": "error",
+        "entity": "Tier Question"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "stale-after-freshness",
+  "description": "A wiki page last checked on 2025-10-01 passed its 365 freshness days on 2026-10-01, so it counts as stale although its stored status is current. The tier 2 runbook checked in September is still current.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-2",
+    "lifecycleStageKey": "operate"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "status": "current",
+        "lastCheckedOnUtc": "2025-10-01T08:00:00Z"
+      },
+      {
+        "documentLinkId": "fixture-link-r1",
+        "documentTypeKey": "runbook",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-09-01T08:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "runbook-tier-2",
+          "documentTypeKey": "runbook",
+          "status": "current",
+          "documentLinkId": "fixture-link-r1",
+          "staleOnUtc": "2027-02-28T08:00:00Z"
+        },
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "stale",
+          "documentLinkId": "fixture-link-w1",
+          "staleOnUtc": "2026-10-01T08:00:00Z"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 1,
+      "staleOnByLink": {
+        "fixture-link-r1": "2027-02-28T08:00:00Z",
+        "fixture-link-w1": "2026-10-01T08:00:00Z"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "documentation.stale",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "wiki-page-all"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

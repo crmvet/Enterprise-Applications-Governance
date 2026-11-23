@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    MCP server core (document 24). Independent of the store and the host.
+    Tool registry, envelope, Tool Policy filtering, resources, input validation and a backend port.
+    The MCP library sits behind a thin adapter until one is chosen.
+    The server runs on Azure on both branches, so .NET 10 only.
+    The in-process backend (the Azure shape) runs the engine runtime in the same process. It talks to the store only
+    through the runtime's storage ports, so no store or host SDK is referenced here (DependencyRuleTests).
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\engine\Product.Engine.Core\Product.Engine.Core.csproj" />
+    <ProjectReference Include="..\..\engine\Product.Engine.Configuration\Product.Engine.Configuration.csproj" />
+    <ProjectReference Include="..\..\engine\Product.Engine.Runtime\Product.Engine.Runtime.csproj" />
+  </ItemGroup>
+
+  <!-- The MCP contracts (mcp/contracts), embedded so the server checks the same schemas in every host.
+       Code finds them by the part of the name after ".Contracts/", so the product rename does not break them. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\contracts\**\*.json" Link="Contracts\%(RecursiveDir)%(Filename)%(Extension)" LogicalName="Product.Mcp.Core.Contracts/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Mcp.Core.Tests" />
+  </ItemGroup>
+</Project>

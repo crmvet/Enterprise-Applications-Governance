@@ -1,0 +1,80 @@
+# Record step for GitHub Actions: an example workflow with the record step at the end of the deploy job.
+# A copy-paste sample, not a package. Copy the step marked "Record the deployment" into your own deploy job, and
+# record-step.mjs into your repository (here .github/scripts/record-step.mjs). See README.md next to this file.
+#
+# What it does: sends one deployment record to the record endpoint. It never stops or fails a deployment:
+# - if: always() records failed and cancelled deployments too;
+# - continue-on-error: true keeps the job green even if Node itself could not start;
+# - record-step.mjs always exits 0 and writes a warning when the record could not be written.
+#
+# Auth: workload identity federation, no secret. The job asks GitHub for an OIDC token (id-token: write), and
+# the script exchanges it with Microsoft Entra ID for an app-only token for the record endpoint. The app
+# registration trusts this repository and environment through a federated credential (issuer
+# https://token.actions.githubusercontent.com, audience api://AzureADTokenExchange). No client secret, no
+# certificate, no personal access token, and no third-party action.
+# WORKING DEFAULT (open design question 12). The workflow's identity holds the deployment recorder role
+# directly (the Deployment.Record app role, or the role on a Dataverse application user), recorded as a
+# workload grant with a reason, the deciding decision and an expiry.
+#
+# Transport: one variable, RECORD_ENDPOINT_URL (a configuration variable, not a secret).
+#   Azure binding:     https://<your product host>/api/deployments
+#   Dataverse binding: https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment
+# The token scope follows from the URL (its origin plus /.default). Set RECORD_ENDPOINT_SCOPE only when the
+# record endpoint's app ID URI differs from its origin, for example api://<application id>/.default.
+#
+# This is a record step only. A check step that asks before the deploy waits for the change gate decision.
+
+name: Deploy and record
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # lets the job ask GitHub for an OIDC token; nothing else
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production # the federated credential's subject names this environment
+    steps:
+      - uses: actions/checkout@v4 # pin to a full commit SHA if your policy asks for it
+
+      - id: deploy
+        name: Deploy (your existing deploy step)
+        run: |
+          echo "started_on=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "artifact_version=1.4.2.0" >> "$GITHUB_OUTPUT"
+          # ... your deployment commands ...
+          echo "finished_on=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Record the deployment (fails soft)
+        if: ${{ always() }}
+        continue-on-error: true
+        timeout-minutes: 3
+        run: node .github/scripts/record-step.mjs
+        env:
+          RECORD_ENDPOINT_URL: ${{ vars.RECORD_ENDPOINT_URL }}
+          RECORD_ENDPOINT_SCOPE: ${{ vars.RECORD_ENDPOINT_SCOPE }}
+          RECORD_AUTH: github-oidc
+          RECORD_TENANT_ID: ${{ vars.RECORD_TENANT_ID }}
+          RECORD_CLIENT_ID: ${{ vars.RECORD_CLIENT_ID }}
+          # Unique per deployment, the same for every retry inside this step. A rerun is a new attempt, so it
+          # is a new deployment with a new key.
+          RECORD_IDEMPOTENCY_KEY: gh-${{ github.repository_id }}-${{ github.run_id }}-${{ github.job }}-${{ github.run_attempt }}
+          RECORD_BUSINESS_APPLICATION_ID: ${{ vars.RECORD_BUSINESS_APPLICATION_ID }}
+          RECORD_ARTIFACT_NAME: FieldVisitPlanner
+          RECORD_ARTIFACT_VERSION: ${{ steps.deploy.outputs.artifact_version }}
+          RECORD_ARTIFACT_KIND_KEY: power-platform-solution
+          RECORD_SOURCE_COMMIT: ${{ github.sha }}
+          RECORD_SOURCE_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+          RECORD_TARGET_EXTERNAL_ID: ${{ vars.RECORD_TARGET_EXTERNAL_ID }}
+          # Must match the pipeline reference's external ID in the product. An unknown one is created as not mapped.
+          RECORD_PIPELINE_EXTERNAL_ID: gh-${{ github.repository_id }}-${{ github.workflow }}
+          RECORD_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
+          RECORD_STARTED_ON: ${{ steps.deploy.outputs.started_on }}
+          RECORD_FINISHED_ON: ${{ steps.deploy.outputs.finished_on }}
+          # The deploy step's outcome: success, failure, cancelled or skipped. The script maps it.
+          RECORD_RESULT: ${{ steps.deploy.outcome }}
+          # Evidence only, never authorization. WORKING DEFAULT (open design question 7)
+          RECORD_CODE_APPROVAL_KIND: unknown

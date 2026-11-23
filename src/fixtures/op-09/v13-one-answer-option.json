@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v13-one-answer-option",
+  "description": "A draft retires two of the three answers to the sensitivity question. A tier question with one active answer cannot tell tiers apart, so V13 refuses it.",
+  "ruleIds": [
+    "V13"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "tier-answer-option",
+        "key": "sensitivity/internal"
+      },
+      {
+        "op": "retire",
+        "entity": "tier-answer-option",
+        "key": "sensitivity/restricted"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "tier.question-options",
+        "severity": "error",
+        "ruleId": "V13",
+        "entity": "Tier Question",
+        "ref": "sensitivity"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "uncovered-kind-ignored",
+  "description": "An item of a component kind the gap check does not cover (Is Gap Check Covered no) is ignored and counted, with one reason per kind.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000111",
+        "sourceType": "microsoft.powerapps/solutions",
+        "componentKindKey": "solution",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Core solution"
+      },
+      {
+        "externalId": "00000000-0000-0000-0000-000000000112",
+        "sourceType": "microsoft.powerapps/solutions",
+        "componentKindKey": "solution",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Second solution"
+      }
+    ]
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "newClaims": [],
+      "counts": {
+        "itemsSeen": 0,
+        "newClaims": 0,
+        "vanishedClaims": 0,
+        "ignored": 2
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.item-ignored",
+        "severity": "info",
+        "entity": "Component Kind",
+        "ref": "solution"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

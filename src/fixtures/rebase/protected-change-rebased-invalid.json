@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "protected-change-rebased-invalid",
+  "description": "The draft starts from version 1 and stops asking a configuration admin for a typed reason, a protected change. Its approvals came from version 1's rules. Version 2 renamed tier 2, so there is no overlap and the draft is re-applied, but version 2 is active now and V34 judges a protected change by the active rules. The revalidation refuses it: a rebase never carries a protected change past the active version's rules.",
+  "ruleIds": [
+    "V34"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "tier", "key": "tier-2", "values": { "label": "Tier 2: Important" } }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 1
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1, "summary": "No typed reason for configuration changes" },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "approval-rule",
+          "key": "configuration-change-approval",
+          "values": { "requiresTypedReason": false }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 2,
+      "canActivate": false,
+      "overlaps": [],
+      "validation": {
+        "isValid": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "config.protected-change",
+        "severity": "error",
+        "ruleId": "V34",
+        "entity": "Approval Rule",
+        "ref": "configuration-change-approval"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "pipeline-refused",
+  "description": "A pipeline workload runs the apply. Version 1 is accepted only by a person signed in as a user.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-pipeline-1",
+      "principalKind": "service-principal",
+      "actorKind": "pipeline"
+    }
+  },
+  "input": {
+    "presetKey": "balanced",
+    "noVersionExists": true,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "bootstrap.not-allowed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

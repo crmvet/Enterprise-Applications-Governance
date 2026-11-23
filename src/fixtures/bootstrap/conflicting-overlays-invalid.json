@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "conflicting-overlays-invalid",
+  "description": "Small team and strict separation are applied together. They conflict (V43), so version 1 is not created.",
+  "ruleIds": [
+    "V43"
+  ],
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "presetKey": "balanced",
+    "overlays": [
+      "small-team",
+      "strict-separation"
+    ],
+    "noVersionExists": true,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "invalid",
+    "reasons": [
+      {
+        "code": "preset.conflict",
+        "severity": "error",
+        "ruleId": "V43"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

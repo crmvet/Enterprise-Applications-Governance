@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-deployment-record-correction-is-a-new-record-allowed",
+  "description": "Class F, O14: a correction is a new record whose Corrects Record names the earlier one, written in the insert (document 22, section 8.3). The record step creates it with Corrects Record and Description. Allowed.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-pipeline-1",
+      "principalKind": "service-principal",
+      "actorKind": "pipeline",
+      "roleKeys": [
+        "deployment-recorder"
+      ]
+    }
+  },
+  "input": {
+    "entity": "deployment-record",
+    "operation": "create",
+    "after": {
+      "result": "deployment-succeeded",
+      "correctsRecord": "fixture-deployment-1",
+      "description": "The first record named the wrong target."
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "resultMeaning": "succeeded",
+        "performedByActorKind": "pipeline"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

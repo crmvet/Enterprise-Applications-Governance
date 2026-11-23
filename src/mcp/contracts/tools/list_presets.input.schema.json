@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_presets input",
+  "description": "The ready-made configuration sets a client can start from: one full preset plus declared overlays, validated as one set. Takes no arguments. Writes nothing.",
+  "x-tool": "list_presets",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false,
+  "examples": [
+    {}
+  ]
+}

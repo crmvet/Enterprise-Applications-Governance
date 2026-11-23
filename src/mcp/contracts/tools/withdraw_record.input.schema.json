@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "withdraw_record input",
+  "description": "Takes back a record the caller created and that is not final. Cancels its pending approval cards. Accepted decisions are never withdrawn; a new decision supersedes them. Withdrawing a submitted configuration draft also withdraws its Proposed decision. Nothing is deleted.",
+  "x-tool": "withdraw_record",
+  "type": "object",
+  "required": [
+    "subjectKind",
+    "subjectId",
+    "reason"
+  ],
+  "properties": {
+    "subjectKind": {
+      "enum": [
+        "intake-request",
+        "change-request",
+        "decision",
+        "application-draft",
+        "configuration-draft"
+      ],
+      "description": "The kind of record to withdraw. application-draft is a Business Application (O02) still in draft."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The ID of the record."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Why it is withdrawn."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "subjectKind": "change-request",
+      "subjectId": "d0000000-0000-4000-8000-000000000001",
+      "reason": "The fix is no longer needed.",
+      "clientRequestId": "req-0103"
+    }
+  ]
+}

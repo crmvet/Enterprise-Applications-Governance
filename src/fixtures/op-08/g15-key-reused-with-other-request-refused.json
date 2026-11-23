@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g15-key-reused-with-other-request-refused",
+  "description": "The idempotency key was used before with a different request (another stored hash). Refused as a conflict.",
+  "ruleIds": [
+    "G-15"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "idempotencyKey": "fixture-key-1",
+    "after": {
+      "status": "intake-draft",
+      "need": "A loan tracker."
+    }
+  },
+  "facts": {
+    "priorRequestHash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "request.idempotency-key-reused",
+          "ruleId": "G-15"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "request.idempotency-key-reused",
+        "severity": "error",
+        "ref": "fixture-key-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

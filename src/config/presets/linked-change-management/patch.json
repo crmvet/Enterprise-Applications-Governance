@@ -1,0 +1,21 @@
+{
+  "$comment": [
+    "Linked change management as one operation (document 21, section 6.2): the setting change-management-mode becomes linked (D-08). Every other row keeps the full preset's value."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "linked-change-management",
+    "presetKind": "overlay",
+    "extends": null,
+    "conflictsWith": []
+  },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "setting",
+      "key": "change-management-mode",
+      "values": { "value": "linked" }
+    }
+  ]
+}

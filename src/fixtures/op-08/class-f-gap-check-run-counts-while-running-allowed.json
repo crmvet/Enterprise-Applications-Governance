@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-gap-check-run-counts-while-running-allowed",
+  "description": "Class F, O22: editable while running. A page of the run adds to Items Seen before Finished On is set. Allowed.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "gap-check-run",
+    "operation": "update",
+    "rowId": "fixture-run-1",
+    "after": {
+      "itemsSeen": 40
+    }
+  },
+  "facts": {
+    "before": {
+      "itemsSeen": 20
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "performedByActorKind": "person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-creates-expired-record-refused",
+  "description": "An engine-nested create names the expired outcome. The engine creates an Approval Record only as a request, with the pending outcome; expired and cancelled are written later, on the pending record. Refused.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "create",
+    "after": {
+      "decision": "fixture-decision-1",
+      "approvalRule": "change-auth-tier-3",
+      "requiredRole": "change-manager",
+      "outcome": "approval-expired",
+      "requestedOn": "2026-11-22T09:00:00Z",
+      "expiresOn": "2026-11-27T09:00:00Z"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error",
+        "ref": "approval-expired"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

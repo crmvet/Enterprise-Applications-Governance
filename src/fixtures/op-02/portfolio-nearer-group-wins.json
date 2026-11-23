@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "portfolio-nearer-group-wins",
+  "description": "Two groups set the same columns and differ only in portfolio. The nearer portfolio in the path wins (28, Q2), and the broader groups drop out.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3-portfolio-parent",
+        "values": {
+          "label": "Parent portfolio: architect authorizes tier 3",
+          "decisionTypeKey": "change-authorization",
+          "tierKey": "tier-3",
+          "portfolioId": "fixture-portfolio-parent",
+          "approverRoleKey": "architect",
+          "approvalMode": "first-to-respond"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3-portfolio-child",
+        "values": {
+          "label": "Child portfolio: security authorizes tier 3",
+          "decisionTypeKey": "change-authorization",
+          "tierKey": "tier-3",
+          "portfolioId": "fixture-portfolio-child",
+          "approverRoleKey": "security-reviewer",
+          "approvalMode": "first-to-respond"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [
+      "fixture-portfolio-child",
+      "fixture-portfolio-parent"
+    ]
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "change-auth-tier-3-portfolio-child",
+          "approverRoleKey": "security-reviewer"
+        }
+      ],
+      "consultations": []
+    },
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-tier-3-portfolio-child",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-tier-3-portfolio-parent",
+        "role": "dropped"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-tier-3",
+        "role": "dropped"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-owner",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

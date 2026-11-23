@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "no-hint-match-ignored",
+  "description": "An item without a component kind whose source type matches no Source Type Hint cannot be placed in a covered kind, so it is ignored and the reason names the source type.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000115",
+        "sourceType": "microsoft.example/things",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Mystery item"
+      }
+    ]
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "newClaims": [],
+      "counts": {
+        "itemsSeen": 0,
+        "newClaims": 0,
+        "vanishedClaims": 0,
+        "ignored": 1
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.item-ignored",
+        "ref": "microsoft.example/things"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

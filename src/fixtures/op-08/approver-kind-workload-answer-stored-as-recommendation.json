@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "approver-kind-workload-answer-stored-as-recommendation",
+  "description": "An answer came from a service principal acting as a pipeline. It fails both tests, and both are listed; the answer is stored as recommendation only.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "pipeline",
+      "approverPrincipalKind": "service-principal",
+      "respondedOn": "2026-11-22T08:55:00Z",
+      "flowRunUrl": "https://example.org/runs/1"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "setColumns": {
+        "outcomeMeaning": "recommendation-only"
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.non-user-principal",
+        "severity": "warning"
+      },
+      {
+        "code": "approval.workload-not-counted",
+        "severity": "warning"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

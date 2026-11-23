@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "two-starts-invalid-input",
+  "description": "A walk starts from exactly one application or component.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "startComponentId": "fixture-component-x",
+    "direction": "dependants",
+    "maxDepth": 2
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

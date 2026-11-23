@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v17-no-external-change-link-kind",
+  "description": "A draft retires the only link kind of the category external change. Every link category needs an active link kind, so V17 refuses it.",
+  "ruleIds": [
+    "V17"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "link-kind",
+        "key": "itsm-change"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "taxonomy.minimum",
+        "severity": "error",
+        "ruleId": "V17",
+        "entity": "Link Kind"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

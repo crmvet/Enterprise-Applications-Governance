@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "configuration in force resource content",
+  "description": "The JSON text of configuration://in-force: the configuration set key, the version in force and its content hash, so an answer can be traced to its rules.",
+  "x-resource": "configuration-in-force",
+  "type": "object",
+  "required": [
+    "uri",
+    "configurationSetKey",
+    "version",
+    "contentHash",
+    "publishedOn",
+    "asOf"
+  ],
+  "properties": {
+    "uri": {
+      "const": "configuration://in-force"
+    },
+    "configurationSetKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C01 Configuration Set"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The version number in force."
+    },
+    "contentHash": {
+      "$ref": "../common.schema.json#/$defs/contentHash"
+    },
+    "publishedOn": {
+      "$ref": "../common.schema.json#/$defs/dateTime"
+    },
+    "asOf": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "When the data was read."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "uri": "configuration://in-force",
+      "configurationSetKey": "working",
+      "version": 3,
+      "contentHash": "a3f1c2d4e5b60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00",
+      "publishedOn": "2026-11-20T10:00:00Z",
+      "asOf": "2026-11-22T09:00:00Z"
+    }
+  ]
+}

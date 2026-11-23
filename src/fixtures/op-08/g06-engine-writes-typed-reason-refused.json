@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-writes-typed-reason-refused",
+  "description": "An engine-nested write with no effect sets Typed Reason on a pending record, with no outcome. Typed Reason is the approver's reason in their own words, and only the approval runner writes it. Refused.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "typedReason": "Looks fine to me."
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "outcome": "approval-pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

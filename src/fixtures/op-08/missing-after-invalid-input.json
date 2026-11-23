@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "missing-after-invalid-input",
+  "description": "An update names no changed columns.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "update",
+    "rowId": "fixture-intake-1"
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

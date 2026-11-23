@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "starter-valid",
+  "description": "The Starter preset alone, as the build checks it, has no validation error.",
+  "tags": ["preset"],
+  "ruleIds": ["V01", "V02", "V03", "V04", "V05", "V06", "V07", "V09", "V10", "V11", "V12", "V44"],
+  "snapshot": { "presetKey": "starter" },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": { "outcome": "valid", "payload": { "isValid": true, "issues": [] } }
+}

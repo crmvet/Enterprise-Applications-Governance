@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_gap_check output",
+  "description": "The response envelope. On success, data is the write result for the Gap Check Run (O22) with the new claims, the vanished claims and the paging state. Labels are text from the inventory, not from the product.",
+  "x-tool": "run_gap_check",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "#/$defs/gapRun"
+    },
+    "gapRun": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Gap Check Run (O22). Claims (O23) are open items for owners.",
+      "properties": {
+        "status": {
+          "type": "null",
+          "description": "A Gap Check Run has no status."
+        },
+        "gapCheckRunId": {
+          "description": "Pass it back with skipToken to continue the run. Null only when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O22 Gap Check Run"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adminRoleUsed": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The Entra role the admin held, as seen in the token. Null when the token did not carry it."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "estatesCovered": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C07 List Value"
+          },
+          "description": "The estates read, from the estate value list."
+        },
+        "itemsSeen": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Items read on this page."
+        },
+        "newClaims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "claimId",
+              "componentKindKey",
+              "labelAsSeen",
+              "targetAsSeen",
+              "suggestedClaimant"
+            ],
+            "properties": {
+              "claimId": {
+                "description": "Null when compareOnly or validateOnly was true.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O23 Claim"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "componentKindKey": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C16 Component Kind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "labelAsSeen": {
+                "type": "string",
+                "description": "The item's name in its tool.",
+                "x-untrusted": true
+              },
+              "targetAsSeen": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "Where the item lives, as seen.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "suggestedClaimant": {
+                "description": "Who probably owns it, from the inventory.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Unregistered items that became open claims. Only unregistered items become claims."
+        },
+        "vanished": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "claimId",
+              "technicalComponentId"
+            ],
+            "properties": {
+              "claimId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O23 Claim"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "technicalComponentId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O03 Technical Component",
+                "description": "The registered component the check no longer sees."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Registered components the check no longer sees, raised as vanished claims on the last page only."
+        },
+        "lastSeenUpdated": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Registered components whose Last Seen On was updated."
+        },
+        "evidenceLevelKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C07 List Value",
+          "description": "The evidence level of the run, from the evidence level value list."
+        },
+        "more": {
+          "type": "boolean",
+          "description": "True when more pages remain."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "required": [
+        "gapCheckRunId",
+        "adminRoleUsed",
+        "estatesCovered",
+        "itemsSeen",
+        "newClaims",
+        "vanished",
+        "lastSeenUpdated",
+        "evidenceLevelKey",
+        "more"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "120 items read. One new item waits for an owner to claim it. More pages remain.",
+      "data": {
+        "recordId": "d9000000-0000-4000-8000-000000000001",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "gapCheckRunId": "d9000000-0000-4000-8000-000000000001",
+        "adminRoleUsed": "Power Platform administrator",
+        "estatesCovered": [
+          "power-platform"
+        ],
+        "itemsSeen": 120,
+        "newClaims": [
+          {
+            "claimId": "c0000000-0000-4000-8000-000000000002",
+            "componentKindKey": "canvas-app",
+            "labelAsSeen": "Expense helper",
+            "targetAsSeen": "Default environment",
+            "suggestedClaimant": {
+              "objectId": "20000000-0000-4000-8000-000000000003",
+              "displayLabel": "Maker (sample)"
+            }
+          }
+        ],
+        "vanished": [],
+        "lastSeenUpdated": 14,
+        "evidenceLevelKey": "read-live",
+        "more": true,
+        "skipToken": "page-2"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "newClaims[].labelAsSeen",
+        "newClaims[].targetAsSeen"
+      ],
+      "nextSteps": [
+        {
+          "tool": "run_gap_check",
+          "inputs": {
+            "gapCheckRunId": "d9000000-0000-4000-8000-000000000001",
+            "skipToken": "page-2"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

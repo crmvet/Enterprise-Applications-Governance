@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-05",
+  "case": "seconds-late-round-up",
+  "description": "Thirty seconds after the end is 1 minute outside: whole minutes round up.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "windowStartUtc": "2026-11-22T08:00:00Z",
+    "windowEndUtc": "2026-11-22T12:00:00Z",
+    "eventUtc": "2026-11-22T12:00:30Z"
+  },
+  "expected": {
+    "outcome": "outside",
+    "payload": {
+      "state": "after",
+      "minutesOutside": 1
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "window.outside",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

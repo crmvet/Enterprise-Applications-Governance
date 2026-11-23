@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "summary": "Version 7 is in force. It has 3 target-stage rows.",
+  "data": {
+    "configurationSet": {
+      "key": "working",
+      "version": 7,
+      "publishedOn": "2026-11-18T10:00:00Z",
+      "contentHash": "5c2e8a71d4f09b3e6a1c7d2f8e4b0a9c3d6f1e7a2b8c4d0e9f5a1b6c2d7e3f80"
+    },
+    "rows": [
+      {
+        "entity": "target-stage",
+        "key": "development",
+        "label": "Development",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "rank": 1
+        }
+      },
+      {
+        "entity": "target-stage",
+        "key": "test",
+        "label": "Test",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "rank": 2
+        }
+      },
+      {
+        "entity": "target-stage",
+        "key": "production",
+        "label": "Production",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "rank": 3
+        }
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "rows[].label"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0002"
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g04-person-delete-refused-twice",
+  "description": "A person deletes a configuration row. Both rules refuse: the write is outside activation, and a configuration row is never deleted. Every failed rule is listed.",
+  "ruleIds": [
+    "G-01",
+    "G-04"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "gate-policy",
+    "operation": "delete",
+    "rowId": "fixture-gate-policy-row"
+  },
+  "facts": {
+    "configurationSetKind": "working",
+    "before": {
+      "key": "tier-3-normal-production"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "config.activation-only",
+          "ruleId": "G-01"
+        },
+        {
+          "code": "config.in-use",
+          "ruleId": "G-04"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "config.activation-only",
+        "severity": "error"
+      },
+      {
+        "code": "config.in-use",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

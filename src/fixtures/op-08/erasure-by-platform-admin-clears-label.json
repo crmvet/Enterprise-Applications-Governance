@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "erasure-by-platform-admin-clears-label",
+  "description": "A platform admin erases a principal. The engine clears the display label to \"former user\", sets Is Erased, keeps the object ID, and writes an Audit Entry that holds IDs, never a label.",
+  "workingDefaults": [
+    1,
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-4",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "principal-reference",
+    "operation": "update",
+    "rowId": "fixture-principal-7",
+    "after": {
+      "isErased": true
+    }
+  },
+  "facts": {
+    "before": {
+      "isErased": false,
+      "displayLabel": "Fixture Person Seven",
+      "entraObjectId": "00000000-0000-4000-8000-000000000071"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "displayLabel": "former user",
+        "isErased": true,
+        "performedByActorKind": "person"
+      },
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "operation": "create",
+          "columns": {
+            "operation": "erasure-performed",
+            "entityName": "Principal Reference",
+            "rowId": "fixture-principal-7",
+            "changedValuesJson": {
+              "entraObjectIdReplaced": false,
+              "isErased": true
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Role",
+        "key": "platform-admin",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

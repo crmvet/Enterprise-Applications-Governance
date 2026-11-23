@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "principal-identity-direct-write-refused",
+  "description": "A platform admin changes a principal's Entra Object Id outside an erasure. The identity columns are the engine's.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-4",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "principal-reference",
+    "operation": "update",
+    "rowId": "fixture-principal-7",
+    "after": {
+      "entraObjectId": "00000000-0000-4000-8000-000000000072"
+    }
+  },
+  "facts": {
+    "before": {
+      "isErased": false
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error",
+        "entity": "Principal Reference"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g14-gate-readiness-missing-invalid-input",
+  "description": "A gate decision is accepted without the OP-07 payload. The engine cannot tell whether the gate is ready, so the request is invalid.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-6",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "priority"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

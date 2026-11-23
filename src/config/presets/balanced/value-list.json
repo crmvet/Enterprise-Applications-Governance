@@ -1,0 +1,191 @@
+{
+  "entity": "value-list",
+  "rows": [
+    {
+      "key": "vocabulary",
+      "label": "Outside vocabulary",
+      "isExtensible": true,
+      "values": [
+        { "key": "support-tier", "label": "Power Platform support tier" },
+        { "key": "copilot-studio-zone", "label": "Copilot Studio zone" },
+        { "key": "agent-risk-tier", "label": "Agent risk tier" }
+      ]
+    },
+    {
+      "key": "tool",
+      "label": "Tool",
+      "isExtensible": true,
+      "values": [
+        { "key": "azure-devops", "label": "Azure DevOps" },
+        { "key": "github", "label": "GitHub" },
+        { "key": "power-platform", "label": "Power Platform" },
+        { "key": "microsoft-365", "label": "Microsoft 365 admin center" },
+        { "key": "entra", "label": "Microsoft Entra" },
+        { "key": "sharepoint", "label": "SharePoint" },
+        { "key": "planner", "label": "Planner" },
+        { "key": "azure", "label": "Azure" },
+        { "key": "itsm", "label": "ITSM tool" },
+        { "key": "other", "label": "Other" }
+      ]
+    },
+    {
+      "key": "channel",
+      "label": "Channel",
+      "isExtensible": false,
+      "values": [
+        { "key": "teams", "label": "Teams" },
+        { "key": "outlook", "label": "Outlook" },
+        { "key": "in-app", "label": "In the app" }
+      ]
+    },
+    {
+      "key": "application-category",
+      "label": "Application category",
+      "isExtensible": true,
+      "values": [
+        { "key": "power-platform", "label": "Power Platform" },
+        { "key": "ai", "label": "AI and agents" },
+        { "key": "custom-code", "label": "Custom code" },
+        { "key": "external", "label": "External and SaaS" }
+      ]
+    },
+    {
+      "key": "horizon",
+      "label": "Horizon",
+      "isExtensible": false,
+      "values": [
+        { "key": "now", "label": "Now" },
+        { "key": "next", "label": "Next" },
+        { "key": "later", "label": "Later" }
+      ]
+    },
+    {
+      "key": "size-band",
+      "label": "Size band",
+      "isExtensible": true,
+      "values": [
+        { "key": "small", "label": "Small" },
+        { "key": "medium", "label": "Medium" },
+        { "key": "large", "label": "Large" }
+      ]
+    },
+    {
+      "key": "build-path",
+      "label": "Build path",
+      "isExtensible": true,
+      "values": [
+        { "key": "citizen", "label": "Citizen" },
+        { "key": "fusion", "label": "Fusion" },
+        { "key": "pro", "label": "Pro" },
+        { "key": "ai-built", "label": "AI-built" }
+      ]
+    },
+    {
+      "key": "autonomy-level",
+      "label": "Autonomy level",
+      "isExtensible": true,
+      "values": [
+        { "key": "assist", "label": "Assist" },
+        { "key": "route", "label": "Route" },
+        { "key": "execute", "label": "Execute" }
+      ]
+    },
+    {
+      "key": "target-kind",
+      "label": "Target kind",
+      "isExtensible": true,
+      "values": [
+        { "key": "power-platform-environment", "label": "Power Platform environment" },
+        { "key": "microsoft-365-tenant", "label": "Microsoft 365 tenant" },
+        { "key": "azure-resource-group", "label": "Azure resource group" },
+        { "key": "github-environment", "label": "GitHub environment" },
+        { "key": "saas-tenant", "label": "SaaS tenant" },
+        { "key": "other", "label": "Other" }
+      ]
+    },
+    {
+      "key": "artifact-kind",
+      "label": "Artifact kind",
+      "isExtensible": true,
+      "values": [
+        { "key": "managed-solution", "label": "Managed solution" },
+        { "key": "container-image", "label": "Container image" },
+        { "key": "code-package", "label": "Code package" },
+        { "key": "static-site", "label": "Static site" },
+        { "key": "agent-package", "label": "Agent package" },
+        { "key": "commit", "label": "Commit" },
+        { "key": "other", "label": "Other" }
+      ]
+    },
+    {
+      "key": "change-result",
+      "label": "Change result",
+      "isExtensible": true,
+      "values": [
+        { "key": "succeeded", "label": "Succeeded" },
+        { "key": "partly-succeeded", "label": "Partly succeeded" },
+        { "key": "failed", "label": "Failed" },
+        { "key": "rolled-back", "label": "Rolled back" },
+        { "key": "cancelled", "label": "Cancelled" }
+      ]
+    },
+    {
+      "key": "evidence-level",
+      "label": "Evidence level",
+      "isExtensible": false,
+      "values": [
+        { "key": "read", "label": "Read" },
+        { "key": "checked", "label": "Checked" },
+        { "key": "as-reported", "label": "As reported" },
+        { "key": "proven", "label": "Proven" },
+        { "key": "designed", "label": "Designed" },
+        { "key": "not-read", "label": "Not read, with a reason" }
+      ]
+    },
+    {
+      "key": "portfolio-level",
+      "label": "Portfolio level",
+      "isExtensible": true,
+      "values": [
+        { "key": "portfolio", "label": "Portfolio" },
+        { "key": "application-group", "label": "Application group" }
+      ]
+    },
+    {
+      "key": "estate",
+      "label": "Estate",
+      "isExtensible": true,
+      "values": [{ "key": "power-platform-inventory", "label": "Power Platform inventory" }]
+    },
+    {
+      "key": "confidence",
+      "label": "Confidence",
+      "isExtensible": false,
+      "values": [
+        { "key": "low", "label": "Low" },
+        { "key": "medium", "label": "Medium" },
+        { "key": "high", "label": "High" }
+      ]
+    },
+    {
+      "key": "impact-role",
+      "label": "Impact role",
+      "isExtensible": false,
+      "values": [
+        { "key": "changed", "label": "Changed" },
+        { "key": "depends-on-change", "label": "Depends on the change" },
+        { "key": "informed", "label": "Informed" }
+      ]
+    },
+    {
+      "key": "criticality",
+      "label": "Criticality",
+      "isExtensible": true,
+      "values": [
+        { "key": "low", "label": "Low" },
+        { "key": "medium", "label": "Medium" },
+        { "key": "high", "label": "High" }
+      ]
+    }
+  ]
+}

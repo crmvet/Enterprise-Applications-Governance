@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "same-base-valid",
+  "description": "The draft starts from version 1, and version 1 is still active. Nothing moved, so nothing is rebased: the draft is validated again on the active version in activation mode and may activate. The diff the admin saw is the diff that activates.",
+  "ruleIds": [
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 1
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1, "summary": "Name tier 3 after its risk" },
+      "operations": [
+        { "op": "upsert", "entity": "tier", "key": "tier-3", "values": { "label": "Tier 3: Critical" } }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "same-base",
+    "payload": {
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 1,
+      "canActivate": true,
+      "changedRows": [],
+      "overlaps": [],
+      "patch": {
+        "manifest": { "kind": "patch", "baseVersionNumber": 1 }
+      },
+      "previousChangeSummary": ["Changed Tier `tier-3`: label."],
+      "diffChanged": false,
+      "validation": {
+        "isValid": true,
+        "issues": [],
+        "changeSummary": ["Changed Tier `tier-3`: label."]
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

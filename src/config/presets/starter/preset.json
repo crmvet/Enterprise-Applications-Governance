@@ -1,0 +1,18 @@
+{
+  "$comment": [
+    "Starter is Balanced with lighter gate rows and one changed separation rule (document 21, sections 6.2, 6.3 and 7.6). The changes are in patch.json.",
+    "Which full preset installs first is still open under D-03. The change gate options suggest Starter."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "starter",
+  "label": "Starter",
+  "description": "Balanced with lighter gates: record in test, flag in production at every tier. Self-approval at tier 3 only through a recorded exception decision.",
+  "presetKind": "full",
+  "extends": "balanced",
+  "conflictsWith": [],
+  "areas": ["gates", "people"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "checkedOn": "2026-11-22",
+  "setupNotes": []
+}

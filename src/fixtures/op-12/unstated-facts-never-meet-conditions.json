@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "unstated-facts-never-meet-conditions",
+  "description": "A change that states no tier rank, no target stage, no count, no component kinds and no window cannot be shown to stay inside any condition, so every condition fails. The engine never assumes a missing fact is fine.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "label-and-view-changes",
+        "values": {
+          "label": "Labels and views only",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "target-stages-in",
+              "value": [
+                "test",
+                "production"
+              ]
+            },
+            {
+              "conditionKind": "max-affected-applications",
+              "value": 1
+            },
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app",
+                "model-driven-app"
+              ]
+            },
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 120
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {},
+    "models": [
+      {
+        "modelKey": "label-and-view-changes",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "label-and-view-changes",
+          "conditionIndex": 0,
+          "conditionKind": "max-tier-rank"
+        },
+        {
+          "modelKey": "label-and-view-changes",
+          "conditionIndex": 1,
+          "conditionKind": "target-stages-in",
+          "why": "the change names no target stage"
+        },
+        {
+          "modelKey": "label-and-view-changes",
+          "conditionIndex": 2,
+          "conditionKind": "max-affected-applications"
+        },
+        {
+          "modelKey": "label-and-view-changes",
+          "conditionIndex": 3,
+          "conditionKind": "component-kinds-within",
+          "why": "the change states no component kinds"
+        },
+        {
+          "modelKey": "label-and-view-changes",
+          "conditionIndex": 4,
+          "conditionKind": "max-window-minutes"
+        },
+        {
+          "modelKey": "label-and-view-changes",
+          "conditionIndex": 5,
+          "conditionKind": "stated"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      },
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      },
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      },
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      },
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      },
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "label-and-view-changes",
+        "role": "skipped"
+      }
+    ]
+  }
+}

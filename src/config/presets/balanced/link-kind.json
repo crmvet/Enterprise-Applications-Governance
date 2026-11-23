@@ -1,0 +1,60 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 1): linkCategory is a fixed engine meaning. The label stays configurable."
+  ],
+  "entity": "link-kind",
+  "rows": [
+    {
+      "key": "ado-work-item",
+      "label": "Azure DevOps work item",
+      "linkCategory": "delivery",
+      "toolKey": "azure-devops",
+      "idPattern": "^[0-9]+$"
+    },
+    {
+      "key": "github-issue",
+      "label": "GitHub issue",
+      "linkCategory": "delivery",
+      "toolKey": "github",
+      "urlPattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$"
+    },
+    { "key": "planner-plan", "label": "Planner plan", "linkCategory": "delivery", "toolKey": "planner" },
+    {
+      "key": "azure-pipelines-pipeline",
+      "label": "Azure Pipelines pipeline",
+      "linkCategory": "pipeline",
+      "toolKey": "azure-devops"
+    },
+    {
+      "key": "github-actions-workflow",
+      "label": "GitHub Actions workflow",
+      "linkCategory": "pipeline",
+      "toolKey": "github",
+      "urlPattern": "^https://github\\.com/[^/]+/[^/]+/actions"
+    },
+    {
+      "key": "power-platform-pipeline",
+      "label": "Power Platform Pipelines pipeline",
+      "linkCategory": "pipeline",
+      "toolKey": "power-platform"
+    },
+    { "key": "ado-wiki-page", "label": "Azure DevOps wiki page", "linkCategory": "document", "toolKey": "azure-devops" },
+    { "key": "repository-file", "label": "Repository file", "linkCategory": "document", "toolKey": "github" },
+    {
+      "key": "sharepoint-page",
+      "label": "SharePoint page",
+      "linkCategory": "document",
+      "toolKey": "sharepoint",
+      "urlPattern": "^https://[^/]+\\.sharepoint\\.com/"
+    },
+    { "key": "evidence-url", "label": "Evidence link", "linkCategory": "evidence", "toolKey": "other" },
+    {
+      "key": "power-platform-resource",
+      "label": "Power Platform resource",
+      "linkCategory": "microsoft-resource",
+      "toolKey": "power-platform"
+    },
+    { "key": "entra-object", "label": "Entra object", "linkCategory": "microsoft-resource", "toolKey": "entra" },
+    { "key": "itsm-change", "label": "ITSM change", "linkCategory": "external-change", "toolKey": "itsm" }
+  ]
+}

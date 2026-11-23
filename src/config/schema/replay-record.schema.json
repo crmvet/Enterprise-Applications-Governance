@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "replay-record.schema.json",
+  "title": "Engine replay record",
+  "description": "One recorded engine call for the replay tool (document 25, section 9: each result carries configurationVersion, snapshotHash and engineVersion, and an auditor can load that version and the same facts and get the same answer). The record holds the snapshot version, the context, the request (what the caller sent and the facts the adapter fetched, joined as the operation's wire input) and the recorded result or write plan. The replay loads the version, evaluates the request again and reports every difference. Fictional data only.",
+  "$comment": "A proposal of this schema: document 25 names the replay tool, not its record format. The snapshot and context shapes are the fixture schema's. expectedDifferences is for fixtures under fixtures/replay/ only: a record an auditor replays has none, and passes only with no difference.",
+  "type": "object",
+  "required": ["schemaVersion", "operation", "case", "snapshot", "context", "request"],
+  "properties": {
+    "$comment": { "$ref": "config-bundle.schema.json#/$defs/comment" },
+    "schemaVersion": { "const": "1.0" },
+    "operation": {
+      "enum": ["OP-01", "OP-02", "OP-03", "OP-04", "OP-05", "OP-06", "OP-07", "OP-08", "OP-10", "OP-11", "OP-12", "OP-13", "OP-14"],
+      "description": "The engine operation of the recorded call. OP-09 is not replayed here: the validate command recomputes a validation report from the same configuration."
+    },
+    "case": {
+      "$ref": "config-bundle.schema.json#/$defs/key",
+      "description": "The record's name. For a fixture it matches the file name without .json."
+    },
+    "description": { "type": "string", "minLength": 1, "description": "What the record shows, in one or two plain sentences." },
+    "tags": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/key" }, "uniqueItems": true },
+    "workingDefaults": {
+      "type": "array",
+      "items": { "enum": [1, 4, 7, 8, 9, 12] },
+      "uniqueItems": true,
+      "description": "The open design questions (document 28, section 3) whose working default the record rests on."
+    },
+    "snapshot": {
+      "$ref": "fixture.schema.json#/$defs/snapshot",
+      "description": "The configuration version the call used: a preset selection with inline operations, or a whole bundle (a C02 Content Json export). The command line can load another bundle instead (--snapshot)."
+    },
+    "context": {
+      "allOf": [
+        { "$ref": "fixture.schema.json#/$defs/context" },
+        { "properties": { "configurationVersion": false, "snapshotHash": false } }
+      ],
+      "description": "The EvaluationContext of the call: the moment, the actor, the correlation ID and the client app. The version and its hash come from the loaded snapshot, never from here, so a replay always says which version it used."
+    },
+    "request": {
+      "type": "object",
+      "description": "The operation's wire input as OperationJson reads it: the caller's input and the fetched facts in one object."
+    },
+    "recorded": { "$ref": "#/$defs/recordedResult" },
+    "expectedDifferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/differenceKind" },
+      "uniqueItems": true,
+      "description": "Fixtures only: the kinds of difference the replay must report, no more and no fewer. Absent means none."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "differenceKind": {
+      "enum": ["snapshot-hash", "configuration-version", "engine-version", "outcome", "payload", "reasons", "trace"],
+      "description": "snapshot-hash: the loaded version is not the one the result was made with. configuration-version: another version number. engine-version: another engine build (a change in rule behavior is a new engine version, section 9). outcome, payload, reasons and trace: the answer itself differs."
+    },
+    "recordedResult": {
+      "type": "object",
+      "description": "The EvaluationResult as it was recorded (document 25, section 5.1). For OP-08 the payload is the write plan.",
+      "required": ["outcome", "configurationVersion", "snapshotHash", "engineVersion", "payload", "reasons", "trace"],
+      "properties": {
+        "outcome": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "configurationVersion": { "type": "integer", "minimum": 0 },
+        "snapshotHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "engineVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$" },
+        "payload": { "type": ["object", "array", "string", "number", "boolean", "null"] },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "severity", "message"],
+            "properties": {
+              "code": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$" },
+              "severity": { "enum": ["info", "warning", "error"] },
+              "message": { "type": "string", "minLength": 1 },
+              "entity": { "type": "string", "minLength": 1 },
+              "ref": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "trace": { "type": "array", "items": { "$ref": "fixture.schema.json#/$defs/expectedTrace" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

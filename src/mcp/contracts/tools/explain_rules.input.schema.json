@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "explain_rules input",
+  "description": "Why does this need X? Returns the engine's rule trace for one record: which rule groups matched, which single most specific group won and which broader groups dropped out, the gate policy row, the separation rules and the flags. The engine re-runs the evaluation in read mode against the configuration set version stamped on the record. Writes nothing.",
+  "x-tool": "explain_rules",
+  "type": "object",
+  "required": [
+    "subjectKind",
+    "subjectId"
+  ],
+  "properties": {
+    "subjectKind": {
+      "enum": [
+        "decision",
+        "change-request",
+        "intake-request",
+        "deployment-record",
+        "business-application"
+      ],
+      "description": "The kind of record."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The ID of the record."
+    },
+    "aspects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "approvals",
+          "gate",
+          "flags",
+          "requirements",
+          "separation"
+        ]
+      },
+      "description": "Only these aspects. Leave out for all."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Explain against this version. Leave out for the version stamped on the record."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "subjectKind": "change-request",
+      "subjectId": "d0000000-0000-4000-8000-000000000002",
+      "aspects": [
+        "approvals",
+        "gate"
+      ]
+    }
+  ]
+}

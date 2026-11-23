@@ -1,0 +1,18 @@
+{
+  "$comment": [
+    "Regulated is Balanced with stricter gate rows, one setting, a tier 2 go-live group and stricter separation rules (document 21, sections 6.2, 6.3 and 7.6). The changes are in patch.json.",
+    "Proposal, not in document 21: conflictsWith lists small-team. Regulated refuses self-approval at every tier and small team allows it with an exception (document 28, Q10), so the two give opposite answers. The build also needs it: Regulated retires no-self-approval-tier-3, and the small team overlay would give that retired key new content (V04). Document 21 declares only small team against strict separation. The product owner can drop this line; the small team overlay then needs another way to land on Regulated."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "regulated",
+  "label": "Regulated",
+  "description": "Balanced with stricter gates: enforce in production from tier 2 up, an audited emergency path and a quarterly configuration review. Nobody approves their own proposal at any tier, and a second configuration admin accepts every configuration change.",
+  "presetKind": "full",
+  "extends": "balanced",
+  "conflictsWith": ["small-team"],
+  "areas": ["gates", "rules", "people"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "checkedOn": "2026-11-22",
+  "setupNotes": []
+}

@@ -1,0 +1,89 @@
+{
+  "case": "op-01-recorded-trace-changed",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A stored OP-01 result whose rule trace says the deciding answer option was only matched. The replay reports the trace row that differs.",
+  "operation": "OP-01",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "computed",
+    "payload": {
+      "computedTierKey": "tier-3",
+      "computedTierRank": 3,
+      "decisiveAnswers": [
+        {
+          "answerKey": "own-identity",
+          "questionKey": "data-change"
+        }
+      ],
+      "ignoredAnswers": [],
+      "missingQuestionKeys": [],
+      "proposedIsLower": false,
+      "triggeredGateRequirementKeys": [],
+      "triggeredReviewTypeKeys": []
+    },
+    "reasons": [],
+    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "trace": [
+      {
+        "entity": "Tier Answer Option",
+        "key": "data-change/own-identity",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier Answer Option",
+        "key": "failure-impact/team-slowed",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier Answer Option",
+        "key": "reach/department",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier Answer Option",
+        "key": "sensitivity/none",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier",
+        "key": "tier-3",
+        "role": "won"
+      }
+    ]
+  },
+  "request": {
+    "answers": [
+      {
+        "answerKey": "own-identity",
+        "questionKey": "data-change"
+      },
+      {
+        "answerKey": "team-slowed",
+        "questionKey": "failure-impact"
+      },
+      {
+        "answerKey": "department",
+        "questionKey": "reach"
+      },
+      {
+        "answerKey": "none",
+        "questionKey": "sensitivity"
+      }
+    ],
+    "applicationKindKey": "power-platform-app"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": [
+    "replay",
+    "tampered"
+  ],
+  "expectedDifferences": [
+    "trace"
+  ]
+}

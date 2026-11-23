@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-a-evidence-link-update-by-engine-refused",
+  "description": "Class A (document 22, section 2.3, from the logical model): an Evidence Link is inserted once and never updated, by the engine either. An engine-nested update is refused.",
+  "tags": [
+    "hardening-1",
+    "class-a"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "evidence-link",
+    "operation": "update",
+    "rowId": "fixture-evidence-1",
+    "after": {
+      "label": "Changed label"
+    }
+  },
+  "facts": {
+    "before": {}
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.append-only"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.append-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

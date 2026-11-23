@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Engine core (document 25, section 3.1).
+    Contract records, the pure operations, the reason code catalog, the snapshot model and canonical hashing.
+    Rules: no package beyond the base class library, no clock, no random values, no I/O (section 3.2).
+    The net48 reference assemblies package is build only and is not a runtime dependency.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>$(EngineTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- The logical model, compiled in, so OP-08 takes each entity's history class and column list from the model
+       itself and never from a hand-kept copy. Found by the end of its name, so the product rename does not break it. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\model\logical-model.json" Link="Model\logical-model.json" LogicalName="Product.Engine.Core.Model.logical-model.json" />
+  </ItemGroup>
+</Project>

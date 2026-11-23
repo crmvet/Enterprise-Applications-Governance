@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "claim-without-times-seen-invalid-input",
+  "description": "An existing claim fact must carry its Times Seen, or the plan could not write an absolute value.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000104",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Budget sheet"
+      }
+    ]
+  },
+  "facts": {
+    "claims": [
+      {
+        "claimId": "fixture-claim-4",
+        "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000104",
+        "statusMeaning": "open",
+        "findingKind": "unregistered"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

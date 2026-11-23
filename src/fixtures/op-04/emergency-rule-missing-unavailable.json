@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "emergency-rule-missing-unavailable",
+  "description": "Emergencies in test are raised to enforce with no emergency rule, so the row cannot say how an emergency passes (V25). The engine refuses and reports a broken configuration.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "gate-policy",
+        "key": "gp-emergency-test--tier-1",
+        "values": {
+          "gateLevel": "enforce",
+          "failMode": "fail-closed"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "check",
+    "tierKey": "tier-1",
+    "changeTypeKey": "emergency",
+    "targetStageKey": "test",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "pending",
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "gate-policy.emergency-rule",
+        "severity": "error",
+        "entity": "Gate Policy",
+        "ref": "gp-emergency-test--tier-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

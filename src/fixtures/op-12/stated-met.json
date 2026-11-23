@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "stated-met",
+  "description": "A model with one stated condition: the change meets it at the limit, so it qualifies.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-stated",
+        "values": {
+          "label": "Model only-stated",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "stated",
+              "key": "no-schema-change",
+              "label": "No table or column changes"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "statedConditionKeys": [
+        "no-schema-change"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "only-stated",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "qualifies",
+    "payload": {
+      "qualifies": true,
+      "modelKey": "only-stated",
+      "approvedByDecisionId": "fixture-decision-model-1",
+      "failedConditions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "standard-model.qualifies",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-stated"
+      },
+      {
+        "code": "standard-model.condition-as-reported",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-stated"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

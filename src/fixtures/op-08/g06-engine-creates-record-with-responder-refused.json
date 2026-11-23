@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-creates-record-with-responder-refused",
+  "description": "An engine-nested create of a pending Approval Record also names an approver, an approver actor kind and meaning, and a response time. The engine writes the request, never who answered or when, so the create is refused, even though the outcome is pending.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "create",
+    "after": {
+      "decision": "fixture-decision-1",
+      "approvalRule": "acceptance-approval",
+      "requiredOwnerRole": "business-owner",
+      "outcome": "approval-pending",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverActorMeaning": "person",
+      "respondedOn": "2026-11-22T09:00:00Z",
+      "requestedOn": "2026-11-22T09:00:00Z",
+      "expiresOn": "2026-12-02T09:00:00Z"
+    }
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

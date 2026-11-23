@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "pending-record-open",
+  "description": "A card still waiting for an answer, before it expires: the decision is pending.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "pending",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "pending",
+    "payload": {
+      "overall": "pending",
+      "requirements": [
+        {
+          "requirementKey": "change-auth-tier-3",
+          "state": "pending",
+          "countingRecordIds": [],
+          "pendingRecordIds": [
+            "r1"
+          ],
+          "nonCountingRecords": []
+        }
+      ],
+      "countsByRecord": {
+        "r1": false
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

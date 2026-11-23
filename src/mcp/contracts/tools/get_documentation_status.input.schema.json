@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_documentation_status input",
+  "description": "What documentation is missing or stale for my app? Required documents come from configuration. Missing is computed from configuration; a Document Link row exists only once a link has been recorded. Give exactly one of businessApplicationId and mine. Writes nothing.",
+  "x-tool": "get_documentation_status",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "One application."
+    },
+    "mine": {
+      "const": true,
+      "description": "Every application the caller owns."
+    },
+    "statusMeanings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/documentStatusMeaning"
+      },
+      "description": "Only documents with these status meanings."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "businessApplicationId"
+      ],
+      "not": {
+        "required": [
+          "mine"
+        ]
+      }
+    },
+    {
+      "required": [
+        "mine"
+      ],
+      "not": {
+        "required": [
+          "businessApplicationId"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+    },
+    {
+      "mine": true,
+      "statusMeanings": [
+        "missing",
+        "stale"
+      ]
+    }
+  ]
+}

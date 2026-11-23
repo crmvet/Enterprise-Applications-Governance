@@ -1,0 +1,48 @@
+{
+  "entity": "review-type",
+  "rows": [
+    {
+      "key": "owner-check",
+      "label": "Owner check",
+      "producesDecisionTypeKey": "ownership",
+      "defaultOwnerRoleKey": "business-owner"
+    },
+    {
+      "key": "tier-check",
+      "label": "Tier check",
+      "producesDecisionTypeKey": "tier",
+      "defaultOwnerRoleKey": "technical-owner"
+    },
+    {
+      "key": "access-check",
+      "label": "Access check",
+      "producesDecisionTypeKey": "risk-acceptance",
+      "defaultOwnerRoleKey": "business-owner",
+      "description": "Links to Entra access review results; never reruns them."
+    },
+    {
+      "key": "benefit",
+      "label": "Benefit review",
+      "producesDecisionTypeKey": "portfolio",
+      "defaultOwnerRoleKey": "business-owner"
+    },
+    {
+      "key": "architecture",
+      "label": "Architecture review",
+      "producesDecisionTypeKey": "design",
+      "defaultOwnerRoleKey": "technical-owner"
+    },
+    {
+      "key": "post-change",
+      "label": "Post-change review",
+      "producesDecisionTypeKey": "acceptance",
+      "defaultOwnerRoleKey": "technical-owner"
+    },
+    {
+      "key": "security-review",
+      "label": "Security review",
+      "producesDecisionTypeKey": "risk-acceptance",
+      "defaultOwnerRoleKey": "security-owner"
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_decision_proposal output",
+  "description": "The response envelope. On success, data is the write result for the Decision (O09), always Proposed, with the decider and the approvals it needs. nextSteps point to submit_record.",
+  "x-tool": "save_decision_proposal",
+  "x-ai-write-states": [
+    "proposed"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Decision (O09).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always Proposed. Only people accept a decision, on approval cards.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/decisionStatusMeaning",
+              "const": "proposed"
+            }
+          }
+        },
+        "decider": {
+          "type": "object",
+          "required": [
+            "principal"
+          ],
+          "properties": {
+            "accountableRoleKey": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C29 Role",
+              "description": "The role that holds the accountable letter."
+            },
+            "accountableOwnerRoleKey": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C28 Owner Role",
+              "description": "The owner role that holds the accountable letter."
+            },
+            "principal": {
+              "description": "The person who will decide, when the letter resolves to one person. Null when several people hold it.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/principalRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "description": "The decider, resolved from the decision rights (C31). The caller cannot set it.",
+          "oneOf": [
+            {
+              "required": [
+                "accountableRoleKey"
+              ]
+            },
+            {
+              "required": [
+                "accountableOwnerRoleKey"
+              ]
+            }
+          ]
+        },
+        "approvalsNeeded": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalNeeded"
+          },
+          "description": "The approvals the decision needs, from the single most specific Approval Rule group (C32)."
+        },
+        "evidenceLinkIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O20 Evidence Link"
+          },
+          "description": "The Evidence Link rows written. Empty when validateOnly was true."
+        }
+      },
+      "required": [
+        "decider",
+        "approvalsNeeded",
+        "evidenceLinkIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The design decision is saved as Proposed. Submit it to send it for acceptance.",
+      "data": {
+        "recordId": "60000000-0000-4000-8000-000000000011",
+        "status": {
+          "label": "Proposed",
+          "meaning": "proposed"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "decider": {
+          "accountableRoleKey": "architect",
+          "principal": null
+        },
+        "approvalsNeeded": [
+          {
+            "decisionTypeKey": "design",
+            "approverRoleKey": "architect",
+            "approvalMode": "first-to-respond",
+            "minimumCount": 1
+          }
+        ],
+        "evidenceLinkIds": [
+          "d7000000-0000-4000-8000-000000000001"
+        ]
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000011"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "submit_record",
+          "inputs": {
+            "subjectKind": "decision",
+            "subjectId": "60000000-0000-4000-8000-000000000011"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

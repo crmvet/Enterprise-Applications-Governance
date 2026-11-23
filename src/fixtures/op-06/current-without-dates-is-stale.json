@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "current-without-dates-is-stale",
+  "description": "A current wiki page with no check date and no update date cannot be shown to be fresh, so it counts as stale (a proposal: the engine never assumes a document is still true).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "status": "current"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "stale",
+          "documentLinkId": "fixture-link-w1"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 1,
+      "staleOnByLink": {}
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "documentation.stale",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "wiki-page-all"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

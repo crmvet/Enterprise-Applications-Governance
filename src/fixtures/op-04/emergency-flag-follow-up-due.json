@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "emergency-flag-follow-up-due",
+  "description": "Balanced flags emergencies in production. The record stores the flag, tells the owners and carries the follow-up due date from the Emergency Rule Json.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "record",
+    "tierKey": "tier-1",
+    "changeTypeKey": "emergency",
+    "targetStageKey": "production",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "pending",
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "allow",
+    "payload": {
+      "gateLevel": "flag",
+      "verdict": "allow",
+      "isMissingApproval": true,
+      "notify": true,
+      "emergencyFollowUpDueUtc": "2026-11-24T15:00:00Z"
+    },
+    "reasons": [
+      {
+        "code": "gate.missing-approval"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

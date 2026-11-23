@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "kind-scoped-requirement-other-kind",
+  "description": "The same agent-only requirement does not apply to a Power Platform app, which is complete with its wiki page.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "documentation-requirement",
+        "key": "runbook-agent",
+        "values": {
+          "label": "Every agent has a runbook",
+          "documentTypeKey": "runbook",
+          "applicationKindKey": "agent",
+          "fromStageKey": "build"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "complete",
+    "payload": {
+      "complete": true,
+      "items": [
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "current",
+          "documentLinkId": "fixture-link-w1",
+          "staleOnUtc": "2027-06-01T10:00:00Z"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {
+        "fixture-link-w1": "2027-06-01T10:00:00Z"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

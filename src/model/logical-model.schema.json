@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Product logical data model",
+  "description": "Shape of model/logical-model.json. The model holds every entity of document 22, plus the entities of documents 20, 21, 24 and 26 that document 22 does not count. Cross-references (targets exist, CFG points to configuration, no duplicate names) are checked by model/check-model.mjs, not by this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "modelVersion", "date", "sources", "conventions", "counts", "types", "historyClasses", "deletePolicies", "meaningContracts", "valueLists", "columnSets", "sharedRelationships", "entities", "openPoints"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "title": { "type": "string", "minLength": 1 },
+    "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "date": { "type": "string", "format": "date" },
+    "sources": { "$ref": "#/$defs/textList" },
+    "conventions": { "$ref": "#/$defs/textList" },
+    "counts": {
+      "description": "Expected entity counts. model/check-model.mjs recounts them from the entities.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entities", "document22FirstRelease", "document22Configuration", "document22Operational", "adoptedOutsideDocument22", "proposals", "later"],
+      "properties": {
+        "entities": { "type": "integer", "minimum": 0 },
+        "document22FirstRelease": { "type": "integer", "minimum": 0 },
+        "document22Configuration": { "type": "integer", "minimum": 0 },
+        "document22Operational": { "type": "integer", "minimum": 0 },
+        "adoptedOutsideDocument22": { "type": "integer", "minimum": 0 },
+        "proposals": { "type": "integer", "minimum": 0 },
+        "later": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "types": {
+      "description": "The logical types of document 22, section 1.1, plus the two platform types.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "written", "meaning", "dataverse", "azureSql"],
+        "properties": {
+          "name": { "$ref": "#/$defs/typeName" },
+          "written": { "type": "string", "minLength": 1 },
+          "meaning": { "type": "string", "minLength": 1 },
+          "dataverse": { "type": "string", "minLength": 1 },
+          "azureSql": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "historyClasses": {
+      "description": "The five history classes of document 22, section 2.3.",
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "rule", "entities", "dataverse", "azureSql"],
+        "properties": {
+          "id": { "$ref": "#/$defs/historyClass" },
+          "name": { "type": "string", "minLength": 1 },
+          "rule": { "type": "string", "minLength": 1 },
+          "entities": { "type": "string", "minLength": 1 },
+          "dataverse": { "type": "string", "minLength": 1 },
+          "azureSql": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "deletePolicies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "rule"],
+        "properties": {
+          "id": { "$ref": "#/$defs/deletePolicy" },
+          "rule": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "meaningContracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workingDefault", "contracts"],
+      "properties": {
+        "workingDefault": { "$ref": "#/$defs/workingDefault" },
+        "contracts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/contract" } }
+      }
+    },
+    "valueLists": {
+      "description": "Value list keys (C06 rows) that attributes name through valueList.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "status", "source"],
+        "properties": {
+          "key": { "$ref": "#/$defs/configKey" },
+          "status": { "enum": ["adopted", "proposal"] },
+          "source": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "columnSets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "appliesTo", "attributes"],
+        "properties": {
+          "name": { "$ref": "#/$defs/columnSetName" },
+          "appliesTo": { "type": "string", "minLength": 1 },
+          "attributes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/attribute" } }
+        }
+      }
+    },
+    "sharedRelationships": {
+      "description": "Relationships every row of a column set has (document 22, section 6.1).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "columnSet", "column", "target", "cardinality", "delete"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^R00[a-z]$" },
+          "columnSet": { "$ref": "#/$defs/columnSetName" },
+          "column": { "$ref": "#/$defs/logicalName" },
+          "target": { "$ref": "#/$defs/entityId" },
+          "cardinality": { "$ref": "#/$defs/cardinality" },
+          "delete": { "$ref": "#/$defs/deleteBehaviour" },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "entities": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/entity" } },
+    "openPoints": { "$ref": "#/$defs/textList" }
+  },
+  "$defs": {
+    "textList": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "entityId": { "type": "string", "pattern": "^[COL][0-9]{2}$" },
+    "logicalName": {
+      "description": "Singular Title Case English with no prefix (document 20, section 3.1).",
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]*( [A-Z][A-Za-z0-9]*)*$"
+    },
+    "configKey": {
+      "description": "Lowercase letters, digits and hyphens, 1 to 64 characters, starting with a letter (document 20, section 3.2).",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "typeName": { "enum": ["id", "text", "longtext", "int", "decimal", "bool", "date", "datetime", "url", "json", "hash", "key", "meaning", "ref", "platform-identity", "platform-user"] },
+    "historyClass": { "enum": ["A", "F", "E", "M", "V"] },
+    "deletePolicy": { "enum": ["never", "retire", "draft-only"] },
+    "deleteBehaviour": { "enum": ["Restrict", "Cascade"] },
+    "columnSetName": { "enum": ["common", "operational", "taxonomy"] },
+    "required": { "description": "Y required, N optional, C conditional.", "enum": ["Y", "N", "C"] },
+    "cardinality": {
+      "description": "Parent to child, as in document 22, section 1.4.",
+      "type": "string",
+      "pattern": "^(1|0\\.\\.1) to (0\\.\\.n|1\\.\\.n|0\\.\\.1)$"
+    },
+    "workingDefault": {
+      "description": "Marks a place built on a working default for one of the six open questions of document 28, section 3.",
+      "type": "string",
+      "pattern": "^WORKING DEFAULT \\(open design question (1|4|7|8|9|12)\\)\\. .+"
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "name", "values", "usedBy", "status", "source"],
+      "properties": {
+        "key": { "$ref": "#/$defs/configKey" },
+        "name": { "type": "string", "minLength": 1 },
+        "values": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "derivedValues": { "description": "Values that are computed and never stored.", "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "proposedValues": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "unionOf": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/configKey" } },
+        "usedBy": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["adopted", "proposal", "later"] },
+        "source": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string", "minLength": 1 },
+        "workingDefault": { "$ref": "#/$defs/workingDefault" }
+      },
+      "if": { "properties": { "unionOf": true }, "required": ["unionOf"] },
+      "then": { "properties": { "values": { "maxItems": 0 } } },
+      "else": { "properties": { "values": { "minItems": 1 } } }
+    },
+    "attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required", "description"],
+      "properties": {
+        "name": { "$ref": "#/$defs/logicalName" },
+        "type": { "$ref": "#/$defs/typeName" },
+        "length": { "description": "Maximum characters for text.", "type": "integer", "minimum": 1, "maximum": 4000 },
+        "meaning": { "description": "The engine contract key for a meaning attribute.", "$ref": "#/$defs/configKey" },
+        "required": { "$ref": "#/$defs/required" },
+        "ref": { "description": "CFG configuration reference, OPS operational reference, PR Principal Reference.", "enum": ["CFG", "OPS", "PR"] },
+        "target": { "description": "The entity a ref attribute points to.", "$ref": "#/$defs/entityId" },
+        "keyOf": {
+          "description": "For a json or key column marked CFG: the configuration entities whose keys it holds, or configuration for any.",
+          "oneOf": [
+            { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/entityId" } },
+            { "const": "configuration" }
+          ]
+        },
+        "valueList": { "description": "For a reference to C07 List Value: the key of the value list.", "$ref": "#/$defs/configKey" },
+        "meaningCopyOf": { "description": "The status column this meaning copy follows (document 22, section 2.1.4).", "$ref": "#/$defs/logicalName" },
+        "storedIn": { "description": "The column that physically holds this value.", "$ref": "#/$defs/logicalName" },
+        "restates": { "description": "This entity lists a column set column again with its own description. One physical column.", "$ref": "#/$defs/columnSetName" },
+        "derived": { "type": "boolean" },
+        "stored": { "description": "False when the value is derived and never stored.", "type": "boolean" },
+        "fillOnce": { "description": "May be filled once while empty and never changed.", "type": "boolean" },
+        "platform": { "description": "Set when the column exists on one binding only.", "enum": ["dataverse", "azure-sql"] },
+        "new": { "description": "Marked (new) in document 22.", "type": "boolean" },
+        "status": { "description": "Set on a column that document 22 does not list.", "enum": ["adopted", "proposal"] },
+        "source": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string", "minLength": 1 },
+        "workingDefault": { "$ref": "#/$defs/workingDefault" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "text" } }, "required": ["type"] },
+          "then": { "required": ["length"] },
+          "else": { "not": { "required": ["length"] } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "ref" } }, "required": ["type"] },
+          "then": { "required": ["target", "ref"] },
+          "else": { "not": { "required": ["target"] } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "meaning" } }, "required": ["type"] },
+          "then": { "required": ["meaning"] },
+          "else": { "not": { "anyOf": [{ "required": ["meaning"] }, { "required": ["meaningCopyOf"] }] } }
+        },
+        {
+          "if": { "required": ["ref"] },
+          "then": { "properties": { "type": { "enum": ["ref", "json", "key"] } } }
+        },
+        {
+          "if": { "properties": { "type": { "enum": ["json", "key"] }, "ref": { "const": "CFG" } }, "required": ["type", "ref"] },
+          "then": { "required": ["keyOf"] }
+        },
+        {
+          "if": { "required": ["keyOf"] },
+          "then": { "properties": { "type": { "enum": ["json", "key"] }, "ref": { "const": "CFG" } }, "required": ["ref"] }
+        },
+        {
+          "if": { "required": ["valueList"] },
+          "then": {
+            "anyOf": [
+              { "properties": { "type": { "const": "ref" }, "target": { "const": "C07" } } },
+              { "properties": { "type": { "const": "json" }, "keyOf": { "const": ["C07"] } } }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "ref": { "const": "PR" } }, "required": ["ref"] },
+          "then": { "properties": { "type": { "const": "ref" }, "target": { "const": "O05" } } }
+        }
+      ]
+    },
+    "relationship": {
+      "description": "One reference from a column of this entity (the child) to its target (the parent).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "column", "target", "cardinality", "delete"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^R([0-9]{2,3}|X[0-9]{2})[a-z]?$" },
+        "catalogId": { "description": "The row of document 22, section 6 this relationship comes from.", "type": "string", "pattern": "^R[0-9]{2,3}$" },
+        "column": { "$ref": "#/$defs/logicalName" },
+        "target": { "$ref": "#/$defs/entityId" },
+        "cardinality": { "$ref": "#/$defs/cardinality" },
+        "delete": { "$ref": "#/$defs/deleteBehaviour" },
+        "ownedChild": { "type": "boolean" },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "columns", "enforcement"],
+      "properties": {
+        "kind": { "enum": ["business", "alternate"] },
+        "columns": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/logicalName" } },
+        "enforcement": { "description": "store: a unique constraint or alternate key. engine: the engine checks it.", "enum": ["store", "engine"] },
+        "condition": { "type": "string", "minLength": 1 },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "columns", "note"],
+      "properties": {
+        "kind": { "enum": ["exactly-one", "at-least-one", "at-most-one"] },
+        "columns": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/logicalName" } },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "status", "release", "historyClass", "deletePolicy", "purpose", "source", "columnSets", "attributes", "keys", "relationships"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "name": { "$ref": "#/$defs/logicalName" },
+        "kind": { "enum": ["configuration", "operational"] },
+        "status": { "description": "adopted: in document 22 or adopted as a working default. proposal: not yet accepted. later: kept in the model, not built first.", "enum": ["adopted", "proposal", "later"] },
+        "release": { "enum": ["R1", "Later"] },
+        "historyClass": { "$ref": "#/$defs/historyClass" },
+        "deletePolicy": { "$ref": "#/$defs/deletePolicy" },
+        "deleteNote": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "notes": { "$ref": "#/$defs/textList" },
+        "rules": { "$ref": "#/$defs/textList" },
+        "storedIn": { "description": "The entity whose rows hold this one. It then has no table and no attributes of its own.", "$ref": "#/$defs/entityId" },
+        "columnSets": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/columnSetName" } },
+        "linkColumns": { "description": "Uses the link columns of document 22, section 2.1.3.", "type": "boolean" },
+        "recordNumberPrefix": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "attributes": { "type": "array", "items": { "$ref": "#/$defs/attribute" } },
+        "keys": { "type": "array", "items": { "$ref": "#/$defs/key" } },
+        "toolIds": { "description": "Columns that hold a Microsoft or tool ID.", "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/logicalName" } },
+        "relationships": { "type": "array", "items": { "$ref": "#/$defs/relationship" } },
+        "constraints": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/constraint" } },
+        "subjects": {
+          "description": "A subject that can be one of several entities (document 22, section 2.6).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kindColumn", "options"],
+          "properties": {
+            "kindColumn": { "$ref": "#/$defs/logicalName" },
+            "options": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["value", "column"],
+                "properties": {
+                  "value": { "$ref": "#/$defs/logicalName" },
+                  "column": { "$ref": "#/$defs/logicalName" }
+                }
+              }
+            }
+          }
+        },
+        "workingDefault": { "$ref": "#/$defs/workingDefault" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "id": { "pattern": "^C" } }, "required": ["id"] },
+          "then": { "properties": { "kind": { "const": "configuration" }, "release": { "const": "R1" } } }
+        },
+        {
+          "if": { "properties": { "id": { "pattern": "^O" } }, "required": ["id"] },
+          "then": { "properties": { "kind": { "const": "operational" }, "status": { "const": "adopted" }, "release": { "const": "R1" } } }
+        },
+        {
+          "if": { "properties": { "id": { "pattern": "^L" } }, "required": ["id"] },
+          "then": { "properties": { "status": { "const": "later" }, "release": { "const": "Later" } } },
+          "else": { "properties": { "status": { "enum": ["adopted", "proposal"] } } }
+        },
+        {
+          "if": { "required": ["storedIn"] },
+          "then": { "properties": { "attributes": { "maxItems": 0 }, "relationships": { "maxItems": 0 }, "keys": { "maxItems": 0 }, "columnSets": { "maxItems": 0 } } },
+          "else": { "properties": { "columnSets": { "contains": { "const": "common" } } } }
+        }
+      ]
+    }
+  }
+}

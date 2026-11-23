@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "columns-pascal-case-computed-flag-invalid-input",
+  "description": "A pipeline records a deployment with IsMissingApproval, not isMissingApproval. G-09 drops the exact name; the other case is not a column of the model, so the write is invalid input and the flag can never reach a store that matches names ignoring case.",
+  "tags": [
+    "hardening-1",
+    "columns"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-pipeline-1",
+      "principalKind": "service-principal",
+      "actorKind": "pipeline",
+      "roleKeys": [
+        "deployment-recorder"
+      ]
+    }
+  },
+  "input": {
+    "entity": "deployment-record",
+    "operation": "create",
+    "after": {
+      "result": "deployment-succeeded",
+      "IsMissingApproval": false
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-column",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

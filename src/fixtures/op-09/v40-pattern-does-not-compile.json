@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v40-pattern-does-not-compile",
+  "description": "A draft gives the work item link kind an ID pattern with an open bracket. It does not compile as a regular expression, so V40 refuses it. The schema check agrees, on the patch and on the composed set.",
+  "ruleIds": [
+    "V40"
+  ],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1,
+        "summary": "Work item ID pattern"
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "link-kind",
+          "key": "ado-work-item",
+          "values": {
+            "idPattern": "^[0-9+$"
+          }
+        }
+      ]
+    }
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "activeSnapshot": {
+      "presetKey": "balanced"
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "pattern.invalid",
+        "severity": "error",
+        "ruleId": "V40",
+        "entity": "Link Kind",
+        "ref": "ado-work-item"
+      },
+      {
+        "code": "shape.schema",
+        "severity": "error",
+        "ruleId": "V01",
+        "entity": "Link Kind",
+        "ref": "ado-work-item"
+      },
+      {
+        "code": "shape.schema",
+        "severity": "error",
+        "ruleId": "V01"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$comment": "Document 24, section 6.12. Route A only, R1. Resources cite, never copy. Prompts come later with the playbook skills package (D-18).",
+  "description": "The read-only MCP resources of the product's own server. Each read returns one content item with mimeType application/json; its text is JSON that matches contentSchema. Rows follow the caller's access like any read.",
+  "notFound": "An unknown or hidden URI returns the MCP resource not found error. It never reveals whether a hidden row exists.",
+  "resources": [
+    {
+      "name": "guideline",
+      "uriTemplate": "guideline://G{n}",
+      "title": "Guideline",
+      "description": "One guideline: number, version, the one-line rule and the hub link.",
+      "mimeType": "application/json",
+      "release": "R1",
+      "routes": [
+        "A"
+      ],
+      "reads": [
+        "C39",
+        "C04"
+      ],
+      "defaultRoles": "Any role, like the read tools.",
+      "contentSchema": "resources/guideline.content.schema.json",
+      "example": "guideline://G2"
+    },
+    {
+      "name": "configuration-in-force",
+      "uriTemplate": "configuration://in-force",
+      "title": "Configuration in force",
+      "description": "The configuration set key, the version in force and its content hash.",
+      "mimeType": "application/json",
+      "release": "R1",
+      "routes": [
+        "A"
+      ],
+      "reads": [
+        "C01",
+        "C02"
+      ],
+      "defaultRoles": "Any role, like the read tools.",
+      "contentSchema": "resources/configuration-in-force.content.schema.json",
+      "example": "configuration://in-force"
+    },
+    {
+      "name": "playbook-chapter",
+      "uriTemplate": "playbook://chapter/{n}",
+      "title": "Playbook chapter",
+      "description": "One playbook chapter: its title and link only.",
+      "mimeType": "application/json",
+      "release": "R1",
+      "routes": [
+        "A"
+      ],
+      "reads": [
+        "C39",
+        "C04"
+      ],
+      "defaultRoles": "Any role, like the read tools.",
+      "contentSchema": "resources/playbook-chapter.content.schema.json",
+      "example": "playbook://chapter/2"
+    }
+  ]
+}

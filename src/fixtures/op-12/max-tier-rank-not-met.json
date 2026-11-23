@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "max-tier-rank-not-met",
+  "description": "A model with one max-tier-rank condition: the change goes past it, so it does not qualify, and the failed condition is listed with its index.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-max-tier-rank",
+        "values": {
+          "label": "Model only-max-tier-rank",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 3
+    },
+    "models": [
+      {
+        "modelKey": "only-max-tier-rank",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "only-max-tier-rank",
+          "conditionIndex": 0,
+          "conditionKind": "max-tier-rank",
+          "why": "the main application's tier rank is 3, above the maximum of 2"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-max-tier-rank"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "only-max-tier-rank",
+        "role": "skipped"
+      }
+    ]
+  }
+}

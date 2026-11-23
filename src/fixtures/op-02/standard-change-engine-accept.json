@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "standard-change-engine-accept",
+  "description": "A standard change whose model qualifies (OP-12) is on the locked list: the engine accepts it and cites the decision that approved the model. It never falls through to an approval rule group.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "label-and-view-changes",
+        "values": {
+          "label": "Labels and views only, tier 1 or 2",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-2",
+    "changeTypeKey": "standard",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "facts": {
+    "standardChange": {
+      "qualifies": true,
+      "modelKey": "label-and-view-changes",
+      "approvedByDecisionId": "fixture-decision-model-1"
+    }
+  },
+  "expected": {
+    "outcome": "engine-accept",
+    "payload": {
+      "requirements": [],
+      "consultations": [],
+      "acceptanceBasis": {
+        "decisionTypeKey": "change-authorization",
+        "condition": "standard-model",
+        "standardChangeModelKey": "label-and-view-changes",
+        "approvedByDecisionId": "fixture-decision-model-1"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "decision.engine-accepted",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Change Type",
+        "key": "standard",
+        "role": "matched"
+      },
+      {
+        "entity": "Setting",
+        "key": "engine-acceptable-decision-types",
+        "role": "matched"
+      },
+      {
+        "entity": "Standard Change Model",
+        "key": "label-and-view-changes",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

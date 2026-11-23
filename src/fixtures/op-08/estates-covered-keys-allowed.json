@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "estates-covered-keys-allowed",
+  "description": "A gap check run whose Estates Covered lists one estate key.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "gap-check-run",
+    "operation": "create",
+    "after": {
+      "runBy": "fixture-person-1",
+      "adminRoleUsed": "Power Platform administrator",
+      "startedOn": "2026-11-22T09:00:00Z",
+      "estatesCovered": [
+        "power-platform-inventory"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

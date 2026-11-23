@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Record endpoint: deployment correction request",
+  "description": "The body a pipeline step sends to the corrections endpoint. It is the record_deployment_correction contract. Fields left out are copied from the corrected record. Give at least one corrected field.",
+  "$comment": "WORKING DEFAULT (open design question 12). Pipelines do not use MCP. They call the record endpoint with this contract, as a workload identity that holds the deployment recorder role through a Workload Grant (C42).",
+  "type": "object",
+  "required": [
+    "correctsDeploymentRecordId",
+    "idempotencyKey",
+    "reason"
+  ],
+  "properties": {
+    "correctsDeploymentRecordId": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/correctsDeploymentRecordId"
+    },
+    "idempotencyKey": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/idempotencyKey"
+    },
+    "reason": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/reason"
+    },
+    "changeRequestId": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/changeRequestId"
+    },
+    "resultMeaning": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/resultMeaning"
+    },
+    "artifactVersion": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/artifactVersion"
+    },
+    "finishedOn": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/finishedOn"
+    },
+    "runUrl": {
+      "$ref": "../tools/record_deployment_correction.input.schema.json#/properties/runUrl"
+    }
+  },
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "changeRequestId"
+      ]
+    },
+    {
+      "required": [
+        "resultMeaning"
+      ]
+    },
+    {
+      "required": [
+        "artifactVersion"
+      ]
+    },
+    {
+      "required": [
+        "finishedOn"
+      ]
+    },
+    {
+      "required": [
+        "runUrl"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "correctsDeploymentRecordId": "d2000000-0000-4000-8000-000000000003",
+      "idempotencyKey": "run-2001-correction-1",
+      "reason": "The run was linked to the wrong change.",
+      "changeRequestId": "d0000000-0000-4000-8000-000000000003"
+    }
+  ]
+}

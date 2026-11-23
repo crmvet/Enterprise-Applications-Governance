@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "vocabulary-source-valid",
+  "description": "A draft adds two vocabulary mappings: one to the owner role business-owner, and one to a fourth tier that the same draft adds as retired. A retired row still exists, so both mappings point to an existing row and the engine check vocabulary.source does not warn.",
+  "tags": [
+    "engine-check"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "vocabulary-mapping",
+        "key": "business-owner-support",
+        "values": {
+          "label": "Business owner support term",
+          "sourceEntity": "owner-role",
+          "sourceKey": "business-owner",
+          "vocabularyKey": "support-tier",
+          "term": "Business owner",
+          "sourceUrl": "https://example.org/terms/support",
+          "checkedOn": "2026-11-22"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "tier",
+        "key": "tier-4",
+        "values": {
+          "label": "Tier 4",
+          "rank": 4,
+          "isActive": false
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "vocabulary-mapping",
+        "key": "tier-4-support",
+        "values": {
+          "label": "Tier 4 support tier",
+          "sourceEntity": "tier",
+          "sourceKey": "tier-4",
+          "vocabularyKey": "support-tier",
+          "term": "Mission critical",
+          "sourceUrl": "https://example.org/terms/support",
+          "checkedOn": "2026-11-22"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    },
+    "reasonsMatch": "exact"
+  }
+}

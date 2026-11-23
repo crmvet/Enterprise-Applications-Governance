@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "attestation-by-change-manager-authorizes",
+  "description": "Where no ITSM step exists, the change manager attests on a confirmation card, with an evidence link: the change is authorized by attestation.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "attestation",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "person",
+        "principalKind": "user",
+        "attesterHoldsRole": true,
+        "answeredOnConfirmationCard": true
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "authorized",
+    "payload": {
+      "authorized": true,
+      "basis": "attestation",
+      "ignoredFacts": [],
+      "decidingFactId": "fixture-fact-1"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

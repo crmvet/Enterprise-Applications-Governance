@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "retired-answer-option-ignored",
+  "description": "An answer that names a retired option does not count, so its question stays unanswered.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "tier-answer-option",
+        "key": "data-change/own-identity"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "own-identity"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "team-slowed"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "department"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "computedTierKey": "tier-2",
+      "missingQuestionKeys": [
+        "data-change"
+      ],
+      "ignoredAnswers": [
+        {
+          "questionKey": "data-change",
+          "answerKey": "own-identity"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "tier.incomplete",
+        "severity": "info",
+        "ref": "data-change"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

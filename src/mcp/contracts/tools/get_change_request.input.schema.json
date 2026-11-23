@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_change_request input",
+  "description": "One change with its state: type, mode, window, authorization, approvals, affected applications, deployments and their flags, result and links. Writes nothing.",
+  "x-tool": "get_change_request",
+  "type": "object",
+  "required": [
+    "changeRequestId"
+  ],
+  "properties": {
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "changeRequestId": "d0000000-0000-4000-8000-000000000002"
+    }
+  ]
+}

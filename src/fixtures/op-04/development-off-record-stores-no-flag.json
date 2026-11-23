@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "development-off-record-stores-no-flag",
+  "description": "A record at off stores no flag and tells nobody.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "record",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "development",
+    "portfolioPath": [],
+    "routeKey": "ai-tool",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "pending",
+      "windowStartUtc": "2026-11-20T08:00:00Z",
+      "windowEndUtc": "2026-11-20T12:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "not-applicable",
+    "payload": {
+      "gateLevel": "off",
+      "isOutsideWindow": false,
+      "isOtherPath": false,
+      "isMissingApproval": false,
+      "isAiOnlyCodeApproval": false,
+      "notify": false
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

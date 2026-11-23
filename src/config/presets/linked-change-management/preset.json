@@ -1,0 +1,25 @@
+{
+  "$comment": [
+    "Linked change management overlay (document 21, section 6.2; D-08). A one-row overlay: the operation is in patch.json.",
+    "It conflicts with nothing. A portfolio row may still narrow the mode in a client's working set (document 28, Q2); presets never hold portfolio rows (V44).",
+    "The linked-mode authorization fact follows document 28, Q22 (a working default the product owner can override). WORKING DEFAULT (open design question 12): the client-built step that reports the authorization state is a workload; it would hold its role through a workload grant (the proposed authorization-reporter role in Balanced)."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "linked-change-management",
+  "label": "Linked change management",
+  "description": "Sets the change management mode to linked: the client's ITSM tool stays the system of record for change requests and their authorization.",
+  "presetKind": "overlay",
+  "extends": null,
+  "conflictsWith": [],
+  "areas": ["change-management"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "setupNotes": [
+    {
+      "text": "Each change request holds the external change number and link from the ITSM tool. The ITSM tool's workflow is never copied."
+    },
+    {
+      "text": "Build a step in the ITSM tool that reports the authorization state with an evidence link. Where no step exists, the change manager confirms the external authorization on a confirmation card. A recorded number alone never counts as authorization."
+    }
+  ]
+}

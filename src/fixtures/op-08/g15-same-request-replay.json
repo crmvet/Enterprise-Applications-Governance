@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g15-same-request-replay",
+  "description": "The same request arrives again with the same idempotency key and the same hash. A replay: allowed, nothing to write, and the adapter returns the first result.",
+  "ruleIds": [
+    "G-15"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "idempotencyKey": "fixture-key-1",
+    "after": {
+      "status": "intake-draft",
+      "need": "A loan tracker."
+    }
+  },
+  "facts": {
+    "priorRequestHash": "fdcb98367ec983062dd296e8a58d0c23e2b54a16970d6c731310f76f522f4f2f"
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isReplay": true,
+      "requestHash": "fdcb98367ec983062dd296e8a58d0c23e2b54a16970d6c731310f76f522f4f2f",
+      "setColumns": {},
+      "effects": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

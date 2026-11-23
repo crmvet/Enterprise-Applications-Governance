@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-cancels-pending-record-and-moves-decision-allowed",
+  "description": "The engine cancels a pending record and changes its Decision in the same write. A pending record counts for nothing and its request columns are the engine's, so this stays allowed.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-cancelled",
+      "decision": "fixture-decision-2"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-pending",
+      "outcomeMeaning": "pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": false,
+      "setColumns": {
+        "outcomeMeaning": "cancelled",
+        "performedByActorKind": "engine"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

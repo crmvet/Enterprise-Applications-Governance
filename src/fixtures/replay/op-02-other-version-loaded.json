@@ -1,0 +1,76 @@
+{
+  "case": "op-02-other-version-loaded",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A result made with configuration version 2, replayed against version 1 of the record's snapshot: the replay reports that the loaded version and its hash are not the ones the result was made with.",
+  "operation": "OP-02",
+  "recorded": {
+    "configurationVersion": 2,
+    "engineVersion": "0.1.0",
+    "outcome": "required",
+    "payload": {
+      "consultations": [],
+      "requirements": [
+        {
+          "approvalMode": "sequential",
+          "approverOwnerRoleKey": "business-owner",
+          "isConsultation": false,
+          "minimumCount": 1,
+          "requiresTypedReason": false,
+          "ruleKey": "go-live-tier-3-owner",
+          "sequence": 1,
+          "source": "approval-rule",
+          "timeoutDays": 5
+        },
+        {
+          "approvalMode": "sequential",
+          "approverRoleKey": "security-reviewer",
+          "isConsultation": false,
+          "minimumCount": 1,
+          "requiresTypedReason": true,
+          "ruleKey": "go-live-tier-3-security",
+          "sequence": 2,
+          "source": "approval-rule",
+          "timeoutDays": 5
+        }
+      ]
+    },
+    "reasons": [],
+    "snapshotHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-tier-3-owner",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-tier-3-security",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-owner",
+        "role": "dropped"
+      }
+    ]
+  },
+  "request": {
+    "decisionTypeKey": "go-live",
+    "portfolioPath": [],
+    "tierKey": "tier-3"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": [
+    "replay",
+    "tampered"
+  ],
+  "expectedDifferences": [
+    "snapshot-hash",
+    "configuration-version"
+  ]
+}

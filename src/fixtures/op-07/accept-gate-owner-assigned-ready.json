@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "accept-gate-owner-assigned-ready",
+  "description": "The accept gate needs a named business owner (guideline G2). An intake with no tier yet and an active business owner assignment is ready.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "accept",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "assignedOwnerRoleKeys": [
+      "business-owner",
+      "technical-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "gateKey": "accept",
+      "ready": true,
+      "requirements": [
+        {
+          "requirementKey": "accept-business-owner",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "business-owner",
+          "met": true,
+          "guidelineKey": "g2",
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Gate",
+        "key": "accept",
+        "role": "matched"
+      },
+      {
+        "entity": "Gate Requirement",
+        "key": "accept-business-owner",
+        "role": "required"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

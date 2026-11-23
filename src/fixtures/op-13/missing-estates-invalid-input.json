@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "missing-estates-invalid-input",
+  "description": "A request that names no covered estate is refused: the engine never guesses which estates a run read.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Expense app"
+      }
+    ]
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

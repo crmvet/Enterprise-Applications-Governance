@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "duplicate-item-in-page-one-claim",
+  "description": "The same item twice in one page is compared once: one new claim, one item seen. External Id and source type compare without case.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000106",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Shift roster"
+      },
+      {
+        "externalId": "00000000-0000-0000-0000-000000000106",
+        "sourceType": "MICROSOFT.POWERAPPS/CANVASAPPS",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Shift roster"
+      }
+    ]
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "newClaims": [
+        {
+          "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000106"
+        }
+      ],
+      "counts": {
+        "itemsSeen": 1,
+        "newClaims": 1,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

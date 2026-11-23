@@ -1,0 +1,11 @@
+{
+  "idempotencyKey": "pp-pipelines-c0000000-0000-4000-8000-000000000007",
+  "artifactName": "FieldVisitPlanner",
+  "artifactVersion": "1.4.3.0",
+  "artifactKindKey": "power-platform-solution",
+  "targetExternalId": "a1000000-0000-4000-8000-000000000003",
+  "startedOn": "2026-12-06T10:00:00Z",
+  "finishedOn": "2026-12-06T10:04:00Z",
+  "resultMeaning": "succeeded",
+  "pipelineExternalId": "pp-pipelines-c1000000-0000-4000-8000-000000000001"
+}

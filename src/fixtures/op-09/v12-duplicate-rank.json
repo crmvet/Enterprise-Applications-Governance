@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v12-duplicate-rank",
+  "description": "A draft gives tier-2 the rank of tier-1. Active tiers need their own ranks, so V12 refuses it.",
+  "ruleIds": ["V12"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [{ "op": "upsert", "entity": "tier", "key": "tier-2", "values": { "rank": 1 } }]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "baseVersionNumber": 1 },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false, "changeSummary": ["Changed Tier `tier-2`: rank."] },
+    "reasons": [{ "code": "tier.rank-duplicate", "severity": "error", "ruleId": "V12", "entity": "Tier", "ref": "tier-2" }],
+    "reasonsMatch": "exact"
+  }
+}

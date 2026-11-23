@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_change_schedule output",
+  "description": "The response envelope. On success, data lists planned changes sorted by window start. authorized is true only when an accepted authorization decision exists, or a linked change has an authorization fact.",
+  "x-tool": "get_change_schedule",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "changeRequestId",
+              "title",
+              "businessApplicationId",
+              "applicationName",
+              "target",
+              "windowStart",
+              "windowEnd",
+              "changeType",
+              "status",
+              "authorized"
+            ],
+            "properties": {
+              "changeRequestId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O11 Change Request"
+              },
+              "title": {
+                "type": "string",
+                "description": "A short name for the change.",
+                "x-untrusted": true
+              },
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "applicationName": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "target": {
+                "description": "The planned target. Null when none is set.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "deploymentTargetId",
+                      "label",
+                      "targetStageKey"
+                    ],
+                    "properties": {
+                      "deploymentTargetId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O15 Deployment Target"
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "The target's name when last seen.",
+                        "x-untrusted": true
+                      },
+                      "targetStageKey": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/key",
+                            "x-entity": "C34 Target Stage"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "windowStart": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "windowEnd": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "changeType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey",
+                "description": "The Change Type (C20)."
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The record status by meaning."
+              },
+              "authorized": {
+                "type": "boolean",
+                "description": "True when the change is authorized."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One change is planned in production next week.",
+      "data": {
+        "items": [
+          {
+            "changeRequestId": "d0000000-0000-4000-8000-000000000002",
+            "title": "Add photo upload to visit form",
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "applicationName": "Field visit planner",
+            "target": {
+              "deploymentTargetId": "d4000000-0000-4000-8000-000000000002",
+              "label": "Production environment",
+              "targetStageKey": "production"
+            },
+            "windowStart": "2026-12-02T18:00:00Z",
+            "windowEnd": "2026-12-02T20:00:00Z",
+            "changeType": {
+              "key": "normal",
+              "label": "Normal"
+            },
+            "status": {
+              "label": "Submitted",
+              "meaning": "submitted"
+            },
+            "authorized": false
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].title",
+        "items[].applicationName",
+        "items[].target.label"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

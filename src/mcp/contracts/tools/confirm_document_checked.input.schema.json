@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "confirm_document_checked input",
+  "description": "The owner confirms a document is still true, or marks it stale. It sets Last Checked On.",
+  "$comment": "WORKING DEFAULT (open design question 9). For a document type with Current Needs Person = yes (C22), current from an AI client is stored as draft until the person confirms on a confirmation card.",
+  "x-tool": "confirm_document_checked",
+  "type": "object",
+  "required": [
+    "documentLinkId",
+    "stillTrue"
+  ],
+  "properties": {
+    "documentLinkId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O19 Document Link",
+      "description": "The document link."
+    },
+    "stillTrue": {
+      "type": "boolean",
+      "description": "True: still true. False: mark it stale."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "A plain note."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "documentLinkId": "e0000000-0000-4000-8000-000000000001",
+      "stillTrue": true,
+      "clientRequestId": "req-0402"
+    }
+  ]
+}

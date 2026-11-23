@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "external-number-alone-not-authorized",
+  "description": "A linked change with only an external change number recorded is not authorized: a recorded number alone never counts (28, Q22; D-08).",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.number-only",
+        "severity": "warning",
+        "entity": "Change Request"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,307 @@
+{
+  "ok": true,
+  "summary": "13 changes have a window between 8 November and 20 December. Five are not authorized yet.",
+  "data": {
+    "items": [
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000007",
+        "title": "Fix the shift export after a payroll change",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000002",
+        "applicationName": "Crew Roster",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+          "label": "Field Ops Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-10T06:00:00Z",
+        "windowEnd": "2026-11-10T07:00:00Z",
+        "changeType": {
+          "key": "emergency",
+          "label": "Emergency"
+        },
+        "status": {
+          "label": "Closed",
+          "meaning": "completed"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000004",
+        "title": "Release 3.4.2: photo upload fix",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+          "label": "Field Ops Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-13T18:00:00Z",
+        "windowEnd": "2026-11-13T19:30:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Closed",
+          "meaning": "completed"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000006",
+        "title": "Invoice Matching 1.12",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000011",
+        "applicationName": "Invoice Matching",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000006",
+          "label": "Finance Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-14T15:00:00Z",
+        "windowEnd": "2026-11-14T17:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Closed",
+          "meaning": "completed"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000005",
+        "title": "Release 3.5 to test",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000002",
+          "label": "Field Ops Test",
+          "targetStageKey": "test"
+        },
+        "windowStart": "2026-11-18T09:00:00Z",
+        "windowEnd": "2026-11-18T11:00:00Z",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Closed",
+          "meaning": "completed"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000009",
+        "title": "Route Planner first release to test",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000009",
+        "applicationName": "Route Planner",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000002",
+          "label": "Field Ops Test",
+          "targetStageKey": "test"
+        },
+        "windowStart": "2026-11-24T09:00:00Z",
+        "windowEnd": "2026-11-24T12:00:00Z",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000002",
+        "title": "Rotate the reminder flow connection",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+          "label": "Field Ops Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-25T07:00:00Z",
+        "windowEnd": "2026-11-25T08:00:00Z",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000001",
+        "title": "Release 3.5: inspector workload view",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+          "label": "Field Ops Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-27T18:00:00Z",
+        "windowEnd": "2026-11-27T21:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000008",
+        "title": "Supplier Onboarding go-live",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000012",
+        "applicationName": "Supplier Onboarding",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000006",
+          "label": "Finance Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-12-02T17:00:00Z",
+        "windowEnd": "2026-12-02T20:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "authorized": false
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000010",
+        "title": "Contractor Portal sign-in page update",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000010",
+        "applicationName": "Contractor Portal",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000004",
+          "label": "Customer Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-12-04T22:00:00Z",
+        "windowEnd": "2026-12-05T01:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "authorized": false
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000011",
+        "title": "Expense Assistant pilot in test",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000019",
+        "applicationName": "Expense Assistant",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000005",
+          "label": "Finance Test",
+          "targetStageKey": "test"
+        },
+        "windowStart": "2026-12-09T09:00:00Z",
+        "windowEnd": "2026-12-09T12:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "authorized": false
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000013",
+        "title": "Desk Booking calendar connector update",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000014",
+        "applicationName": "Desk Booking",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000008",
+          "label": "Desk Booking tenant",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-12-11T06:00:00Z",
+        "windowEnd": "2026-12-11T08:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "authorized": false
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000012",
+        "title": "Training Records yearly archive",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000020",
+        "applicationName": "Training Records",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000007",
+          "label": "People Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-12-15T19:00:00Z",
+        "windowEnd": "2026-12-15T22:00:00Z",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000014",
+        "title": "Customer Feedback Bot pilot",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000018",
+        "applicationName": "Customer Feedback Bot",
+        "target": null,
+        "windowStart": "2026-12-16T09:00:00Z",
+        "windowEnd": "2026-12-17T17:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "authorized": false
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [
+    {
+      "message": "Customer Feedback Bot pilot has no planned target yet.",
+      "code": "change.target-missing",
+      "ref": "70000000-0000-4000-8000-000000000014"
+    }
+  ],
+  "untrustedFields": [
+    "items[].title",
+    "items[].applicationName",
+    "items[].target.label"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0011"
+}

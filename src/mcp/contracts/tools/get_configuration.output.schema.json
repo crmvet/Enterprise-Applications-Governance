@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_configuration output",
+  "description": "The response envelope. On success, data is the configuration set version read, its rows, and the diff when compareToVersion was given. Labels and descriptions are configuration text that admins typed.",
+  "x-tool": "get_configuration",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "configurationSet",
+        "rows"
+      ],
+      "properties": {
+        "configurationSet": {
+          "type": "object",
+          "required": [
+            "key",
+            "version",
+            "publishedOn",
+            "contentHash"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C01 Configuration Set"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The version read."
+            },
+            "publishedOn": {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            "contentHash": {
+              "$ref": "../common.schema.json#/$defs/contentHash"
+            }
+          },
+          "additionalProperties": false
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "key",
+              "label",
+              "isActive",
+              "origin",
+              "fields"
+            ],
+            "properties": {
+              "entity": {
+                "$ref": "../common.schema.json#/$defs/entityKey"
+              },
+              "key": {
+                "$ref": "../common.schema.json#/$defs/keyPath"
+              },
+              "label": {
+                "type": "string",
+                "description": "The configured label.",
+                "x-untrusted": true
+              },
+              "isActive": {
+                "type": "boolean",
+                "description": "False for a retired row."
+              },
+              "origin": {
+                "enum": [
+                  "shipped",
+                  "local"
+                ],
+                "description": "Shipped from a preset, or added or changed by the client."
+              },
+              "fields": {
+                "type": "object",
+                "description": "The row's other fields, in the seed format of document 21."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "diff": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "key",
+              "op",
+              "before",
+              "after"
+            ],
+            "properties": {
+              "entity": {
+                "$ref": "../common.schema.json#/$defs/entityKey"
+              },
+              "key": {
+                "$ref": "../common.schema.json#/$defs/keyPath"
+              },
+              "op": {
+                "enum": [
+                  "added",
+                  "updated",
+                  "retired"
+                ]
+              },
+              "before": {
+                "description": "The row before. Null when added.",
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "after": {
+                "description": "The row after.",
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Present only when compareToVersion was given."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Version 3 is in force. Tier 3 production is at enforce.",
+      "data": {
+        "configurationSet": {
+          "key": "working",
+          "version": 3,
+          "publishedOn": "2026-11-20T10:00:00Z",
+          "contentHash": "a3f1c2d4e5b60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00"
+        },
+        "rows": [
+          {
+            "entity": "gate-policy",
+            "key": "tier-3-normal-production",
+            "label": "Tier 3, normal change, production",
+            "isActive": true,
+            "origin": "shipped",
+            "fields": {
+              "tierKey": "tier-3",
+              "changeTypeKey": "normal",
+              "targetStageKey": "production",
+              "gateLevel": "enforce",
+              "failMode": "fail-closed"
+            }
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "rows[].label"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

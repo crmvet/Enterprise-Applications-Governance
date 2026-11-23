@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g14-gate-decision-ready-allowed",
+  "description": "The same gate decision is accepted when OP-07 says the gate is ready. Allowed: the engine sets Decided On and writes an Audit Entry.",
+  "ruleIds": [
+    "G-14",
+    "G-17"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-6",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "priority",
+      "subjectKind": "intake-request"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "commit",
+      "ready": true,
+      "requirements": []
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "decidedOn": "2026-11-22T09:00:00Z",
+        "statusMeaning": "accepted"
+      },
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "columns": {
+            "operation": "decision-accepted",
+            "changedValuesJson": {
+              "basis": "approvals-satisfied"
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Gate",
+        "key": "commit",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

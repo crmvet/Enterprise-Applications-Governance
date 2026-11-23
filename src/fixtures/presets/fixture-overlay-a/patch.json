@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "fixture-overlay-a",
+    "presetKind": "overlay",
+    "extends": null,
+    "conflictsWith": ["fixture-overlay-b"]
+  },
+  "operations": [
+    { "op": "upsert", "entity": "guideline", "key": "g1", "values": { "chapter": "Fixture overlay A" } }
+  ]
+}

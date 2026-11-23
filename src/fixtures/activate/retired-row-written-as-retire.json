@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "retired-row-written-as-retire",
+  "description": "The draft retires a tier question. Activation never deletes a live row: it writes the row retired (Is Active no).",
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 1
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "submitted",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "retire",
+          "entity": "vocabulary-mapping",
+          "key": "tier-1-support"
+        }
+      ]
+    }
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "activated",
+    "payload": {
+      "versionNumber": 2,
+      "rowWrites": [
+        {
+          "entity": "vocabulary-mapping",
+          "key": "tier-1-support",
+          "change": "retire"
+        }
+      ]
+    }
+  }
+}

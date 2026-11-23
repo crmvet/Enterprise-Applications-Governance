@@ -1,0 +1,24 @@
+{
+  "description": "Copy-paste inputs for the two Compose actions of the Power Platform Pipelines record flow (README.md, steps 3 and 4). stageRunFacts is the only place you pick dynamic content from the trigger: replace each PICK value with the matching trigger output in the designer. recordBody then needs no change: its expressions read stageRunFacts and build the record endpoint body. Not run in a real host: the output names and status words of OnDeploymentCompleted are UNVERIFIED here (README.md, What is not verified). The local test checks that recordBody has exactly the fields of fixtures/deployment.json.",
+  "stageRunFacts": {
+    "stageRunId": "PICK: the deployment stage run ID",
+    "artifactName": "PICK: the artifact (solution) name",
+    "artifactVersion": "PICK: the artifact version",
+    "targetEnvironmentId": "PICK: the target environment ID",
+    "pipelineId": "PICK: the deployment pipeline ID",
+    "startedOn": "PICK: when the stage run started",
+    "finishedOn": "PICK: when the stage run ended, or leave empty",
+    "status": "PICK: the stage run's result"
+  },
+  "recordBody": {
+    "idempotencyKey": "@{concat('pp-pipelines-', outputs('Stage_run_facts')?['stageRunId'])}",
+    "artifactName": "@{outputs('Stage_run_facts')?['artifactName']}",
+    "artifactVersion": "@{outputs('Stage_run_facts')?['artifactVersion']}",
+    "artifactKindKey": "power-platform-solution",
+    "targetExternalId": "@{outputs('Stage_run_facts')?['targetEnvironmentId']}",
+    "startedOn": "@{formatDateTime(outputs('Stage_run_facts')?['startedOn'], 'yyyy-MM-ddTHH:mm:ssZ')}",
+    "finishedOn": "@{if(empty(outputs('Stage_run_facts')?['finishedOn']), utcNow('yyyy-MM-ddTHH:mm:ssZ'), formatDateTime(outputs('Stage_run_facts')?['finishedOn'], 'yyyy-MM-ddTHH:mm:ssZ'))}",
+    "resultMeaning": "@{if(equals(toLower(string(outputs('Stage_run_facts')?['status'])), 'succeeded'), 'succeeded', if(equals(toLower(string(outputs('Stage_run_facts')?['status'])), 'failed'), 'failed', 'not-deployed'))}",
+    "pipelineExternalId": "@{concat('pp-pipelines-', outputs('Stage_run_facts')?['pipelineId'])}"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-creates-pending-record-allowed",
+  "description": "The engine writes the request: after OP-02 names the required approvals, it creates the Approval Record with the pending outcome, as an engine-nested write for the person who asked for approvals. Document 22, O10 makes Outcome required and says the engine writes the request, so this is allowed. G-10 writes the meaning copy, the stamps name the engine, and no responder column is written.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "create",
+    "rowId": "fixture-approval-3",
+    "after": {
+      "decision": "fixture-decision-1",
+      "approvalRule": "acceptance-approval",
+      "requiredOwnerRole": "business-owner",
+      "askedPrincipal": "fixture-person-2",
+      "outcome": "approval-pending",
+      "requestedOn": "2026-11-22T09:00:00Z",
+      "expiresOn": "2026-12-02T09:00:00Z",
+      "countsTowardRequirement": false
+    }
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": false,
+      "setColumns": {
+        "outcomeMeaning": "pending",
+        "createdByPrincipal": "fixture-person-1",
+        "performedByActorKind": "engine",
+        "isAiCreated": false,
+        "configurationSetVersion": 1
+      },
+      "removedColumns": [],
+      "effects": []
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Status",
+        "key": "approval-pending",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

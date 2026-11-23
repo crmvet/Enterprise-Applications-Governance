@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "map_pipeline output",
+  "description": "The response envelope. On success, data is the write result for the Pipeline Reference (O16), with its map entries (O17). Links have no status.",
+  "x-tool": "map_pipeline",
+  "x-ai-write-states": [
+    "link"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Pipeline Reference (O16).",
+      "properties": {
+        "status": {
+          "type": "null",
+          "description": "A Pipeline Reference has no status."
+        },
+        "pipelineReferenceId": {
+          "description": "Null only when validateOnly was true and the pipeline is new.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O16 Pipeline Reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "pipelineMapEntryId",
+              "businessApplicationId",
+              "deploymentTargetId",
+              "stageOrder"
+            ],
+            "properties": {
+              "pipelineMapEntryId": {
+                "description": "Null only when validateOnly was true.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O17 Pipeline Map Entry"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "deploymentTargetId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O15 Deployment Target"
+              },
+              "stageOrder": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The Pipeline Map Entry rows (O17)."
+        }
+      },
+      "required": [
+        "pipelineReferenceId",
+        "entries"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The pipeline is mapped to two targets of the application.",
+      "data": {
+        "recordId": "d5000000-0000-4000-8000-000000000001",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "pipelineReferenceId": "d5000000-0000-4000-8000-000000000001",
+        "entries": [
+          {
+            "pipelineMapEntryId": "d6000000-0000-4000-8000-000000000001",
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "deploymentTargetId": "d4000000-0000-4000-8000-000000000001",
+            "stageOrder": 1
+          },
+          {
+            "pipelineMapEntryId": "d6000000-0000-4000-8000-000000000002",
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "deploymentTargetId": "d4000000-0000-4000-8000-000000000002",
+            "stageOrder": 2
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

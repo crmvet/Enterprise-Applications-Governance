@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_decision_log input",
+  "description": "What was decided, by whom, when and why, with the supersede and amend chain. Writes nothing. subjectKind and subjectId go together.",
+  "x-tool": "get_decision_log",
+  "type": "object",
+  "properties": {
+    "subjectKind": {
+      "$ref": "../common.schema.json#/$defs/decisionSubjectKind",
+      "description": "Only decisions about this kind of record."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "Only decisions about this record."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only decisions about this application or its records."
+    },
+    "decisionTypeKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C18 Decision Type"
+      },
+      "description": "Only these decision types."
+    },
+    "statusMeanings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/decisionStatusMeaning"
+      },
+      "description": "Only decisions with these status meanings."
+    },
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Decided on or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Decided on or before this date."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "dependentRequired": {
+    "subjectId": [
+      "subjectKind"
+    ],
+    "subjectKind": [
+      "subjectId"
+    ]
+  },
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "statusMeanings": [
+        "accepted"
+      ],
+      "top": 10
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "whoami output",
+  "description": "The response envelope. On success, data says who the person is, their roles and the tools they may call.",
+  "x-tool": "whoami",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "principal",
+        "productRoles",
+        "actorKind",
+        "clientApp",
+        "configurationSet",
+        "toolsets",
+        "tools"
+      ],
+      "properties": {
+        "principal": {
+          "type": "object",
+          "required": [
+            "objectId",
+            "displayLabel",
+            "principalKind"
+          ],
+          "properties": {
+            "objectId": {
+              "$ref": "../common.schema.json#/$defs/guid"
+            },
+            "displayLabel": {
+              "type": "string"
+            },
+            "principalKind": {
+              "$ref": "../common.schema.json#/$defs/principalKind"
+            }
+          },
+          "additionalProperties": false
+        },
+        "productRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "roleKey",
+              "label",
+              "viaGroup"
+            ],
+            "properties": {
+              "roleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role"
+              },
+              "label": {
+                "type": "string"
+              },
+              "viaGroup": {
+                "$ref": "../common.schema.json#/$defs/directoryObject",
+                "description": "The Entra group that grants the role. Human roles come only through groups (D-11)."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The product roles the person holds now. Empty when they hold none."
+        },
+        "actorKind": {
+          "const": "ai-client-for-person",
+          "description": "Calls through the MCP endpoint are always stamped as an AI client acting for the person."
+        },
+        "clientApp": {
+          "$ref": "../common.schema.json#/$defs/clientApp"
+        },
+        "configurationSet": {
+          "type": "object",
+          "required": [
+            "key",
+            "version",
+            "publishedOn"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C01 Configuration Set"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The version number in force."
+            },
+            "publishedOn": {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            }
+          },
+          "additionalProperties": false,
+          "description": "The configuration set version in force."
+        },
+        "toolsets": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          },
+          "description": "The toolset keys the person may use.",
+          "uniqueItems": true
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/toolName"
+          },
+          "description": "The tool names the person may call, built per request from the Tool Policy rows and the person's roles.",
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "You are signed in as Requester (sample) with the requester role.",
+      "data": {
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Requester (sample)",
+          "principalKind": "user"
+        },
+        "productRoles": [
+          {
+            "roleKey": "requester",
+            "label": "Requester",
+            "viaGroup": {
+              "objectId": "30000000-0000-4000-8000-000000000001",
+              "displayLabel": "Product requesters (sample)"
+            }
+          }
+        ],
+        "actorKind": "ai-client-for-person",
+        "clientApp": {
+          "appId": "40000000-0000-4000-8000-000000000001",
+          "label": "Claude Code"
+        },
+        "configurationSet": {
+          "key": "working",
+          "version": 3,
+          "publishedOn": "2026-11-20T08:00:00Z"
+        },
+        "toolsets": [
+          "session",
+          "portfolio",
+          "intake"
+        ],
+        "tools": [
+          "whoami",
+          "get_my_queue",
+          "find_applications",
+          "save_intake_draft"
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

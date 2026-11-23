@@ -1,0 +1,49 @@
+# Runs every check of src/ with the repository's own check runner (src/tools/ci.mjs): build, tests, presets,
+# fixtures, replays, dash check, JSON, model, content, UI harness packages, pipeline step samples and generated files.
+# --no-scrub: the scrub gate and its term list are not part of this repository, so that one check is skipped here.
+# No secrets and no sign-in. Packages come from nuget.org and npmjs only.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Build, test and check src
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: src
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET (the SDK in src/global.json)
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: src/global.json
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Run every check
+        run: node tools/ci.mjs --no-scrub

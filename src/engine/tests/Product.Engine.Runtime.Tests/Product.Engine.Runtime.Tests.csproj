@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Tests for the engine runtime: the storage ports, the snapshot cache with the version probe, the caller
+    resolution, plan, fetch and evaluate, and full writes through the in-memory store adapter.
+    Runs on both shipped runtimes, net10.0 and net48. Reads the shipped presets in src/, nothing else.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>$(EngineTestTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Product.Engine.Core\Product.Engine.Core.csproj" />
+    <ProjectReference Include="..\..\Product.Engine.Configuration\Product.Engine.Configuration.csproj" />
+    <ProjectReference Include="..\..\Product.Engine.Runtime\Product.Engine.Runtime.csproj" />
+    <ProjectReference Include="..\..\Product.Engine.Testing\Product.Engine.Testing.csproj" />
+  </ItemGroup>
+</Project>

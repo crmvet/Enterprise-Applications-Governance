@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_gap_check input",
+  "description": "What is running that is not in the register? Runs live as the signed-in admin: the server exchanges the admin's token for a Power Platform API token and queries the inventory. Only unregistered items become claims. Registered components the check no longer sees become vanished claims. Long runs come back in pages: pass gapCheckRunId and skipToken to continue. compareOnly returns the comparison and writes no claims; validateOnly writes nothing at all.",
+  "x-tool": "run_gap_check",
+  "type": "object",
+  "properties": {
+    "gapCheckRunId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O22 Gap Check Run",
+      "description": "Continue this run."
+    },
+    "estateKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C07 List Value"
+      },
+      "description": "Only these estates, from the estate value list. Leave out for every covered estate."
+    },
+    "environmentIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "description": "Only these environments."
+    },
+    "includeVanished": {
+      "type": "boolean",
+      "default": true,
+      "description": "True also raises vanished claims for registered components no longer seen."
+    },
+    "compareOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "True returns the result and writes no claims."
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "dependentRequired": {
+    "skipToken": [
+      "gapCheckRunId"
+    ]
+  },
+  "examples": [
+    {
+      "estateKeys": [
+        "power-platform"
+      ],
+      "includeVanished": true,
+      "clientRequestId": "req-0501"
+    }
+  ]
+}

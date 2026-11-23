@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "consultation-only-group-unavailable",
+  "description": "A winning group made only of consultations, for a type with Requires Approval, would let nobody approve. The engine refuses and reports it (V27).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "gate-policy-change-config-admin",
+        "values": {
+          "isConsultation": true
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "gate-policy-change",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "approval-rule.consultation-only",
+        "severity": "error",
+        "entity": "Approval Rule"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

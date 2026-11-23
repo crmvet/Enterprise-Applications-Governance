@@ -1,0 +1,41 @@
+{
+  "entity": "reminder-rule",
+  "rows": [
+    {
+      "key": "review-reminder",
+      "label": "Review due",
+      "subjectKind": "review",
+      "leadDays": 14,
+      "repeatDays": 7,
+      "escalateAfterDays": 14,
+      "channelKey": "teams"
+    },
+    {
+      "key": "document-reminder",
+      "label": "Document missing or stale",
+      "subjectKind": "document",
+      "leadDays": 0,
+      "repeatDays": 14,
+      "escalateAfterDays": 30,
+      "channelKey": "teams"
+    },
+    {
+      "key": "approval-reminder",
+      "label": "Approval waiting",
+      "subjectKind": "approval",
+      "leadDays": 0,
+      "repeatDays": 2,
+      "escalateAfterDays": 5,
+      "channelKey": "outlook"
+    },
+    {
+      "key": "claim-reminder",
+      "label": "Claim open",
+      "subjectKind": "claim",
+      "leadDays": 0,
+      "repeatDays": 7,
+      "escalateAfterDays": 21,
+      "channelKey": "teams"
+    }
+  ]
+}

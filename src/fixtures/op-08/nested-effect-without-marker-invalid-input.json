@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "nested-effect-without-marker-invalid-input",
+  "description": "A caller names an engine effect without being engine-nested. Only the engine's own writes name an effect, so a caller cannot claim to be activation.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "tier",
+    "operation": "update",
+    "rowId": "fixture-tier-row-3",
+    "after": {
+      "label": "Tier 3"
+    },
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "configurationSetKind": "working",
+    "before": {
+      "key": "tier-3"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

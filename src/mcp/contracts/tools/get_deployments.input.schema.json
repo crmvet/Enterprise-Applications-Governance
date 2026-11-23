@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_deployments input",
+  "description": "What runs where? The latest version per target, or the history, with flags. Writes nothing.",
+  "x-tool": "get_deployments",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only this application."
+    },
+    "deploymentTargetId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O15 Deployment Target",
+      "description": "Only this target."
+    },
+    "latestOnly": {
+      "type": "boolean",
+      "default": true,
+      "description": "True returns only the latest record per application and target."
+    },
+    "flaggedOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "True returns only records with at least one flag."
+    },
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Finished on or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Finished on or before this date."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "flaggedOnly": true
+    }
+  ]
+}

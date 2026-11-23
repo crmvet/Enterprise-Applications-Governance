@@ -1,0 +1,15 @@
+{
+  "$comment": "Balanced is the canonical full preset. Starter, Regulated and the Microsoft CoE baseline are written as changes to it (document 21, section 6.2).",
+  "schemaVersion": "1.0",
+  "presetKey": "balanced",
+  "label": "Balanced",
+  "description": "The default three-tier preset. Flag by default, Advise for tier 2 in production, Enforce for tier 3 in production.",
+  "presetKind": "full",
+  "extends": null,
+  "conflictsWith": [],
+  "areas": ["taxonomy", "people", "rules", "gates", "change-management", "documentation"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "checkedOn": "2026-11-22",
+  "setupNotes": []
+}

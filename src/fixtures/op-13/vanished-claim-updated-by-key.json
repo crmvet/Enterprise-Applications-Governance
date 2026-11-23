@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "vanished-claim-updated-by-key",
+  "description": "A component that was already missing in an earlier run is missing again: its vanished claim is updated by its key and Times Seen rises. A dismissed vanished claim stays dismissed.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": true,
+    "items": []
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-2",
+        "externalId": "00000000-0000-0000-0000-000000000109",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      }
+    ],
+    "claims": [
+      {
+        "claimId": "fixture-claim-9",
+        "claimKey": "vanished|canvas-app|00000000-0000-0000-0000-000000000109",
+        "statusMeaning": "dismissed",
+        "findingKind": "vanished",
+        "timesSeen": 1,
+        "lastSeenRunId": "fixture-run-1"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "vanishedClaims": [
+        {
+          "claimId": "fixture-claim-9",
+          "claimKey": "vanished|canvas-app|00000000-0000-0000-0000-000000000109",
+          "technicalComponentId": "fixture-component-2",
+          "lastSeenRunId": "fixture-run-2",
+          "lastSeenOnUtc": "2026-11-22T09:00:00Z",
+          "timesSeen": 2
+        }
+      ],
+      "counts": {
+        "itemsSeen": 0,
+        "newClaims": 0,
+        "vanishedClaims": 1,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

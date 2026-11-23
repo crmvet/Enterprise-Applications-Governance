@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_change_request_draft output",
+  "description": "The response envelope. On success, data is the write result for the Change Request (O11), always Draft, with the mode and a preview of what the change will need. nextSteps point to check_standard_change and submit_record.",
+  "x-tool": "save_change_request_draft",
+  "x-ai-write-states": [
+    "draft"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Change Request (O11).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always Draft. An AI client cannot leave a change request in any other state through this tool.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/recordStatusMeaning",
+              "const": "draft"
+            }
+          }
+        },
+        "mode": {
+          "$ref": "../common.schema.json#/$defs/changeManagementMode",
+          "description": "Copied from the change-management-mode setting in force for the application's portfolio."
+        },
+        "affectedApplicationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O02 Business Application"
+          },
+          "description": "The Affected Application rows (O12), including the ones the engine proposed."
+        },
+        "requirementsPreview": {
+          "type": "object",
+          "required": [
+            "tierKey",
+            "targetStageKey",
+            "requiresAuthorization",
+            "gateLevel",
+            "approvals"
+          ],
+          "properties": {
+            "tierKey": {
+              "description": "The application's current tier. Null when it has none yet.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C08 Tier"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "targetStageKey": {
+              "description": "The planned target's stage. Null without a planned target.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C34 Target Stage"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requiresAuthorization": {
+              "type": "boolean",
+              "description": "True when the change type needs an authorization decision (C20)."
+            },
+            "gateLevel": {
+              "description": "The gate level a deployment of this change would get. Null without a planned target.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/gateLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "approvals": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/approvalNeeded"
+              },
+              "description": "The authorization approvals, from the single most specific rule group. Empty in linked mode."
+            }
+          },
+          "additionalProperties": false,
+          "description": "A preview for the change type, tier and target stage. Requirements freeze only at submission."
+        }
+      },
+      "required": [
+        "mode",
+        "affectedApplicationIds",
+        "requirementsPreview"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change request is saved as a draft. It needs the business owner's authorization.",
+      "data": {
+        "recordId": "d0000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "mode": "built-in",
+        "affectedApplicationIds": [],
+        "requirementsPreview": {
+          "tierKey": "tier-2",
+          "targetStageKey": "production",
+          "requiresAuthorization": true,
+          "gateLevel": "advise",
+          "approvals": [
+            {
+              "decisionTypeKey": "change-authorization",
+              "approverOwnerRoleKey": "business-owner",
+              "approvalMode": "everyone-must-approve",
+              "minimumCount": 1
+            }
+          ]
+        }
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/d0000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "check_standard_change",
+          "inputs": {
+            "changeRequestId": "d0000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "tool": "submit_record",
+          "inputs": {
+            "subjectKind": "change-request",
+            "subjectId": "d0000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

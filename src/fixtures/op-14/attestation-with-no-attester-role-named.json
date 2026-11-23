@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "attestation-with-no-attester-role-named",
+  "description": "No attester role is named for the change, so no attestation counts, whatever the fact says about the person.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "attestation",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "person",
+        "principalKind": "user",
+        "attesterHoldsRole": true,
+        "answeredOnConfirmationCard": true
+      }
+    ],
+    "attesterRoleKeys": []
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": [
+        {
+          "factId": "fixture-fact-1",
+          "code": "authorization.not-attester"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.not-attester",
+        "severity": "warning",
+        "entity": "Evidence Link",
+        "ref": "fixture-fact-1"
+      },
+      {
+        "code": "authorization.number-only",
+        "severity": "warning",
+        "entity": "Change Request"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

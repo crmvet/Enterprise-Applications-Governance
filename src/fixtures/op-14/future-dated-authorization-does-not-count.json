@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "future-dated-authorization-does-not-count",
+  "description": "An ITSM step reports authorized at 08:00, cancelled at 08:30, then a fact dated 2099 says authorized. A fact dated after the evaluation moment never authorizes (authorization.reported-later, proposed), so the cancellation stands.",
+  "workingDefaults": [
+    12
+  ],
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-22T08:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      },
+      {
+        "factId": "fixture-fact-2",
+        "sourceKind": "itsm-step",
+        "state": "cancelled",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-22T08:30:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      },
+      {
+        "factId": "fixture-fact-3",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2099-01-01T00:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "decidingFactId": "fixture-fact-2",
+      "ignoredFacts": [
+        {
+          "factId": "fixture-fact-3",
+          "code": "authorization.reported-later"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.reported-later",
+        "severity": "warning",
+        "ref": "fixture-fact-3"
+      },
+      {
+        "code": "authorization.revoked",
+        "severity": "info",
+        "ref": "fixture-fact-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

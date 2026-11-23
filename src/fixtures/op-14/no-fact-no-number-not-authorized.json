@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "no-fact-no-number-not-authorized",
+  "description": "A linked change with no fact and no number is not authorized, and no number warning is raised.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked"
+  },
+  "facts": {
+    "facts": [],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

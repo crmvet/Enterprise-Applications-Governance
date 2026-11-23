@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "missing-change-facts-invalid-input",
+  "description": "Without the change's facts the conditions cannot be tested, so the request is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "models": []
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

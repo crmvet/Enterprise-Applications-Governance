@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MCP resource index",
+  "description": "Schema for resources.json, the index of the read-only MCP resources the product's own server publishes.",
+  "type": "object",
+  "required": [
+    "description",
+    "resources"
+  ],
+  "properties": {
+    "$comment": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notFound": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "uriTemplate",
+          "title",
+          "description",
+          "mimeType",
+          "release",
+          "routes",
+          "reads",
+          "defaultRoles",
+          "contentSchema",
+          "example"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "uriTemplate": {
+            "type": "string",
+            "pattern": "^[a-z]+://"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mimeType": {
+            "const": "application/json"
+          },
+          "release": {
+            "enum": [
+              "R1",
+              "Later"
+            ]
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "A",
+                "B",
+                "C"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "reads": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[COL][0-9]{2}$"
+            },
+            "uniqueItems": true
+          },
+          "defaultRoles": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contentSchema": {
+            "type": "string",
+            "pattern": "^resources/[a-z][a-z0-9-]*\\.content\\.schema\\.json$"
+          },
+          "example": {
+            "type": "string",
+            "pattern": "^[a-z]+://"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v39-emergency-rule-shape",
+  "description": "A draft replaces an emergency rule with one that lacks approvalDueWorkingDays. The JSON field no longer matches its sub-schema, so V39 refuses it. The schema check agrees, on the patch and on the composed set.",
+  "ruleIds": [
+    "V39"
+  ],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1,
+        "summary": "Shorter emergency rule"
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "gate-policy",
+          "key": "gp-emergency-prod-tier-1",
+          "values": {
+            "emergencyRule": {
+              "passWithoutApproval": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "activeSnapshot": {
+      "presetKey": "balanced"
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "json.schema",
+        "severity": "error",
+        "ruleId": "V39",
+        "entity": "Gate Policy",
+        "ref": "gp-emergency-prod-tier-1"
+      },
+      {
+        "code": "shape.schema",
+        "severity": "error",
+        "ruleId": "V01",
+        "entity": "Gate Policy",
+        "ref": "gp-emergency-prod-tier-1"
+      },
+      {
+        "code": "shape.schema",
+        "severity": "error",
+        "ruleId": "V01"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

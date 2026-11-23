@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "sibling-child-rebased-valid",
+  "description": "The draft starts from version 1 and rewords the small-team answer of the reach question. Version 2, now active, added another answer, partners, to the same question. The parent row itself did not change (each child is a row of its own), and the draft does not touch partners, so the engine rebases the draft onto version 2 and validates it again.",
+  "ruleIds": [
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "tier-answer-option",
+        "key": "reach/partners",
+        "values": { "label": "Partners", "answerText": "Partner organizations", "impliedTierKey": "tier-3" }
+      }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1 },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier-answer-option",
+          "key": "reach/small-team",
+          "values": { "answerText": "One small team, ten people or fewer" }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "rebased",
+    "payload": {
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 2,
+      "canActivate": true,
+      "changedRows": [
+        { "entity": "tier-answer-option", "key": "reach/partners", "change": "added" }
+      ],
+      "overlaps": [],
+      "patch": {
+        "manifest": { "kind": "patch", "baseVersionNumber": 2 }
+      },
+      "diffChanged": false,
+      "validation": {
+        "isValid": true,
+        "issues": [],
+        "changeSummary": ["Changed Tier Answer Option `reach/small-team`: answerText."]
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "missing-computed-without-link",
+  "description": "From the build stage every application needs a wiki page. With no Document Link at all, the engine computes it as missing: no row is ever stored for a missing document (28, issue 16).",
+  "tags": [
+    "missing-computed"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "missing"
+        }
+      ],
+      "missingCount": 1,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {}
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "documentation.missing",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "wiki-page-all"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Documentation Requirement",
+        "key": "wiki-page-all",
+        "role": "required"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

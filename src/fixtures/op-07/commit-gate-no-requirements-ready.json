@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "commit-gate-no-requirements-ready",
+  "description": "A gate with no requirement is ready.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "commit",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "gateKey": "commit",
+      "ready": true,
+      "requirements": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Gate",
+        "key": "commit",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

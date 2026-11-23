@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "instructing-admin-accepts-own-draft-balanced",
+  "description": "Balanced lets the instructing admin accept their own AI's configuration draft on the card with the diff.",
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "configuration-change"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "configuration-change-approval",
+        "approverRoleKey": "configuration-admin",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "configuration-change-approval",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-approver",
+      "instructingAdminPrincipalId": "fixture-person-approver"
+    }
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied",
+      "countsByRecord": {
+        "r1": true
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

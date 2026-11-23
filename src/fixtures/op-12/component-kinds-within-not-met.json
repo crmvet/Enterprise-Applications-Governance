@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "component-kinds-within-not-met",
+  "description": "A model with one component-kinds-within condition: the change goes past it, so it does not qualify, and the failed condition is listed with its index.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-component-kinds-within",
+        "values": {
+          "label": "Model only-component-kinds-within",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app"
+              ]
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "componentKindKeys": [
+        "canvas-app",
+        "cloud-flow"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "only-component-kinds-within",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "only-component-kinds-within",
+          "conditionIndex": 0,
+          "conditionKind": "component-kinds-within",
+          "why": "component kind `cloud-flow` is not one of `canvas-app`"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-component-kinds-within"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "only-component-kinds-within",
+        "role": "skipped"
+      }
+    ]
+  }
+}

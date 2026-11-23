@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v43-regulated-small-team",
+  "description": "Regulated lists small-team in conflictsWith, so V43 refuses the selection. Regulated retires no-self-approval-tier-3, and small team would give that retired key new content (V04).",
+  "tags": ["preset"],
+  "ruleIds": ["V04", "V43"],
+  "workingDefaults": [4, 7],
+  "snapshot": { "presetKey": "regulated", "overlays": ["small-team"] },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [
+      { "code": "preset.conflict", "severity": "error", "ruleId": "V43", "ref": "small-team" },
+      {
+        "code": "key.reused",
+        "severity": "error",
+        "ruleId": "V04",
+        "entity": "Separation Rule",
+        "ref": "no-self-approval-tier-3"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

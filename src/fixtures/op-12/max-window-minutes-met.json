@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "max-window-minutes-met",
+  "description": "A model with one max-window-minutes condition: the change meets it at the limit, so it qualifies.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-max-window-minutes",
+        "values": {
+          "label": "Model only-max-window-minutes",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 240
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "windowMinutes": 240
+    },
+    "models": [
+      {
+        "modelKey": "only-max-window-minutes",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "qualifies",
+    "payload": {
+      "qualifies": true,
+      "modelKey": "only-max-window-minutes",
+      "approvedByDecisionId": "fixture-decision-model-1",
+      "failedConditions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "standard-model.qualifies",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-max-window-minutes"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

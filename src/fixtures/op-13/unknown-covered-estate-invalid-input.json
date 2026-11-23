@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "unknown-covered-estate-invalid-input",
+  "description": "A covered estate that is not a value of the estate list is refused as input.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "moon-base"
+    ],
+    "isFinalPage": false,
+    "items": []
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "ref": "estate/moon-base"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

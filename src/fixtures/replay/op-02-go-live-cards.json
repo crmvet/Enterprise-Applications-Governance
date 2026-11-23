@@ -1,0 +1,69 @@
+{
+  "case": "op-02-go-live-cards",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A recorded OP-02 answer: the go-live cards of a tier 3 application. Replayed against the same version it gives the same cards.",
+  "operation": "OP-02",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "required",
+    "payload": {
+      "consultations": [],
+      "requirements": [
+        {
+          "approvalMode": "sequential",
+          "approverOwnerRoleKey": "business-owner",
+          "isConsultation": false,
+          "minimumCount": 1,
+          "requiresTypedReason": false,
+          "ruleKey": "go-live-tier-3-owner",
+          "sequence": 1,
+          "source": "approval-rule",
+          "timeoutDays": 5
+        },
+        {
+          "approvalMode": "sequential",
+          "approverRoleKey": "security-reviewer",
+          "isConsultation": false,
+          "minimumCount": 1,
+          "requiresTypedReason": true,
+          "ruleKey": "go-live-tier-3-security",
+          "sequence": 2,
+          "source": "approval-rule",
+          "timeoutDays": 5
+        }
+      ]
+    },
+    "reasons": [],
+    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-tier-3-owner",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-tier-3-security",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-owner",
+        "role": "dropped"
+      }
+    ]
+  },
+  "request": {
+    "decisionTypeKey": "go-live",
+    "portfolioPath": [],
+    "tierKey": "tier-3"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": ["replay"]
+}

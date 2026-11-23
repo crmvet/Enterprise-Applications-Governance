@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-creates-record-without-outcome-invalid-input",
+  "description": "An engine-nested create of an Approval Record leaves out the outcome. Outcome is required (document 22, O10), and the engine creates the record pending, so the request is refused as invalid input.",
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "create",
+    "after": {
+      "decision": "fixture-decision-1",
+      "approvalRule": "acceptance-approval",
+      "requiredOwnerRole": "business-owner",
+      "requestedOn": "2026-11-22T09:00:00Z",
+      "expiresOn": "2026-12-02T09:00:00Z"
+    }
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

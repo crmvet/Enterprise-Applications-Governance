@@ -1,0 +1,10 @@
+{
+  "entity": "gate",
+  "rows": [
+    { "key": "accept", "label": "Accept", "afterStageKey": "intake-and-triage", "gateDecisionTypeKey": "intake" },
+    { "key": "commit", "label": "Commit", "afterStageKey": "prioritize-and-fund", "gateDecisionTypeKey": "priority" },
+    { "key": "design", "label": "Design", "afterStageKey": "risk-and-tier", "gateDecisionTypeKey": "design" },
+    { "key": "go-live", "label": "Go-live", "afterStageKey": "change-and-release", "gateDecisionTypeKey": "go-live" },
+    { "key": "value", "label": "Value", "afterStageKey": "review", "gateDecisionTypeKey": "portfolio" }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "answer-for-unknown-requirement-not-counted",
+  "description": "An answer that belongs to no current requirement, for example one left from a rule the recomputation no longer has, never counts.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r9",
+        "ruleKey": "change-auth-owner",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "pending",
+    "payload": {
+      "overall": "pending",
+      "countsByRecord": {
+        "r9": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.no-requirement",
+        "severity": "info",
+        "ref": "r9"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

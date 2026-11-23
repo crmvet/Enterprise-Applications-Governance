@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g02-preset-row-refused-even-in-activation",
+  "description": "An activation write targets a row of a preset set. Rows of a preset never change, not even inside activation.",
+  "ruleIds": [
+    "G-02"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "tier",
+    "operation": "update",
+    "rowId": "fixture-preset-tier-row",
+    "after": {
+      "label": "Tier 1"
+    },
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "configurationSetKind": "preset",
+    "before": {
+      "key": "tier-1",
+      "origin": "shipped"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "config.preset-read-only",
+          "ruleId": "G-02"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "config.preset-read-only",
+        "severity": "error",
+        "ref": "tier-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

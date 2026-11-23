@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-names-outcome-meaning-on-final-refused",
+  "description": "The engine (approval runner, engine-nested, recompute-approvals) sends only Outcome Meaning pending on an approved record. A nested write never names Outcome Meaning: the guard writes it from the outcome (G-10), and a final record never reads pending again. Refused.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcomeMeaning": "pending"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-approved",
+      "outcomeMeaning": "approved",
+      "decision": "fixture-decision-1",
+      "approver": "fixture-person-3",
+      "approverActorMeaning": "person",
+      "approverPrincipalKind": "user",
+      "approverHoldsRequiredRole": false
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "approval.outcome-writer",
+          "ruleId": "G-06"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

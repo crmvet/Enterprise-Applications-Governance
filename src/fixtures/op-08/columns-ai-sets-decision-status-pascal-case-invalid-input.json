@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "columns-ai-sets-decision-status-pascal-case-invalid-input",
+  "description": "The case g08-ai-sets-decision-accepted-refused with Status for status. Earlier, the guard did not know the name, so the AI client's accepted status passed G-08 and G-17 unjudged. An unknown column is now invalid input, before any rule runs.",
+  "ruleIds": [
+    "G-08",
+    "G-17"
+  ],
+  "tags": [
+    "hardening-1",
+    "columns"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "Status": "decision-accepted"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-column",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

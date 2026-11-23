@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_dependency_impact output",
+  "description": "The response envelope. On success, data lists every application reached, with its depth and path.",
+  "x-tool": "get_dependency_impact",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "root",
+        "nodes",
+        "counts",
+        "truncatedAtDepth"
+      ],
+      "properties": {
+        "root": {
+          "type": "object",
+          "required": [
+            "businessApplicationId",
+            "technicalComponentId",
+            "name"
+          ],
+          "properties": {
+            "businessApplicationId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O02 Business Application"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "technicalComponentId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O03 Technical Component"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "name": {
+              "type": "string",
+              "description": "The start of the walk.",
+              "x-untrusted": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "tier",
+              "lifecycleMeaning",
+              "businessOwner",
+              "technicalOwner",
+              "dependencyTypeKey",
+              "criticalityKey",
+              "depth",
+              "path"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "tier": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lifecycleMeaning": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/lifecycleMeaning"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessOwner": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "technicalOwner": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dependencyTypeKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C17 Dependency Type"
+              },
+              "criticalityKey": {
+                "description": "From the criticality value list.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C07 List Value"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "depth": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Hops from the root."
+              },
+              "path": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O02 Business Application"
+                },
+                "description": "The applications from the root to this node."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "byTier",
+            "byCriticality"
+          ],
+          "properties": {
+            "byTier": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/bucket"
+              }
+            },
+            "byCriticality": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/bucket"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "truncatedAtDepth": {
+          "type": "boolean",
+          "description": "True when the walk stopped at the depth limit with more to walk."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Two applications depend on Field visit planner. One is tier 3.",
+      "data": {
+        "root": {
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "technicalComponentId": null,
+          "name": "Field visit planner"
+        },
+        "nodes": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000002",
+            "name": "Route optimizer",
+            "tier": {
+              "key": "tier-3",
+              "label": "Tier 3"
+            },
+            "lifecycleMeaning": "live",
+            "businessOwner": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Business owner (sample)"
+            },
+            "technicalOwner": null,
+            "dependencyTypeKey": "reads-data-from",
+            "criticalityKey": "high",
+            "depth": 1,
+            "path": [
+              "10000000-0000-4000-8000-000000000001",
+              "10000000-0000-4000-8000-000000000002"
+            ]
+          },
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000003",
+            "name": "Visit report",
+            "tier": {
+              "key": "tier-1",
+              "label": "Tier 1"
+            },
+            "lifecycleMeaning": "live",
+            "businessOwner": null,
+            "technicalOwner": null,
+            "dependencyTypeKey": "calls-api-of",
+            "criticalityKey": null,
+            "depth": 2,
+            "path": [
+              "10000000-0000-4000-8000-000000000001",
+              "10000000-0000-4000-8000-000000000002",
+              "10000000-0000-4000-8000-000000000003"
+            ]
+          }
+        ],
+        "counts": {
+          "byTier": [
+            {
+              "key": "tier-3",
+              "label": "Tier 3",
+              "count": 1
+            },
+            {
+              "key": "tier-1",
+              "label": "Tier 1",
+              "count": 1
+            }
+          ],
+          "byCriticality": [
+            {
+              "key": "high",
+              "label": "High",
+              "count": 1
+            },
+            {
+              "key": null,
+              "label": "Not set",
+              "count": 1
+            }
+          ]
+        },
+        "truncatedAtDepth": false
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "root.name",
+        "nodes[].name"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

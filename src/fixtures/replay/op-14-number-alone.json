@@ -1,0 +1,46 @@
+{
+  "case": "op-14-number-alone",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A recorded OP-14 answer: an external change number alone does not authorize. Replayed against the same version it gives the same answer.",
+  "operation": "OP-14",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": []
+    },
+    "reasons": [
+      {
+        "code": "authorization.number-only",
+        "entity": "Change Request",
+        "message": "A recorded external change number alone never authorizes a change.",
+        "severity": "warning"
+      }
+    ],
+    "snapshotHash": "c802bc0aca6bbe6bcfc5e0dfd5bbad39e5cbf28e5e54490b1556e2b128c5c24d",
+    "trace": [
+      {
+        "entity": "Role",
+        "key": "change-manager",
+        "role": "matched"
+      }
+    ]
+  },
+  "request": {
+    "attesterRoleKeys": ["change-manager"],
+    "changeManagementMode": "linked",
+    "facts": [],
+    "hasExternalChangeNumber": true
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "overlays": ["linked-change-management"],
+    "presetKey": "balanced"
+  },
+  "tags": ["replay"]
+}

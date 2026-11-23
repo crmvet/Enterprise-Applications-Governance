@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-approver-writes-own-outcome-refused",
+  "description": "The approver, a person, writes the outcome on the row directly instead of answering the card. Refused: the only path to an outcome is the approval channel (document 26, AN-01).",
+  "ruleIds": [
+    "G-06"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-2",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "data-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverPrincipalKind": "user",
+      "respondedOn": "2026-11-22T08:55:00Z",
+      "flowRunUrl": "https://example.org/runs/1"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "ok": true,
+  "summary": "Five changes have a window in the next two weeks. Two are not authorized yet.",
+  "data": {
+    "items": [
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000009",
+        "title": "Route Planner first release to test",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000009",
+        "applicationName": "Route Planner",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000002",
+          "label": "Field Ops Test",
+          "targetStageKey": "test"
+        },
+        "windowStart": "2026-11-24T09:00:00Z",
+        "windowEnd": "2026-11-24T12:00:00Z",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000002",
+        "title": "Rotate the reminder flow connection",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+          "label": "Field Ops Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-25T07:00:00Z",
+        "windowEnd": "2026-11-25T08:00:00Z",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000001",
+        "title": "Release 3.5: inspector workload view",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+          "label": "Field Ops Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-11-27T18:00:00Z",
+        "windowEnd": "2026-11-27T21:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "authorized": true
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000008",
+        "title": "Supplier Onboarding go-live",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000012",
+        "applicationName": "Supplier Onboarding",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000006",
+          "label": "Finance Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-12-02T17:00:00Z",
+        "windowEnd": "2026-12-02T20:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "authorized": false
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000010",
+        "title": "Contractor Portal sign-in page update",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000010",
+        "applicationName": "Contractor Portal",
+        "target": {
+          "deploymentTargetId": "90000000-0000-4000-8000-000000000004",
+          "label": "Customer Prod",
+          "targetStageKey": "production"
+        },
+        "windowStart": "2026-12-04T22:00:00Z",
+        "windowEnd": "2026-12-05T01:00:00Z",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "authorized": false
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "items[].title",
+    "items[].applicationName",
+    "items[].target.label"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0010"
+}

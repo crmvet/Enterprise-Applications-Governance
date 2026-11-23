@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "non-impact-type-not-followed",
+  "description": "Replaces does not count for impact (C17 Counts For Impact no), so the replacing application B is not reached. C reads data from A and is.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 3
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "replaces"
+      },
+      {
+        "fromId": "fixture-app-c",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "reads-data-from"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 3,
+      "reached": [
+        {
+          "applicationId": "fixture-app-c",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-c"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "impact-max-depth",
+        "role": "matched"
+      },
+      {
+        "entity": "Dependency Type",
+        "key": "reads-data-from",
+        "role": "matched"
+      },
+      {
+        "entity": "Dependency Type",
+        "key": "replaces",
+        "role": "skipped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

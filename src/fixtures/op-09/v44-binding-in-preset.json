@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v44-binding-in-preset",
+  "description": "A preset build carries a role group binding with a directory group ID. Bindings and directory IDs are client facts, so V44 refuses them in a shipped preset. The ID is fictional.",
+  "ruleIds": ["V44"],
+  "workingDefaults": [12],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "role-group-binding",
+        "key": "fixture-config-admins",
+        "values": {
+          "label": "Configuration admins",
+          "roleKey": "configuration-admin",
+          "entraGroupObjectId": "00000000-0000-4000-8000-000000000001",
+          "bindingMethod": "entra-app-role-assignment",
+          "bindingDetail": "Fixture group"
+        }
+      }
+    ]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [
+      { "code": "preset.tenant-data", "severity": "error", "ruleId": "V44", "entity": "Role Group Binding", "ref": "fixture-config-admins" }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

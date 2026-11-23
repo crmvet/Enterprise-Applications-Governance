@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Tests for engine configuration, the validator and the fixture runner.
+    Runs on both shipped runtimes, net10.0 and net48. Reads the presets and fixtures in src/, nothing else.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>$(EngineTestTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Product.Engine.Core\Product.Engine.Core.csproj" />
+    <ProjectReference Include="..\..\Product.Engine.Configuration\Product.Engine.Configuration.csproj" />
+    <ProjectReference Include="..\..\Product.Engine.Testing\Product.Engine.Testing.csproj" />
+  </ItemGroup>
+</Project>

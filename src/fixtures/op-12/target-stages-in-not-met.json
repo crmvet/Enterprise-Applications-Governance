@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "target-stages-in-not-met",
+  "description": "A model with one target-stages-in condition: the change goes past it, so it does not qualify, and the failed condition is listed with its index.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-target-stages-in",
+        "values": {
+          "label": "Model only-target-stages-in",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "target-stages-in",
+              "value": [
+                "development",
+                "test"
+              ]
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "targetStageKeys": [
+        "test",
+        "production"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "only-target-stages-in",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "only-target-stages-in",
+          "conditionIndex": 0,
+          "conditionKind": "target-stages-in",
+          "why": "target stage `production` is not one of `development`, `test`"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-target-stages-in"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "only-target-stages-in",
+        "role": "skipped"
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v04-reactivate-allowed",
+  "description": "Bringing retired guideline g10 back on purpose (isActive true) is not a reused key. V04 passes.",
+  "ruleIds": ["V04"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "guideline", "key": "g10", "values": { "isActive": true, "label": "G10 Plan before every import" } }
+    ]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "baseVersionNumber": 1 },
+  "expected": {
+    "outcome": "valid",
+    "payload": { "isValid": true, "changeSummary": ["Reactivated Guideline `g10` and changed label."] }
+  }
+}

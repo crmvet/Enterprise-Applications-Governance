@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_role_bindings input",
+  "description": "The direct assignment check. Confirms each product role is bound to an Entra group that exists, and flags any product role held outside a bound group, including by agent accounts, agent users or service principals. It also lists the Workload Grants (C42) and flags a direct assignment with no grant, an expired grant, and any grant to an agent identity. A read: it logs the check to an Audit Entry (O24) and changes nothing else.",
+  "$comment": "WORKING DEFAULT (open design question 12). Each pipeline or approval runner identity holds its workload role directly, recorded as a Workload Grant (C42). People get roles only through groups, and agent identities never get a grant.",
+  "x-tool": "check_role_bindings",
+  "type": "object",
+  "properties": {
+    "includeDirectAssignments": {
+      "type": "boolean",
+      "default": true,
+      "description": "True also lists every direct assignment found."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {}
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-a-evidence-link-create-allowed",
+  "description": "Class A: inserting an Evidence Link is the one write it takes. A person links evidence to a decision. Allowed.",
+  "tags": [
+    "hardening-1",
+    "class-a"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "evidence-link",
+    "operation": "create",
+    "after": {
+      "subjectKind": "decision",
+      "subjectDecision": "fixture-decision-1",
+      "linkKind": "evidence-url",
+      "url": "https://example.org/evidence/1",
+      "label": "Risk review notes",
+      "evidenceLevel": "read",
+      "capturedOn": "2026-11-22T09:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "performedByActorKind": "person",
+        "isAiCreated": false
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

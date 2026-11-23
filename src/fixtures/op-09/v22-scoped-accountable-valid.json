@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v22-scoped-accountable-valid",
+  "description": "A draft adds a tier 3 go-live group whose one accountable is the security reviewer. Each group holds exactly one accountable, so V22 passes.",
+  "ruleIds": [
+    "V22"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "decision-right",
+        "key": "go-live-tier-3-a",
+        "values": {
+          "label": "Tier 3 go-live: accountable",
+          "decisionTypeKey": "go-live",
+          "tierKey": "tier-3",
+          "letter": "accountable",
+          "roleKey": "security-reviewer"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

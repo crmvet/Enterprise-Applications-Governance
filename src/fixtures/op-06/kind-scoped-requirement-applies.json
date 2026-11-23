@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "kind-scoped-requirement-applies",
+  "description": "A requirement scoped to the agent kind applies to an agent from build on, beside the wiki page every application needs.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "documentation-requirement",
+        "key": "runbook-agent",
+        "values": {
+          "label": "Every agent has a runbook",
+          "documentTypeKey": "runbook",
+          "applicationKindKey": "agent",
+          "fromStageKey": "build"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "agent",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "runbook-agent",
+          "documentTypeKey": "runbook",
+          "status": "missing"
+        },
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "current",
+          "documentLinkId": "fixture-link-w1",
+          "staleOnUtc": "2027-06-01T10:00:00Z"
+        }
+      ],
+      "missingCount": 1,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {
+        "fixture-link-w1": "2027-06-01T10:00:00Z"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "documentation.missing",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "runbook-agent"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

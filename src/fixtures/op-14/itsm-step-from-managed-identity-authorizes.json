@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "itsm-step-from-managed-identity-authorizes",
+  "description": "A pipeline step that runs as a managed identity is a workload principal too, so its fact counts.",
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "managed-identity"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "authorized",
+    "payload": {
+      "authorized": true,
+      "basis": "itsm-step",
+      "ignoredFacts": [],
+      "decidingFactId": "fixture-fact-1"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

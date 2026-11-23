@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_configuration input",
+  "description": "What rules are in force, row by row, and what changed between two versions. Writes nothing.",
+  "x-tool": "get_configuration",
+  "type": "object",
+  "properties": {
+    "entity": {
+      "$ref": "../common.schema.json#/$defs/entityKey",
+      "description": "Only this entity, by its entity key, such as tier or gate-policy."
+    },
+    "keys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/keyPath"
+      },
+      "description": "Only rows with these keys. A child row key is the parent key, a slash, then the child key."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "This version. Leave out for the version in force."
+    },
+    "compareToVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Also return the diff from this version to the one read."
+    },
+    "includeRetired": {
+      "type": "boolean",
+      "default": false,
+      "description": "True also returns retired rows."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "entity": "gate-policy"
+    },
+    {
+      "compareToVersion": 2
+    }
+  ]
+}

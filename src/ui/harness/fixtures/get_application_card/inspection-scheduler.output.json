@@ -1,0 +1,491 @@
+{
+  "ok": true,
+  "summary": "Inspection Scheduler is a live tier 2 app. Its runbook is stale and its support guide is missing.",
+  "data": {
+    "application": {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "name": "Inspection Scheduler",
+      "purpose": "Schedules safety inspections of field sites, assigns inspectors and tracks findings until they are closed.",
+      "status": {
+        "label": "Registered",
+        "meaning": "registered"
+      },
+      "kind": {
+        "key": "power-platform-app",
+        "label": "Power Platform app"
+      },
+      "tier": {
+        "key": "tier-2",
+        "label": "Tier 2",
+        "decisionId": "60000000-0000-4000-8000-000000000002"
+      },
+      "stage": {
+        "key": "operate",
+        "label": "Operate",
+        "since": "2026-03-16T08:00:00Z",
+        "decisionId": "60000000-0000-4000-8000-000000000004"
+      },
+      "buildPath": {
+        "key": "fusion",
+        "label": "Fusion"
+      },
+      "usesAi": true,
+      "agreedAutonomyLevel": null,
+      "nextReviewOn": "2027-03-16"
+    },
+    "components": [
+      {
+        "technicalComponentId": "b0000000-0000-4000-8000-000000000001",
+        "kind": {
+          "key": "model-driven-app",
+          "label": "Model-driven app"
+        },
+        "externalId": "app-7f3c21",
+        "url": "https://make.example.org/apps/app-7f3c21",
+        "labelAsSeen": "Inspection Scheduler",
+        "lastSeenOn": "2026-11-20T06:00:00Z"
+      },
+      {
+        "technicalComponentId": "b0000000-0000-4000-8000-000000000002",
+        "kind": {
+          "key": "cloud-flow",
+          "label": "Cloud flow"
+        },
+        "externalId": "flow-2b91d0",
+        "url": "https://make.example.org/flows/flow-2b91d0",
+        "labelAsSeen": "Send inspection reminders",
+        "lastSeenOn": "2026-11-20T06:00:00Z"
+      },
+      {
+        "technicalComponentId": "b0000000-0000-4000-8000-000000000003",
+        "kind": {
+          "key": "solution",
+          "label": "Solution"
+        },
+        "externalId": "sol-inspection-scheduler",
+        "url": "https://make.example.org/solutions/sol-inspection-scheduler",
+        "labelAsSeen": "Inspection Scheduler solution",
+        "lastSeenOn": "2026-11-20T06:00:00Z"
+      },
+      {
+        "technicalComponentId": "b0000000-0000-4000-8000-000000000004",
+        "kind": {
+          "key": "repository",
+          "label": "Repository"
+        },
+        "externalId": "field-ops/inspection-scheduler",
+        "url": "https://git.example.org/field-ops/inspection-scheduler",
+        "labelAsSeen": "inspection-scheduler",
+        "lastSeenOn": "2026-11-21T22:00:00Z"
+      }
+    ],
+    "dependencies": {
+      "dependsOnCount": 3,
+      "usedByCount": 4,
+      "top": [
+        {
+          "direction": "depends-on",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000003",
+          "technicalComponentId": null,
+          "name": "Asset Register",
+          "dependencyType": {
+            "key": "reads-data-from",
+            "label": "Reads data from"
+          },
+          "criticality": {
+            "key": "high",
+            "label": "High"
+          }
+        },
+        {
+          "direction": "used-by",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000006",
+          "technicalComponentId": null,
+          "name": "Visit Report Agent",
+          "dependencyType": {
+            "key": "reads-data-from",
+            "label": "Reads data from"
+          },
+          "criticality": {
+            "key": "high",
+            "label": "High"
+          }
+        },
+        {
+          "direction": "used-by",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000009",
+          "technicalComponentId": null,
+          "name": "Route Planner",
+          "dependencyType": {
+            "key": "calls-api-of",
+            "label": "Calls API of"
+          },
+          "criticality": {
+            "key": "high",
+            "label": "High"
+          }
+        },
+        {
+          "direction": "depends-on",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000005",
+          "technicalComponentId": null,
+          "name": "Parts Catalogue API",
+          "dependencyType": {
+            "key": "calls-api-of",
+            "label": "Calls API of"
+          },
+          "criticality": {
+            "key": "medium",
+            "label": "Medium"
+          }
+        }
+      ]
+    },
+    "decisions": [
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000007",
+        "decisionType": {
+          "key": "risk-acceptance",
+          "label": "Risk acceptance"
+        },
+        "statement": "Accept that inspection photos stay on devices for up to 7 days while offline.",
+        "outcome": null,
+        "status": {
+          "label": "Proposed",
+          "meaning": "proposed"
+        },
+        "decidedOn": null
+      },
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000006",
+        "decisionType": {
+          "key": "change-authorization",
+          "label": "Change authorization"
+        },
+        "statement": "Authorize release 3.5 to production in the 27 November window.",
+        "outcome": {
+          "key": "authorize",
+          "label": "Authorize"
+        },
+        "status": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        },
+        "decidedOn": "2026-11-19T15:20:00Z"
+      },
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000002",
+        "decisionType": {
+          "key": "tier",
+          "label": "Tier"
+        },
+        "statement": "Keep tier 2 after adding AI summaries of inspection findings.",
+        "outcome": {
+          "key": "confirm",
+          "label": "Confirm"
+        },
+        "status": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        },
+        "decidedOn": "2026-08-28T10:00:00Z"
+      },
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000005",
+        "decisionType": {
+          "key": "design",
+          "label": "Design"
+        },
+        "statement": "Read asset data from Asset Register instead of keeping a local copy.",
+        "outcome": {
+          "key": "approve",
+          "label": "Approve"
+        },
+        "status": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        },
+        "decidedOn": "2026-06-30T13:00:00Z"
+      },
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000004",
+        "decisionType": {
+          "key": "go-live",
+          "label": "Go-live"
+        },
+        "statement": "Go live for all field regions.",
+        "outcome": {
+          "key": "go",
+          "label": "Go"
+        },
+        "status": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        },
+        "decidedOn": "2026-03-16T08:00:00Z"
+      }
+    ],
+    "changes": [
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000002",
+        "title": "Rotate the reminder flow connection",
+        "changeType": {
+          "key": "standard",
+          "label": "Standard"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "windowStart": "2026-11-25T07:00:00Z",
+        "windowEnd": "2026-11-25T08:00:00Z"
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000001",
+        "title": "Release 3.5: inspector workload view",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Scheduled",
+          "meaning": "in-progress"
+        },
+        "windowStart": "2026-11-27T18:00:00Z",
+        "windowEnd": "2026-11-27T21:00:00Z"
+      },
+      {
+        "changeRequestId": "70000000-0000-4000-8000-000000000003",
+        "title": "Retire the old export flow",
+        "changeType": {
+          "key": "normal",
+          "label": "Normal"
+        },
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "windowStart": null,
+        "windowEnd": null
+      }
+    ],
+    "deployments": [
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000004",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+        "targetLabel": "Field Ops Prod",
+        "targetStageKey": "production",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.4.2.3",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-13T19:41:00Z"
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000007",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000002",
+        "targetLabel": "Field Ops Test",
+        "targetStageKey": "test",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.5.0.9",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-18T10:30:00Z"
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000009",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000001",
+        "targetLabel": "Field Ops Dev",
+        "targetStageKey": "development",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.5.0.12",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-20T14:12:00Z"
+      }
+    ],
+    "documents": [
+      {
+        "documentType": {
+          "key": "wiki-page",
+          "label": "Wiki page"
+        },
+        "status": {
+          "label": "Current",
+          "meaning": "current"
+        },
+        "documentLinkId": "e0000000-0000-4000-8000-000000000001",
+        "url": "https://wiki.example.org/field-ops/inspection-scheduler",
+        "lastCheckedOn": "2026-10-02",
+        "staleOn": "2027-04-02"
+      },
+      {
+        "documentType": {
+          "key": "runbook",
+          "label": "Runbook"
+        },
+        "status": {
+          "label": "Stale",
+          "meaning": "stale"
+        },
+        "documentLinkId": "e0000000-0000-4000-8000-000000000002",
+        "url": "https://wiki.example.org/field-ops/inspection-scheduler/runbook",
+        "lastCheckedOn": "2026-04-10",
+        "staleOn": "2026-10-10"
+      },
+      {
+        "documentType": {
+          "key": "architecture-decision-record",
+          "label": "Architecture decision record"
+        },
+        "status": {
+          "label": "Current",
+          "meaning": "current"
+        },
+        "documentLinkId": "e0000000-0000-4000-8000-000000000003",
+        "url": "https://git.example.org/field-ops/inspection-scheduler/docs/adr",
+        "lastCheckedOn": "2026-09-14",
+        "staleOn": "2027-03-14"
+      },
+      {
+        "documentType": {
+          "key": "support-guide",
+          "label": "Support guide"
+        },
+        "status": {
+          "label": "Missing",
+          "meaning": "missing"
+        },
+        "documentLinkId": null,
+        "url": null,
+        "lastCheckedOn": null,
+        "staleOn": null
+      }
+    ],
+    "reviews": [
+      {
+        "reviewId": "c0000000-0000-4000-8000-000000000001",
+        "reviewType": {
+          "key": "owner-check",
+          "label": "Owner check"
+        },
+        "status": {
+          "label": "Due",
+          "meaning": "due"
+        },
+        "dueOn": "2026-11-30",
+        "doneOn": null
+      },
+      {
+        "reviewId": "c0000000-0000-4000-8000-000000000002",
+        "reviewType": {
+          "key": "access-check",
+          "label": "Access check"
+        },
+        "status": {
+          "label": "Due",
+          "meaning": "due"
+        },
+        "dueOn": "2026-12-15",
+        "doneOn": null
+      },
+      {
+        "reviewId": "c0000000-0000-4000-8000-000000000003",
+        "reviewType": {
+          "key": "tier-check",
+          "label": "Tier check"
+        },
+        "status": {
+          "label": "Done",
+          "meaning": "done"
+        },
+        "dueOn": "2026-09-01",
+        "doneOn": "2026-08-28"
+      },
+      {
+        "reviewId": "c0000000-0000-4000-8000-000000000004",
+        "reviewType": {
+          "key": "architecture",
+          "label": "Architecture review"
+        },
+        "status": {
+          "label": "Done",
+          "meaning": "done"
+        },
+        "dueOn": "2026-07-01",
+        "doneOn": "2026-06-30"
+      }
+    ],
+    "links": [
+      {
+        "deliveryLinkId": "d0000000-0000-4000-8000-000000000001",
+        "linkKind": {
+          "key": "ado-work-item",
+          "label": "Azure DevOps work item"
+        },
+        "url": "https://dev.example.org/field-ops/boards/inspection-scheduler-3-5",
+        "label": "Epic: Inspection Scheduler 3.5",
+        "lastSeenOn": "2026-11-21T08:00:00Z"
+      },
+      {
+        "deliveryLinkId": "d0000000-0000-4000-8000-000000000002",
+        "linkKind": {
+          "key": "azure-pipelines-pipeline",
+          "label": "Azure Pipelines pipeline"
+        },
+        "url": "https://pipelines.example.org/field-ops/inspection-scheduler",
+        "label": "Inspection Scheduler release",
+        "lastSeenOn": "2026-11-20T14:12:00Z"
+      },
+      {
+        "deliveryLinkId": "d0000000-0000-4000-8000-000000000003",
+        "linkKind": {
+          "key": "planner-plan",
+          "label": "Planner plan"
+        },
+        "url": "https://plans.example.org/field-ops-backlog",
+        "label": "Field ops app backlog",
+        "lastSeenOn": "2026-11-15T09:00:00Z"
+      }
+    ]
+  },
+  "links": {
+    "recordUrl": "https://product.example.org/records/10000000-0000-4000-8000-000000000001"
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [
+    {
+      "kind": "decision",
+      "count": 1
+    }
+  ],
+  "warnings": [],
+  "untrustedFields": [
+    "application.name",
+    "application.purpose",
+    "components[].labelAsSeen",
+    "dependencies.top[].name",
+    "decisions[].statement",
+    "changes[].title",
+    "deployments[].targetLabel",
+    "deployments[].artifactName",
+    "links[].label"
+  ],
+  "nextSteps": [
+    {
+      "tool": "get_dependency_impact",
+      "inputs": {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "direction": "dependants"
+      }
+    }
+  ],
+  "correlationId": "harness-0012"
+}

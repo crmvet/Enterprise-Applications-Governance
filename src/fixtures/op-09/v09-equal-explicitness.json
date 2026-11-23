@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v09-equal-explicitness",
+  "description": "In the expanded set, the gate policy for tier 1, normal changes and test already exists (from the wildcard row gp-test). A draft adds a second row for the same combination with the same number of explicit fields. V09 refuses the overlap.",
+  "ruleIds": ["V09"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "gate-policy",
+        "key": "gp-test-tier-1-normal",
+        "values": { "label": "Test, tier 1, normal: record", "tierKey": "tier-1", "changeTypeKey": "normal", "targetStageKey": "test", "gateLevel": "record" }
+      }
+    ]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "baseVersionNumber": 1 },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [{ "code": "ref.wildcard", "severity": "error", "ruleId": "V09", "entity": "Gate Policy", "ref": "gp-test-tier-1-normal" }],
+    "reasonsMatch": "exact"
+  }
+}

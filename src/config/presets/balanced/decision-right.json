@@ -1,0 +1,255 @@
+{
+  "$comment": [
+    "One accountable per decision type and scope (V22). The change manager is accountable for tier 3 and emergency change authorization, with its own group for a tier 3 emergency. The change board is accountable for exceptions about a change (document 28, issues 2 and 4). The configuration admin is the one accountable for both configuration decision types (document 28, issue 6)."
+  ],
+  "entity": "decision-right",
+  "rows": [
+    {
+      "key": "intake-a",
+      "label": "Intake: accountable",
+      "decisionTypeKey": "intake",
+      "letter": "accountable",
+      "roleKey": "platform-admin"
+    },
+    { "key": "intake-s", "label": "Intake: AI drafts", "decisionTypeKey": "intake", "letter": "supports" },
+    {
+      "key": "priority-a",
+      "label": "Priority: accountable",
+      "decisionTypeKey": "priority",
+      "letter": "accountable",
+      "ownerRoleKey": "sponsor"
+    },
+    {
+      "key": "priority-r",
+      "label": "Priority: responsible",
+      "decisionTypeKey": "priority",
+      "letter": "responsible",
+      "roleKey": "pmo"
+    },
+    {
+      "key": "design-a",
+      "label": "Design: accountable",
+      "decisionTypeKey": "design",
+      "letter": "accountable",
+      "roleKey": "architect"
+    },
+    { "key": "design-s", "label": "Design: AI drafts", "decisionTypeKey": "design", "letter": "supports" },
+    {
+      "key": "data-use-a",
+      "label": "Data use: accountable",
+      "decisionTypeKey": "data-use",
+      "letter": "accountable",
+      "ownerRoleKey": "data-owner"
+    },
+    {
+      "key": "tier-a",
+      "label": "Tier: accountable",
+      "decisionTypeKey": "tier",
+      "letter": "accountable",
+      "roleKey": "platform-admin"
+    },
+    { "key": "tier-s", "label": "Tier: AI suggests", "decisionTypeKey": "tier", "letter": "supports" },
+    {
+      "key": "risk-acceptance-a",
+      "label": "Risk acceptance: accountable",
+      "decisionTypeKey": "risk-acceptance",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "acceptance-a",
+      "label": "Acceptance: accountable",
+      "decisionTypeKey": "acceptance",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "change-auth-a",
+      "label": "Change: accountable",
+      "decisionTypeKey": "change-authorization",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "change-auth-s",
+      "label": "Change: AI drafts",
+      "decisionTypeKey": "change-authorization",
+      "letter": "supports"
+    },
+    {
+      "key": "change-auth-tier-3-a",
+      "label": "Tier 3 change: accountable",
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "letter": "accountable",
+      "roleKey": "change-manager"
+    },
+    {
+      "key": "change-auth-tier-3-c",
+      "label": "Tier 3 change: consulted",
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "letter": "consulted",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "change-auth-tier-3-s",
+      "label": "Tier 3 change: AI drafts",
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "letter": "supports"
+    },
+    {
+      "key": "change-auth-emergency-a",
+      "label": "Emergency: accountable",
+      "decisionTypeKey": "change-authorization",
+      "changeTypeKey": "emergency",
+      "letter": "accountable",
+      "roleKey": "change-manager"
+    },
+    {
+      "key": "change-auth-tier-3-emergency-a",
+      "label": "Tier 3 emergency: accountable",
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "changeTypeKey": "emergency",
+      "letter": "accountable",
+      "roleKey": "change-manager"
+    },
+    {
+      "key": "go-live-a",
+      "label": "Go-live: accountable",
+      "decisionTypeKey": "go-live",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "ownership-a",
+      "label": "Ownership: accountable",
+      "decisionTypeKey": "ownership",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "portfolio-a",
+      "label": "Portfolio: accountable",
+      "decisionTypeKey": "portfolio",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "portfolio-r",
+      "label": "Portfolio: responsible",
+      "decisionTypeKey": "portfolio",
+      "letter": "responsible",
+      "roleKey": "pmo"
+    },
+    {
+      "key": "exception-a",
+      "label": "Exception: accountable",
+      "decisionTypeKey": "exception",
+      "letter": "accountable",
+      "roleKey": "architect"
+    },
+    {
+      "key": "change-exception-standard-a",
+      "label": "Exception about a standard change: accountable",
+      "decisionTypeKey": "exception",
+      "changeTypeKey": "standard",
+      "letter": "accountable",
+      "roleKey": "change-board"
+    },
+    {
+      "key": "change-exception-normal-a",
+      "label": "Exception about a normal change: accountable",
+      "decisionTypeKey": "exception",
+      "changeTypeKey": "normal",
+      "letter": "accountable",
+      "roleKey": "change-board"
+    },
+    {
+      "key": "change-exception-emergency-a",
+      "label": "Exception about an emergency change: accountable",
+      "decisionTypeKey": "exception",
+      "changeTypeKey": "emergency",
+      "letter": "accountable",
+      "roleKey": "change-board"
+    },
+    {
+      "key": "retirement-a",
+      "label": "Retirement: accountable",
+      "decisionTypeKey": "retirement",
+      "letter": "accountable",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "retirement-r",
+      "label": "Retirement: responsible",
+      "decisionTypeKey": "retirement",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "autonomy-level-a",
+      "label": "Autonomy: accountable",
+      "decisionTypeKey": "autonomy-level",
+      "letter": "accountable",
+      "roleKey": "security-reviewer"
+    },
+    {
+      "key": "autonomy-level-c",
+      "label": "Autonomy: AI lead consulted",
+      "decisionTypeKey": "autonomy-level",
+      "letter": "consulted",
+      "roleKey": "ai-lead"
+    },
+    {
+      "key": "configuration-change-a",
+      "label": "Configuration: accountable",
+      "decisionTypeKey": "configuration-change",
+      "letter": "accountable",
+      "roleKey": "configuration-admin"
+    },
+    {
+      "key": "configuration-change-c-ai-lead",
+      "label": "Configuration: AI lead consulted on AI rules",
+      "decisionTypeKey": "configuration-change",
+      "letter": "consulted",
+      "roleKey": "ai-lead"
+    },
+    {
+      "key": "configuration-change-c-platform-admin",
+      "label": "Configuration: platform admin consulted on roles and bindings",
+      "decisionTypeKey": "configuration-change",
+      "letter": "consulted",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "configuration-change-s",
+      "label": "Configuration: AI drafts",
+      "decisionTypeKey": "configuration-change",
+      "letter": "supports"
+    },
+    {
+      "key": "gate-policy-change-a",
+      "label": "Gate policy: accountable",
+      "decisionTypeKey": "gate-policy-change",
+      "letter": "accountable",
+      "roleKey": "configuration-admin",
+      "description": "Who owns the policy table is open under D-03."
+    },
+    {
+      "key": "gate-policy-change-c",
+      "label": "Gate policy: consulted",
+      "decisionTypeKey": "gate-policy-change",
+      "letter": "consulted",
+      "roleKey": "change-manager"
+    },
+    {
+      "key": "gate-policy-change-s",
+      "label": "Gate policy: AI drafts",
+      "decisionTypeKey": "gate-policy-change",
+      "letter": "supports"
+    }
+  ]
+}

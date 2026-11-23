@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "external-id-matches-without-case",
+  "description": "Microsoft IDs compare without case: an item whose External Id is upper case matches the registered component.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-00000000010A",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Site audit"
+      }
+    ]
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-7",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "externalId": "00000000-0000-0000-0000-00000000010a"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "componentLastSeen": [
+        "fixture-component-7"
+      ],
+      "newClaims": [],
+      "counts": {
+        "itemsSeen": 1,
+        "newClaims": 0,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

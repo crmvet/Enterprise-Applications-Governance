@@ -1,0 +1,14 @@
+{
+  "$comment": "Fictional overlay for fixtures only. Never shipped. It conflicts with fixture-overlay-b, so fixtures can test V43.",
+  "schemaVersion": "1.0",
+  "presetKey": "fixture-overlay-a",
+  "label": "Fixture overlay A",
+  "description": "Changes one guideline chapter. Used by the V43 fixtures.",
+  "presetKind": "overlay",
+  "extends": null,
+  "conflictsWith": ["fixture-overlay-b"],
+  "areas": ["documentation"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "setupNotes": []
+}

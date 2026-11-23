@@ -1,0 +1,39 @@
+{
+  "entity": "documentation-requirement",
+  "rows": [
+    {
+      "key": "wiki-page-all",
+      "label": "Every application has a wiki page",
+      "documentTypeKey": "wiki-page",
+      "fromStageKey": "build"
+    },
+    {
+      "key": "runbook-tier-2",
+      "label": "Tier 2 runbook",
+      "documentTypeKey": "runbook",
+      "tierKey": "tier-2",
+      "fromStageKey": "change-and-release"
+    },
+    {
+      "key": "runbook-tier-3",
+      "label": "Tier 3 runbook",
+      "documentTypeKey": "runbook",
+      "tierKey": "tier-3",
+      "fromStageKey": "change-and-release"
+    },
+    {
+      "key": "adr-tier-3",
+      "label": "Tier 3 architecture decision record",
+      "documentTypeKey": "architecture-decision-record",
+      "tierKey": "tier-3",
+      "fromStageKey": "design-and-review"
+    },
+    {
+      "key": "support-guide-tier-3",
+      "label": "Tier 3 support guide",
+      "documentTypeKey": "support-guide",
+      "tierKey": "tier-3",
+      "fromStageKey": "operate"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "rebased-result-invalid",
+  "description": "The draft starts from version 1 and moves the build stage to stage number 11, which is free in version 1. Version 2, now active, moved the test stage to 11. The two operations touch different rows, so there is no overlap and the draft is re-applied. But the result has two stages numbered 11, so the revalidation fails V14 and the draft cannot activate. Rebase never skips OP-09.",
+  "ruleIds": [
+    "V14"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "lifecycle-stage", "key": "test", "values": { "stageNumber": 11 } }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1 },
+      "operations": [
+        { "op": "upsert", "entity": "lifecycle-stage", "key": "build", "values": { "stageNumber": 11 } }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 2,
+      "canActivate": false,
+      "changedRows": [
+        { "entity": "lifecycle-stage", "key": "test", "change": "changed" }
+      ],
+      "overlaps": [],
+      "validation": {
+        "isValid": false
+      }
+    },
+    "reasons": [
+      { "code": "stage.meaning-coverage", "severity": "error", "ruleId": "V14", "entity": "Lifecycle Stage" }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

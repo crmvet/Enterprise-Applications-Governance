@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "live-query-evidence-read",
+  "description": "When the product's own server ran the live query as the admin, the evidence level is read, and the as-reported reason is absent.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "isLiveQuery": true,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Expense app"
+      }
+    ]
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-1",
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "evidenceLevel": "read"
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

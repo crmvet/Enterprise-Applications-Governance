@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "separation-flag-in-record-mode",
+  "description": "After the deploy, OP-03 re-run with the deployer known flagged the deployer as a counting approver under an allow-and-flag row. The record carries the warning.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "record",
+    "tierKey": "tier-1",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "satisfied",
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z",
+      "deployerFlaggedBySeparation": true
+    }
+  },
+  "expected": {
+    "outcome": "allow",
+    "payload": {
+      "isOutsideWindow": false,
+      "isOtherPath": false,
+      "isMissingApproval": false,
+      "isAiOnlyCodeApproval": false,
+      "notify": false
+    },
+    "reasons": [
+      {
+        "code": "approval.separation-flagged",
+        "severity": "warning",
+        "entity": "Deployment Record"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

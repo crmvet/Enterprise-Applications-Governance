@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "named-model-fails-others-not-tried",
+  "description": "The requester names a model whose window limit the change exceeds. Another model would fit, but a named model is the only one tried, so the change does not qualify: the engine never switches the change to a model nobody named.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "a-short-window",
+        "values": {
+          "label": "A short window",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 30
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "b-any-window",
+        "values": {
+          "label": "B any window",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 3
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard",
+    "standardChangeModelKey": "a-short-window"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 2,
+      "targetStageKeys": [
+        "production"
+      ],
+      "affectedApplicationCount": 1,
+      "componentKindKeys": [
+        "canvas-app"
+      ],
+      "windowMinutes": 60,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "a-short-window",
+        "approvedByDecisionStatus": "accepted"
+      },
+      {
+        "modelKey": "b-any-window",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "a-short-window",
+          "conditionIndex": 0,
+          "conditionKind": "max-window-minutes",
+          "why": "the change window lasts 60 minutes, longer than 30"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "ref": "a-short-window"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Change Type",
+        "key": "standard",
+        "role": "matched"
+      },
+      {
+        "entity": "Standard Change Model",
+        "key": "a-short-window",
+        "role": "skipped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

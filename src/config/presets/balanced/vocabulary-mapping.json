@@ -1,0 +1,95 @@
+{
+  "entity": "vocabulary-mapping",
+  "rows": [
+    {
+      "key": "tier-1-support",
+      "label": "Tier 1 support tier",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-1",
+      "vocabularyKey": "support-tier",
+      "term": "Productivity",
+      "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-2-support",
+      "label": "Tier 2 support tier",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-2",
+      "vocabularyKey": "support-tier",
+      "term": "Important",
+      "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-3-support",
+      "label": "Tier 3 support tier",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-3",
+      "vocabularyKey": "support-tier",
+      "term": "Critical",
+      "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-1-zone",
+      "label": "Tier 1 zone",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-1",
+      "vocabularyKey": "copilot-studio-zone",
+      "term": "Zone 1 - Citizen Development Zone",
+      "sourceUrl": "https://learn.microsoft.com/microsoft-copilot-studio/guidance/sec-gov-phase2",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-2-zone",
+      "label": "Tier 2 zone",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-2",
+      "vocabularyKey": "copilot-studio-zone",
+      "term": "Zone 2 - Partnered Development Zone",
+      "sourceUrl": "https://learn.microsoft.com/microsoft-copilot-studio/guidance/sec-gov-phase2",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-3-zone",
+      "label": "Tier 3 zone",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-3",
+      "vocabularyKey": "copilot-studio-zone",
+      "term": "Zone 3 - Professional Development Zone",
+      "sourceUrl": "https://learn.microsoft.com/microsoft-copilot-studio/guidance/sec-gov-phase2",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-1-agent-risk",
+      "label": "Tier 1 agent risk",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-1",
+      "vocabularyKey": "agent-risk-tier",
+      "term": "Tier 1: Low risk",
+      "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-2-agent-risk",
+      "label": "Tier 2 agent risk",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-2",
+      "vocabularyKey": "agent-risk-tier",
+      "term": "Tier 2: Medium risk",
+      "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
+      "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "tier-3-agent-risk",
+      "label": "Tier 3 agent risk",
+      "sourceEntity": "tier",
+      "sourceKey": "tier-3",
+      "vocabularyKey": "agent-risk-tier",
+      "term": "Tier 3: High risk",
+      "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
+      "checkedOn": "2026-11-22"
+    }
+  ]
+}

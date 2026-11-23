@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v09-wildcard-not-allowed",
+  "description": "A draft puts the wildcard in an approval rule's tier. Only the scope fields of review cadences and gate policies take a wildcard. V09 refuses it, and V01 reports the key pattern.",
+  "ruleIds": ["V09"],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1, "summary": "Every tier for change authorization" },
+      "operations": [{ "op": "upsert", "entity": "approval-rule", "key": "change-auth-owner", "values": { "tierKey": "*" } }]
+    }
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "activeSnapshot": { "presetKey": "balanced" } },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [
+      { "code": "ref.wildcard", "severity": "error", "ruleId": "V09", "entity": "Approval Rule", "ref": "change-auth-owner" },
+      { "code": "shape.schema", "severity": "error", "ruleId": "V01" }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

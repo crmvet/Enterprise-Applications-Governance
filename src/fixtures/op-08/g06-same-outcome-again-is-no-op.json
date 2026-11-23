@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-same-outcome-again-is-no-op",
+  "description": "The approval runner writes the same outcome again, as a retried flow would. Writing the same outcome again is a no-op (document 25, section 8): allowed, with nothing to stamp and no effect.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverPrincipalKind": "user",
+      "respondedOn": "2026-11-22T08:55:00Z",
+      "flowRunUrl": "https://example.org/runs/1"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "approved",
+      "outcome": "approval-approved",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": true,
+      "setColumns": {},
+      "effects": []
+    },
+    "payloadMatch": "subset",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

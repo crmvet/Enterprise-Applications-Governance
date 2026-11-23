@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "claim_resource input",
+  "description": "An owner claims a found item. It attaches to an existing application, or starts a new one as Draft. Claiming an item for an application the caller does not own creates a Proposed ownership decision instead of a silent change. Give exactly one of businessApplicationId and newApplication.",
+  "x-tool": "claim_resource",
+  "type": "object",
+  "required": [
+    "claimId"
+  ],
+  "properties": {
+    "claimId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O23 Claim",
+      "description": "The claim."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Attach the item to this application."
+    },
+    "newApplication": {
+      "type": "object",
+      "required": [
+        "name",
+        "purpose",
+        "applicationKindKey"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The application name."
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "What it is for."
+        },
+        "applicationKindKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C15 Application Kind"
+        },
+        "portfolioId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O01 Portfolio"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Start a new application as Draft. Only a person's confirmation registers it."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "businessApplicationId"
+      ],
+      "not": {
+        "required": [
+          "newApplication"
+        ]
+      }
+    },
+    {
+      "required": [
+        "newApplication"
+      ],
+      "not": {
+        "required": [
+          "businessApplicationId"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "claimId": "c0000000-0000-4000-8000-000000000002",
+      "newApplication": {
+        "name": "Expense helper",
+        "purpose": "Helps staff fill in expense forms.",
+        "applicationKindKey": "power-platform-app",
+        "portfolioId": "a0000000-0000-4000-8000-000000000001"
+      },
+      "clientRequestId": "req-0504"
+    },
+    {
+      "claimId": "c0000000-0000-4000-8000-000000000003",
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "$comment": [
+    "The change manager authorizes tier 3 changes and emergencies, with a combined group for a tier 3 emergency. The change board decides exceptions about a change (document 28, issues 2 and 4).",
+    "WORKING DEFAULT (open design question 4): one configuration admin accepts a configuration change on one card, and that person may be the admin who instructed it. Regulated and the strict separation overlay require a second admin through a separation rule."
+  ],
+  "entity": "approval-rule",
+  "rows": [
+    {
+      "key": "data-use-approval",
+      "label": "Data owner approves data use",
+      "decisionTypeKey": "data-use",
+      "approverOwnerRoleKey": "data-owner",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "risk-acceptance-approval",
+      "label": "Business owner accepts risk",
+      "decisionTypeKey": "risk-acceptance",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "acceptance-approval",
+      "label": "Business owner accepts",
+      "decisionTypeKey": "acceptance",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10
+    },
+    {
+      "key": "change-auth-owner",
+      "label": "Business owner authorizes the change",
+      "decisionTypeKey": "change-authorization",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 5
+    },
+    {
+      "key": "change-auth-tier-3",
+      "label": "Change manager authorizes tier 3",
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "approverRoleKey": "change-manager",
+      "approvalMode": "first-to-respond",
+      "minimumCount": 1,
+      "timeoutDays": 5,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "change-auth-emergency",
+      "label": "Change manager authorizes an emergency",
+      "decisionTypeKey": "change-authorization",
+      "changeTypeKey": "emergency",
+      "approverRoleKey": "change-manager",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 2
+    },
+    {
+      "key": "change-auth-tier-3-emergency",
+      "label": "Change manager authorizes a tier 3 emergency",
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "changeTypeKey": "emergency",
+      "approverRoleKey": "change-manager",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 2,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "go-live-owner",
+      "label": "Business owner approves go-live",
+      "decisionTypeKey": "go-live",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 5
+    },
+    {
+      "key": "go-live-tier-3-owner",
+      "label": "Tier 3 go-live: business owner first",
+      "decisionTypeKey": "go-live",
+      "tierKey": "tier-3",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "sequential",
+      "sequence": 1,
+      "timeoutDays": 5
+    },
+    {
+      "key": "go-live-tier-3-security",
+      "label": "Tier 3 go-live: then security",
+      "decisionTypeKey": "go-live",
+      "tierKey": "tier-3",
+      "approverRoleKey": "security-reviewer",
+      "approvalMode": "sequential",
+      "sequence": 2,
+      "timeoutDays": 5,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "exception-approval",
+      "label": "Architect grants an exception",
+      "decisionTypeKey": "exception",
+      "approverRoleKey": "architect",
+      "approvalMode": "first-to-respond",
+      "requiresTypedReason": true
+    },
+    {
+      "key": "change-exception-standard",
+      "label": "Change board decides an exception about a standard change",
+      "decisionTypeKey": "exception",
+      "changeTypeKey": "standard",
+      "approverRoleKey": "change-board",
+      "approvalMode": "first-to-respond",
+      "minimumCount": 1,
+      "timeoutDays": 5,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "change-exception-normal",
+      "label": "Change board decides an exception about a normal change",
+      "decisionTypeKey": "exception",
+      "changeTypeKey": "normal",
+      "approverRoleKey": "change-board",
+      "approvalMode": "first-to-respond",
+      "minimumCount": 1,
+      "timeoutDays": 5,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "change-exception-emergency",
+      "label": "Change board decides an exception about an emergency change",
+      "decisionTypeKey": "exception",
+      "changeTypeKey": "emergency",
+      "approverRoleKey": "change-board",
+      "approvalMode": "first-to-respond",
+      "minimumCount": 1,
+      "timeoutDays": 2,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "retirement-approval",
+      "label": "Business owner approves retirement",
+      "decisionTypeKey": "retirement",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "everyone-must-approve"
+    },
+    {
+      "key": "autonomy-level-approval",
+      "label": "Security agrees agent autonomy",
+      "decisionTypeKey": "autonomy-level",
+      "applicationKindKey": "agent",
+      "approverRoleKey": "security-reviewer",
+      "approvalMode": "first-to-respond",
+      "requiresTypedReason": true
+    },
+    {
+      "key": "configuration-change-approval",
+      "label": "A configuration admin accepts",
+      "decisionTypeKey": "configuration-change",
+      "approverRoleKey": "configuration-admin",
+      "approvalMode": "first-to-respond",
+      "requiresTypedReason": true
+    },
+    {
+      "key": "gate-policy-change-config-admin",
+      "label": "Gate policy: configuration admin",
+      "decisionTypeKey": "gate-policy-change",
+      "approverRoleKey": "configuration-admin",
+      "approvalMode": "everyone-must-approve",
+      "requiresTypedReason": true
+    },
+    {
+      "key": "gate-policy-change-change-manager",
+      "label": "Gate policy: change manager consulted",
+      "decisionTypeKey": "gate-policy-change",
+      "approverRoleKey": "change-manager",
+      "approvalMode": "first-to-respond",
+      "isConsultation": true
+    }
+  ]
+}

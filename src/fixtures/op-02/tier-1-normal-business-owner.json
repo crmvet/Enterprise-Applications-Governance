@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "tier-1-normal-business-owner",
+  "description": "A tier 1 normal change matches only the group without a scope: the business owner authorizes it.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-1",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "change-auth-owner",
+          "approverOwnerRoleKey": "business-owner",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-owner",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

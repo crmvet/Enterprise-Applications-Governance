@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-engine-empty-update-on-final-approval-refused",
+  "description": "An engine-nested write with no columns on an approved record. Class F: nothing changes once final, stamps included.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {},
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-approved",
+      "outcomeMeaning": "approved",
+      "decision": "fixture-decision-1",
+      "approver": "fixture-person-3",
+      "approverActorMeaning": "person",
+      "approverPrincipalKind": "user",
+      "approverHoldsRequiredRole": true
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

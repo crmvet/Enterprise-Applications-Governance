@@ -1,0 +1,95 @@
+# Record step for Azure Pipelines: a steps template. A copy-paste sample, not a package.
+# Put it at the end of the job that deploys, after the deploy step. See README.md next to this file.
+#
+# What it does: sends one deployment record to the record endpoint. It never stops or fails a deployment:
+# - condition: always() records failed and cancelled deployments too;
+# - continueOnError: true keeps the run green even if Node itself could not start;
+# - record-step.mjs always exits 0 and writes a warning when the record could not be written.
+# Do not set retryCountOnTaskFailure here: the script retries by itself with the same idempotency key.
+#
+# Auth: workload identity federation, no secret. The AzureCLI@2 task signs in with an Azure Resource Manager
+# service connection of type workload identity federation (new ones use the Microsoft Entra issuer), and the
+# script asks the Azure CLI for an app-only token for the record endpoint. No client secret, no certificate,
+# no personal access token.
+# WORKING DEFAULT (open design question 12). The service connection's identity holds the deployment recorder
+# role directly (the Deployment.Record app role, or the role on a Dataverse application user), recorded as a
+# workload grant with a reason, the deciding decision and an expiry.
+#
+# Transport: one variable, RECORD_ENDPOINT_URL (a pipeline or variable group variable, not a secret).
+#   Azure binding:     https://<your product host>/api/deployments
+#   Dataverse binding: https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment
+# The token scope follows from the URL (its origin plus /.default). Set RECORD_ENDPOINT_SCOPE only when the
+# record endpoint's app ID URI differs from its origin, for example api://<application id>/.default.
+#
+# This is a record step only. A check step that asks before the deploy waits for the change gate decision.
+
+parameters:
+  - name: serviceConnection # Azure Resource Manager service connection, workload identity federation
+    type: string
+  - name: recordStepScript # where you copied record-step.mjs in your repository
+    type: string
+    default: pipelines/record-step.mjs
+  - name: artifactName # for example the solution unique name
+    type: string
+  - name: artifactVersion
+    type: string
+  - name: targetExternalId # the target's ID in its own tool, as the product's deployment target holds it
+    type: string
+  - name: artifactKindKey # a key from the product's artifact kind list, or empty
+    type: string
+    default: ''
+  - name: businessApplicationId # the application's row ID, or empty to let the product resolve it
+    type: string
+    default: ''
+  - name: changeRequestId # the change's row ID when the pipeline knows it, or empty
+    type: string
+    default: ''
+  - name: stageOrderRun # the stages this run went through, comma separated, or empty
+    type: string
+    default: ''
+  - name: codeApprovalKind # evidence only, never authorization (WORKING DEFAULT (open design question 7))
+    type: string
+    default: unknown
+    values:
+      - person
+      - ai-only
+      - none
+      - unknown
+
+steps:
+  - task: AzureCLI@2
+    displayName: Record the deployment (fails soft)
+    condition: always()
+    continueOnError: true
+    timeoutInMinutes: 3
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: node "${{ parameters.recordStepScript }}"
+    env:
+      RECORD_ENDPOINT_URL: $(RECORD_ENDPOINT_URL)
+      RECORD_ENDPOINT_SCOPE: $(RECORD_ENDPOINT_SCOPE)
+      RECORD_AUTH: azure-cli
+      # Unique per deployment, the same for every retry inside this step. A rerun of the job is a new attempt,
+      # so it is a new deployment with a new key.
+      RECORD_IDEMPOTENCY_KEY: ado-$(System.CollectionId)-$(Build.BuildId)-$(System.StageName)-$(System.JobName)-$(System.JobAttempt)
+      RECORD_BUSINESS_APPLICATION_ID: ${{ parameters.businessApplicationId }}
+      RECORD_ARTIFACT_NAME: ${{ parameters.artifactName }}
+      RECORD_ARTIFACT_VERSION: ${{ parameters.artifactVersion }}
+      RECORD_ARTIFACT_KIND_KEY: ${{ parameters.artifactKindKey }}
+      RECORD_SOURCE_COMMIT: $(Build.SourceVersion)
+      RECORD_SOURCE_REPOSITORY_URL: $(Build.Repository.Uri)
+      RECORD_TARGET_EXTERNAL_ID: ${{ parameters.targetExternalId }}
+      RECORD_CHANGE_REQUEST_ID: ${{ parameters.changeRequestId }}
+      # Must match the pipeline reference's external ID in the product. An unknown one is created as not mapped.
+      RECORD_PIPELINE_EXTERNAL_ID: ado-$(System.CollectionId)-$(System.DefinitionId)
+      RECORD_RUN_URL: $(System.CollectionUri)$(System.TeamProjectId)/_build/results?buildId=$(Build.BuildId)
+      # Optional: set these two from your deploy step (##vso[task.setvariable]). Without RECORD_FINISHED_ON the
+      # script uses the time it runs.
+      RECORD_STARTED_ON: $(RECORD_STARTED_ON)
+      RECORD_FINISHED_ON: $(RECORD_FINISHED_ON)
+      # The job status so far: Succeeded, SucceededWithIssues, Failed or Canceled. The script maps it.
+      RECORD_RESULT: $(Agent.JobStatus)
+      RECORD_STAGE_ORDER_RUN: ${{ parameters.stageOrderRun }}
+      RECORD_CODE_APPROVAL_KIND: ${{ parameters.codeApprovalKind }}

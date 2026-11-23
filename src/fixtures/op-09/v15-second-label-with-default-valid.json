@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v15-second-label-with-default-valid",
+  "description": "The same second accepted label, marked isDefaultForMeaning. Exactly one default per meaning, so V15 passes.",
+  "ruleIds": [
+    "V15"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "status",
+        "key": "decision-approved",
+        "values": {
+          "label": "Approved",
+          "appliesToEntity": "decision",
+          "engineMeaning": "accepted",
+          "isDefaultForMeaning": true
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

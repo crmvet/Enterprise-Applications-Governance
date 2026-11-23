@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "columns-engine-writes-pascal-case-responded-on-invalid-input",
+  "description": "The engine sends RespondedOn, not respondedOn, on a pending record. Earlier, the guard ignored a name it did not know, so a store that matches names ignoring case would write a response time nobody gave. Every column must be a column of the entity in the logical model, in its exact lowerCamelCase form. Invalid input.",
+  "tags": [
+    "hardening-1",
+    "columns"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "RespondedOn": "2026-11-22T08:55:00Z"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-pending",
+      "outcomeMeaning": "pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-column",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

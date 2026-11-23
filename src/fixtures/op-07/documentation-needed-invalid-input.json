@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "documentation-needed-invalid-input",
+  "description": "A document-current requirement applies, and the document statuses were not passed. The engine never guesses, so it asks for the OP-06 result.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

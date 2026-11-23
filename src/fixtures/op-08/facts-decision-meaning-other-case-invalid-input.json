@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "facts-decision-meaning-other-case-invalid-input",
+  "description": "The pre-image gives Status Meaning \"Accepted\" (an adapter mapping in another case) and a person rewrites the statement. A meaning outside the contract list never reads as not final: the facts are broken.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "statement": "rewritten after acceptance"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "Accepted"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.contract-value-unknown",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

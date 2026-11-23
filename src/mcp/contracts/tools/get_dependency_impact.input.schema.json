@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_dependency_impact input",
+  "description": "What breaks if it retires? Walks dependencies in one call. Only dependency types with Counts For Impact = yes are followed. Give exactly one of businessApplicationId and technicalComponentId. Writes nothing.",
+  "x-tool": "get_dependency_impact",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Start the walk at this application."
+    },
+    "technicalComponentId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O03 Technical Component",
+      "description": "Start the walk at this component."
+    },
+    "direction": {
+      "enum": [
+        "dependants",
+        "dependencies",
+        "both"
+      ],
+      "default": "dependants",
+      "description": "Walk to the dependants, the dependencies or both."
+    },
+    "depth": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "x-max-from-setting": "impact-max-depth",
+      "description": "Hops to walk. The server caps it at the impact-max-depth setting."
+    },
+    "dependencyTypeKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C17 Dependency Type"
+      },
+      "description": "Only these dependency types."
+    },
+    "includeRetired": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include retired applications."
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "businessApplicationId"
+      ]
+    },
+    {
+      "required": [
+        "technicalComponentId"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "direction": "dependants",
+      "depth": 3
+    }
+  ]
+}

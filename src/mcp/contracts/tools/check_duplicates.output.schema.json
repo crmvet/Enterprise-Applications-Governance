@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_duplicates output",
+  "description": "The response envelope. On success, data lists possible matches, best first.",
+  "x-tool": "check_duplicates",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "matches"
+      ],
+      "properties": {
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "reason",
+              "score"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "reason": {
+                "enum": [
+                  "name",
+                  "purpose",
+                  "component",
+                  "owner"
+                ],
+                "description": "What matched."
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Match strength from 0 to 1."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One existing application looks similar: Field visit planner.",
+      "data": {
+        "matches": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "name": "Field visit planner",
+            "reason": "purpose",
+            "score": 0.82
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "matches[].name"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

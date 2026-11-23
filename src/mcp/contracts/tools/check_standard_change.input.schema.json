@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_standard_change input",
+  "description": "Checks whether a change fits a pre-approved standard change model. The engine evaluates the model's conditions (document 25, OP-12). An AI client never decides that a change is standard. Writes nothing.",
+  "x-tool": "check_standard_change",
+  "type": "object",
+  "required": [
+    "changeRequestId"
+  ],
+  "properties": {
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change to check."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "changeRequestId": "d0000000-0000-4000-8000-000000000002"
+    }
+  ]
+}

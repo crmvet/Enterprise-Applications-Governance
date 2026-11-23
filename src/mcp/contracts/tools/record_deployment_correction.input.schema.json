@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_deployment_correction input",
+  "description": "Corrects a deployment record without editing it. A deployment record is final at insert, so linking it to its change after the fact, or fixing a wrong fact, adds a new record whose Corrects Record names the old one. Fields left out are copied from the corrected record. Give at least one corrected field. The engine computes the flags for the new record.",
+  "$comment": "WORKING DEFAULT (open design question 12). Pipelines do not use MCP. They call the record endpoint with this contract, as a workload identity that holds the deployment recorder role through a Workload Grant (C42). idempotencyKey replaces clientRequestId for this tool (document 24, section 3.6).",
+  "x-tool": "record_deployment_correction",
+  "type": "object",
+  "required": [
+    "correctsDeploymentRecordId",
+    "idempotencyKey",
+    "reason"
+  ],
+  "properties": {
+    "correctsDeploymentRecordId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O14 Deployment Record",
+      "description": "The record to correct. It stays as it is; the new record names it in Corrects Record."
+    },
+    "idempotencyKey": {
+      "$ref": "../common.schema.json#/$defs/idempotencyKey",
+      "description": "The sender's retry key. A retry with the same key returns the first correction."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Why the record is corrected."
+    },
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change the deployment belongs to."
+    },
+    "resultMeaning": {
+      "$ref": "../common.schema.json#/$defs/deploymentResultMeaning",
+      "description": "The right result."
+    },
+    "artifactVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "The right artifact version."
+    },
+    "finishedOn": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "The right finish time."
+    },
+    "runUrl": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "The right run link."
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "changeRequestId"
+      ]
+    },
+    {
+      "required": [
+        "resultMeaning"
+      ]
+    },
+    {
+      "required": [
+        "artifactVersion"
+      ]
+    },
+    {
+      "required": [
+        "finishedOn"
+      ]
+    },
+    {
+      "required": [
+        "runUrl"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "correctsDeploymentRecordId": "d2000000-0000-4000-8000-000000000001",
+      "idempotencyKey": "correction-2026-12-03-01",
+      "reason": "The deployment belongs to the photo upload change.",
+      "changeRequestId": "d0000000-0000-4000-8000-000000000002"
+    }
+  ]
+}

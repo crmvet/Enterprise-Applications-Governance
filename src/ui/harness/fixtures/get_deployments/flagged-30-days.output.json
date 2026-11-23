@@ -1,0 +1,131 @@
+{
+  "ok": true,
+  "summary": "Four deployments in the last 30 days carry a flag. Two lack an approval.",
+  "data": {
+    "items": [
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000008",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000010",
+        "applicationName": "Contractor Portal",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000004",
+        "targetLabel": "Customer Prod",
+        "targetStageKey": "production",
+        "artifactName": "Contractor Portal site",
+        "artifactVersion": "2.8.1",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-19T23:40:00Z",
+        "route": {
+          "key": "person-in-app",
+          "meaning": "person-in-app"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": true,
+          "missingApproval": true,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": null,
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000005",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000011",
+        "applicationName": "Invoice Matching",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000006",
+        "targetLabel": "Finance Prod",
+        "targetStageKey": "production",
+        "artifactName": "invoice-matching",
+        "artifactVersion": "1.12.0",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-14T16:05:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": true
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": "https://pipelines.example.org/finance/invoice-matching/runs/311",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000004",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+        "targetLabel": "Field Ops Prod",
+        "targetStageKey": "production",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.4.2.3",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-13T19:41:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": true,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1846",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000001",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000002",
+        "applicationName": "Crew Roster",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+        "targetLabel": "Field Ops Prod",
+        "targetStageKey": "production",
+        "artifactName": "Crew Roster solution",
+        "artifactVersion": "5.2.1",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-04T17:25:00Z",
+        "route": {
+          "key": "ai-tool",
+          "meaning": "ai-tool"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": true,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": null,
+        "correctsRecordId": null
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "items[].applicationName",
+    "items[].targetLabel",
+    "items[].artifactName"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0008"
+}

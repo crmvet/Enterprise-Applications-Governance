@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "proposed-lower-tier-warning",
+  "description": "A person proposes tier 1 while the answers imply tier 3. The result says the proposal is lower, which needs a tier decision with a reason (O08).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "own-identity"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "team-slowed"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "department"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ],
+    "proposedTierKey": "tier-1"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "computedTierKey": "tier-3",
+      "proposedIsLower": true
+    },
+    "reasons": [
+      {
+        "code": "tier.proposed-lower",
+        "severity": "warning",
+        "entity": "Tier",
+        "ref": "tier-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "tier-2-emergency-change-manager",
+  "description": "An emergency below tier 3 matches the emergency group, which is more specific than the group without a scope.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-2",
+    "changeTypeKey": "emergency",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "change-auth-emergency",
+          "approverRoleKey": "change-manager",
+          "timeoutDays": 2
+        }
+      ]
+    },
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-emergency",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-owner",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

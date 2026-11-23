@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-approval-runner-writes-outcome-allowed",
+  "description": "The approval runner, holding the approval writer workload role, writes a person's approval. Allowed. The engine writes the meaning copies and plans the recompute of the decision's approvals and an Audit Entry.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverPrincipalKind": "user",
+      "respondedOn": "2026-11-22T08:55:00Z",
+      "flowRunUrl": "https://example.org/runs/1"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "outcome": "approval-pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": false,
+      "setColumns": {
+        "outcomeMeaning": "approved",
+        "approverActorMeaning": "person",
+        "performedByActorKind": "approval-runner",
+        "onBehalfOf": "fixture-person-2"
+      },
+      "effects": [
+        {
+          "kind": "recompute-approvals",
+          "entity": "Decision",
+          "operation": "update",
+          "rowId": "fixture-decision-1",
+          "columns": {}
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "operation": "create",
+          "columns": {
+            "operation": "approval-outcome-written",
+            "entityName": "Approval Record",
+            "rowId": "fixture-approval-1",
+            "changedValuesJson": {
+              "outcomeMeaning": "approved"
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Role",
+        "key": "approval-writer",
+        "role": "matched"
+      },
+      {
+        "entity": "Status",
+        "key": "approval-approved",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

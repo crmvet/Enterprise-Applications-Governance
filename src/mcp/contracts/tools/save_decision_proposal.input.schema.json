@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_decision_proposal input",
+  "description": "Records a decision for acceptance: what, why, the options weighed and the outcome proposed. The decision is always Proposed. The decider is resolved from the decision rights (the accountable holder in C31) and the caller cannot set it. No input carries a status. Configuration and gate policy decisions use propose_configuration_change instead, and the engine refuses them here.",
+  "x-tool": "save_decision_proposal",
+  "type": "object",
+  "required": [
+    "decisionTypeKey",
+    "subjectKind",
+    "subjectId",
+    "statement",
+    "context",
+    "proposedOutcomeKey",
+    "reason"
+  ],
+  "properties": {
+    "decisionId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O09 Decision",
+      "description": "Edit this decision while it is Proposed. Leave out to record a new one."
+    },
+    "decisionTypeKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C18 Decision Type",
+      "description": "The decision type."
+    },
+    "subjectKind": {
+      "enum": [
+        "business-application",
+        "intake-request",
+        "change-request",
+        "deployment-record",
+        "technical-component",
+        "claim",
+        "review"
+      ],
+      "description": "The kind of record the decision is about."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The ID of the subject row."
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "One sentence: what is decided."
+    },
+    "context": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "description": "The situation and the forces at play."
+    },
+    "optionsConsidered": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "option",
+          "whyNot"
+        ],
+        "properties": {
+          "option": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "An option that was weighed."
+          },
+          "whyNot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "Why it was not chosen."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "The options weighed and why each was not chosen."
+    },
+    "proposedOutcomeKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C19 Decision Outcome",
+      "description": "The outcome proposed. It takes effect only when people accept the decision on cards."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Why this outcome."
+    },
+    "confidenceKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "From the confidence value list."
+    },
+    "supersedesDecisionId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O09 Decision",
+      "description": "An accepted decision this one replaces, once accepted."
+    },
+    "amendsDecisionId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O09 Decision",
+      "description": "An accepted decision this one amends, once accepted."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/evidenceInput"
+      },
+      "description": "Links to proof held elsewhere. Each becomes an Evidence Link (O20)."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "not": {
+    "required": [
+      "supersedesDecisionId",
+      "amendsDecisionId"
+    ]
+  },
+  "examples": [
+    {
+      "decisionTypeKey": "design",
+      "subjectKind": "business-application",
+      "subjectId": "10000000-0000-4000-8000-000000000001",
+      "statement": "Store visit photos in the team site library, not in the app.",
+      "context": "Photos grow fast and the app storage is small.",
+      "optionsConsidered": [
+        {
+          "option": "Keep photos in the app",
+          "whyNot": "Storage runs out within a year."
+        }
+      ],
+      "proposedOutcomeKey": "accept",
+      "reason": "The library is already backed up and searchable.",
+      "evidence": [
+        {
+          "linkKindKey": "wiki-page",
+          "url": "https://wiki.example.org/visit-planner/photos",
+          "label": "Photo storage notes"
+        }
+      ],
+      "clientRequestId": "req-0101"
+    }
+  ]
+}

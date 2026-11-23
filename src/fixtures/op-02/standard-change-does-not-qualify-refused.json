@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "standard-change-does-not-qualify-refused",
+  "description": "A change of a type that requires a standard model, which fits no approved model, is refused: it is not standard and needs another change type. It never falls through to the business owner group.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "label-and-view-changes",
+        "values": {
+          "label": "Labels and views only, tier 1 or 2",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-2",
+    "changeTypeKey": "standard",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "facts": {
+    "standardChange": {
+      "qualifies": false
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "standard-model.does-not-qualify",
+        "severity": "error",
+        "entity": "Change Type",
+        "ref": "standard"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

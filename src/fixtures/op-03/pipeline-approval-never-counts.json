@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "pipeline-approval-never-counts",
+  "description": "A pipeline's workload identity approves. A workload never counts toward an approval.",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "pipeline",
+        "responderPrincipalKind": "service-principal",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "pending",
+    "payload": {
+      "overall": "pending",
+      "requirements": [
+        {
+          "requirementKey": "change-auth-tier-3",
+          "state": "pending",
+          "countingRecordIds": [],
+          "pendingRecordIds": [],
+          "nonCountingRecords": [
+            {
+              "approvalRecordId": "r1",
+              "reasonCodes": [
+                "approval.workload-not-counted",
+                "approval.non-user-principal"
+              ]
+            }
+          ]
+        }
+      ],
+      "countsByRecord": {
+        "r1": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.workload-not-counted",
+        "entity": "Approval Record",
+        "ref": "r1"
+      },
+      {
+        "code": "approval.non-user-principal",
+        "entity": "Approval Record",
+        "ref": "r1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

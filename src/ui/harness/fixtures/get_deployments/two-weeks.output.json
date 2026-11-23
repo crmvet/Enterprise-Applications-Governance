@@ -1,0 +1,271 @@
+{
+  "ok": true,
+  "summary": "Nine deployments finished in the last two weeks. Three carry a flag and one failed.",
+  "data": {
+    "items": [
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000010",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000012",
+        "applicationName": "Supplier Onboarding",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000005",
+        "targetLabel": "Finance Test",
+        "targetStageKey": "test",
+        "artifactName": "Supplier Onboarding solution",
+        "artifactVersion": "1.0.0-rc.2",
+        "result": {
+          "label": "Partly succeeded",
+          "meaning": "partly-succeeded"
+        },
+        "finishedOn": "2026-11-21T09:55:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "record",
+        "runUrl": "https://pipelines.example.org/finance/supplier-onboarding/runs/97",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000009",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000001",
+        "targetLabel": "Field Ops Dev",
+        "targetStageKey": "development",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.5.0.12",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-20T14:12:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "off",
+        "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1872",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000008",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000010",
+        "applicationName": "Contractor Portal",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000004",
+        "targetLabel": "Customer Prod",
+        "targetStageKey": "production",
+        "artifactName": "Contractor Portal site",
+        "artifactVersion": "2.8.1",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-19T23:40:00Z",
+        "route": {
+          "key": "person-in-app",
+          "meaning": "person-in-app"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": true,
+          "missingApproval": true,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": null,
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000007",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000002",
+        "targetLabel": "Field Ops Test",
+        "targetStageKey": "test",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.5.0.9",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-18T10:30:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "record",
+        "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1861",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000006",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000009",
+        "applicationName": "Route Planner",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000001",
+        "targetLabel": "Field Ops Dev",
+        "targetStageKey": "development",
+        "artifactName": "route-planner",
+        "artifactVersion": "0.9.0",
+        "result": {
+          "label": "Failed",
+          "meaning": "failed"
+        },
+        "finishedOn": "2026-11-17T13:20:00Z",
+        "route": {
+          "key": "ai-tool",
+          "meaning": "ai-tool"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "off",
+        "runUrl": null,
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000005",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000011",
+        "applicationName": "Invoice Matching",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000006",
+        "targetLabel": "Finance Prod",
+        "targetStageKey": "production",
+        "artifactName": "invoice-matching",
+        "artifactVersion": "1.12.0",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-14T16:05:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": true
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": "https://pipelines.example.org/finance/invoice-matching/runs/311",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000004",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+        "targetLabel": "Field Ops Prod",
+        "targetStageKey": "production",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.4.2.3",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-13T19:41:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": true,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "flag",
+        "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1846",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000003",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+        "applicationName": "Inspection Scheduler",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000001",
+        "targetLabel": "Field Ops Dev",
+        "targetStageKey": "development",
+        "artifactName": "Inspection Scheduler solution",
+        "artifactVersion": "3.4.2.1",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-12T11:05:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "off",
+        "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1840",
+        "correctsRecordId": null
+      },
+      {
+        "deploymentRecordId": "80000000-0000-4000-8000-000000000002",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000002",
+        "applicationName": "Crew Roster",
+        "deploymentTargetId": "90000000-0000-4000-8000-000000000003",
+        "targetLabel": "Field Ops Prod",
+        "targetStageKey": "production",
+        "artifactName": "Crew Roster solution",
+        "artifactVersion": "5.2.2",
+        "result": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "finishedOn": "2026-11-10T06:42:00Z",
+        "route": {
+          "key": "pipeline-step",
+          "meaning": "pipeline-step"
+        },
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "record",
+        "runUrl": "https://pipelines.example.org/field-ops/crew-roster/runs/2207",
+        "correctsRecordId": null
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "items[].applicationName",
+    "items[].targetLabel",
+    "items[].artifactName"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0009"
+}

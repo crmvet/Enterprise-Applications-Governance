@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_approval_status output",
+  "description": "The response envelope. On success, data lists the required approvals, every approval record with the approver kind, and what is missing. An answer counts only when a person who holds the required role gave it and no Separation Rule (C40) refuses it. A consulted role's answer is a recommendation and never counts. typedReason is text people typed.",
+  "x-tool": "get_approval_status",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "decisionId",
+        "required",
+        "records",
+        "missing",
+        "ready"
+      ],
+      "properties": {
+        "decisionId": {
+          "description": "The decision whose approvals are shown. Null when the record has no decision yet.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRuleKey",
+              "approvalMode",
+              "minimumCount",
+              "received",
+              "isConsultation"
+            ],
+            "properties": {
+              "approvalRuleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C32 Approval Rule"
+              },
+              "requiredRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role"
+              },
+              "requiredOwnerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "approvalMode": {
+                "$ref": "../common.schema.json#/$defs/approvalMode"
+              },
+              "minimumCount": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many counted approvals the rule needs."
+              },
+              "received": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Counted approvals so far."
+              },
+              "isConsultation": {
+                "type": "boolean",
+                "description": "True for a consulted role. Its answers never count."
+              }
+            },
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "required": [
+                  "requiredRoleKey"
+                ]
+              },
+              {
+                "required": [
+                  "requiredOwnerRoleKey"
+                ]
+              }
+            ]
+          },
+          "description": "The approvals the rules require, frozen at submission."
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRecordId",
+              "approvalRuleKey",
+              "approver",
+              "approverActorKind",
+              "approverPrincipalKind",
+              "outcome",
+              "typedReason",
+              "respondedOn",
+              "countsTowardRequirement",
+              "refusedBySeparationRuleKey"
+            ],
+            "properties": {
+              "approvalRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              },
+              "approvalRuleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C32 Approval Rule"
+              },
+              "approver": {
+                "description": "Who answered. Null while pending.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "approverActorKind": {
+                "description": "The approver kind. Only person counts.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/actorKindMeaning"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "approverPrincipalKind": {
+                "description": "Only user counts.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outcome": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The approval outcome by meaning."
+              },
+              "typedReason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The approver's reason, in their words.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "respondedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "countsTowardRequirement": {
+                "type": "boolean",
+                "description": "False when the answer is not a person's, is a consultation, or a Separation Rule refuses it."
+              },
+              "refusedBySeparationRuleKey": {
+                "description": "The separation rule that refused the answer, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C40 Separation Rule"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Every approval record for the decision."
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRuleKey",
+              "stillNeeded"
+            ],
+            "properties": {
+              "approvalRuleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C32 Approval Rule"
+              },
+              "requiredRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role"
+              },
+              "requiredOwnerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "stillNeeded": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Counted approvals still needed."
+              }
+            },
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "required": [
+                  "requiredRoleKey"
+                ]
+              },
+              {
+                "required": [
+                  "requiredOwnerRoleKey"
+                ]
+              }
+            ]
+          },
+          "description": "What still has to come from people."
+        },
+        "ready": {
+          "type": "boolean",
+          "description": "True when the counted approvals meet every rule. The engine then marks the decision accepted. This tool never does."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One approval is still missing: the architect has not answered.",
+      "data": {
+        "decisionId": "60000000-0000-4000-8000-000000000011",
+        "required": [
+          {
+            "approvalRuleKey": "design-architect",
+            "requiredRoleKey": "architect",
+            "approvalMode": "first-to-respond",
+            "minimumCount": 1,
+            "received": 0,
+            "isConsultation": false
+          }
+        ],
+        "records": [
+          {
+            "approvalRecordId": "d1000000-0000-4000-8000-000000000003",
+            "approvalRuleKey": "design-architect",
+            "approver": null,
+            "approverActorKind": null,
+            "approverPrincipalKind": null,
+            "outcome": {
+              "label": "Pending",
+              "meaning": "pending"
+            },
+            "typedReason": null,
+            "respondedOn": null,
+            "countsTowardRequirement": false,
+            "refusedBySeparationRuleKey": null
+          }
+        ],
+        "missing": [
+          {
+            "approvalRuleKey": "design-architect",
+            "requiredRoleKey": "architect",
+            "stillNeeded": 1
+          }
+        ],
+        "ready": false
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000011"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "records[].typedReason"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

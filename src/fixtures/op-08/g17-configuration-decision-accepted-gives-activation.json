@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g17-configuration-decision-accepted-gives-activation",
+  "description": "A configuration change decision about a submitted draft is accepted after its card. The engine plans the activation of that draft (section 6.4) and an Audit Entry.",
+  "ruleIds": [
+    "G-17"
+  ],
+  "workingDefaults": [
+    4,
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-7",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "configuration-change",
+      "subjectKind": "configuration-draft",
+      "subjectConfigurationDraft": "fixture-draft-1"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry"
+        },
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Draft",
+          "operation": "update",
+          "rowId": "fixture-draft-1",
+          "columns": {
+            "changeDecision": "fixture-decision-7"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

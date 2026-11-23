@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_application_card input",
+  "description": "The whole application in one call, so an AI client can answer follow-up questions without ten more calls. Writes nothing.",
+  "x-tool": "get_application_card",
+  "type": "object",
+  "required": [
+    "businessApplicationId"
+  ],
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "owners",
+          "components",
+          "dependencies",
+          "decisions",
+          "changes",
+          "deployments",
+          "documents",
+          "reviews",
+          "links"
+        ]
+      },
+      "default": [
+        "owners",
+        "components",
+        "dependencies",
+        "decisions",
+        "changes",
+        "deployments",
+        "documents",
+        "reviews",
+        "links"
+      ],
+      "description": "Only these sections. Every section by default."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "sections": [
+        "owners",
+        "documents"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "child-of-changed-parent-conflict",
+  "description": "The draft starts from version 1 and rewords one answer of the reach question. Version 2, now active, relabelled the reach question itself. A child row lives inside its parent row, so an operation on the child also touches the parent, and the rebase refuses with V42. This is a judgment call beyond the literal rule: it refuses more, never merges more.",
+  "ruleIds": [
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "tier-question", "key": "reach", "values": { "label": "Who uses it" } }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1 },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier-answer-option",
+          "key": "reach/small-team",
+          "values": { "answerText": "One small team, ten people or fewer" }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "conflict",
+    "payload": {
+      "canActivate": false,
+      "changedRows": [
+        { "entity": "tier-question", "key": "reach", "change": "changed" }
+      ],
+      "overlaps": [
+        {
+          "operation": "/operations/0",
+          "op": "upsert",
+          "entity": "tier-answer-option",
+          "key": "reach/small-team",
+          "changedRow": { "entity": "tier-question", "key": "reach", "change": "changed" }
+        }
+      ]
+    },
+    "reasons": [
+      { "code": "config.base-moved", "severity": "error", "ruleId": "V42", "entity": "Tier Question", "ref": "reach" }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

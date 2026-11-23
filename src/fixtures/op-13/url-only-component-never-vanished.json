@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "url-only-component-never-vanished",
+  "description": "A component held by URL only has no External Id: the gap check can never see it, so it never vanishes.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": true,
+    "items": []
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-9",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "vanishedClaims": [],
+      "counts": {
+        "itemsSeen": 0,
+        "newClaims": 0,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

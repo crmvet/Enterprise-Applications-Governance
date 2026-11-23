@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "coe-baseline-process-owner-missing",
+  "description": "The Microsoft CoE baseline also needs a named process owner at the accept gate for tier 3. A business owner alone is not enough.",
+  "snapshot": {
+    "presetKey": "microsoft-coe-baseline"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "accept",
+    "tierKey": "tier-3",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "assignedOwnerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "accept",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "accept-business-owner",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "business-owner",
+          "met": true,
+          "guidelineKey": "g2",
+          "triggered": false
+        },
+        {
+          "requirementKey": "accept-process-owner-tier-3",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "process-owner",
+          "met": false,
+          "reasonCode": "gate.requirement-owner-missing",
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-owner-missing",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "accept-process-owner-tier-3"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "accept"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

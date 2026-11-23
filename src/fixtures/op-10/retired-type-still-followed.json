@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "retired-type-still-followed",
+  "description": "A retired dependency type keeps its Counts For Impact flag: its Dependency rows still exist, and the walk asks what breaks (a proposal).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "dependency-type",
+        "key": "hosted-on"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 2
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "hosted-on"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 2,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Dependency Type",
+        "key": "hosted-on",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "includes"
+  }
+}

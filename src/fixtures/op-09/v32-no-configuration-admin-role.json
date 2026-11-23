@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v32-no-configuration-admin-role",
+  "description": "A draft takes Can Change Configuration away from the configuration admin role. No role could accept a configuration change, and neither configuration decision type has a rule naming such a role, so V32 refuses it.",
+  "ruleIds": [
+    "V32"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "role",
+        "key": "configuration-admin",
+        "values": {
+          "canChangeConfiguration": false
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "role.config-admin-missing",
+        "severity": "error",
+        "ruleId": "V32",
+        "entity": "Role"
+      },
+      {
+        "code": "role.config-admin-missing",
+        "severity": "error",
+        "ruleId": "V32",
+        "entity": "Approval Rule",
+        "ref": "configuration-change-approval"
+      },
+      {
+        "code": "role.config-admin-missing",
+        "severity": "error",
+        "ruleId": "V32",
+        "entity": "Approval Rule",
+        "ref": "gate-policy-change-config-admin"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

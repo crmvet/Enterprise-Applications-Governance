@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "erasure-with-tombstone-replaces-object-id",
+  "description": "The client's policy asks for the object ID to go too. The adapter passes a tombstone value (the core makes no random values) and the engine writes it.",
+  "workingDefaults": [
+    1,
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-4",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "principal-reference",
+    "operation": "update",
+    "rowId": "fixture-principal-7",
+    "after": {
+      "isErased": true,
+      "entraObjectId": "tombstone-00000000000000000000000000000001"
+    }
+  },
+  "facts": {
+    "before": {
+      "isErased": false,
+      "entraObjectId": "00000000-0000-4000-8000-000000000071"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "setColumns": {
+        "entraObjectId": "tombstone-00000000000000000000000000000001",
+        "displayLabel": "former user",
+        "isErased": true
+      },
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "columns": {
+            "changedValuesJson": {
+              "entraObjectIdReplaced": true,
+              "isErased": true
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

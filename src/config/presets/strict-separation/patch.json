@@ -1,0 +1,101 @@
+{
+  "$comment": [
+    "Strict separation as operations by key (document 21, section 6.6). Overlays apply after the full preset's wildcards expand.",
+    "Nobody approves their own proposal at any tier: no-self-approval-all replaces no-self-approval-tier-3 (document 28, Q10).",
+    "WORKING DEFAULT (open design question 4): config-accepter-differs and its twin gate-policy-accepter-differs refuse an approval from the admin who instructed the change, so a second configuration admin accepts every configuration change.",
+    "ai-lead-own-group: the AI lead and the platform admin bind to different groups (D-20 require a different person; V36).",
+    "Two change board members decide an exception about a change. The engine counts approved responses until two arrive. Whether one Power Automate approval can wait for exactly two of many approvers is UNVERIFIED, so the approval runner may send one card per member.",
+    "deployer-not-sole-approver refuses: at enforce, the check step stops a production deployment whose deployer is the only approver; at lower levels it is flagged.",
+    "The separation rule keys and values match Regulated, so this overlay on Regulated changes only the AI lead rule, the board minimum count and the deployer rule."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "strict-separation",
+    "presetKind": "overlay",
+    "extends": null,
+    "conflictsWith": ["small-team"]
+  },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "no-self-approval-all",
+      "values": {
+        "label": "No self-approval at any tier",
+        "ruleKind": "approver-differs",
+        "mustDifferFrom": "proposer",
+        "enforcement": "refuse"
+      }
+    },
+    { "op": "retire", "entity": "separation-rule", "key": "no-self-approval-tier-3" },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "config-accepter-differs",
+      "values": {
+        "label": "A second configuration admin accepts a configuration change",
+        "ruleKind": "approver-differs",
+        "decisionTypeKey": "configuration-change",
+        "mustDifferFrom": "instructing-admin",
+        "enforcement": "refuse"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "gate-policy-accepter-differs",
+      "values": {
+        "label": "A second configuration admin accepts a gate policy change",
+        "ruleKind": "approver-differs",
+        "decisionTypeKey": "gate-policy-change",
+        "mustDifferFrom": "instructing-admin",
+        "enforcement": "refuse"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "ai-lead-own-group",
+      "values": {
+        "label": "AI lead and platform admin use different groups",
+        "ruleKind": "roles-in-different-groups",
+        "roleKeys": ["ai-lead", "platform-admin"],
+        "enforcement": "refuse"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "change-exception-standard",
+      "values": {
+        "label": "Two change board members decide an exception about a standard change",
+        "minimumCount": 2
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "change-exception-normal",
+      "values": {
+        "label": "Two change board members decide an exception about a normal change",
+        "minimumCount": 2
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "change-exception-emergency",
+      "values": {
+        "label": "Two change board members decide an exception about an emergency change",
+        "minimumCount": 2
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "deployer-not-sole-approver",
+      "values": { "enforcement": "refuse" }
+    }
+  ]
+}

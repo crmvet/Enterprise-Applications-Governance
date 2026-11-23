@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "triggered-requirement-applies-outside-scope",
+  "description": "A tier answer triggered the tier 3 security review requirement for a tier 1 application (C10 Triggers Json). It applies although its tier scope does not match, and it is marked as triggered (a proposal).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-1",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "triggeredGateRequirementKeys": [
+      "go-live-security-tier-3"
+    ]
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": true,
+          "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-security-tier-3",
+          "requirementKind": "review-done",
+          "requiredReviewTypeKey": "security-review",
+          "met": false,
+          "reasonCode": "gate.requirement-review-not-done",
+          "triggered": true
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-review-not-done",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "go-live-security-tier-3"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "agent-autonomy-level-security",
+  "description": "The autonomy level of an agent matches the group scoped to the application kind agent.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "autonomy-level",
+    "applicationKindKey": "agent",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "autonomy-level-approval",
+          "approverRoleKey": "security-reviewer",
+          "requiresTypedReason": true
+        }
+      ]
+    },
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "autonomy-level-approval",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

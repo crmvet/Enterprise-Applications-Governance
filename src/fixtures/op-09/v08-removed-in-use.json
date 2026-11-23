@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v08-removed-in-use",
+  "description": "The active version holds a document type that an active documentation requirement uses. A candidate built from Balanced alone drops both rows. V08 refuses the removal of the row in use.",
+  "ruleIds": ["V08"],
+  "snapshot": { "presetKey": "balanced" },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": {
+    "mode": "draft",
+    "activeSnapshot": {
+      "presetKey": "balanced",
+      "operations": [
+        { "op": "upsert", "entity": "document-type", "key": "fixture-handbook", "values": { "label": "Fixture handbook" } },
+        {
+          "op": "upsert",
+          "entity": "documentation-requirement",
+          "key": "fixture-handbook-tier-3",
+          "values": { "label": "Handbook at tier 3", "documentTypeKey": "fixture-handbook", "tierKey": "tier-3", "fromStageKey": "operate" }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false,
+      "changeSummary": ["Removed Document Type `fixture-handbook`.", "Removed Documentation Requirement `fixture-handbook-tier-3`."]
+    },
+    "reasons": [{ "code": "ref.in-use", "severity": "error", "ruleId": "V08", "entity": "Document Type", "ref": "fixture-handbook" }],
+    "reasonsMatch": "exact"
+  }
+}

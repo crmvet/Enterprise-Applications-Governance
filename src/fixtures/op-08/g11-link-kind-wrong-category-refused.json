@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g11-link-kind-wrong-category-refused",
+  "description": "A delivery link uses a wiki page link kind, which belongs to the document category.",
+  "ruleIds": [
+    "G-11"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "delivery-link",
+    "operation": "create",
+    "after": {
+      "linkKind": "ado-wiki-page",
+      "url": "https://example.org/wiki/page-1",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "link.wrong-category",
+          "ruleId": "G-11"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "link.wrong-category",
+        "severity": "error",
+        "entity": "Delivery Link",
+        "ref": "ado-wiki-page"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

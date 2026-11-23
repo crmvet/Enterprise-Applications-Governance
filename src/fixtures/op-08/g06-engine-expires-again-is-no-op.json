@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-expires-again-is-no-op",
+  "description": "The expiry runs again on a record the engine already marked expired, as a re-run effect would. The same outcome again is a no-op (document 25, section 8): allowed, with nothing to stamp and no effect.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-expired"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "expired",
+      "outcome": "approval-expired",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": true,
+      "setColumns": {},
+      "removedColumns": [],
+      "effects": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

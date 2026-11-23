@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g16-engine-submits-draft-for-admin-allowed",
+  "description": "The engine's submit operation freezes the draft for the configuration admin who submits it. Allowed.",
+  "ruleIds": [
+    "G-16"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "update",
+    "rowId": "fixture-draft-1",
+    "after": {
+      "draftStatus": "submitted",
+      "submittedOn": "2026-11-22T09:00:00Z",
+      "changeDecision": "fixture-decision-7"
+    }
+  },
+  "facts": {
+    "before": {
+      "draftStatus": "draft"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

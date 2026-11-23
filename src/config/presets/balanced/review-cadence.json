@@ -1,0 +1,77 @@
+{
+  "entity": "review-cadence",
+  "rows": [
+    {
+      "key": "owner-check-tier-1",
+      "label": "Owner check, tier 1",
+      "reviewTypeKey": "owner-check",
+      "tierKey": "tier-1",
+      "intervalDays": 365,
+      "leadDays": 14,
+      "escalateAfterDays": 14
+    },
+    {
+      "key": "owner-check-tier-2",
+      "label": "Owner check, tier 2",
+      "reviewTypeKey": "owner-check",
+      "tierKey": "tier-2",
+      "intervalDays": 180,
+      "leadDays": 14,
+      "escalateAfterDays": 14
+    },
+    {
+      "key": "owner-check-tier-3",
+      "label": "Owner check, tier 3",
+      "reviewTypeKey": "owner-check",
+      "tierKey": "tier-3",
+      "intervalDays": 90,
+      "leadDays": 14,
+      "escalateAfterDays": 7
+    },
+    {
+      "key": "tier-check",
+      "label": "Tier check",
+      "reviewTypeKey": "tier-check",
+      "tierKey": "*",
+      "intervalDays": 365,
+      "leadDays": 14,
+      "escalateAfterDays": 14
+    },
+    {
+      "key": "access-check-tier-1",
+      "label": "Access check, tier 1",
+      "reviewTypeKey": "access-check",
+      "tierKey": "tier-1",
+      "intervalDays": 365,
+      "leadDays": 14,
+      "escalateAfterDays": 14
+    },
+    {
+      "key": "access-check-tier-2",
+      "label": "Access check, tier 2",
+      "reviewTypeKey": "access-check",
+      "tierKey": "tier-2",
+      "intervalDays": 180,
+      "leadDays": 14,
+      "escalateAfterDays": 14
+    },
+    {
+      "key": "access-check-tier-3",
+      "label": "Access check, tier 3",
+      "reviewTypeKey": "access-check",
+      "tierKey": "tier-3",
+      "intervalDays": 90,
+      "leadDays": 14,
+      "escalateAfterDays": 7
+    },
+    {
+      "key": "benefit",
+      "label": "Benefit review",
+      "reviewTypeKey": "benefit",
+      "tierKey": "*",
+      "intervalDays": 365,
+      "leadDays": 30,
+      "escalateAfterDays": 30
+    }
+  ]
+}

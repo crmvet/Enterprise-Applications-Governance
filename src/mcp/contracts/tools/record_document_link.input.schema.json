@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_document_link input",
+  "description": "Records the link and status of a document the owner's own AI tool wrote, for example a wiki page. The product never writes the document and never assumes the owner's write succeeded: it stores what the caller reports. The first recorded link creates the row.",
+  "$comment": "WORKING DEFAULT (open design question 9). For a document type with Current Needs Person = yes (C22), current from an AI client is stored as draft until the person confirms on a confirmation card.",
+  "x-tool": "record_document_link",
+  "type": "object",
+  "required": [
+    "businessApplicationId",
+    "documentTypeKey",
+    "url"
+  ],
+  "properties": {
+    "documentLinkId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O19 Document Link",
+      "description": "Update this link. Leave out to record a new one."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "documentTypeKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C22 Document Type",
+      "description": "The document type."
+    },
+    "url": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "Opens the document. Checked against the link kind's Url Pattern and the forbidden URL patterns."
+    },
+    "statusMeaning": {
+      "enum": [
+        "draft",
+        "current"
+      ],
+      "default": "draft",
+      "description": "The status the caller reports. How far an AI client may set it is the Tool Policy's Max AI State."
+    },
+    "lastUpdatedOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "When the document was last updated."
+    },
+    "documentOwnerObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "The document owner. Leave out for the caller."
+    },
+    "linkKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C37 Link Kind",
+      "description": "A link kind of the document category."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "documentTypeKey": "support-guide",
+      "url": "https://wiki.example.org/visit-planner/support",
+      "statusMeaning": "current",
+      "lastUpdatedOn": "2026-11-22",
+      "linkKindKey": "wiki-page",
+      "clientRequestId": "req-0401"
+    }
+  ]
+}

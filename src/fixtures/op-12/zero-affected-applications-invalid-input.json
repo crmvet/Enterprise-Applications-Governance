@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "zero-affected-applications-invalid-input",
+  "description": "The count of affected applications includes the main application, so 0 is refused as malformed.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "affectedApplicationCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

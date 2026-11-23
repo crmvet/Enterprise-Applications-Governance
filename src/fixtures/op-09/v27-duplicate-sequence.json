@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v27-duplicate-sequence",
+  "description": "A draft gives the second rule of the sequential tier 3 go-live group the same sequence as the first. V27 refuses the repeated sequence number.",
+  "ruleIds": [
+    "V27"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "go-live-tier-3-security",
+        "values": {
+          "sequence": 1
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "approval-rule.sequence",
+        "severity": "error",
+        "ruleId": "V27",
+        "entity": "Approval Rule",
+        "ref": "go-live-tier-3-security"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

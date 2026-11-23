@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "summary": "48 applications across all portfolios. Four have no tier yet.",
+  "data": {
+    "buckets": [
+      {
+        "key": "tier-1",
+        "label": "Tier 1",
+        "count": 17
+      },
+      {
+        "key": "tier-2",
+        "label": "Tier 2",
+        "count": 19
+      },
+      {
+        "key": "tier-3",
+        "label": "Tier 3",
+        "count": 8
+      },
+      {
+        "key": null,
+        "label": "No tier yet",
+        "count": 4
+      }
+    ],
+    "ownerGaps": 4,
+    "reviewsOverdue": 3,
+    "documentsMissingOrStale": 7,
+    "draftsOlderThanDays": 2
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [],
+  "nextSteps": [],
+  "correlationId": "harness-0006"
+}

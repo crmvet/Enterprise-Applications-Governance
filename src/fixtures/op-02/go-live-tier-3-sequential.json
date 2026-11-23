@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "go-live-tier-3-sequential",
+  "description": "Tier 3 go-live needs the business owner first, then security, as two sequential rules of one group. The broader go-live group drops out.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "go-live",
+    "tierKey": "tier-3",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "go-live-tier-3-owner",
+          "approverOwnerRoleKey": "business-owner",
+          "approvalMode": "sequential",
+          "sequence": 1
+        },
+        {
+          "ruleKey": "go-live-tier-3-security",
+          "approverRoleKey": "security-reviewer",
+          "approvalMode": "sequential",
+          "sequence": 2,
+          "requiresTypedReason": true
+        }
+      ],
+      "consultations": []
+    },
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-tier-3-owner",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-tier-3-security",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "go-live-owner",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

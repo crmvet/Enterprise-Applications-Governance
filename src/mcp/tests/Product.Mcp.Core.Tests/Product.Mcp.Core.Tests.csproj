@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Tests for the MCP server core: contract tests against the in-memory store.
+    Every R1 tool and resource through the whole core, the fixed error codes, Tool Policy, the rate limit in the store
+    port, X-Toolsets, the Known Client check, the mock identity and telemetry. net10.0 only, like the core.
+    The mock identity and the in-memory counters come from Product.Mcp.Testing, and the in-memory store from
+    Product.Engine.Testing. No host references either.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Product.Mcp.Core\Product.Mcp.Core.csproj" />
+    <ProjectReference Include="..\..\Product.Mcp.Testing\Product.Mcp.Testing.csproj" />
+    <ProjectReference Include="..\..\..\engine\Product.Engine.Testing\Product.Engine.Testing.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,2132 @@
+{
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "bundle",
+    "presetKey": "balanced",
+    "label": "Balanced",
+    "description": "The default three-tier preset. Flag by default, Advise for tier 2 in production, Enforce for tier 3 in production.",
+    "presetKind": "full",
+    "extends": null,
+    "conflictsWith": [],
+    "areas": ["taxonomy", "people", "rules", "gates", "change-management", "documentation"],
+    "productRelease": "0.1.0",
+    "contentVersion": "1.0.0",
+    "checkedOn": "2026-11-22",
+    "setupNotes": []
+  },
+  "entities": {
+    "setting": [
+      {
+        "key": "change-management-mode",
+        "label": "Change management mode",
+        "valueType": "contract:change-management-mode",
+        "value": "built-in"
+      },
+      {
+        "key": "ai-approval-lock",
+        "label": "AI never approves",
+        "valueType": "yes-no",
+        "value": true,
+        "isLocked": true
+      },
+      {
+        "key": "engine-acceptable-decision-types",
+        "label": "Decisions the engine may accept without a card",
+        "valueType": "json",
+        "value": [
+          { "decisionTypeKey": "intake", "condition": "lowest-tier" },
+          { "decisionTypeKey": "change-authorization", "condition": "standard-model" }
+        ],
+        "isLocked": true,
+        "description": "Working default, open design question 8. Extending the list needs a product release."
+      },
+      {
+        "key": "reminder-channel",
+        "label": "Reminder channel",
+        "valueType": "key:list-value:channel",
+        "value": "teams"
+      },
+      {
+        "key": "guideline-hub-base-url",
+        "label": "Guideline hub base URL",
+        "valueType": "text",
+        "value": null,
+        "description": "Set during setup; the public hub location is still open."
+      },
+      {
+        "key": "draft-expiry-days",
+        "label": "Days before an unsubmitted draft is discarded",
+        "valueType": "number",
+        "value": 30
+      },
+      {
+        "key": "configuration-review-days",
+        "label": "Days between reviews of the whole configuration",
+        "valueType": "number",
+        "value": 180
+      },
+      {
+        "key": "default-flag-notify",
+        "label": "Who hears about a flag",
+        "valueType": "json",
+        "value": { "ownerRoleKeys": ["business-owner", "technical-owner"], "roleKeys": ["change-manager"] }
+      },
+      {
+        "key": "default-ai-only-code-approval-handling",
+        "label": "When the only code approval came from an AI",
+        "valueType": "contract:ai-only-code-approval-handling",
+        "value": "flag"
+      },
+      {
+        "key": "confirmation-channel",
+        "label": "What counts as a person's act for an AI draft",
+        "valueType": "json",
+        "value": {
+          "decision": "approval-card",
+          "application-registration": "confirmation-card",
+          "gate-document-current": "confirmation-card",
+          "intake-or-change-submission": "same-call",
+          "links-deployments-checks": "none"
+        },
+        "description": "Working default, open design question 9."
+      },
+      {
+        "key": "unlinked-deployment-change-type",
+        "label": "Change type for a deployment with no change request",
+        "valueType": "key:change-type",
+        "value": "normal"
+      },
+      {
+        "key": "intake-visibility",
+        "label": "Who reads intake requests",
+        "valueType": "contract:intake-visibility",
+        "value": "own"
+      },
+      {
+        "key": "claim-visibility",
+        "label": "Who reads gap check claims",
+        "valueType": "contract:claim-visibility",
+        "value": "admins-and-claimant"
+      },
+      {
+        "key": "record-access-mode",
+        "label": "Read scope of the register",
+        "valueType": "contract:record-access-mode",
+        "value": "open-read"
+      },
+      { "key": "agent-read-access", "label": "Agent identities may read", "valueType": "yes-no", "value": false },
+      {
+        "key": "principal-refresh-days",
+        "label": "Days between principal refreshes from Entra",
+        "valueType": "number",
+        "value": 7
+      },
+      {
+        "key": "forbidden-url-patterns",
+        "label": "URL parts a link may not carry",
+        "valueType": "json",
+        "value": ["[?&]sig=", "[?&]token=", "[?&]code=", "^[a-z]+://[^/]*@"]
+      },
+      {
+        "key": "audit-retention-days",
+        "label": "Days to keep audit and history",
+        "valueType": "number",
+        "value": null,
+        "description": "Null keeps them forever, the Dataverse default. On Azure, set from the client's retention policy. Ledger tables ignore it."
+      },
+      {
+        "key": "link-undo-minutes",
+        "label": "Minutes in which a link's creator may delete it",
+        "valueType": "number",
+        "value": 30
+      },
+      {
+        "key": "workload-grant-max-days",
+        "label": "Longest a workload grant may run, in days",
+        "valueType": "number",
+        "value": 365
+      },
+      { "key": "impact-max-depth", "label": "Deepest dependency walk", "valueType": "number", "value": 5 },
+      { "key": "mcp-page-size-max", "label": "Largest page a list tool returns", "valueType": "number", "value": 100 },
+      {
+        "key": "engine-read-cache-seconds",
+        "label": "Seconds to cache read operations",
+        "valueType": "number",
+        "value": 0
+      },
+      {
+        "key": "working-days",
+        "label": "Working days",
+        "valueType": "json",
+        "value": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+      }
+    ],
+    "status": [
+      { "key": "decision-proposed", "label": "Proposed", "appliesToEntity": "decision", "engineMeaning": "proposed" },
+      { "key": "decision-accepted", "label": "Accepted", "appliesToEntity": "decision", "engineMeaning": "accepted" },
+      { "key": "decision-rejected", "label": "Rejected", "appliesToEntity": "decision", "engineMeaning": "rejected" },
+      {
+        "key": "decision-superseded",
+        "label": "Superseded",
+        "appliesToEntity": "decision",
+        "engineMeaning": "superseded"
+      },
+      { "key": "decision-withdrawn", "label": "Withdrawn", "appliesToEntity": "decision", "engineMeaning": "withdrawn" },
+      { "key": "intake-draft", "label": "Draft", "appliesToEntity": "intake-request", "engineMeaning": "draft" },
+      {
+        "key": "intake-submitted",
+        "label": "Submitted",
+        "appliesToEntity": "intake-request",
+        "engineMeaning": "submitted"
+      },
+      {
+        "key": "intake-in-progress",
+        "label": "In progress",
+        "appliesToEntity": "intake-request",
+        "engineMeaning": "in-progress"
+      },
+      {
+        "key": "intake-completed",
+        "label": "Completed",
+        "appliesToEntity": "intake-request",
+        "engineMeaning": "completed"
+      },
+      {
+        "key": "intake-rejected",
+        "label": "Declined",
+        "appliesToEntity": "intake-request",
+        "engineMeaning": "rejected"
+      },
+      {
+        "key": "intake-withdrawn",
+        "label": "Withdrawn",
+        "appliesToEntity": "intake-request",
+        "engineMeaning": "withdrawn"
+      },
+      {
+        "key": "intake-cancelled",
+        "label": "Cancelled",
+        "appliesToEntity": "intake-request",
+        "engineMeaning": "cancelled"
+      },
+      { "key": "change-draft", "label": "Draft", "appliesToEntity": "change-request", "engineMeaning": "draft" },
+      {
+        "key": "change-submitted",
+        "label": "Submitted",
+        "appliesToEntity": "change-request",
+        "engineMeaning": "submitted"
+      },
+      {
+        "key": "change-in-progress",
+        "label": "Scheduled",
+        "appliesToEntity": "change-request",
+        "engineMeaning": "in-progress"
+      },
+      {
+        "key": "change-completed",
+        "label": "Closed",
+        "appliesToEntity": "change-request",
+        "engineMeaning": "completed"
+      },
+      {
+        "key": "change-rejected",
+        "label": "Rejected",
+        "appliesToEntity": "change-request",
+        "engineMeaning": "rejected"
+      },
+      {
+        "key": "change-withdrawn",
+        "label": "Withdrawn",
+        "appliesToEntity": "change-request",
+        "engineMeaning": "withdrawn"
+      },
+      {
+        "key": "change-cancelled",
+        "label": "Cancelled",
+        "appliesToEntity": "change-request",
+        "engineMeaning": "cancelled"
+      },
+      { "key": "app-draft", "label": "Draft", "appliesToEntity": "business-application", "engineMeaning": "draft" },
+      {
+        "key": "app-registered",
+        "label": "Registered",
+        "appliesToEntity": "business-application",
+        "engineMeaning": "registered"
+      },
+      {
+        "key": "app-archived",
+        "label": "Archived",
+        "appliesToEntity": "business-application",
+        "engineMeaning": "archived"
+      },
+      {
+        "key": "approval-pending",
+        "label": "Waiting",
+        "appliesToEntity": "approval-record",
+        "engineMeaning": "pending"
+      },
+      {
+        "key": "approval-approved",
+        "label": "Approved",
+        "appliesToEntity": "approval-record",
+        "engineMeaning": "approved"
+      },
+      {
+        "key": "approval-rejected",
+        "label": "Rejected",
+        "appliesToEntity": "approval-record",
+        "engineMeaning": "rejected"
+      },
+      {
+        "key": "approval-expired",
+        "label": "Expired",
+        "appliesToEntity": "approval-record",
+        "engineMeaning": "expired"
+      },
+      {
+        "key": "approval-cancelled",
+        "label": "Cancelled",
+        "appliesToEntity": "approval-record",
+        "engineMeaning": "cancelled"
+      },
+      {
+        "key": "approval-recommendation",
+        "label": "Recommendation only",
+        "appliesToEntity": "approval-record",
+        "engineMeaning": "recommendation-only"
+      },
+      {
+        "key": "document-missing",
+        "label": "Missing",
+        "appliesToEntity": "document-link",
+        "engineMeaning": "missing",
+        "description": "Shown for a required document with no link. Computed from configuration, never stored."
+      },
+      { "key": "document-draft", "label": "Draft", "appliesToEntity": "document-link", "engineMeaning": "draft" },
+      { "key": "document-current", "label": "Current", "appliesToEntity": "document-link", "engineMeaning": "current" },
+      { "key": "document-stale", "label": "Stale", "appliesToEntity": "document-link", "engineMeaning": "stale" },
+      { "key": "claim-open", "label": "Open", "appliesToEntity": "claim", "engineMeaning": "open" },
+      { "key": "claim-claimed", "label": "Claimed", "appliesToEntity": "claim", "engineMeaning": "claimed" },
+      { "key": "claim-dismissed", "label": "Dismissed", "appliesToEntity": "claim", "engineMeaning": "dismissed" },
+      {
+        "key": "deployment-succeeded",
+        "label": "Succeeded",
+        "appliesToEntity": "deployment-record",
+        "engineMeaning": "succeeded"
+      },
+      {
+        "key": "deployment-partly",
+        "label": "Partly succeeded",
+        "appliesToEntity": "deployment-record",
+        "engineMeaning": "partly-succeeded"
+      },
+      {
+        "key": "deployment-failed",
+        "label": "Failed",
+        "appliesToEntity": "deployment-record",
+        "engineMeaning": "failed"
+      },
+      {
+        "key": "deployment-not-deployed",
+        "label": "Not deployed",
+        "appliesToEntity": "deployment-record",
+        "engineMeaning": "not-deployed"
+      },
+      { "key": "review-due", "label": "Due", "appliesToEntity": "review", "engineMeaning": "due" },
+      { "key": "review-done", "label": "Done", "appliesToEntity": "review", "engineMeaning": "done" },
+      { "key": "review-cancelled", "label": "Cancelled", "appliesToEntity": "review", "engineMeaning": "cancelled" }
+    ],
+    "value-list": [
+      {
+        "key": "vocabulary",
+        "label": "Outside vocabulary",
+        "isExtensible": true,
+        "values": [
+          { "key": "support-tier", "label": "Power Platform support tier" },
+          { "key": "copilot-studio-zone", "label": "Copilot Studio zone" },
+          { "key": "agent-risk-tier", "label": "Agent risk tier" }
+        ]
+      },
+      {
+        "key": "tool",
+        "label": "Tool",
+        "isExtensible": true,
+        "values": [
+          { "key": "azure-devops", "label": "Azure DevOps" },
+          { "key": "github", "label": "GitHub" },
+          { "key": "power-platform", "label": "Power Platform" },
+          { "key": "microsoft-365", "label": "Microsoft 365 admin center" },
+          { "key": "entra", "label": "Microsoft Entra" },
+          { "key": "sharepoint", "label": "SharePoint" },
+          { "key": "planner", "label": "Planner" },
+          { "key": "azure", "label": "Azure" },
+          { "key": "itsm", "label": "ITSM tool" },
+          { "key": "other", "label": "Other" }
+        ]
+      },
+      {
+        "key": "channel",
+        "label": "Channel",
+        "isExtensible": false,
+        "values": [
+          { "key": "teams", "label": "Teams" },
+          { "key": "outlook", "label": "Outlook" },
+          { "key": "in-app", "label": "In the app" }
+        ]
+      },
+      {
+        "key": "application-category",
+        "label": "Application category",
+        "isExtensible": true,
+        "values": [
+          { "key": "power-platform", "label": "Power Platform" },
+          { "key": "ai", "label": "AI and agents" },
+          { "key": "custom-code", "label": "Custom code" },
+          { "key": "external", "label": "External and SaaS" }
+        ]
+      },
+      {
+        "key": "horizon",
+        "label": "Horizon",
+        "isExtensible": false,
+        "values": [
+          { "key": "now", "label": "Now" },
+          { "key": "next", "label": "Next" },
+          { "key": "later", "label": "Later" }
+        ]
+      },
+      {
+        "key": "size-band",
+        "label": "Size band",
+        "isExtensible": true,
+        "values": [
+          { "key": "small", "label": "Small" },
+          { "key": "medium", "label": "Medium" },
+          { "key": "large", "label": "Large" }
+        ]
+      },
+      {
+        "key": "build-path",
+        "label": "Build path",
+        "isExtensible": true,
+        "values": [
+          { "key": "citizen", "label": "Citizen" },
+          { "key": "fusion", "label": "Fusion" },
+          { "key": "pro", "label": "Pro" },
+          { "key": "ai-built", "label": "AI-built" }
+        ]
+      },
+      {
+        "key": "autonomy-level",
+        "label": "Autonomy level",
+        "isExtensible": true,
+        "values": [
+          { "key": "assist", "label": "Assist" },
+          { "key": "route", "label": "Route" },
+          { "key": "execute", "label": "Execute" }
+        ]
+      },
+      {
+        "key": "target-kind",
+        "label": "Target kind",
+        "isExtensible": true,
+        "values": [
+          { "key": "power-platform-environment", "label": "Power Platform environment" },
+          { "key": "microsoft-365-tenant", "label": "Microsoft 365 tenant" },
+          { "key": "azure-resource-group", "label": "Azure resource group" },
+          { "key": "github-environment", "label": "GitHub environment" },
+          { "key": "saas-tenant", "label": "SaaS tenant" },
+          { "key": "other", "label": "Other" }
+        ]
+      },
+      {
+        "key": "artifact-kind",
+        "label": "Artifact kind",
+        "isExtensible": true,
+        "values": [
+          { "key": "managed-solution", "label": "Managed solution" },
+          { "key": "container-image", "label": "Container image" },
+          { "key": "code-package", "label": "Code package" },
+          { "key": "static-site", "label": "Static site" },
+          { "key": "agent-package", "label": "Agent package" },
+          { "key": "commit", "label": "Commit" },
+          { "key": "other", "label": "Other" }
+        ]
+      },
+      {
+        "key": "change-result",
+        "label": "Change result",
+        "isExtensible": true,
+        "values": [
+          { "key": "succeeded", "label": "Succeeded" },
+          { "key": "partly-succeeded", "label": "Partly succeeded" },
+          { "key": "failed", "label": "Failed" },
+          { "key": "rolled-back", "label": "Rolled back" },
+          { "key": "cancelled", "label": "Cancelled" }
+        ]
+      },
+      {
+        "key": "evidence-level",
+        "label": "Evidence level",
+        "isExtensible": false,
+        "values": [
+          { "key": "read", "label": "Read" },
+          { "key": "checked", "label": "Checked" },
+          { "key": "as-reported", "label": "As reported" },
+          { "key": "proven", "label": "Proven" },
+          { "key": "designed", "label": "Designed" },
+          { "key": "not-read", "label": "Not read, with a reason" }
+        ]
+      },
+      {
+        "key": "portfolio-level",
+        "label": "Portfolio level",
+        "isExtensible": true,
+        "values": [
+          { "key": "portfolio", "label": "Portfolio" },
+          { "key": "application-group", "label": "Application group" }
+        ]
+      },
+      {
+        "key": "estate",
+        "label": "Estate",
+        "isExtensible": true,
+        "values": [{ "key": "power-platform-inventory", "label": "Power Platform inventory" }]
+      },
+      {
+        "key": "confidence",
+        "label": "Confidence",
+        "isExtensible": false,
+        "values": [
+          { "key": "low", "label": "Low" },
+          { "key": "medium", "label": "Medium" },
+          { "key": "high", "label": "High" }
+        ]
+      },
+      {
+        "key": "impact-role",
+        "label": "Impact role",
+        "isExtensible": false,
+        "values": [
+          { "key": "changed", "label": "Changed" },
+          { "key": "depends-on-change", "label": "Depends on the change" },
+          { "key": "informed", "label": "Informed" }
+        ]
+      },
+      {
+        "key": "criticality",
+        "label": "Criticality",
+        "isExtensible": true,
+        "values": [
+          { "key": "low", "label": "Low" },
+          { "key": "medium", "label": "Medium" },
+          { "key": "high", "label": "High" }
+        ]
+      }
+    ],
+    "tier": [
+      {
+        "key": "tier-1",
+        "label": "Tier 1",
+        "rank": 1,
+        "description": "Personal or team use. Reads, or changes only the person's own items. No sensitive data."
+      },
+      {
+        "key": "tier-2",
+        "label": "Tier 2",
+        "rank": 2,
+        "description": "Department use. Changes shared data as the signed-in person, or touches internal data."
+      },
+      {
+        "key": "tier-3",
+        "label": "Tier 3",
+        "rank": 3,
+        "description": "Acts under its own identity, touches restricted data, reaches the whole organization or outside users, or executes changes as an agent."
+      }
+    ],
+    "tier-question": [
+      {
+        "key": "data-change",
+        "label": "Data change",
+        "questionText": "Does it change data?",
+        "helpText": "Example: a flow that updates customer records under its own identity is tier 3.",
+        "answerOptions": [
+          {
+            "key": "reads-only",
+            "label": "Reads only",
+            "answerText": "Reads only, or changes only the person's own items",
+            "impliedTierKey": "tier-1"
+          },
+          {
+            "key": "as-user",
+            "label": "As the user",
+            "answerText": "Changes shared business data as the signed-in person",
+            "impliedTierKey": "tier-2"
+          },
+          {
+            "key": "own-identity",
+            "label": "Own identity",
+            "answerText": "Changes data under its own identity, or in a system of record",
+            "impliedTierKey": "tier-3"
+          }
+        ]
+      },
+      {
+        "key": "sensitivity",
+        "label": "Sensitive data",
+        "questionText": "Does it touch sensitive data?",
+        "answerOptions": [
+          { "key": "none", "label": "None", "answerText": "No", "impliedTierKey": "tier-1" },
+          { "key": "internal", "label": "Internal", "answerText": "Internal data only", "impliedTierKey": "tier-2" },
+          {
+            "key": "restricted",
+            "label": "Restricted",
+            "answerText": "Personal, financial, regulated or otherwise restricted data",
+            "impliedTierKey": "tier-3"
+          }
+        ]
+      },
+      {
+        "key": "reach",
+        "label": "Reach",
+        "questionText": "Who can reach it?",
+        "answerOptions": [
+          {
+            "key": "small-team",
+            "label": "Small team",
+            "answerText": "The builder or a small team",
+            "impliedTierKey": "tier-1"
+          },
+          {
+            "key": "department",
+            "label": "Department",
+            "answerText": "A department or business unit",
+            "impliedTierKey": "tier-2"
+          },
+          {
+            "key": "organization",
+            "label": "Organization or outside",
+            "answerText": "The whole organization, or anyone outside it",
+            "impliedTierKey": "tier-3"
+          }
+        ]
+      },
+      {
+        "key": "agent-autonomy",
+        "label": "Agent autonomy",
+        "questionText": "Does an agent act on its own?",
+        "appliesToKindKeys": ["agent"],
+        "answerOptions": [
+          {
+            "key": "assists",
+            "label": "Assists",
+            "answerText": "No, it assists a person who stays in the loop",
+            "impliedTierKey": "tier-1"
+          },
+          {
+            "key": "routes",
+            "label": "Routes",
+            "answerText": "It answers or routes, a person acts",
+            "impliedTierKey": "tier-2"
+          },
+          {
+            "key": "executes",
+            "label": "Executes",
+            "answerText": "It executes changes in systems",
+            "impliedTierKey": "tier-3",
+            "triggers": { "reviewTypeKeys": ["security-review"] }
+          }
+        ]
+      },
+      {
+        "key": "failure-impact",
+        "label": "Failure impact",
+        "questionText": "What happens if it fails for a day?",
+        "answerOptions": [
+          { "key": "little", "label": "Little", "answerText": "Little", "impliedTierKey": "tier-1" },
+          { "key": "team-slowed", "label": "Team slowed", "answerText": "A team is slowed", "impliedTierKey": "tier-2" },
+          {
+            "key": "business-hit",
+            "label": "Business hit",
+            "answerText": "Revenue, compliance or trust is hit",
+            "impliedTierKey": "tier-3"
+          }
+        ]
+      }
+    ],
+    "vocabulary-mapping": [
+      {
+        "key": "tier-1-support",
+        "label": "Tier 1 support tier",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-1",
+        "vocabularyKey": "support-tier",
+        "term": "Productivity",
+        "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-2-support",
+        "label": "Tier 2 support tier",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-2",
+        "vocabularyKey": "support-tier",
+        "term": "Important",
+        "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-3-support",
+        "label": "Tier 3 support tier",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-3",
+        "vocabularyKey": "support-tier",
+        "term": "Critical",
+        "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-1-zone",
+        "label": "Tier 1 zone",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-1",
+        "vocabularyKey": "copilot-studio-zone",
+        "term": "Zone 1 - Citizen Development Zone",
+        "sourceUrl": "https://learn.microsoft.com/microsoft-copilot-studio/guidance/sec-gov-phase2",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-2-zone",
+        "label": "Tier 2 zone",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-2",
+        "vocabularyKey": "copilot-studio-zone",
+        "term": "Zone 2 - Partnered Development Zone",
+        "sourceUrl": "https://learn.microsoft.com/microsoft-copilot-studio/guidance/sec-gov-phase2",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-3-zone",
+        "label": "Tier 3 zone",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-3",
+        "vocabularyKey": "copilot-studio-zone",
+        "term": "Zone 3 - Professional Development Zone",
+        "sourceUrl": "https://learn.microsoft.com/microsoft-copilot-studio/guidance/sec-gov-phase2",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-1-agent-risk",
+        "label": "Tier 1 agent risk",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-1",
+        "vocabularyKey": "agent-risk-tier",
+        "term": "Tier 1: Low risk",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-2-agent-risk",
+        "label": "Tier 2 agent risk",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-2",
+        "vocabularyKey": "agent-risk-tier",
+        "term": "Tier 2: Medium risk",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
+        "checkedOn": "2026-11-22"
+      },
+      {
+        "key": "tier-3-agent-risk",
+        "label": "Tier 3 agent risk",
+        "sourceEntity": "tier",
+        "sourceKey": "tier-3",
+        "vocabularyKey": "agent-risk-tier",
+        "term": "Tier 3: High risk",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
+        "checkedOn": "2026-11-22"
+      }
+    ],
+    "lifecycle-stage": [
+      {
+        "key": "idea",
+        "label": "Idea",
+        "stageNumber": 0,
+        "stageRank": 0,
+        "engineMeaning": "pre-live",
+        "leadingOwnerRoleKey": "business-owner"
+      },
+      {
+        "key": "intake-and-triage",
+        "label": "Intake and triage",
+        "stageNumber": 1,
+        "stageRank": 1,
+        "engineMeaning": "pre-live",
+        "leadingRoleKey": "platform-admin"
+      },
+      {
+        "key": "prioritize-and-fund",
+        "label": "Prioritize and fund",
+        "stageNumber": 2,
+        "stageRank": 2,
+        "engineMeaning": "pre-live",
+        "leadingRoleKey": "pmo"
+      },
+      {
+        "key": "design-and-review",
+        "label": "Design and architecture review",
+        "stageNumber": 3,
+        "stageRank": 3,
+        "engineMeaning": "pre-live",
+        "leadingRoleKey": "architect"
+      },
+      {
+        "key": "risk-and-tier",
+        "label": "Risk and tier",
+        "stageNumber": 4,
+        "stageRank": 4,
+        "engineMeaning": "pre-live",
+        "leadingRoleKey": "platform-admin"
+      },
+      {
+        "key": "build",
+        "label": "Build",
+        "stageNumber": 5,
+        "stageRank": 5,
+        "engineMeaning": "pre-live",
+        "leadingOwnerRoleKey": "builder"
+      },
+      {
+        "key": "test",
+        "label": "Test",
+        "stageNumber": 6,
+        "stageRank": 6,
+        "engineMeaning": "pre-live",
+        "leadingOwnerRoleKey": "builder"
+      },
+      {
+        "key": "change-and-release",
+        "label": "Change and release",
+        "stageNumber": 7,
+        "stageRank": 7,
+        "engineMeaning": "pre-live",
+        "leadingRoleKey": "platform-admin"
+      },
+      {
+        "key": "operate",
+        "label": "Operate",
+        "stageNumber": 8,
+        "stageRank": 8,
+        "engineMeaning": "live",
+        "leadingOwnerRoleKey": "technical-owner"
+      },
+      {
+        "key": "review",
+        "label": "Review",
+        "stageNumber": 9,
+        "stageRank": 9,
+        "engineMeaning": "live",
+        "leadingRoleKey": "pmo"
+      },
+      {
+        "key": "retire",
+        "label": "Retire",
+        "stageNumber": 10,
+        "stageRank": 10,
+        "engineMeaning": "retired",
+        "leadingRoleKey": "platform-admin"
+      }
+    ],
+    "gate": [
+      { "key": "accept", "label": "Accept", "afterStageKey": "intake-and-triage", "gateDecisionTypeKey": "intake" },
+      { "key": "commit", "label": "Commit", "afterStageKey": "prioritize-and-fund", "gateDecisionTypeKey": "priority" },
+      { "key": "design", "label": "Design", "afterStageKey": "risk-and-tier", "gateDecisionTypeKey": "design" },
+      { "key": "go-live", "label": "Go-live", "afterStageKey": "change-and-release", "gateDecisionTypeKey": "go-live" },
+      { "key": "value", "label": "Value", "afterStageKey": "review", "gateDecisionTypeKey": "portfolio" }
+    ],
+    "gate-requirement": [
+      {
+        "key": "accept-business-owner",
+        "label": "A business owner is named",
+        "gateKey": "accept",
+        "requirementKind": "owner-assigned",
+        "requiredOwnerRoleKey": "business-owner",
+        "guidelineKey": "g2"
+      },
+      {
+        "key": "design-adr-tier-3",
+        "label": "Architecture decision recorded",
+        "gateKey": "design",
+        "tierKey": "tier-3",
+        "requirementKind": "document-current",
+        "requiredDocumentTypeKey": "architecture-decision-record"
+      },
+      {
+        "key": "go-live-acceptance",
+        "label": "Owner accepted after testing",
+        "gateKey": "go-live",
+        "requirementKind": "decision-accepted",
+        "requiredDecisionTypeKey": "acceptance",
+        "guidelineKey": "g9"
+      },
+      {
+        "key": "go-live-runbook-tier-2",
+        "label": "Runbook current",
+        "gateKey": "go-live",
+        "tierKey": "tier-2",
+        "requirementKind": "document-current",
+        "requiredDocumentTypeKey": "runbook"
+      },
+      {
+        "key": "go-live-runbook-tier-3",
+        "label": "Runbook current",
+        "gateKey": "go-live",
+        "tierKey": "tier-3",
+        "requirementKind": "document-current",
+        "requiredDocumentTypeKey": "runbook"
+      },
+      {
+        "key": "go-live-security-tier-3",
+        "label": "Security review done",
+        "gateKey": "go-live",
+        "tierKey": "tier-3",
+        "requirementKind": "review-done",
+        "requiredReviewTypeKey": "security-review"
+      },
+      {
+        "key": "go-live-autonomy-agent",
+        "label": "Autonomy level agreed",
+        "gateKey": "go-live",
+        "applicationKindKey": "agent",
+        "requirementKind": "decision-accepted",
+        "requiredDecisionTypeKey": "autonomy-level",
+        "guidelineKey": "g17"
+      }
+    ],
+    "application-kind": [
+      {
+        "key": "power-platform-app",
+        "label": "Power Platform app",
+        "categoryKey": "power-platform",
+        "defaultComponentKindKeys": ["canvas-app", "model-driven-app", "cloud-flow", "solution"]
+      },
+      {
+        "key": "agent",
+        "label": "Agent",
+        "categoryKey": "ai",
+        "defaultComponentKindKeys": ["copilot-studio-agent", "entra-agent-identity"]
+      },
+      {
+        "key": "ai-built-app",
+        "label": "AI-built app",
+        "categoryKey": "ai",
+        "defaultComponentKindKeys": ["code-app", "repository"]
+      },
+      {
+        "key": "code-app",
+        "label": "Code app",
+        "categoryKey": "custom-code",
+        "defaultComponentKindKeys": ["code-app", "repository"]
+      },
+      {
+        "key": "runtime-app",
+        "label": "Copilot managed runtime app",
+        "categoryKey": "ai",
+        "defaultComponentKindKeys": ["copilot-managed-runtime-app"]
+      },
+      { "key": "saas", "label": "SaaS", "categoryKey": "external" },
+      { "key": "external-system", "label": "External system", "categoryKey": "external" },
+      { "key": "api", "label": "API", "categoryKey": "custom-code", "defaultComponentKindKeys": ["azure-resource"] },
+      {
+        "key": "mcp-server",
+        "label": "MCP server",
+        "categoryKey": "custom-code",
+        "defaultComponentKindKeys": ["azure-resource", "repository"]
+      },
+      {
+        "key": "practice-app",
+        "label": "Practice app",
+        "categoryKey": "power-platform",
+        "defaultComponentKindKeys": ["canvas-app"]
+      }
+    ],
+    "component-kind": [
+      { "key": "canvas-app", "label": "Canvas app", "sourceToolKey": "power-platform", "isGapCheckCovered": true },
+      {
+        "key": "model-driven-app",
+        "label": "Model-driven app",
+        "sourceToolKey": "power-platform",
+        "isGapCheckCovered": true
+      },
+      { "key": "code-app", "label": "Code app", "sourceToolKey": "power-platform", "isGapCheckCovered": true },
+      { "key": "cloud-flow", "label": "Cloud flow", "sourceToolKey": "power-platform", "isGapCheckCovered": true },
+      {
+        "key": "copilot-studio-agent",
+        "label": "Copilot Studio agent",
+        "sourceToolKey": "power-platform",
+        "isGapCheckCovered": true
+      },
+      {
+        "key": "copilot-managed-runtime-app",
+        "label": "Copilot managed runtime app",
+        "sourceToolKey": "microsoft-365",
+        "isGapCheckCovered": true
+      },
+      {
+        "key": "power-pages-site",
+        "label": "Power Pages site",
+        "sourceToolKey": "power-platform",
+        "isGapCheckCovered": true,
+        "description": "Inventory coverage is preview."
+      },
+      { "key": "solution", "label": "Solution", "sourceToolKey": "power-platform", "isGapCheckCovered": false },
+      {
+        "key": "entra-agent-identity",
+        "label": "Entra agent identity",
+        "sourceToolKey": "entra",
+        "isGapCheckCovered": false
+      },
+      { "key": "repository", "label": "Repository", "sourceToolKey": "github", "isGapCheckCovered": false },
+      { "key": "azure-resource", "label": "Azure resource", "sourceToolKey": "azure", "isGapCheckCovered": false }
+    ],
+    "dependency-type": [
+      { "key": "reads-data-from", "label": "Reads data from", "inverseLabel": "Data read by", "countsForImpact": true },
+      { "key": "writes-data-to", "label": "Writes data to", "inverseLabel": "Data written by", "countsForImpact": true },
+      { "key": "calls-api-of", "label": "Calls API of", "inverseLabel": "API called by", "countsForImpact": true },
+      { "key": "hosted-on", "label": "Hosted on", "inverseLabel": "Hosts", "countsForImpact": true },
+      {
+        "key": "run-time-need-in-target",
+        "label": "Run-time need in target",
+        "inverseLabel": "Needed in target by",
+        "countsForImpact": true
+      },
+      { "key": "replaces", "label": "Replaces", "inverseLabel": "Replaced by", "countsForImpact": false }
+    ],
+    "decision-type": [
+      {
+        "key": "intake",
+        "label": "Intake",
+        "defaultSubjectKind": "intake-request",
+        "requiresApproval": false,
+        "outcomes": [
+          { "key": "accept", "label": "Accept" },
+          { "key": "park", "label": "Park" },
+          { "key": "redirect", "label": "Redirect to reuse" },
+          { "key": "decline", "label": "Decline" }
+        ]
+      },
+      {
+        "key": "priority",
+        "label": "Priority",
+        "defaultSubjectKind": "intake-request",
+        "requiresApproval": false,
+        "outcomes": [
+          { "key": "fund", "label": "Fund" },
+          { "key": "defer", "label": "Defer" },
+          { "key": "stop", "label": "Stop" }
+        ]
+      },
+      {
+        "key": "design",
+        "label": "Design",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": false,
+        "needsOptionsConsidered": true,
+        "outcomes": [{ "key": "approve", "label": "Approve" }, { "key": "rework", "label": "Rework" }]
+      },
+      {
+        "key": "data-use",
+        "label": "Data use",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "allow", "label": "Allow" }, { "key": "deny", "label": "Deny" }]
+      },
+      {
+        "key": "tier",
+        "label": "Tier",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": false,
+        "outcomes": [
+          { "key": "confirm", "label": "Confirm" },
+          { "key": "raise", "label": "Raise" },
+          { "key": "lower", "label": "Lower" }
+        ]
+      },
+      {
+        "key": "risk-acceptance",
+        "label": "Risk acceptance",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "decline", "label": "Decline" }]
+      },
+      {
+        "key": "acceptance",
+        "label": "Acceptance",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+      },
+      {
+        "key": "change-authorization",
+        "label": "Change authorization",
+        "defaultSubjectKind": "change-request",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "authorize", "label": "Authorize" }, { "key": "reject", "label": "Reject" }]
+      },
+      {
+        "key": "go-live",
+        "label": "Go-live",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "outcomes": [
+          { "key": "go", "label": "Go", "nextLifecycleStageKey": "operate" },
+          { "key": "no-go", "label": "No go" }
+        ]
+      },
+      {
+        "key": "ownership",
+        "label": "Ownership",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": false,
+        "outcomes": [{ "key": "assign", "label": "Assign" }, { "key": "end", "label": "End" }]
+      },
+      {
+        "key": "portfolio",
+        "label": "Portfolio",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": false,
+        "outcomes": [
+          { "key": "keep", "label": "Keep" },
+          { "key": "invest", "label": "Invest" },
+          { "key": "replace", "label": "Replace" },
+          { "key": "retire", "label": "Retire" }
+        ]
+      },
+      {
+        "key": "exception",
+        "label": "Exception",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "needsOptionsConsidered": true,
+        "outcomes": [{ "key": "grant", "label": "Grant" }, { "key": "deny", "label": "Deny" }]
+      },
+      {
+        "key": "retirement",
+        "label": "Retirement",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "outcomes": [
+          { "key": "retire", "label": "Retire", "nextLifecycleStageKey": "retire" },
+          { "key": "keep", "label": "Keep" }
+        ]
+      },
+      {
+        "key": "autonomy-level",
+        "label": "Autonomy level",
+        "defaultSubjectKind": "business-application",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "agree", "label": "Agree" }, { "key": "decline", "label": "Decline" }]
+      },
+      {
+        "key": "configuration-change",
+        "label": "Configuration change",
+        "defaultSubjectKind": "configuration-draft",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+      },
+      {
+        "key": "gate-policy-change",
+        "label": "Gate policy change",
+        "defaultSubjectKind": "configuration-draft",
+        "requiresApproval": true,
+        "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+      }
+    ],
+    "change-type": [
+      { "key": "standard", "label": "Standard", "requiresAuthorization": false, "requiresStandardModel": true },
+      { "key": "normal", "label": "Normal", "requiresAuthorization": true },
+      {
+        "key": "emergency",
+        "label": "Emergency",
+        "requiresAuthorization": true,
+        "allowsAuthorizationAfter": true,
+        "requiresReviewAfter": true,
+        "reviewDueDays": 5
+      }
+    ],
+    "standard-change-model": [],
+    "document-type": [
+      { "key": "wiki-page", "label": "Wiki page", "defaultLinkKindKey": "ado-wiki-page", "freshnessDays": 365 },
+      {
+        "key": "runbook",
+        "label": "Runbook",
+        "defaultLinkKindKey": "ado-wiki-page",
+        "freshnessDays": 180,
+        "currentNeedsPerson": true
+      },
+      {
+        "key": "architecture-decision-record",
+        "label": "Architecture decision record",
+        "defaultLinkKindKey": "repository-file",
+        "currentNeedsPerson": true
+      },
+      {
+        "key": "support-guide",
+        "label": "Support guide",
+        "defaultLinkKindKey": "sharepoint-page",
+        "freshnessDays": 365
+      }
+    ],
+    "documentation-requirement": [
+      {
+        "key": "wiki-page-all",
+        "label": "Every application has a wiki page",
+        "documentTypeKey": "wiki-page",
+        "fromStageKey": "build"
+      },
+      {
+        "key": "runbook-tier-2",
+        "label": "Tier 2 runbook",
+        "documentTypeKey": "runbook",
+        "tierKey": "tier-2",
+        "fromStageKey": "change-and-release"
+      },
+      {
+        "key": "runbook-tier-3",
+        "label": "Tier 3 runbook",
+        "documentTypeKey": "runbook",
+        "tierKey": "tier-3",
+        "fromStageKey": "change-and-release"
+      },
+      {
+        "key": "adr-tier-3",
+        "label": "Tier 3 architecture decision record",
+        "documentTypeKey": "architecture-decision-record",
+        "tierKey": "tier-3",
+        "fromStageKey": "design-and-review"
+      },
+      {
+        "key": "support-guide-tier-3",
+        "label": "Tier 3 support guide",
+        "documentTypeKey": "support-guide",
+        "tierKey": "tier-3",
+        "fromStageKey": "operate"
+      }
+    ],
+    "review-type": [
+      {
+        "key": "owner-check",
+        "label": "Owner check",
+        "producesDecisionTypeKey": "ownership",
+        "defaultOwnerRoleKey": "business-owner"
+      },
+      {
+        "key": "tier-check",
+        "label": "Tier check",
+        "producesDecisionTypeKey": "tier",
+        "defaultOwnerRoleKey": "technical-owner"
+      },
+      {
+        "key": "access-check",
+        "label": "Access check",
+        "producesDecisionTypeKey": "risk-acceptance",
+        "defaultOwnerRoleKey": "business-owner",
+        "description": "Links to Entra access review results; never reruns them."
+      },
+      {
+        "key": "benefit",
+        "label": "Benefit review",
+        "producesDecisionTypeKey": "portfolio",
+        "defaultOwnerRoleKey": "business-owner"
+      },
+      {
+        "key": "architecture",
+        "label": "Architecture review",
+        "producesDecisionTypeKey": "design",
+        "defaultOwnerRoleKey": "technical-owner"
+      },
+      {
+        "key": "post-change",
+        "label": "Post-change review",
+        "producesDecisionTypeKey": "acceptance",
+        "defaultOwnerRoleKey": "technical-owner"
+      },
+      {
+        "key": "security-review",
+        "label": "Security review",
+        "producesDecisionTypeKey": "risk-acceptance",
+        "defaultOwnerRoleKey": "security-owner"
+      }
+    ],
+    "review-cadence": [
+      {
+        "key": "owner-check-tier-1",
+        "label": "Owner check, tier 1",
+        "reviewTypeKey": "owner-check",
+        "tierKey": "tier-1",
+        "intervalDays": 365,
+        "leadDays": 14,
+        "escalateAfterDays": 14
+      },
+      {
+        "key": "owner-check-tier-2",
+        "label": "Owner check, tier 2",
+        "reviewTypeKey": "owner-check",
+        "tierKey": "tier-2",
+        "intervalDays": 180,
+        "leadDays": 14,
+        "escalateAfterDays": 14
+      },
+      {
+        "key": "owner-check-tier-3",
+        "label": "Owner check, tier 3",
+        "reviewTypeKey": "owner-check",
+        "tierKey": "tier-3",
+        "intervalDays": 90,
+        "leadDays": 14,
+        "escalateAfterDays": 7
+      },
+      {
+        "key": "tier-check",
+        "label": "Tier check",
+        "reviewTypeKey": "tier-check",
+        "tierKey": "*",
+        "intervalDays": 365,
+        "leadDays": 14,
+        "escalateAfterDays": 14
+      },
+      {
+        "key": "access-check-tier-1",
+        "label": "Access check, tier 1",
+        "reviewTypeKey": "access-check",
+        "tierKey": "tier-1",
+        "intervalDays": 365,
+        "leadDays": 14,
+        "escalateAfterDays": 14
+      },
+      {
+        "key": "access-check-tier-2",
+        "label": "Access check, tier 2",
+        "reviewTypeKey": "access-check",
+        "tierKey": "tier-2",
+        "intervalDays": 180,
+        "leadDays": 14,
+        "escalateAfterDays": 14
+      },
+      {
+        "key": "access-check-tier-3",
+        "label": "Access check, tier 3",
+        "reviewTypeKey": "access-check",
+        "tierKey": "tier-3",
+        "intervalDays": 90,
+        "leadDays": 14,
+        "escalateAfterDays": 7
+      },
+      {
+        "key": "benefit",
+        "label": "Benefit review",
+        "reviewTypeKey": "benefit",
+        "tierKey": "*",
+        "intervalDays": 365,
+        "leadDays": 30,
+        "escalateAfterDays": 30
+      }
+    ],
+    "reminder-rule": [
+      {
+        "key": "review-reminder",
+        "label": "Review due",
+        "subjectKind": "review",
+        "leadDays": 14,
+        "repeatDays": 7,
+        "escalateAfterDays": 14,
+        "channelKey": "teams"
+      },
+      {
+        "key": "document-reminder",
+        "label": "Document missing or stale",
+        "subjectKind": "document",
+        "leadDays": 0,
+        "repeatDays": 14,
+        "escalateAfterDays": 30,
+        "channelKey": "teams"
+      },
+      {
+        "key": "approval-reminder",
+        "label": "Approval waiting",
+        "subjectKind": "approval",
+        "leadDays": 0,
+        "repeatDays": 2,
+        "escalateAfterDays": 5,
+        "channelKey": "outlook"
+      },
+      {
+        "key": "claim-reminder",
+        "label": "Claim open",
+        "subjectKind": "claim",
+        "leadDays": 0,
+        "repeatDays": 7,
+        "escalateAfterDays": 21,
+        "channelKey": "teams"
+      }
+    ],
+    "party": [
+      { "key": "business", "label": "Business" },
+      { "key": "it", "label": "IT" },
+      { "key": "ai", "label": "AI" },
+      { "key": "citizen-developers", "label": "Citizen developers" },
+      { "key": "pmo", "label": "PMO" },
+      { "key": "change-control", "label": "Change control" },
+      { "key": "architects", "label": "Architects" }
+    ],
+    "owner-role": [
+      {
+        "key": "business-owner",
+        "label": "Business owner",
+        "partyKey": "business",
+        "requiresDeputy": true,
+        "maximumHolders": 1
+      },
+      { "key": "sponsor", "label": "Sponsor", "partyKey": "business" },
+      { "key": "data-owner", "label": "Data owner", "partyKey": "business", "requiresDeputy": true },
+      { "key": "process-owner", "label": "Process owner", "partyKey": "business", "requiresDeputy": true },
+      { "key": "technical-owner", "label": "Technical owner", "partyKey": "it", "requiresDeputy": true },
+      { "key": "support-owner", "label": "Support owner", "partyKey": "it", "requiresDeputy": true },
+      { "key": "security-owner", "label": "Security owner", "partyKey": "it" },
+      { "key": "builder", "label": "Builder", "partyKey": "citizen-developers" }
+    ],
+    "role": [
+      { "key": "requester", "label": "Requester", "partyKey": "business", "duties": "Submits intake requests." },
+      {
+        "key": "maker",
+        "label": "Maker",
+        "partyKey": "citizen-developers",
+        "duties": "Builds in approved environments and records links."
+      },
+      {
+        "key": "application-owner",
+        "label": "Application owner",
+        "partyKey": "business",
+        "duties": "Holds owner roles on applications."
+      },
+      {
+        "key": "data-owner",
+        "label": "Data owner",
+        "partyKey": "business",
+        "duties": "Decides data use for a data area."
+      },
+      {
+        "key": "architect",
+        "label": "Architect",
+        "partyKey": "architects",
+        "duties": "Reviews designs and grants exceptions to standards."
+      },
+      {
+        "key": "change-manager",
+        "label": "Change manager",
+        "partyKey": "change-control",
+        "duties": "Runs the change schedule; authorizes tier 3 changes and emergencies."
+      },
+      {
+        "key": "change-board",
+        "label": "Change board",
+        "partyKey": "change-control",
+        "duties": "Decides exceptions about changes, and windows that cover several applications, as a group."
+      },
+      { "key": "pmo", "label": "PMO", "partyKey": "pmo", "duties": "Scores demand and runs portfolio reviews." },
+      {
+        "key": "ai-lead",
+        "label": "AI lead",
+        "partyKey": "ai",
+        "duties": "Keeps the AI guidelines, is consulted on agent autonomy, decides on agents Microsoft flags."
+      },
+      {
+        "key": "security-reviewer",
+        "label": "Security reviewer",
+        "partyKey": "it",
+        "duties": "Runs security reviews and agrees agent autonomy levels."
+      },
+      {
+        "key": "platform-admin",
+        "label": "Platform admin",
+        "partyKey": "it",
+        "duties": "Triages intake, confirms tiers, runs the gap check."
+      },
+      {
+        "key": "configuration-admin",
+        "label": "Configuration admin",
+        "partyKey": "it",
+        "duties": "Instructs and accepts configuration changes.",
+        "canChangeConfiguration": true
+      },
+      {
+        "key": "auditor",
+        "label": "Auditor",
+        "partyKey": "change-control",
+        "duties": "Reads everything, including audit entries, and changes nothing.",
+        "isReadOnly": true
+      },
+      {
+        "key": "reader",
+        "label": "Reader",
+        "partyKey": "business",
+        "duties": "Reads the register, decisions and the change schedule. No audit entries, no restricted columns. Never writes.",
+        "isReadOnly": true
+      },
+      {
+        "key": "deployment-recorder",
+        "label": "Deployment recorder",
+        "partyKey": "it",
+        "duties": "Held by pipeline identities through a workload grant. Writes deployment records.",
+        "isWorkloadRole": true
+      },
+      {
+        "key": "approval-writer",
+        "label": "Approval writer",
+        "partyKey": "it",
+        "duties": "Held by the approval runner through a workload grant. Writes the person's answer on an approval record; never decides.",
+        "isWorkloadRole": true
+      }
+    ],
+    "role-group-binding": [],
+    "decision-right": [
+      {
+        "key": "intake-a",
+        "label": "Intake: accountable",
+        "decisionTypeKey": "intake",
+        "letter": "accountable",
+        "roleKey": "platform-admin"
+      },
+      { "key": "intake-s", "label": "Intake: AI drafts", "decisionTypeKey": "intake", "letter": "supports" },
+      {
+        "key": "priority-a",
+        "label": "Priority: accountable",
+        "decisionTypeKey": "priority",
+        "letter": "accountable",
+        "ownerRoleKey": "sponsor"
+      },
+      {
+        "key": "priority-r",
+        "label": "Priority: responsible",
+        "decisionTypeKey": "priority",
+        "letter": "responsible",
+        "roleKey": "pmo"
+      },
+      {
+        "key": "design-a",
+        "label": "Design: accountable",
+        "decisionTypeKey": "design",
+        "letter": "accountable",
+        "roleKey": "architect"
+      },
+      { "key": "design-s", "label": "Design: AI drafts", "decisionTypeKey": "design", "letter": "supports" },
+      {
+        "key": "data-use-a",
+        "label": "Data use: accountable",
+        "decisionTypeKey": "data-use",
+        "letter": "accountable",
+        "ownerRoleKey": "data-owner"
+      },
+      {
+        "key": "tier-a",
+        "label": "Tier: accountable",
+        "decisionTypeKey": "tier",
+        "letter": "accountable",
+        "roleKey": "platform-admin"
+      },
+      { "key": "tier-s", "label": "Tier: AI suggests", "decisionTypeKey": "tier", "letter": "supports" },
+      {
+        "key": "risk-acceptance-a",
+        "label": "Risk acceptance: accountable",
+        "decisionTypeKey": "risk-acceptance",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "acceptance-a",
+        "label": "Acceptance: accountable",
+        "decisionTypeKey": "acceptance",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "change-auth-a",
+        "label": "Change: accountable",
+        "decisionTypeKey": "change-authorization",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "change-auth-s",
+        "label": "Change: AI drafts",
+        "decisionTypeKey": "change-authorization",
+        "letter": "supports"
+      },
+      {
+        "key": "change-auth-tier-3-a",
+        "label": "Tier 3 change: accountable",
+        "decisionTypeKey": "change-authorization",
+        "tierKey": "tier-3",
+        "letter": "accountable",
+        "roleKey": "change-manager"
+      },
+      {
+        "key": "change-auth-tier-3-c",
+        "label": "Tier 3 change: consulted",
+        "decisionTypeKey": "change-authorization",
+        "tierKey": "tier-3",
+        "letter": "consulted",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "change-auth-tier-3-s",
+        "label": "Tier 3 change: AI drafts",
+        "decisionTypeKey": "change-authorization",
+        "tierKey": "tier-3",
+        "letter": "supports"
+      },
+      {
+        "key": "change-auth-emergency-a",
+        "label": "Emergency: accountable",
+        "decisionTypeKey": "change-authorization",
+        "changeTypeKey": "emergency",
+        "letter": "accountable",
+        "roleKey": "change-manager"
+      },
+      {
+        "key": "change-auth-tier-3-emergency-a",
+        "label": "Tier 3 emergency: accountable",
+        "decisionTypeKey": "change-authorization",
+        "tierKey": "tier-3",
+        "changeTypeKey": "emergency",
+        "letter": "accountable",
+        "roleKey": "change-manager"
+      },
+      {
+        "key": "go-live-a",
+        "label": "Go-live: accountable",
+        "decisionTypeKey": "go-live",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "ownership-a",
+        "label": "Ownership: accountable",
+        "decisionTypeKey": "ownership",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "portfolio-a",
+        "label": "Portfolio: accountable",
+        "decisionTypeKey": "portfolio",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "portfolio-r",
+        "label": "Portfolio: responsible",
+        "decisionTypeKey": "portfolio",
+        "letter": "responsible",
+        "roleKey": "pmo"
+      },
+      {
+        "key": "exception-a",
+        "label": "Exception: accountable",
+        "decisionTypeKey": "exception",
+        "letter": "accountable",
+        "roleKey": "architect"
+      },
+      {
+        "key": "change-exception-standard-a",
+        "label": "Exception about a standard change: accountable",
+        "decisionTypeKey": "exception",
+        "changeTypeKey": "standard",
+        "letter": "accountable",
+        "roleKey": "change-board"
+      },
+      {
+        "key": "change-exception-normal-a",
+        "label": "Exception about a normal change: accountable",
+        "decisionTypeKey": "exception",
+        "changeTypeKey": "normal",
+        "letter": "accountable",
+        "roleKey": "change-board"
+      },
+      {
+        "key": "change-exception-emergency-a",
+        "label": "Exception about an emergency change: accountable",
+        "decisionTypeKey": "exception",
+        "changeTypeKey": "emergency",
+        "letter": "accountable",
+        "roleKey": "change-board"
+      },
+      {
+        "key": "retirement-a",
+        "label": "Retirement: accountable",
+        "decisionTypeKey": "retirement",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      },
+      {
+        "key": "retirement-r",
+        "label": "Retirement: responsible",
+        "decisionTypeKey": "retirement",
+        "letter": "responsible",
+        "roleKey": "platform-admin"
+      },
+      {
+        "key": "autonomy-level-a",
+        "label": "Autonomy: accountable",
+        "decisionTypeKey": "autonomy-level",
+        "letter": "accountable",
+        "roleKey": "security-reviewer"
+      },
+      {
+        "key": "autonomy-level-c",
+        "label": "Autonomy: AI lead consulted",
+        "decisionTypeKey": "autonomy-level",
+        "letter": "consulted",
+        "roleKey": "ai-lead"
+      },
+      {
+        "key": "configuration-change-a",
+        "label": "Configuration: accountable",
+        "decisionTypeKey": "configuration-change",
+        "letter": "accountable",
+        "roleKey": "configuration-admin"
+      },
+      {
+        "key": "configuration-change-c-ai-lead",
+        "label": "Configuration: AI lead consulted on AI rules",
+        "decisionTypeKey": "configuration-change",
+        "letter": "consulted",
+        "roleKey": "ai-lead"
+      },
+      {
+        "key": "configuration-change-c-platform-admin",
+        "label": "Configuration: platform admin consulted on roles and bindings",
+        "decisionTypeKey": "configuration-change",
+        "letter": "consulted",
+        "roleKey": "platform-admin"
+      },
+      {
+        "key": "configuration-change-s",
+        "label": "Configuration: AI drafts",
+        "decisionTypeKey": "configuration-change",
+        "letter": "supports"
+      },
+      {
+        "key": "gate-policy-change-a",
+        "label": "Gate policy: accountable",
+        "decisionTypeKey": "gate-policy-change",
+        "letter": "accountable",
+        "roleKey": "configuration-admin",
+        "description": "Who owns the policy table is open under D-03."
+      },
+      {
+        "key": "gate-policy-change-c",
+        "label": "Gate policy: consulted",
+        "decisionTypeKey": "gate-policy-change",
+        "letter": "consulted",
+        "roleKey": "change-manager"
+      },
+      {
+        "key": "gate-policy-change-s",
+        "label": "Gate policy: AI drafts",
+        "decisionTypeKey": "gate-policy-change",
+        "letter": "supports"
+      }
+    ],
+    "approval-rule": [
+      {
+        "key": "data-use-approval",
+        "label": "Data owner approves data use",
+        "decisionTypeKey": "data-use",
+        "approverOwnerRoleKey": "data-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 10,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "risk-acceptance-approval",
+        "label": "Business owner accepts risk",
+        "decisionTypeKey": "risk-acceptance",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 10,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "acceptance-approval",
+        "label": "Business owner accepts",
+        "decisionTypeKey": "acceptance",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 10
+      },
+      {
+        "key": "change-auth-owner",
+        "label": "Business owner authorizes the change",
+        "decisionTypeKey": "change-authorization",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 5
+      },
+      {
+        "key": "change-auth-tier-3",
+        "label": "Change manager authorizes tier 3",
+        "decisionTypeKey": "change-authorization",
+        "tierKey": "tier-3",
+        "approverRoleKey": "change-manager",
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "change-auth-emergency",
+        "label": "Change manager authorizes an emergency",
+        "decisionTypeKey": "change-authorization",
+        "changeTypeKey": "emergency",
+        "approverRoleKey": "change-manager",
+        "approvalMode": "first-to-respond",
+        "timeoutDays": 2
+      },
+      {
+        "key": "change-auth-tier-3-emergency",
+        "label": "Change manager authorizes a tier 3 emergency",
+        "decisionTypeKey": "change-authorization",
+        "tierKey": "tier-3",
+        "changeTypeKey": "emergency",
+        "approverRoleKey": "change-manager",
+        "approvalMode": "first-to-respond",
+        "timeoutDays": 2,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "go-live-owner",
+        "label": "Business owner approves go-live",
+        "decisionTypeKey": "go-live",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 5
+      },
+      {
+        "key": "go-live-tier-3-owner",
+        "label": "Tier 3 go-live: business owner first",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-3",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "sequential",
+        "sequence": 1,
+        "timeoutDays": 5
+      },
+      {
+        "key": "go-live-tier-3-security",
+        "label": "Tier 3 go-live: then security",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-3",
+        "approverRoleKey": "security-reviewer",
+        "approvalMode": "sequential",
+        "sequence": 2,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "exception-approval",
+        "label": "Architect grants an exception",
+        "decisionTypeKey": "exception",
+        "approverRoleKey": "architect",
+        "approvalMode": "first-to-respond",
+        "requiresTypedReason": true
+      },
+      {
+        "key": "change-exception-standard",
+        "label": "Change board decides an exception about a standard change",
+        "decisionTypeKey": "exception",
+        "changeTypeKey": "standard",
+        "approverRoleKey": "change-board",
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "change-exception-normal",
+        "label": "Change board decides an exception about a normal change",
+        "decisionTypeKey": "exception",
+        "changeTypeKey": "normal",
+        "approverRoleKey": "change-board",
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "change-exception-emergency",
+        "label": "Change board decides an exception about an emergency change",
+        "decisionTypeKey": "exception",
+        "changeTypeKey": "emergency",
+        "approverRoleKey": "change-board",
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 2,
+        "requiresTypedReason": true
+      },
+      {
+        "key": "retirement-approval",
+        "label": "Business owner approves retirement",
+        "decisionTypeKey": "retirement",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve"
+      },
+      {
+        "key": "autonomy-level-approval",
+        "label": "Security agrees agent autonomy",
+        "decisionTypeKey": "autonomy-level",
+        "applicationKindKey": "agent",
+        "approverRoleKey": "security-reviewer",
+        "approvalMode": "first-to-respond",
+        "requiresTypedReason": true
+      },
+      {
+        "key": "configuration-change-approval",
+        "label": "A configuration admin accepts",
+        "decisionTypeKey": "configuration-change",
+        "approverRoleKey": "configuration-admin",
+        "approvalMode": "first-to-respond",
+        "requiresTypedReason": true
+      },
+      {
+        "key": "gate-policy-change-config-admin",
+        "label": "Gate policy: configuration admin",
+        "decisionTypeKey": "gate-policy-change",
+        "approverRoleKey": "configuration-admin",
+        "approvalMode": "everyone-must-approve",
+        "requiresTypedReason": true
+      },
+      {
+        "key": "gate-policy-change-change-manager",
+        "label": "Gate policy: change manager consulted",
+        "decisionTypeKey": "gate-policy-change",
+        "approverRoleKey": "change-manager",
+        "approvalMode": "first-to-respond",
+        "isConsultation": true
+      }
+    ],
+    "gate-policy": [
+      {
+        "key": "gp-development",
+        "label": "Development is not governed",
+        "tierKey": "*",
+        "changeTypeKey": "*",
+        "targetStageKey": "development",
+        "gateLevel": "off"
+      },
+      {
+        "key": "gp-test",
+        "label": "Test: flag",
+        "tierKey": "*",
+        "changeTypeKey": "*",
+        "targetStageKey": "test",
+        "gateLevel": "flag"
+      },
+      {
+        "key": "gp-prod-tier-1",
+        "label": "Production tier 1: flag",
+        "tierKey": "tier-1",
+        "changeTypeKey": "*",
+        "targetStageKey": "production",
+        "gateLevel": "flag"
+      },
+      {
+        "key": "gp-prod-tier-2",
+        "label": "Production tier 2: advise",
+        "tierKey": "tier-2",
+        "changeTypeKey": "*",
+        "targetStageKey": "production",
+        "gateLevel": "advise"
+      },
+      {
+        "key": "gp-prod-tier-3",
+        "label": "Production tier 3: enforce",
+        "tierKey": "tier-3",
+        "changeTypeKey": "*",
+        "targetStageKey": "production",
+        "gateLevel": "enforce",
+        "failMode": "fail-closed"
+      },
+      {
+        "key": "gp-emergency-test",
+        "label": "Emergency in test: record",
+        "tierKey": "*",
+        "changeTypeKey": "emergency",
+        "targetStageKey": "test",
+        "gateLevel": "record"
+      },
+      {
+        "key": "gp-emergency-prod-tier-1",
+        "label": "Emergency in production, tier 1",
+        "tierKey": "tier-1",
+        "changeTypeKey": "emergency",
+        "targetStageKey": "production",
+        "gateLevel": "flag",
+        "emergencyRule": { "passWithoutApproval": true, "approvalDueWorkingDays": 2, "reviewTypeKey": "post-change" }
+      },
+      {
+        "key": "gp-emergency-prod-tier-2",
+        "label": "Emergency in production, tier 2",
+        "tierKey": "tier-2",
+        "changeTypeKey": "emergency",
+        "targetStageKey": "production",
+        "gateLevel": "flag",
+        "emergencyRule": { "passWithoutApproval": true, "approvalDueWorkingDays": 2, "reviewTypeKey": "post-change" }
+      },
+      {
+        "key": "gp-emergency-prod-tier-3",
+        "label": "Emergency in production, tier 3",
+        "tierKey": "tier-3",
+        "changeTypeKey": "emergency",
+        "targetStageKey": "production",
+        "gateLevel": "flag",
+        "emergencyRule": { "passWithoutApproval": true, "approvalDueWorkingDays": 2, "reviewTypeKey": "post-change" }
+      }
+    ],
+    "target-stage": [
+      { "key": "development", "label": "Development", "rank": 1 },
+      { "key": "test", "label": "Test", "rank": 2 },
+      { "key": "production", "label": "Production", "rank": 3 }
+    ],
+    "change-path": [
+      { "key": "pipeline-only", "label": "Pipeline only", "allowedRouteKeys": ["pipeline-step"] },
+      { "key": "pipeline-or-ai-tool", "label": "Pipeline or AI tool", "allowedRouteKeys": ["pipeline-step", "ai-tool"] },
+      {
+        "key": "any-route",
+        "label": "Any route",
+        "allowedRouteKeys": ["pipeline-step", "ai-tool", "person-in-app", "other"]
+      }
+    ],
+    "deployment-route": [
+      { "key": "pipeline-step", "label": "Pipeline step", "engineMeaning": "pipeline-step" },
+      { "key": "ai-tool", "label": "Owner's AI tool", "engineMeaning": "ai-tool" },
+      { "key": "person-in-app", "label": "Person in the app", "engineMeaning": "person-in-app" },
+      { "key": "other", "label": "Other, found later", "engineMeaning": "other" }
+    ],
+    "link-kind": [
+      {
+        "key": "ado-work-item",
+        "label": "Azure DevOps work item",
+        "linkCategory": "delivery",
+        "toolKey": "azure-devops",
+        "idPattern": "^[0-9]+$"
+      },
+      {
+        "key": "github-issue",
+        "label": "GitHub issue",
+        "linkCategory": "delivery",
+        "toolKey": "github",
+        "urlPattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$"
+      },
+      { "key": "planner-plan", "label": "Planner plan", "linkCategory": "delivery", "toolKey": "planner" },
+      {
+        "key": "azure-pipelines-pipeline",
+        "label": "Azure Pipelines pipeline",
+        "linkCategory": "pipeline",
+        "toolKey": "azure-devops"
+      },
+      {
+        "key": "github-actions-workflow",
+        "label": "GitHub Actions workflow",
+        "linkCategory": "pipeline",
+        "toolKey": "github",
+        "urlPattern": "^https://github\\.com/[^/]+/[^/]+/actions"
+      },
+      {
+        "key": "power-platform-pipeline",
+        "label": "Power Platform Pipelines pipeline",
+        "linkCategory": "pipeline",
+        "toolKey": "power-platform"
+      },
+      {
+        "key": "ado-wiki-page",
+        "label": "Azure DevOps wiki page",
+        "linkCategory": "document",
+        "toolKey": "azure-devops"
+      },
+      { "key": "repository-file", "label": "Repository file", "linkCategory": "document", "toolKey": "github" },
+      {
+        "key": "sharepoint-page",
+        "label": "SharePoint page",
+        "linkCategory": "document",
+        "toolKey": "sharepoint",
+        "urlPattern": "^https://[^/]+\\.sharepoint\\.com/"
+      },
+      { "key": "evidence-url", "label": "Evidence link", "linkCategory": "evidence", "toolKey": "other" },
+      {
+        "key": "power-platform-resource",
+        "label": "Power Platform resource",
+        "linkCategory": "microsoft-resource",
+        "toolKey": "power-platform"
+      },
+      { "key": "entra-object", "label": "Entra object", "linkCategory": "microsoft-resource", "toolKey": "entra" },
+      { "key": "itsm-change", "label": "ITSM change", "linkCategory": "external-change", "toolKey": "itsm" }
+    ],
+    "actor-kind": [
+      { "key": "person", "label": "Person", "engineMeaning": "person" },
+      { "key": "ai-client", "label": "AI client for a person", "engineMeaning": "ai-client-for-person" },
+      { "key": "agent-identity", "label": "Agent identity", "engineMeaning": "agent-identity" },
+      { "key": "pipeline", "label": "Pipeline", "engineMeaning": "pipeline" },
+      { "key": "approval-runner", "label": "Approval runner", "engineMeaning": "approval-runner" },
+      { "key": "engine", "label": "Engine", "engineMeaning": "engine" }
+    ],
+    "guideline": [
+      {
+        "key": "g1",
+        "label": "G1 Keep one register",
+        "number": "G1",
+        "version": "1.0",
+        "rule": "Keep one register of business applications; an inventory is not a catalog."
+      },
+      {
+        "key": "g2",
+        "label": "G2 Name the owners",
+        "number": "G2",
+        "version": "1.0",
+        "rule": "Every app names business, technical and data owners."
+      },
+      {
+        "key": "g9",
+        "label": "G9 Ship what you tested",
+        "number": "G9",
+        "version": "1.0",
+        "rule": "Ship the zip you tested."
+      },
+      {
+        "key": "g17",
+        "label": "G17 No AI approves",
+        "number": "G17",
+        "version": "1.0",
+        "rule": "No AI approves its own work, or anyone's."
+      }
+    ],
+    "separation-rule": [
+      {
+        "key": "no-self-approval-tier-3",
+        "label": "No self-approval at tier 3",
+        "ruleKind": "approver-differs",
+        "tierKey": "tier-3",
+        "mustDifferFrom": "proposer",
+        "enforcement": "refuse"
+      },
+      {
+        "key": "deployer-not-sole-approver",
+        "label": "Deployer is not the only approver",
+        "ruleKind": "approver-differs",
+        "decisionTypeKey": "change-authorization",
+        "targetStageKey": "production",
+        "mustDifferFrom": "deployer",
+        "enforcement": "flag"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "loop-through-start-both-directions",
+  "description": "A depends on B and B depends on A. Walking both ways reaches B once in each walk, and the loop is reported.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "both",
+    "maxDepth": 2
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-a",
+        "toApplicationId": "fixture-app-b",
+        "dependencyTypeKey": "calls-api-of"
+      },
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "reads-data-from"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "both",
+      "maxDepthApplied": 2,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependencies",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "calls-api-of"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        }
+      ],
+      "cycleDetected": true,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "impact.cycle-detected",
+        "severity": "info",
+        "entity": "Dependency",
+        "ref": "fixture-app-a"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

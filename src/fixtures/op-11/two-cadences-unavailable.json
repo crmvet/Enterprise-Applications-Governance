@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "two-cadences-unavailable",
+  "description": "Two cadences for one review type and tier leave no single interval. The engine refuses and reports the broken configuration instead of picking one (V09 refuses it before activation).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "review-cadence",
+        "key": "owner-check-tier-3-extra",
+        "values": {
+          "label": "Owner check, tier 3, monthly",
+          "reviewTypeKey": "owner-check",
+          "tierKey": "tier-3",
+          "intervalDays": 30
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "doneOnUtc": "2026-11-01T10:00:00Z",
+    "reviewTypeKey": "owner-check",
+    "tierKey": "tier-3"
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "rule-group.ambiguous",
+        "severity": "error",
+        "entity": "Review Cadence",
+        "ref": "owner-check-tier-3-extra"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "guideline resource content",
+  "description": "The JSON text of guideline://G<n>. It cites the guideline: number, version, the one-line rule and the hub link (C39). It never copies the guideline text or the playbook.",
+  "x-resource": "guideline",
+  "type": "object",
+  "required": [
+    "uri",
+    "number",
+    "version",
+    "rule",
+    "hubUrl",
+    "chapter",
+    "isActive",
+    "isAdopted",
+    "localUrl",
+    "configurationSetVersion",
+    "asOf"
+  ],
+  "properties": {
+    "uri": {
+      "type": "string",
+      "pattern": "^guideline://G[1-9][0-9]{0,2}$"
+    },
+    "number": {
+      "$ref": "../common.schema.json#/$defs/guidelineNumber"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Two parts: the first changes the rule, the second only the wording."
+    },
+    "rule": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule in one line."
+    },
+    "hubUrl": {
+      "description": "The canonical text on the public hub. Null until the hub location is set.",
+      "anyOf": [
+        {
+          "$ref": "../common.schema.json#/$defs/url"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "chapter": {
+      "description": "The playbook chapter it belongs to.",
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "False for a retired number, such as G10 and G11 in the public list version 1.0. Numbers are never reused."
+    },
+    "isAdopted": {
+      "type": "boolean",
+      "description": "False when the client chose not to adopt it."
+    },
+    "localUrl": {
+      "description": "The client's own page for it.",
+      "anyOf": [
+        {
+          "$ref": "../common.schema.json#/$defs/url"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "configurationSetVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The configuration set version in force."
+    },
+    "asOf": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "When the data was read."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "uri": "guideline://G2",
+      "number": "G2",
+      "version": "1.0",
+      "rule": "Every application names a business owner, a technical owner and a data owner, each with a deputy.",
+      "hubUrl": null,
+      "chapter": null,
+      "isActive": true,
+      "isAdopted": true,
+      "localUrl": null,
+      "configurationSetVersion": 3,
+      "asOf": "2026-11-22T09:00:00Z"
+    }
+  ]
+}

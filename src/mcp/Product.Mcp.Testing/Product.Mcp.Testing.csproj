@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    MCP testing. The stand-ins for tests and the local harness: the mock identity
+    (MockTokenValidator), the in-memory rate limit counter (InMemoryRateLimitStore) and the repeatable GUID wrapper over
+    the in-memory store (GuidIdRecordStore).
+    No host references this assembly, and the MCP server core never references it, so a production build cannot bind a
+    mock (DependencyRuleTests in the MCP core tests). .NET 10 only, like the core.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Mcp.Core\Product.Mcp.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "gate-policy-missing-unavailable",
+  "description": "With no gate policy row for the combination, the engine never falls back to a level: it returns gate-policy.missing, and the check step applies its cached fail mode (28, issue 14).",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "gate-policy",
+        "key": "gp-prod-tier-3--normal"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "check",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "satisfied",
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "gate-policy.missing",
+        "severity": "error",
+        "entity": "Gate Policy"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

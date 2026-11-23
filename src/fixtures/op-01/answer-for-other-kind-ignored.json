@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "answer-for-other-kind-ignored",
+  "description": "A Power Platform app does not see the agent autonomy question. An answer to it is ignored: it neither raises the tier nor triggers a review.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "reads-only"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "little"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "small-team"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      },
+      {
+        "questionKey": "agent-autonomy",
+        "answerKey": "executes"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "decisiveAnswers": [
+        {
+          "questionKey": "data-change",
+          "answerKey": "reads-only"
+        },
+        {
+          "questionKey": "failure-impact",
+          "answerKey": "little"
+        },
+        {
+          "questionKey": "reach",
+          "answerKey": "small-team"
+        },
+        {
+          "questionKey": "sensitivity",
+          "answerKey": "none"
+        }
+      ],
+      "missingQuestionKeys": [],
+      "triggeredReviewTypeKeys": [],
+      "triggeredGateRequirementKeys": [],
+      "proposedIsLower": false,
+      "ignoredAnswers": [
+        {
+          "questionKey": "agent-autonomy",
+          "answerKey": "executes"
+        }
+      ],
+      "computedTierKey": "tier-1",
+      "computedTierRank": 1
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Tier Answer Option",
+        "key": "agent-autonomy/executes",
+        "role": "skipped"
+      }
+    ]
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_application_draft output",
+  "description": "The response envelope. On success, data is the write result. The application is Draft. The component rows are links. The ownership decision is Proposed.",
+  "x-tool": "save_application_draft",
+  "x-ai-write-states": [
+    "draft",
+    "proposed"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Business Application (O02).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always Draft. Only a person's confirmation registers the application.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/registrationStatusMeaning",
+              "const": "draft"
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "technicalComponentId",
+              "componentKindKey",
+              "externalId",
+              "url"
+            ],
+            "properties": {
+              "technicalComponentId": {
+                "description": "Null only when validateOnly was true.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O03 Technical Component"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "componentKindKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C16 Component Kind"
+              },
+              "externalId": {
+                "type": "string",
+                "description": "The tool's own ID."
+              },
+              "url": {
+                "$ref": "../common.schema.json#/$defs/url"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The component rows written, as links."
+        },
+        "ownershipDecisionId": {
+          "description": "The ownership decision, status Proposed. Null when no owners were proposed or validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvalsNeeded": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalNeeded"
+          },
+          "description": "The approvals the ownership decision needs."
+        },
+        "confirmationCardSent": {
+          "type": "boolean",
+          "$comment": "WORKING DEFAULT (open design question 9). Registering an application sends the person a confirmation card.",
+          "description": "True when a confirmation card went to the person. False when validateOnly was true."
+        }
+      },
+      "required": [
+        "components",
+        "ownershipDecisionId",
+        "approvalsNeeded",
+        "confirmationCardSent"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Field visit planner would be saved as a draft with one component. Nothing was written.",
+      "data": {
+        "recordId": null,
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "components": [
+          {
+            "technicalComponentId": null,
+            "componentKindKey": "canvas-app",
+            "externalId": "app-0001",
+            "url": "https://apps.example.org/play/app-0001"
+          }
+        ],
+        "ownershipDecisionId": null,
+        "approvalsNeeded": [
+          {
+            "approverOwnerRoleKey": "business-owner",
+            "approvalMode": "everyone-must-approve",
+            "minimumCount": 1
+          }
+        ],
+        "confirmationCardSent": false
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g16-activated-draft-frozen",
+  "description": "An effect tries to discard a draft that is already activated. An activated draft is final.",
+  "ruleIds": [
+    "G-16"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "update",
+    "rowId": "fixture-draft-1",
+    "after": {
+      "draftStatus": "discarded",
+      "discardReason": "rejected"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "draftStatus": "activated"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "config.draft-frozen",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

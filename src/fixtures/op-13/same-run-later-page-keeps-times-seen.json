@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "same-run-later-page-keeps-times-seen",
+  "description": "A later page of the same run sees the item again: Last Seen On moves, but Times Seen counts runs, so it stays 3.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000104",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Budget sheet"
+      }
+    ]
+  },
+  "facts": {
+    "claims": [
+      {
+        "claimId": "fixture-claim-4",
+        "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000104",
+        "statusMeaning": "open",
+        "findingKind": "unregistered",
+        "timesSeen": 3,
+        "lastSeenRunId": "fixture-run-2"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "newClaims": [],
+      "updatedClaims": [
+        {
+          "claimId": "fixture-claim-4",
+          "timesSeen": 3
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

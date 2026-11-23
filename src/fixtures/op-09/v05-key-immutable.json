@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v05-key-immutable",
+  "description": "A draft tries to rename tier-1 by setting a new key in its values. V05 refuses it: keys never change, labels do. V01 also reports the key field, which upsert values never hold.",
+  "ruleIds": ["V05"],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1, "summary": "Rename the first tier" },
+      "operations": [{ "op": "upsert", "entity": "tier", "key": "tier-1", "values": { "key": "tier-one" } }]
+    }
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "activeSnapshot": { "presetKey": "balanced" } },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [
+      { "code": "key.immutable", "severity": "error", "ruleId": "V05", "entity": "Tier", "ref": "tier-1" },
+      { "code": "shape.schema", "severity": "error", "ruleId": "V01", "entity": "Tier", "ref": "tier-1" }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

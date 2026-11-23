@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v03-duplicate-key",
+  "description": "A small snapshot holds two tiers with the key tier-1. V03 refuses the repeated key. Other rules fail too, because the small snapshot lacks the rows every set needs, such as statuses and settings.",
+  "ruleIds": ["V03"],
+  "snapshot": {
+    "bundle": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "bundle", "configurationSetKey": "fixture-set" },
+      "entities": {
+        "tier": [
+          { "key": "tier-1", "label": "Tier 1", "rank": 1 },
+          { "key": "tier-1", "label": "Tier 1 again", "rank": 2 }
+        ]
+      }
+    }
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft" },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [{ "code": "key.duplicate", "severity": "error", "ruleId": "V03", "entity": "Tier", "ref": "tier-1" }],
+    "reasonsMatch": "includes"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g01-version-created-outside-activation-refused",
+  "description": "A configuration admin creates a Configuration Set Version. A version is created only inside activation, after people accept a configuration change.",
+  "ruleIds": [
+    "G-01"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "configuration-set-version",
+    "operation": "create",
+    "after": {
+      "versionNumber": 2
+    }
+  },
+  "facts": {
+    "configurationSetKind": "working"
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "config.activation-only",
+        "severity": "error",
+        "entity": "Configuration Set Version"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

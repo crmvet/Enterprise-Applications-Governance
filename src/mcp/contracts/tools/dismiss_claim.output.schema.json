@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dismiss_claim output",
+  "description": "The response envelope. On success, data is the write result for the Claim (O23): dismissed, or open after an undo.",
+  "x-tool": "dismiss_claim",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Claim (O23).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Dismissed, or open after an undo.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/claimStatusMeaning",
+              "enum": [
+                "dismissed",
+                "open"
+              ]
+            }
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The claim is dismissed as a personal test app.",
+      "data": {
+        "recordId": "c0000000-0000-4000-8000-000000000004",
+        "status": {
+          "label": "Dismissed",
+          "meaning": "dismissed"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

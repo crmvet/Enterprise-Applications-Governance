@@ -1,0 +1,12 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 1): engineMeaning is a fixed engine meaning. The label stays configurable."
+  ],
+  "entity": "deployment-route",
+  "rows": [
+    { "key": "pipeline-step", "label": "Pipeline step", "engineMeaning": "pipeline-step" },
+    { "key": "ai-tool", "label": "Owner's AI tool", "engineMeaning": "ai-tool" },
+    { "key": "person-in-app", "label": "Person in the app", "engineMeaning": "person-in-app" },
+    { "key": "other", "label": "Other, found later", "engineMeaning": "other" }
+  ]
+}

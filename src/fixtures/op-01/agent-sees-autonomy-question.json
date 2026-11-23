@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "agent-sees-autonomy-question",
+  "description": "An agent sees the agent autonomy question too (Applies To Kinds). Answering only the general questions leaves it missing.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "agent",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "reads-only"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "little"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "small-team"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "computedTierKey": "tier-1",
+      "missingQuestionKeys": [
+        "agent-autonomy"
+      ]
+    },
+    "reasons": [
+      {
+        "code": "tier.incomplete",
+        "severity": "info",
+        "ref": "agent-autonomy"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

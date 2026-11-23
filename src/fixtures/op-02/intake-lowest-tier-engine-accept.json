@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "intake-lowest-tier-engine-accept",
+  "description": "Intake at the lowest tier with no counting approval rule group is on the locked list, so the engine accepts it with no card.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "intake",
+    "tierKey": "tier-1",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "engine-accept",
+    "payload": {
+      "requirements": [],
+      "consultations": [],
+      "acceptanceBasis": {
+        "decisionTypeKey": "intake",
+        "condition": "lowest-tier"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "decision.engine-accepted",
+        "severity": "info",
+        "entity": "Decision Type",
+        "ref": "intake"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "engine-acceptable-decision-types",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier",
+        "key": "tier-1",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

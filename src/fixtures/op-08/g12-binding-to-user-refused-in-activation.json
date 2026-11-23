@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g12-binding-to-user-refused-in-activation",
+  "description": "Inside activation, a Role Group Binding names a user. A role binds only to an Entra group (D-11).",
+  "ruleIds": [
+    "G-12"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "role-group-binding",
+    "operation": "create",
+    "after": {
+      "key": "pmo-binding",
+      "roleKey": "pmo",
+      "entraGroupObjectId": "00000000-0000-4000-8000-000000000052"
+    },
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "configurationSetKind": "working",
+    "bindingPrincipalKind": "user"
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "role.binding-not-group",
+          "ruleId": "G-12"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "role.binding-not-group",
+        "severity": "error",
+        "ref": "pmo-binding"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

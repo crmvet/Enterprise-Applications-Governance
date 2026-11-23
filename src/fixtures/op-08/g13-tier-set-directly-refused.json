@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g13-tier-set-directly-refused",
+  "description": "A platform admin sets an application's tier directly. Tier and stage change only as an effect of an accepted decision.",
+  "ruleIds": [
+    "G-13"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "update",
+    "rowId": "fixture-app-1",
+    "after": {
+      "tier": "tier-1"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "registered",
+      "tier": "tier-2"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "register.decision-required",
+          "ruleId": "G-13"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "register.decision-required",
+        "severity": "error",
+        "entity": "Business Application"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

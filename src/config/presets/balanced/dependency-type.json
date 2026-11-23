@@ -1,0 +1,16 @@
+{
+  "entity": "dependency-type",
+  "rows": [
+    { "key": "reads-data-from", "label": "Reads data from", "inverseLabel": "Data read by", "countsForImpact": true },
+    { "key": "writes-data-to", "label": "Writes data to", "inverseLabel": "Data written by", "countsForImpact": true },
+    { "key": "calls-api-of", "label": "Calls API of", "inverseLabel": "API called by", "countsForImpact": true },
+    { "key": "hosted-on", "label": "Hosted on", "inverseLabel": "Hosts", "countsForImpact": true },
+    {
+      "key": "run-time-need-in-target",
+      "label": "Run-time need in target",
+      "inverseLabel": "Needed in target by",
+      "countsForImpact": true
+    },
+    { "key": "replaces", "label": "Replaces", "inverseLabel": "Replaced by", "countsForImpact": false }
+  ]
+}

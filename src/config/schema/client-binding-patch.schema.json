@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "client-binding-patch.schema.json",
+  "title": "Client binding patch",
+  "description": "The patch the configuration service delivers after install (document 21, section 6.8): it binds human roles to the client's Entra groups (C30), gives workload roles to workload identities (C42), and adds portfolio-scoped rows and the portfolio narrowing of change-management-mode. It carries client facts, so it lives in the client's own private repository, never in a shipped preset or in this source tree (V44). It is also a valid draft patch of config-bundle.schema.json.",
+  "$comment": "Operations: upsert and retire by stable key. An upsert here carries the full row, so a binding patch is complete on its own. Changes after setup go through an ordinary draft. WORKING DEFAULT (open design question 12): workload roles reach workload identities only through Workload Grant rows. People get roles only through groups.",
+  "type": "object",
+  "required": ["schemaVersion", "manifest", "operations"],
+  "properties": {
+    "$comment": { "$ref": "config-bundle.schema.json#/$defs/comment" },
+    "schemaVersion": { "$ref": "config-bundle.schema.json#/$defs/schemaVersion" },
+    "manifest": {
+      "type": "object",
+      "required": ["kind", "baseVersionNumber", "summary"],
+      "properties": {
+        "kind": { "const": "patch" },
+        "baseVersionNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The active version the patch starts from, usually 1 (the bootstrap version)."
+        },
+        "summary": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "operations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/operation" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "operation": {
+      "type": "object",
+      "required": ["op", "entity", "key"],
+      "properties": {
+        "op": { "$ref": "config-bundle.schema.json#/$defs/contract.patch-operation" },
+        "entity": {
+          "enum": [
+            "role-group-binding",
+            "workload-grant",
+            "decision-right",
+            "approval-rule",
+            "gate-policy",
+            "setting",
+            "portfolio-access",
+            "known-client"
+          ]
+        },
+        "key": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "values": { "type": "object" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "required": ["op"], "properties": { "op": { "const": "retire" } } },
+          "then": { "properties": { "values": false } },
+          "else": { "required": ["values"] }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "role-group-binding" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/role-group-binding.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "workload-grant" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/workload-grant.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "decision-right" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/decision-right.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "approval-rule" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/approval-rule.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "gate-policy" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/gate-policy.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "setting" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/setting.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "portfolio-access" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/portfolio-access.upsert" } } }
+        },
+        {
+          "if": {
+            "required": ["op", "entity"],
+            "properties": { "op": { "const": "upsert" }, "entity": { "const": "known-client" } }
+          },
+          "then": { "properties": { "values": { "$ref": "#/$defs/known-client.upsert" } } }
+        }
+      ]
+    },
+    "role-group-binding.upsert": {
+      "allOf": [{ "$ref": "config-bundle.schema.json#/$defs/role-group-binding.draftValues" }],
+      "required": ["label", "roleKey", "entraGroupObjectId", "bindingMethod", "bindingDetail"],
+      "description": "A full C30 Role Group Binding row."
+    },
+    "workload-grant.upsert": {
+      "allOf": [{ "$ref": "config-bundle.schema.json#/$defs/workload-grant.draftValues" }],
+      "required": [
+        "label",
+        "principalObjectId",
+        "workloadRoleKey",
+        "reason",
+        "usesFederatedCredential",
+        "bindingDetail",
+        "expiresOn"
+      ],
+      "$comment": "WORKING DEFAULT (open design question 12): one grant per pipeline identity and one for the approval runner, each recorded and expiring. Agent identities and agent users never get a grant.",
+      "description": "A full C42 Workload Grant row."
+    },
+    "decision-right.upsert": {
+      "allOf": [
+        { "$ref": "config-bundle.schema.json#/$defs/decision-right.draftValues" },
+        { "$ref": "config-bundle.schema.json#/$defs/decision-right.rules" }
+      ],
+      "required": ["label", "decisionTypeKey", "letter", "portfolioId"],
+      "description": "A C31 row scoped to one portfolio: the full row, with portfolioId."
+    },
+    "approval-rule.upsert": {
+      "allOf": [
+        { "$ref": "config-bundle.schema.json#/$defs/approval-rule.draftValues" },
+        { "$ref": "config-bundle.schema.json#/$defs/approval-rule.rules" }
+      ],
+      "required": ["label", "decisionTypeKey", "approvalMode", "portfolioId"],
+      "description": "A C32 row scoped to one portfolio: the full row, with portfolioId."
+    },
+    "gate-policy.upsert": {
+      "allOf": [
+        { "$ref": "config-bundle.schema.json#/$defs/gate-policy.draftValues" },
+        { "$ref": "config-bundle.schema.json#/$defs/gate-policy.rules" },
+        {
+          "description": "Stored rows never hold a wildcard.",
+          "properties": {
+            "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "changeTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+          }
+        }
+      ],
+      "required": ["label", "tierKey", "changeTypeKey", "targetStageKey", "gateLevel", "portfolioId"],
+      "description": "A C33 row scoped to one portfolio: the full row, with portfolioId."
+    },
+    "setting.upsert": {
+      "allOf": [
+        { "$ref": "config-bundle.schema.json#/$defs/setting.draftValues" },
+        {
+          "description": "Only change-management-mode may be narrowed for one portfolio (V38).",
+          "properties": {
+            "narrowsSettingKey": { "const": "change-management-mode" },
+            "valueType": { "const": "contract:change-management-mode" },
+            "value": { "$ref": "config-bundle.schema.json#/$defs/contract.change-management-mode" },
+            "isLocked": false
+          }
+        }
+      ],
+      "required": ["label", "valueType", "value", "narrowsSettingKey", "portfolioId"],
+      "description": "A C04 row that narrows change-management-mode for one portfolio."
+    },
+    "portfolio-access.upsert": {
+      "allOf": [{ "$ref": "config-bundle.schema.json#/$defs/portfolio-access.draftValues" }],
+      "required": ["label", "portfolioId", "entraGroupObjectId", "bindingDetail"],
+      "x-proposal": "document 26, sections 5.2 and 15",
+      "description": "A full C44 Portfolio Access row."
+    },
+    "known-client.upsert": {
+      "allOf": [{ "$ref": "config-bundle.schema.json#/$defs/known-client.draftValues" }],
+      "required": ["label", "clientIdentifier"],
+      "x-proposal": "document 26, sections 10.3 and 15",
+      "description": "A full C45 Known Client row."
+    }
+  }
+}

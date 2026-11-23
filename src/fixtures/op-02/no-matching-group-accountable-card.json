@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "no-matching-group-accountable-card",
+  "description": "For another application kind no approval rule group matches, so the decision still goes on one card, to its accountable holder (rule 7).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "autonomy-level",
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "accountable",
+          "decisionRightKey": "autonomy-level-a",
+          "approverRoleKey": "security-reviewer"
+        }
+      ]
+    }
+  }
+}

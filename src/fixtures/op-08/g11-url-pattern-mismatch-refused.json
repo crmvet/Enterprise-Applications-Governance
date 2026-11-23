@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g11-url-pattern-mismatch-refused",
+  "description": "A delivery link of kind GitHub issue points to a URL that does not match the kind's Url Pattern.",
+  "ruleIds": [
+    "G-11"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "delivery-link",
+    "operation": "create",
+    "after": {
+      "linkKind": "github-issue",
+      "url": "https://example.org/issues/7",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "link.url-pattern",
+        "severity": "error",
+        "ref": "github-issue"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

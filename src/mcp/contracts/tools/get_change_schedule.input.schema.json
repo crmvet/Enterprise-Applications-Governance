@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_change_schedule input",
+  "description": "The read-only list of planned changes by window and target. No booking and no freeze tables. Writes nothing.",
+  "x-tool": "get_change_schedule",
+  "type": "object",
+  "required": [
+    "from",
+    "to"
+  ],
+  "properties": {
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Windows that end on or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Windows that start on or before this date."
+    },
+    "deploymentTargetIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/id",
+        "x-entity": "O15 Deployment Target"
+      },
+      "description": "Only these targets."
+    },
+    "targetStageKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C34 Target Stage"
+      },
+      "description": "Only targets at these stages."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only changes for this application."
+    },
+    "statusMeanings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/recordStatusMeaning"
+      },
+      "description": "Only changes with these status meanings."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "from": "2026-12-01",
+      "to": "2026-12-07",
+      "targetStageKeys": [
+        "production"
+      ]
+    }
+  ]
+}

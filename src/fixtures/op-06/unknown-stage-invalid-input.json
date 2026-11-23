@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "unknown-stage-invalid-input",
+  "description": "A lifecycle stage that is not in the configuration in force is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "launch"
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

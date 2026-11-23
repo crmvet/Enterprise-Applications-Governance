@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_document_link output",
+  "description": "The response envelope. On success, data is the write result for the Document Link (O19), with the status as stored and staleOn computed from the document type's freshness.",
+  "$comment": "WORKING DEFAULT (open design question 9). For a document type with Current Needs Person = yes (C22), current from an AI client is stored as draft until the person confirms on a confirmation card.",
+  "x-tool": "record_document_link",
+  "x-ai-write-states": [
+    "link",
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Document Link (O19).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Draft or current, as stored. A requested current waits as draft while a confirmation card is out.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/documentStatusMeaning",
+              "enum": [
+                "draft",
+                "current"
+              ]
+            }
+          }
+        },
+        "documentLinkId": {
+          "description": "Null only when validateOnly was true and the link is new.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O19 Document Link"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "staleOn": {
+          "description": "When the document becomes stale. Null for a draft.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confirmationCardSent": {
+          "type": "boolean",
+          "$comment": "WORKING DEFAULT (open design question 9). For a document type with Current Needs Person = yes (C22), current from an AI client is stored as draft until the person confirms on a confirmation card.",
+          "description": "True when a confirmation card went to the person, because an AI client asked for current on a document type with Current Needs Person = yes. The link stays draft until the person confirms. False when validateOnly was true."
+        }
+      },
+      "required": [
+        "documentLinkId",
+        "staleOn",
+        "confirmationCardSent"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The support guide link is recorded as a draft. The owner got a card to confirm it is current.",
+      "data": {
+        "recordId": "e0000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "documentLinkId": "e0000000-0000-4000-8000-000000000002",
+        "staleOn": null,
+        "confirmationCardSent": true
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/e0000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

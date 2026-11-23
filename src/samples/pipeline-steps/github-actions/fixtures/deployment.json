@@ -1,0 +1,16 @@
+{
+  "idempotencyKey": "gh-700000001-9000000001-deploy-1",
+  "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+  "artifactName": "FieldVisitPlanner",
+  "artifactVersion": "1.4.2.0",
+  "artifactKindKey": "power-platform-solution",
+  "sourceCommit": "8a7f6e5d4c3b2a1908f7e6d5c4b3a2918f7e6d5c",
+  "sourceRepositoryUrl": "https://code.example.org/sample-org/field-visit-planner",
+  "targetExternalId": "env-prod-0001",
+  "runUrl": "https://code.example.org/sample-org/field-visit-planner/actions/runs/9000000001/attempts/1",
+  "startedOn": "2026-12-05T08:00:00Z",
+  "finishedOn": "2026-12-05T08:06:00Z",
+  "resultMeaning": "succeeded",
+  "codeApprovalKind": "unknown",
+  "pipelineExternalId": "gh-700000001-Deploy and record"
+}

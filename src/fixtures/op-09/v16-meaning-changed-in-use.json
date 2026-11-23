@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v16-meaning-changed-in-use",
+  "description": "A draft changes the engine meaning of the test stage from pre-live to live, and the facts say operational records use that stage. Records keep the meaning they were judged by, so V16 refuses it.",
+  "ruleIds": [
+    "V16"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "lifecycle-stage",
+        "key": "test",
+        "values": {
+          "engineMeaning": "live"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "facts": {
+    "rowsInUse": [
+      {
+        "entity": "lifecycle-stage",
+        "key": "test"
+      }
+    ]
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "meaning.changed-in-use",
+        "severity": "error",
+        "ruleId": "V16",
+        "entity": "Lifecycle Stage",
+        "ref": "test"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

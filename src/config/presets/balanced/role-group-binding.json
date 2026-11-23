@@ -1,0 +1,7 @@
+{
+  "$comment": [
+    "Always empty in a preset. Role group bindings are client facts: the client binding patch adds them (V44)."
+  ],
+  "entity": "role-group-binding",
+  "rows": []
+}

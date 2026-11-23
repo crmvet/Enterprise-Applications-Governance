@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v30-workload-role-approver",
+  "description": "A draft makes the deployment recorder, a workload role held by pipelines, the approver of tier 3 changes. No AI or pipeline ever approves, so V30 refuses it.",
+  "ruleIds": [
+    "V30"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3",
+        "values": {
+          "approverRoleKey": "deployment-recorder"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "approval-rule.workload-approver",
+        "severity": "error",
+        "ruleId": "V30",
+        "entity": "Approval Rule",
+        "ref": "change-auth-tier-3"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

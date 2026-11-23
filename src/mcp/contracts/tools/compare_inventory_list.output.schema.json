@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "compare_inventory_list output",
+  "description": "The response envelope. On success, data is as run_gap_check, and the run carries the evidence level as reported.",
+  "x-tool": "compare_inventory_list",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "run_gap_check.output.schema.json#/$defs/gapRun"
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One item is new and waits for an owner. The run is marked as reported.",
+      "data": {
+        "recordId": "d9000000-0000-4000-8000-000000000002",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "gapCheckRunId": "d9000000-0000-4000-8000-000000000002",
+        "adminRoleUsed": null,
+        "estatesCovered": [
+          "power-platform"
+        ],
+        "itemsSeen": 1,
+        "newClaims": [
+          {
+            "claimId": "c0000000-0000-4000-8000-000000000002",
+            "componentKindKey": "canvas-app",
+            "labelAsSeen": "Expense helper",
+            "targetAsSeen": "Default environment",
+            "suggestedClaimant": {
+              "objectId": "20000000-0000-4000-8000-000000000003",
+              "displayLabel": "Maker (sample)"
+            }
+          }
+        ],
+        "vanished": [],
+        "lastSeenUpdated": 0,
+        "evidenceLevelKey": "as-reported",
+        "more": false
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "newClaims[].labelAsSeen",
+        "newClaims[].targetAsSeen"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

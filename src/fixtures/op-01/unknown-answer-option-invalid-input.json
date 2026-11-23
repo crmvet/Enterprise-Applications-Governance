@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "unknown-answer-option-invalid-input",
+  "description": "An answer key that is not an option of its question is invalid input.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "sometimes"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error",
+        "ref": "data-change/sometimes"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

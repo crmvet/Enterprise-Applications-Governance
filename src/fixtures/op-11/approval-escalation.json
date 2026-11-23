@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "approval-escalation",
+  "description": "An approval due on 2026-11-17 is escalated to the deputy 5 days later, by Outlook as its rule says. Repeats went every 2 days before.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "approval",
+    "dueOnUtc": "2026-11-17T08:00:00Z"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "approval",
+      "dueOnUtc": "2026-11-17T08:00:00Z",
+      "isOverdue": true,
+      "actions": [
+        {
+          "action": "escalate",
+          "ruleKey": "approval-reminder",
+          "reminderNumber": 4,
+          "escalated": true,
+          "channelKey": "outlook"
+        }
+      ],
+      "nextActionOnUtc": "2026-11-23T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

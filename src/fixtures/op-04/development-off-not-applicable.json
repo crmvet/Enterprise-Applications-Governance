@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "development-off-not-applicable",
+  "description": "Development is off in Balanced: not governed. Even with a pending approval, a past window and another route, no flag is set.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "check",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "development",
+    "portfolioPath": [],
+    "routeKey": "ai-tool",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "pending",
+      "windowStartUtc": "2026-11-20T08:00:00Z",
+      "windowEndUtc": "2026-11-20T12:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "not-applicable",
+    "payload": {
+      "gateLevel": "off",
+      "verdict": "not-applicable",
+      "isOutsideWindow": false,
+      "isOtherPath": false,
+      "isMissingApproval": false,
+      "isAiOnlyCodeApproval": false,
+      "notify": false,
+      "gatePolicyKey": "gp-development--tier-3--normal",
+      "changeTypeKey": "normal",
+      "windowState": "after",
+      "notifyOwnerRoleKeys": [],
+      "notifyRoleKeys": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

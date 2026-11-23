@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "stage-rank-orders-requirements",
+  "description": "At the test stage (rank 6) a tier 3 application needs the documents required from design and review (rank 3) and build (rank 5), but not yet the runbook (rank 7) or the support guide (rank 8). Stage Rank decides, never the display number.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-3",
+    "lifecycleStageKey": "test"
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "adr-tier-3",
+          "documentTypeKey": "architecture-decision-record",
+          "status": "missing"
+        },
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "missing"
+        }
+      ],
+      "missingCount": 2,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {}
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "documentation.missing",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "adr-tier-3"
+      },
+      {
+        "code": "documentation.missing",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "wiki-page-all"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

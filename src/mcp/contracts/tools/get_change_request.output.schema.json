@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_change_request output",
+  "description": "The response envelope. On success, data is the change with its authorization, affected applications, deployments, result and links. In linked mode linkedSource says how the authorization was reported; none means not authorized. title, description and labels are text people typed.",
+  "x-tool": "get_change_request",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "change",
+        "authorization",
+        "affected",
+        "deployments",
+        "result",
+        "links"
+      ],
+      "properties": {
+        "change": {
+          "type": "object",
+          "required": [
+            "changeRequestId",
+            "title",
+            "description",
+            "businessApplicationId",
+            "changeType",
+            "standardChangeModel",
+            "status",
+            "mode",
+            "windowStart",
+            "windowEnd",
+            "plannedTargetId",
+            "externalChangeNumber",
+            "externalChangeUrl"
+          ],
+          "properties": {
+            "changeRequestId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O11 Change Request"
+            },
+            "title": {
+              "type": "string",
+              "description": "A short name for the change.",
+              "x-untrusted": true
+            },
+            "description": {
+              "type": "string",
+              "description": "What changes, and why.",
+              "x-untrusted": true
+            },
+            "businessApplicationId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O02 Business Application"
+            },
+            "changeType": {
+              "$ref": "../common.schema.json#/$defs/labelledKey",
+              "description": "The Change Type (C20)."
+            },
+            "standardChangeModel": {
+              "description": "The Standard Change Model (C21) applied, if any.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "$ref": "../common.schema.json#/$defs/statusValue",
+              "description": "The record status by meaning."
+            },
+            "mode": {
+              "$ref": "../common.schema.json#/$defs/changeManagementMode"
+            },
+            "windowStart": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/dateTime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "windowEnd": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/dateTime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "plannedTargetId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O15 Deployment Target"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "externalChangeNumber": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "The ITSM change number. Shown, never decisive."
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "externalChangeUrl": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/url"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "authorization": {
+          "type": "object",
+          "required": [
+            "decisionId",
+            "status",
+            "approvalsSummary",
+            "linkedSource"
+          ],
+          "properties": {
+            "decisionId": {
+              "description": "The change authorization decision.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "description": "The authorization decision status by meaning.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/statusValue"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "approvalsSummary": {
+              "$ref": "../common.schema.json#/$defs/approvalsSummary"
+            },
+            "linkedSource": {
+              "description": "Linked mode only: how the authorization was reported. none means not authorized. Null in built-in mode.",
+              "anyOf": [
+                {
+                  "enum": [
+                    "itsm-step",
+                    "attestation",
+                    "none"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "affected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "impactRoleKey"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "impactRoleKey": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C07 List Value"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The Affected Application rows (O12)."
+        },
+        "deployments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "deploymentRecordId",
+              "deploymentTargetId",
+              "targetLabel",
+              "result",
+              "finishedOn",
+              "flags"
+            ],
+            "properties": {
+              "deploymentRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O14 Deployment Record"
+              },
+              "deploymentTargetId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O15 Deployment Target"
+              },
+              "targetLabel": {
+                "type": "string",
+                "description": "The target's name when last seen.",
+                "x-untrusted": true
+              },
+              "result": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The deployment result by meaning."
+              },
+              "finishedOn": {
+                "$ref": "../common.schema.json#/$defs/dateTime"
+              },
+              "flags": {
+                "$ref": "../common.schema.json#/$defs/deploymentFlags"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Deployment records linked to the change. Corrected records show their latest correction."
+        },
+        "result": {
+          "description": "The result as reported, from the change result value list. Null until recorded.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "linkId",
+              "linkCategory",
+              "linkKind",
+              "url",
+              "label"
+            ],
+            "properties": {
+              "linkId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "description": "A Delivery Link (O18) or an Evidence Link (O20)."
+              },
+              "linkCategory": {
+                "enum": [
+                  "delivery",
+                  "evidence"
+                ]
+              },
+              "linkKind": {
+                "$ref": "../common.schema.json#/$defs/labelledKey",
+                "description": "The Link Kind (C37)."
+              },
+              "url": {
+                "$ref": "../common.schema.json#/$defs/url"
+              },
+              "label": {
+                "type": "string",
+                "description": "A short label.",
+                "x-untrusted": true
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Delivery and evidence links of the change."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change is submitted and waits for the business owner's authorization.",
+      "data": {
+        "change": {
+          "changeRequestId": "d0000000-0000-4000-8000-000000000002",
+          "title": "Add photo upload to visit form",
+          "description": "Adds a photo control and stores photos in the team site library.",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "changeType": {
+            "key": "normal",
+            "label": "Normal"
+          },
+          "standardChangeModel": null,
+          "status": {
+            "label": "Submitted",
+            "meaning": "submitted"
+          },
+          "mode": "built-in",
+          "windowStart": "2026-12-02T18:00:00Z",
+          "windowEnd": "2026-12-02T20:00:00Z",
+          "plannedTargetId": "d4000000-0000-4000-8000-000000000002",
+          "externalChangeNumber": null,
+          "externalChangeUrl": null
+        },
+        "authorization": {
+          "decisionId": "60000000-0000-4000-8000-000000000015",
+          "status": {
+            "label": "Proposed",
+            "meaning": "proposed"
+          },
+          "approvalsSummary": {
+            "required": 1,
+            "approved": 0,
+            "rejected": 0,
+            "pending": 1
+          },
+          "linkedSource": null
+        },
+        "affected": [],
+        "deployments": [],
+        "result": null,
+        "links": [
+          {
+            "linkId": "d8000000-0000-4000-8000-000000000001",
+            "linkCategory": "delivery",
+            "linkKind": {
+              "key": "work-item",
+              "label": "Work item"
+            },
+            "url": "https://devops.example.org/items/101",
+            "label": "Photo upload story"
+          }
+        ]
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/d0000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "change.title",
+        "change.description",
+        "affected[].name",
+        "deployments[].targetLabel",
+        "links[].label"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

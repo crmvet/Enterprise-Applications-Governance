@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v06-unresolved-reference",
+  "description": "A draft scopes the tier 3 change authorization rule to tier-9, which does not exist. V06 reports the orphan reference. The broad rule still covers every tier, so no coverage rule fails, and V26 ignores a scope no record can reach.",
+  "ruleIds": ["V06"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "approval-rule", "key": "change-auth-tier-3", "values": { "tierKey": "tier-9" } }
+    ]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "baseVersionNumber": 1 },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false, "changeSummary": ["Changed Approval Rule `change-auth-tier-3`: tierKey."] },
+    "reasons": [{ "code": "ref.unresolved", "severity": "error", "ruleId": "V06", "entity": "Approval Rule", "ref": "change-auth-tier-3" }],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v13-two-answer-options-valid",
+  "description": "A draft retires one of the three answers to the sensitivity question. Two active answers remain, each implying an active tier, so V13 passes.",
+  "ruleIds": [
+    "V13"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "tier-answer-option",
+        "key": "sensitivity/internal"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

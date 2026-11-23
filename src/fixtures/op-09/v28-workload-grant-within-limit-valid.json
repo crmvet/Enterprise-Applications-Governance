@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v28-workload-grant-within-limit-valid",
+  "description": "The same grant expiring on 2027-11-22, the last day workload-grant-max-days allows. V28 passes. The ID is fictional.",
+  "ruleIds": [
+    "V28",
+    "V35"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "workload-grant",
+        "key": "release-pipeline",
+        "values": {
+          "label": "release-pipeline",
+          "principalObjectId": "00000000-0000-4000-8000-000000000031",
+          "workloadRoleKey": "deployment-recorder",
+          "reason": "The release pipeline writes deployment records.",
+          "usesFederatedCredential": true,
+          "bindingDetail": "App role assignment on the product registration",
+          "expiresOn": "2027-11-22"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "facts": {
+    "principals": [
+      {
+        "objectId": "00000000-0000-4000-8000-000000000031",
+        "principalKind": "service-principal"
+      }
+    ]
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

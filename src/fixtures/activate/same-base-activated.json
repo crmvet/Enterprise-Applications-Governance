@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "same-base-activated",
+  "description": "A submitted draft that starts from the active version 1 is accepted. Activation revalidates it, writes the one changed live row, creates version 2, sets the current version number, marks the draft activated and writes an Audit Entry, all as one transaction of engine-nested writes.",
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 1
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "submitted",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier",
+          "key": "tier-3",
+          "values": {
+            "label": "Tier 3: Critical"
+          }
+        }
+      ]
+    }
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "activated",
+    "payload": {
+      "versionNumber": 2,
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 1,
+      "rebaseOutcome": "same-base",
+      "isRebased": false,
+      "changeSummary": [
+        "Changed Tier `tier-3`: label."
+      ],
+      "rowWriteCount": 1,
+      "rowWrites": [
+        {
+          "entity": "tier",
+          "key": "tier-3",
+          "change": "update"
+        }
+      ],
+      "effects": [
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Set Version",
+          "operation": "create",
+          "columns": {
+            "versionNumber": 2,
+            "baseVersionNumber": 1,
+            "sourceDraft": "fixture-draft-1",
+            "changeDecision": "fixture-decision-7",
+            "instructedBy": "fixture-person-1",
+            "publishedOn": "2026-11-22T09:00:00Z"
+          }
+        },
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Set",
+          "operation": "update",
+          "key": "working-set",
+          "columns": {
+            "currentVersionNumber": 2
+          }
+        },
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Draft",
+          "operation": "update",
+          "rowId": "fixture-draft-1",
+          "columns": {
+            "draftStatus": "activated",
+            "resultingVersion": 2
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "operation": "create",
+          "columns": {
+            "operation": "configuration-activated",
+            "changedValuesJson": {
+              "versionNumber": 2,
+              "isRebased": false,
+              "changeDecision": "fixture-decision-7"
+            }
+          }
+        }
+      ],
+      "errorCount": 0
+    }
+  }
+}

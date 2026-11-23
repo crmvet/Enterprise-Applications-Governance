@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "propose_configuration_change input",
+  "description": "Turns an admin's instruction into a validated configuration draft. The AI client prepares the operations; the engine validates them against the engine contract and the locked settings. The result is a candidate: a patch stored on a Configuration Draft row (C46). No configuration table changes and no Configuration Set Version (C02) is written. Give exactly one of operations, preset and fileContent. Then submit_record freezes the draft and starts the card; nothing is in force until a person accepts that decision.",
+  "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on one card. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
+  "x-tool": "propose_configuration_change",
+  "type": "object",
+  "required": [
+    "baseVersionNumber",
+    "proposalRationale"
+  ],
+  "properties": {
+    "configurationDraftId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "C46 Configuration Draft",
+      "description": "Edit this draft. Only a draft not yet submitted."
+    },
+    "baseVersionNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The active version number the patch starts from. A stale number returns conflict."
+    },
+    "proposalRationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Why the change is wanted, in the admin's words. The change summary is computed by the engine, never taken from the caller."
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "op",
+          "entity",
+          "key"
+        ],
+        "properties": {
+          "op": {
+            "enum": [
+              "upsert",
+              "retire"
+            ],
+            "description": "Upsert creates a row or merges values into it. Retire sets isActive to false. There is no delete."
+          },
+          "entity": {
+            "$ref": "../common.schema.json#/$defs/entityKey",
+            "description": "The entity key, such as approval-rule."
+          },
+          "key": {
+            "$ref": "../common.schema.json#/$defs/keyPath",
+            "description": "The row key. A child row key is the parent key, a slash, then the child key."
+          },
+          "values": {
+            "type": "object",
+            "minProperties": 1,
+            "description": "For upsert: the fields to set, in the seed format. The key never goes in values."
+          }
+        },
+        "additionalProperties": false,
+        "if": {
+          "properties": {
+            "op": {
+              "const": "retire"
+            }
+          },
+          "required": [
+            "op"
+          ]
+        },
+        "then": {
+          "not": {
+            "required": [
+              "values"
+            ]
+          }
+        },
+        "else": {
+          "required": [
+            "values"
+          ]
+        }
+      },
+      "description": "The patch operations, in order. Use fileContent for a larger patch."
+    },
+    "preset": {
+      "type": "object",
+      "required": [
+        "presetKey"
+      ],
+      "properties": {
+        "presetKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C03 Preset",
+          "description": "The full preset."
+        },
+        "overlayKeys": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C03 Preset"
+          },
+          "description": "Declared overlays to add."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Move to a preset with overlays. The engine computes the patch from the active version."
+    },
+    "fileContent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000000,
+      "description": "A patch in the seed format (document 21, section 8.2), for example as kept in a repository after export_configuration."
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "operations"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "preset"
+            ]
+          },
+          {
+            "required": [
+              "fileContent"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "required": [
+        "preset"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "operations"
+            ]
+          },
+          {
+            "required": [
+              "fileContent"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "required": [
+        "fileContent"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "operations"
+            ]
+          },
+          {
+            "required": [
+              "preset"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "baseVersionNumber": 3,
+      "proposalRationale": "Tier 2 go-live should need the data owner too.",
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "approval-rule",
+          "key": "go-live-tier-2-owner",
+          "values": {
+            "label": "Tier 2 go-live: business owner",
+            "decisionTypeKey": "go-live",
+            "tierKey": "tier-2",
+            "approverOwnerRoleKey": "business-owner",
+            "approvalMode": "everyone-must-approve"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "approval-rule",
+          "key": "go-live-tier-2-data-owner",
+          "values": {
+            "label": "Tier 2 go-live: data owner",
+            "decisionTypeKey": "go-live",
+            "tierKey": "tier-2",
+            "approverOwnerRoleKey": "data-owner",
+            "approvalMode": "everyone-must-approve"
+          }
+        }
+      ],
+      "validateOnly": true
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g09-platform-modified-columns-dropped",
+  "description": "A person writes modifiedBy and modifiedOn on an intake. Both are platform-supplied, so both values are dropped.",
+  "ruleIds": [
+    "G-09"
+  ],
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "update",
+    "rowId": "fixture-intake-1",
+    "after": {
+      "modifiedBy": "fixture-person-7",
+      "modifiedOn": "2020-01-01T00:00:00Z"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "removedColumns": [
+        "modifiedBy",
+        "modifiedOn"
+      ]
+    },
+    "reasons": [
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "modifiedBy"
+      },
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "modifiedOn"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

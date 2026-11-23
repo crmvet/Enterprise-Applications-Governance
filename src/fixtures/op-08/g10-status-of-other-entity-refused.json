@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g10-status-of-other-entity-refused",
+  "description": "A decision is given a status that belongs to intake requests. A status written must be a C05 row for that entity.",
+  "ruleIds": [
+    "G-10"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "create",
+    "after": {
+      "decisionType": "design",
+      "status": "intake-draft"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "status.unknown",
+        "severity": "error",
+        "entity": "Decision",
+        "ref": "intake-draft"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_pipeline_map input",
+  "description": "Which pipelines deploy an application, in which stage order. Give exactly one of businessApplicationId and pipelineReferenceId. Writes nothing.",
+  "x-tool": "get_pipeline_map",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "pipelineReferenceId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O16 Pipeline Reference",
+      "description": "The pipeline."
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "businessApplicationId"
+      ],
+      "not": {
+        "required": [
+          "pipelineReferenceId"
+        ]
+      }
+    },
+    {
+      "required": [
+        "pipelineReferenceId"
+      ],
+      "not": {
+        "required": [
+          "businessApplicationId"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

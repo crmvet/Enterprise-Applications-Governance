@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "unlinked-deployment-uses-setting",
+  "description": "A deployment with no change request takes its change type from the setting unlinked-deployment-change-type (normal). The policy expects a change, so the approval is missing.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "record",
+    "tierKey": "tier-1",
+    "targetStageKey": "production",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ]
+  },
+  "expected": {
+    "outcome": "allow",
+    "payload": {
+      "changeTypeKey": "normal",
+      "gatePolicyKey": "gp-prod-tier-1--normal",
+      "isOutsideWindow": false,
+      "isOtherPath": false,
+      "isMissingApproval": true,
+      "isAiOnlyCodeApproval": false,
+      "windowState": "no-window"
+    },
+    "reasons": [
+      {
+        "code": "gate.missing-approval"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "unlinked-deployment-change-type",
+        "role": "matched"
+      }
+    ]
+  }
+}

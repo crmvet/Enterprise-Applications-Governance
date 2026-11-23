@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g16-caller-sets-draft-status-refused",
+  "description": "A configuration admin sets a draft to activated directly. The draft status is the engine's; nobody activates by hand.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "update",
+    "rowId": "fixture-draft-1",
+    "after": {
+      "draftStatus": "activated"
+    }
+  },
+  "facts": {
+    "before": {
+      "draftStatus": "draft"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error",
+        "ref": "draftStatus"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

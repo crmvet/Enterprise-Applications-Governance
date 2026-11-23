@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-empty-update-on-deployment-record-refused",
+  "description": "A person sends an update with no columns to a recorded deployment. It would still restamp the final row (Performed By, Engine Checked On), so it is refused (record.final, proposed).",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "deployment-record",
+    "operation": "update",
+    "rowId": "fixture-deployment-1",
+    "after": {}
+  },
+  "facts": {
+    "before": {
+      "result": "deployment-failed",
+      "resultMeaning": "failed"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error",
+        "ref": "fixture-deployment-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

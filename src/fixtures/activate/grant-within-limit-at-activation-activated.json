@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "grant-within-limit-at-activation-activated",
+  "description": "The same draft is accepted on 2026-12-15. From that validation date the grant runs 350 days, inside workload-grant-max-days, so activation creates version 2. The validation date really reaches V28.",
+  "ruleIds": [
+    "V28"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 1
+  },
+  "context": {
+    "asOfUtc": "2026-12-15T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "submitted",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "workload-grant",
+          "key": "release-pipeline",
+          "values": {
+            "label": "release-pipeline",
+            "principalObjectId": "00000000-0000-4000-8000-000000000031",
+            "workloadRoleKey": "deployment-recorder",
+            "reason": "The release pipeline writes deployment records.",
+            "usesFederatedCredential": true,
+            "bindingDetail": "App role assignment on the product registration",
+            "expiresOn": "2027-11-30"
+          }
+        }
+      ]
+    }
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "activated",
+    "payload": {
+      "versionNumber": 2,
+      "rowWrites": [
+        {
+          "entity": "workload-grant",
+          "key": "release-pipeline",
+          "change": "create"
+        }
+      ]
+    }
+  }
+}

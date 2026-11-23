@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v20-counting-rule-without-approval",
+  "description": "A draft adds a counting approval rule to the design decision type, which does not require approval. Its card goes to the accountable holder, so a counting rule is refused by V20.",
+  "ruleIds": [
+    "V20"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "design-architect",
+        "values": {
+          "label": "Architect approves designs",
+          "decisionTypeKey": "design",
+          "approverRoleKey": "architect",
+          "approvalMode": "first-to-respond"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "approval-rule.coverage",
+        "severity": "error",
+        "ruleId": "V20",
+        "entity": "Approval Rule",
+        "ref": "design-architect"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

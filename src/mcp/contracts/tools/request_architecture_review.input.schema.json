@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "request_architecture_review input",
+  "description": "Asks for an ad hoc architecture review of an application or a change. The engine creates a Review (O21) of type architecture, status due, and it appears in the architect's queue. A request, never a decision: the review ends in a design decision that people accept on cards. If an open architecture review already exists for the subject, the tool returns it and writes nothing new.",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may send the request where the Tool Policy row says AI May Submit = yes for subject kind review-request. Shipped yes.",
+  "x-tool": "request_architecture_review",
+  "type": "object",
+  "required": [
+    "businessApplicationId",
+    "reason"
+  ],
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application to review."
+    },
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change to review, if the review is about one change."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What the reviewer should look at, and why."
+    },
+    "dueOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "When the review is wanted. Leave out for today."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/evidenceInput"
+      },
+      "description": "Links to the design material. Each becomes an Evidence Link (O20)."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "reason": "We plan to call an external mapping service.",
+      "dueOn": "2026-12-05",
+      "clientRequestId": "req-0104"
+    }
+  ]
+}

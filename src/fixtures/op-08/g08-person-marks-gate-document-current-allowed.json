@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-person-marks-gate-document-current-allowed",
+  "description": "The owner marks the runbook current in person, so no card is needed.",
+  "workingDefaults": [
+    9
+  ],
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "document-link",
+    "operation": "update",
+    "rowId": "fixture-doc-1",
+    "after": {
+      "status": "document-current"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft",
+      "documentType": "runbook"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "current",
+        "performedByActorKind": "person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

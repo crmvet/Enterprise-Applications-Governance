@@ -1,0 +1,23 @@
+{
+  "entity": "tier",
+  "rows": [
+    {
+      "key": "tier-1",
+      "label": "Tier 1",
+      "rank": 1,
+      "description": "Personal or team use. Reads, or changes only the person's own items. No sensitive data."
+    },
+    {
+      "key": "tier-2",
+      "label": "Tier 2",
+      "rank": 2,
+      "description": "Department use. Changes shared data as the signed-in person, or touches internal data."
+    },
+    {
+      "key": "tier-3",
+      "label": "Tier 3",
+      "rank": 3,
+      "description": "Acts under its own identity, touches restricted data, reaches the whole organization or outside users, or executes changes as an agent."
+    }
+  ]
+}

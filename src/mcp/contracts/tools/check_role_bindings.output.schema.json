@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_role_bindings output",
+  "description": "The response envelope. On success, data lists the bindings, the workload grants, the direct assignments and the findings. Reasons are text people typed.",
+  "$comment": "WORKING DEFAULT (open design question 12). Each pipeline or approval runner identity holds its workload role directly, recorded as a Workload Grant (C42). People get roles only through groups, and agent identities never get a grant.",
+  "x-tool": "check_role_bindings",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "bindings",
+        "workloadGrants",
+        "directAssignments",
+        "findings",
+        "auditEntryId"
+      ],
+      "properties": {
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "roleKey",
+              "group",
+              "bindingMethod",
+              "groupExists",
+              "lastVerifiedOn"
+            ],
+            "properties": {
+              "roleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role"
+              },
+              "group": {
+                "description": "The bound Entra group. Null when the role has no binding.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/directoryObject"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "bindingMethod": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "dataverse-group-team",
+                      "entra-app-role-assignment"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "groupExists": {
+                "type": "boolean",
+                "description": "False when the group is gone from Entra."
+              },
+              "lastVerifiedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "workloadGrants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "principal",
+              "principalKind",
+              "roleKey",
+              "reason",
+              "decisionId",
+              "expiresOn",
+              "assignmentFound",
+              "isExpired"
+            ],
+            "properties": {
+              "principal": {
+                "$ref": "../common.schema.json#/$defs/principalRef"
+              },
+              "principalKind": {
+                "$ref": "../common.schema.json#/$defs/principalKind"
+              },
+              "roleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role",
+                "description": "A workload role, such as deployment-recorder."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why the grant exists.",
+                "x-untrusted": true
+              },
+              "decisionId": {
+                "description": "The decision that granted it.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expiresOn": {
+                "$ref": "../common.schema.json#/$defs/date"
+              },
+              "assignmentFound": {
+                "type": "boolean",
+                "description": "True when the platform assignment exists."
+              },
+              "isExpired": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Every Workload Grant (C42)."
+        },
+        "directAssignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "principal",
+              "principalKind",
+              "roleKey",
+              "where",
+              "coveredByGrant"
+            ],
+            "properties": {
+              "principal": {
+                "$ref": "../common.schema.json#/$defs/principalRef"
+              },
+              "principalKind": {
+                "$ref": "../common.schema.json#/$defs/principalKind"
+              },
+              "roleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role"
+              },
+              "where": {
+                "type": "string",
+                "description": "Where the assignment was found, such as a Dataverse user role or an Entra app role assignment."
+              },
+              "coveredByGrant": {
+                "type": "boolean",
+                "description": "True when a valid Workload Grant covers it."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Product roles held outside a bound group. Present when includeDirectAssignments is true."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "One plain sentence per problem."
+          },
+          "description": "Empty when every role is held only through its group or a valid grant."
+        },
+        "auditEntryId": {
+          "description": "The audit entry that logs this check.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O24 Audit Entry"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Every role is bound to an existing group. One pipeline grant expires in 30 days.",
+      "data": {
+        "bindings": [
+          {
+            "roleKey": "change-manager",
+            "group": {
+              "objectId": "30000000-0000-4000-8000-000000000002",
+              "displayLabel": "Change managers"
+            },
+            "bindingMethod": "entra-app-role-assignment",
+            "groupExists": true,
+            "lastVerifiedOn": "2026-11-22T08:00:00Z"
+          }
+        ],
+        "workloadGrants": [
+          {
+            "principal": {
+              "objectId": "e1000000-0000-4000-8000-000000000001",
+              "displayLabel": "Release pipeline identity",
+              "principalKind": "service-principal"
+            },
+            "principalKind": "service-principal",
+            "roleKey": "deployment-recorder",
+            "reason": "Records deployments of the visit planner.",
+            "decisionId": "60000000-0000-4000-8000-000000000017",
+            "expiresOn": "2026-12-22",
+            "assignmentFound": true,
+            "isExpired": false
+          }
+        ],
+        "directAssignments": [
+          {
+            "principal": {
+              "objectId": "e1000000-0000-4000-8000-000000000001",
+              "displayLabel": "Release pipeline identity",
+              "principalKind": "service-principal"
+            },
+            "principalKind": "service-principal",
+            "roleKey": "deployment-recorder",
+            "where": "Entra app role assignment",
+            "coveredByGrant": true
+          }
+        ],
+        "findings": [],
+        "auditEntryId": "db000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "workloadGrants[].reason"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

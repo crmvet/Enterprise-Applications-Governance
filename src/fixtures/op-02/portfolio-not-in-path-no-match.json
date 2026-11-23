@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "portfolio-not-in-path-no-match",
+  "description": "Portfolio groups match only when their portfolio is in the path, so another portfolio gets the tier 3 group.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3-portfolio-parent",
+        "values": {
+          "label": "Parent portfolio: architect authorizes tier 3",
+          "decisionTypeKey": "change-authorization",
+          "tierKey": "tier-3",
+          "portfolioId": "fixture-portfolio-parent",
+          "approverRoleKey": "architect",
+          "approvalMode": "first-to-respond"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3-portfolio-child",
+        "values": {
+          "label": "Child portfolio: security authorizes tier 3",
+          "decisionTypeKey": "change-authorization",
+          "tierKey": "tier-3",
+          "portfolioId": "fixture-portfolio-child",
+          "approverRoleKey": "security-reviewer",
+          "approvalMode": "first-to-respond"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [
+      "fixture-portfolio-other"
+    ]
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "change-auth-tier-3",
+          "approverRoleKey": "change-manager",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": true
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact"
+  }
+}

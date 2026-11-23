@@ -1,0 +1,30 @@
+{
+  "case": "op-05-inside-window",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A recorded OP-05 answer, which reads no snapshot: the deployment is inside its window.",
+  "operation": "OP-05",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "inside",
+    "payload": {
+      "minutesOutside": 0,
+      "state": "inside"
+    },
+    "reasons": [],
+    "snapshotHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "trace": []
+  },
+  "request": {
+    "eventUtc": "2026-11-22T09:00:00Z",
+    "windowEndUtc": "2026-11-22T12:00:00Z",
+    "windowStartUtc": "2026-11-22T08:00:00Z"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "none": true
+  },
+  "tags": ["replay"]
+}

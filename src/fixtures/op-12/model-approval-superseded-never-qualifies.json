@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "model-approval-superseded-never-qualifies",
+  "description": "A model whose Approved By Decision is superseded never qualifies, even when the change meets every condition.",
+  "tags": [
+    "invariant"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "label-and-view-changes",
+        "values": {
+          "label": "Labels and views only",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "target-stages-in",
+              "value": [
+                "test",
+                "production"
+              ]
+            },
+            {
+              "conditionKind": "max-affected-applications",
+              "value": 1
+            },
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app",
+                "model-driven-app"
+              ]
+            },
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 120
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 2,
+      "targetStageKeys": [
+        "production"
+      ],
+      "affectedApplicationCount": 1,
+      "componentKindKeys": [
+        "canvas-app"
+      ],
+      "windowMinutes": 60,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "label-and-view-changes",
+        "approvedByDecisionStatus": "superseded"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": []
+    },
+    "reasons": [
+      {
+        "code": "standard-model.not-approved",
+        "severity": "warning",
+        "entity": "Standard Change Model",
+        "ref": "label-and-view-changes"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "label-and-view-changes",
+        "role": "skipped"
+      }
+    ],
+    "traceMatch": "includes"
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 8): engine-acceptable-decision-types is the locked list of decisions the engine may accept without a person's card: lowest-tier intake, and a change authorization for a standard change whose model is active.",
+    "WORKING DEFAULT (open design question 7): default-ai-only-code-approval-handling ships as flag. An AI-only code approval never counts as authorization.",
+    "WORKING DEFAULT (open design question 9): confirmation-channel sets which act counts as the person's for each kind of AI draft.",
+    "WORKING DEFAULT (open design question 12): workload-grant-max-days caps how long a Workload Grant may run before a new decision renews it.",
+    "Every setting of document 21, section 3.6 is here exactly once (V38). The read visibility settings follow document 28, issue 10 and Q13."
+  ],
+  "entity": "setting",
+  "rows": [
+    {
+      "key": "change-management-mode",
+      "label": "Change management mode",
+      "valueType": "contract:change-management-mode",
+      "value": "built-in"
+    },
+    { "key": "ai-approval-lock", "label": "AI never approves", "valueType": "yes-no", "value": true, "isLocked": true },
+    {
+      "key": "engine-acceptable-decision-types",
+      "label": "Decisions the engine may accept without a card",
+      "valueType": "json",
+      "value": [
+        { "decisionTypeKey": "intake", "condition": "lowest-tier" },
+        { "decisionTypeKey": "change-authorization", "condition": "standard-model" }
+      ],
+      "isLocked": true,
+      "description": "Working default (question 8). Extending the list needs a product release."
+    },
+    { "key": "reminder-channel", "label": "Reminder channel", "valueType": "key:list-value:channel", "value": "teams" },
+    {
+      "key": "guideline-hub-base-url",
+      "label": "Guideline hub base URL",
+      "valueType": "text",
+      "value": null,
+      "description": "Set during setup; the public hub location is still open."
+    },
+    {
+      "key": "draft-expiry-days",
+      "label": "Days before an unsubmitted draft is discarded",
+      "valueType": "number",
+      "value": 30
+    },
+    {
+      "key": "configuration-review-days",
+      "label": "Days between reviews of the whole configuration",
+      "valueType": "number",
+      "value": 180
+    },
+    {
+      "key": "default-flag-notify",
+      "label": "Who hears about a flag",
+      "valueType": "json",
+      "value": { "ownerRoleKeys": ["business-owner", "technical-owner"], "roleKeys": ["change-manager"] }
+    },
+    {
+      "key": "default-ai-only-code-approval-handling",
+      "label": "When the only code approval came from an AI",
+      "valueType": "contract:ai-only-code-approval-handling",
+      "value": "flag"
+    },
+    {
+      "key": "confirmation-channel",
+      "label": "What counts as a person's act for an AI draft",
+      "valueType": "json",
+      "value": {
+        "decision": "approval-card",
+        "application-registration": "confirmation-card",
+        "gate-document-current": "confirmation-card",
+        "intake-or-change-submission": "same-call",
+        "links-deployments-checks": "none"
+      },
+      "description": "Working default (question 9)."
+    },
+    {
+      "key": "unlinked-deployment-change-type",
+      "label": "Change type for a deployment with no change request",
+      "valueType": "key:change-type",
+      "value": "normal"
+    },
+    {
+      "key": "intake-visibility",
+      "label": "Who reads intake requests",
+      "valueType": "contract:intake-visibility",
+      "value": "own"
+    },
+    {
+      "key": "claim-visibility",
+      "label": "Who reads gap check claims",
+      "valueType": "contract:claim-visibility",
+      "value": "admins-and-claimant"
+    },
+    {
+      "key": "record-access-mode",
+      "label": "Read scope of the register",
+      "valueType": "contract:record-access-mode",
+      "value": "open-read"
+    },
+    { "key": "agent-read-access", "label": "Agent identities may read", "valueType": "yes-no", "value": false },
+    {
+      "key": "principal-refresh-days",
+      "label": "Days between principal refreshes from Entra",
+      "valueType": "number",
+      "value": 7
+    },
+    {
+      "key": "forbidden-url-patterns",
+      "label": "URL parts a link may not carry",
+      "valueType": "json",
+      "value": ["[?&]sig=", "[?&]token=", "[?&]code=", "^[a-z]+://[^/]*@"]
+    },
+    {
+      "key": "audit-retention-days",
+      "label": "Days to keep audit and history",
+      "valueType": "number",
+      "value": null,
+      "description": "Null keeps them forever, the Dataverse default. On Azure, set from the client's retention policy. Ledger tables ignore it."
+    },
+    {
+      "key": "link-undo-minutes",
+      "label": "Minutes in which a link's creator may delete it",
+      "valueType": "number",
+      "value": 30
+    },
+    {
+      "key": "workload-grant-max-days",
+      "label": "Longest a workload grant may run, in days",
+      "valueType": "number",
+      "value": 365
+    },
+    { "key": "impact-max-depth", "label": "Deepest dependency walk", "valueType": "number", "value": 5 },
+    { "key": "mcp-page-size-max", "label": "Largest page a list tool returns", "valueType": "number", "value": 100 },
+    {
+      "key": "engine-read-cache-seconds",
+      "label": "Seconds to cache read operations",
+      "valueType": "number",
+      "value": 0
+    },
+    {
+      "key": "working-days",
+      "label": "Working days",
+      "valueType": "json",
+      "value": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    }
+  ]
+}

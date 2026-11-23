@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-person-sends-only-counts-toward-requirement-refused",
+  "description": "A person sends only Counts Toward Requirement on an approved record. G-09 used to drop the value and let the write through, so the frozen record's stamps changed. No caller writes an Approval Record without the approval runner's answer. Refused.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "countsTowardRequirement": true
+    }
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-approved",
+      "outcomeMeaning": "approved",
+      "decision": "fixture-decision-1",
+      "approver": "fixture-person-3",
+      "approverActorMeaning": "person",
+      "approverPrincipalKind": "user",
+      "approverHoldsRequiredRole": false
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "engine.effect-only"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

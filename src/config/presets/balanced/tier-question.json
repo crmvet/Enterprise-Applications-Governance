@@ -1,0 +1,113 @@
+{
+  "entity": "tier-question",
+  "rows": [
+    {
+      "key": "data-change",
+      "label": "Data change",
+      "questionText": "Does it change data?",
+      "helpText": "Example: a flow that updates customer records under its own identity is tier 3.",
+      "answerOptions": [
+        {
+          "key": "reads-only",
+          "label": "Reads only",
+          "answerText": "Reads only, or changes only the person's own items",
+          "impliedTierKey": "tier-1"
+        },
+        {
+          "key": "as-user",
+          "label": "As the user",
+          "answerText": "Changes shared business data as the signed-in person",
+          "impliedTierKey": "tier-2"
+        },
+        {
+          "key": "own-identity",
+          "label": "Own identity",
+          "answerText": "Changes data under its own identity, or in a system of record",
+          "impliedTierKey": "tier-3"
+        }
+      ]
+    },
+    {
+      "key": "sensitivity",
+      "label": "Sensitive data",
+      "questionText": "Does it touch sensitive data?",
+      "answerOptions": [
+        { "key": "none", "label": "None", "answerText": "No", "impliedTierKey": "tier-1" },
+        { "key": "internal", "label": "Internal", "answerText": "Internal data only", "impliedTierKey": "tier-2" },
+        {
+          "key": "restricted",
+          "label": "Restricted",
+          "answerText": "Personal, financial, regulated or otherwise restricted data",
+          "impliedTierKey": "tier-3"
+        }
+      ]
+    },
+    {
+      "key": "reach",
+      "label": "Reach",
+      "questionText": "Who can reach it?",
+      "answerOptions": [
+        {
+          "key": "small-team",
+          "label": "Small team",
+          "answerText": "The builder or a small team",
+          "impliedTierKey": "tier-1"
+        },
+        {
+          "key": "department",
+          "label": "Department",
+          "answerText": "A department or business unit",
+          "impliedTierKey": "tier-2"
+        },
+        {
+          "key": "organization",
+          "label": "Organization or outside",
+          "answerText": "The whole organization, or anyone outside it",
+          "impliedTierKey": "tier-3"
+        }
+      ]
+    },
+    {
+      "key": "agent-autonomy",
+      "label": "Agent autonomy",
+      "questionText": "Does an agent act on its own?",
+      "appliesToKindKeys": ["agent"],
+      "answerOptions": [
+        {
+          "key": "assists",
+          "label": "Assists",
+          "answerText": "No, it assists a person who stays in the loop",
+          "impliedTierKey": "tier-1"
+        },
+        {
+          "key": "routes",
+          "label": "Routes",
+          "answerText": "It answers or routes, a person acts",
+          "impliedTierKey": "tier-2"
+        },
+        {
+          "key": "executes",
+          "label": "Executes",
+          "answerText": "It executes changes in systems",
+          "impliedTierKey": "tier-3",
+          "triggers": { "reviewTypeKeys": ["security-review"] }
+        }
+      ]
+    },
+    {
+      "key": "failure-impact",
+      "label": "Failure impact",
+      "questionText": "What happens if it fails for a day?",
+      "answerOptions": [
+        { "key": "little", "label": "Little", "answerText": "Little", "impliedTierKey": "tier-1" },
+        { "key": "team-slowed", "label": "Team slowed", "answerText": "A team is slowed", "impliedTierKey": "tier-2" },
+        {
+          "key": "business-hit",
+          "label": "Business hit",
+          "answerText": "Revenue, compliance or trust is hit",
+          "impliedTierKey": "tier-3"
+        }
+      ]
+    }
+  ]
+}

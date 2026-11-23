@@ -1,0 +1,84 @@
+{
+  "$comment": [
+    "Every value is a preset value, not a decision: the change gate (D-03) is still open. Wildcard rows expand to all 27 combinations of tier, change type and target stage (V23)."
+  ],
+  "entity": "gate-policy",
+  "rows": [
+    {
+      "key": "gp-development",
+      "label": "Development is not governed",
+      "tierKey": "*",
+      "changeTypeKey": "*",
+      "targetStageKey": "development",
+      "gateLevel": "off"
+    },
+    {
+      "key": "gp-test",
+      "label": "Test: flag",
+      "tierKey": "*",
+      "changeTypeKey": "*",
+      "targetStageKey": "test",
+      "gateLevel": "flag"
+    },
+    {
+      "key": "gp-prod-tier-1",
+      "label": "Production tier 1: flag",
+      "tierKey": "tier-1",
+      "changeTypeKey": "*",
+      "targetStageKey": "production",
+      "gateLevel": "flag"
+    },
+    {
+      "key": "gp-prod-tier-2",
+      "label": "Production tier 2: advise",
+      "tierKey": "tier-2",
+      "changeTypeKey": "*",
+      "targetStageKey": "production",
+      "gateLevel": "advise"
+    },
+    {
+      "key": "gp-prod-tier-3",
+      "label": "Production tier 3: enforce",
+      "tierKey": "tier-3",
+      "changeTypeKey": "*",
+      "targetStageKey": "production",
+      "gateLevel": "enforce",
+      "failMode": "fail-closed"
+    },
+    {
+      "key": "gp-emergency-test",
+      "label": "Emergency in test: record",
+      "tierKey": "*",
+      "changeTypeKey": "emergency",
+      "targetStageKey": "test",
+      "gateLevel": "record"
+    },
+    {
+      "key": "gp-emergency-prod-tier-1",
+      "label": "Emergency in production, tier 1",
+      "tierKey": "tier-1",
+      "changeTypeKey": "emergency",
+      "targetStageKey": "production",
+      "gateLevel": "flag",
+      "emergencyRule": { "passWithoutApproval": true, "approvalDueWorkingDays": 2, "reviewTypeKey": "post-change" }
+    },
+    {
+      "key": "gp-emergency-prod-tier-2",
+      "label": "Emergency in production, tier 2",
+      "tierKey": "tier-2",
+      "changeTypeKey": "emergency",
+      "targetStageKey": "production",
+      "gateLevel": "flag",
+      "emergencyRule": { "passWithoutApproval": true, "approvalDueWorkingDays": 2, "reviewTypeKey": "post-change" }
+    },
+    {
+      "key": "gp-emergency-prod-tier-3",
+      "label": "Emergency in production, tier 3",
+      "tierKey": "tier-3",
+      "changeTypeKey": "emergency",
+      "targetStageKey": "production",
+      "gateLevel": "flag",
+      "emergencyRule": { "passWithoutApproval": true, "approvalDueWorkingDays": 2, "reviewTypeKey": "post-change" }
+    }
+  ]
+}

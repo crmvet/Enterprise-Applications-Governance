@@ -1,0 +1,18 @@
+# .NET build output
+bin/
+obj/
+TestResults/
+coverage/
+*.user
+.vs/
+
+# Node packages and build output
+node_modules/
+src/ui/harness/dist/
+
+# Built configuration bundles (src/config/build/ is rebuilt by the preset build)
+src/config/build/
+
+# Local settings and secrets
+.env
+.env.*

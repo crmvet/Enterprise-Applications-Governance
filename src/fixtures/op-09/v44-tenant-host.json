@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v44-tenant-host",
+  "description": "A preset build points a guideline at a page on one tenant's site. Shipped presets hold no tenant host names, so V44 refuses it. The host is fictional.",
+  "ruleIds": ["V44"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "guideline", "key": "g1", "values": { "hubUrl": "https://example-tenant.sharepoint.com/sites/governance/g1" } }
+    ]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [{ "code": "preset.tenant-data", "severity": "error", "ruleId": "V44", "entity": "Guideline", "ref": "g1" }],
+    "reasonsMatch": "exact"
+  }
+}

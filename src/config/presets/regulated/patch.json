@@ -1,0 +1,132 @@
+{
+  "$comment": [
+    "Regulated as changes to Balanced (document 21, sections 6.3 and 7.6). The build applies these operations to Balanced's source rows before wildcards expand.",
+    "Every gate value is a preset value, not a decision: the change gate (D-03) is still open.",
+    "Production: tier 1 stays flag, tier 2 becomes enforce with fail open, tier 3 stays enforce with fail closed. Emergencies in production become enforce and keep Balanced's emergency rule, so an emergency may deploy first and its approval and post-change review must follow.",
+    "Document 21 names no fail mode for the emergency rows. They use fail open at tiers 1 and 2 (like tier 2 production) and fail closed at tier 3 (like tier 3 production).",
+    "Emergencies in test become flag: the preset matrix (document 21, section 7.6) shows Regulated's test target as flag for every change, without Balanced's record for emergencies.",
+    "WORKING DEFAULT (open design question 7): every enforce row sets aiOnlyCodeApprovalHandling to stop. Rows below enforce use the setting default-ai-only-code-approval-handling (flag). An AI-only code approval never counts as authorization.",
+    "The tier 2 go-live group replaces the broader go-live group at tier 2 (document 21, section 10.3), so it repeats the business owner and adds the data owner. The business owner keeps Balanced's 5 day timeout.",
+    "no-self-approval-all replaces no-self-approval-tier-3 (document 28, Q10). The keys match the strict separation overlay, so the overlay on Regulated changes nothing in these rows.",
+    "WORKING DEFAULT (open design question 4): config-accepter-differs and its twin gate-policy-accepter-differs refuse an approval from the admin who instructed the change, so a second configuration admin accepts it."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "regulated",
+    "presetKind": "full",
+    "extends": "balanced",
+    "conflictsWith": ["small-team"]
+  },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-emergency-test",
+      "values": { "label": "Emergency in test: flag", "gateLevel": "flag" }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-prod-tier-2",
+      "values": {
+        "label": "Production tier 2: enforce",
+        "gateLevel": "enforce",
+        "failMode": "fail-open",
+        "aiOnlyCodeApprovalHandling": "stop"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-prod-tier-3",
+      "values": { "aiOnlyCodeApprovalHandling": "stop" }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-emergency-prod-tier-1",
+      "values": { "gateLevel": "enforce", "failMode": "fail-open", "aiOnlyCodeApprovalHandling": "stop" }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-emergency-prod-tier-2",
+      "values": { "gateLevel": "enforce", "failMode": "fail-open", "aiOnlyCodeApprovalHandling": "stop" }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-emergency-prod-tier-3",
+      "values": { "gateLevel": "enforce", "failMode": "fail-closed", "aiOnlyCodeApprovalHandling": "stop" }
+    },
+    {
+      "op": "upsert",
+      "entity": "setting",
+      "key": "configuration-review-days",
+      "values": { "value": 90 }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "go-live-tier-2-owner",
+      "values": {
+        "label": "Tier 2 go-live: business owner",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-2",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 5
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "go-live-tier-2-data-owner",
+      "values": {
+        "label": "Tier 2 go-live: data owner",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-2",
+        "approverOwnerRoleKey": "data-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 5
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "no-self-approval-all",
+      "values": {
+        "label": "No self-approval at any tier",
+        "ruleKind": "approver-differs",
+        "mustDifferFrom": "proposer",
+        "enforcement": "refuse"
+      }
+    },
+    { "op": "retire", "entity": "separation-rule", "key": "no-self-approval-tier-3" },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "config-accepter-differs",
+      "values": {
+        "label": "A second configuration admin accepts a configuration change",
+        "ruleKind": "approver-differs",
+        "decisionTypeKey": "configuration-change",
+        "mustDifferFrom": "instructing-admin",
+        "enforcement": "refuse"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "separation-rule",
+      "key": "gate-policy-accepter-differs",
+      "values": {
+        "label": "A second configuration admin accepts a gate policy change",
+        "ruleKind": "approver-differs",
+        "decisionTypeKey": "gate-policy-change",
+        "mustDifferFrom": "instructing-admin",
+        "enforcement": "refuse"
+      }
+    }
+  ]
+}

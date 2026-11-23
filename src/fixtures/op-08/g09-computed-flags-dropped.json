@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g09-computed-flags-dropped",
+  "description": "A pipeline sends a deployment record with Is Missing Approval false. The flags are engine-computed (OP-04), so the value is dropped and reported; the runtime writes the engine's value.",
+  "ruleIds": [
+    "G-09"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-pipeline-1",
+      "principalKind": "service-principal",
+      "actorKind": "pipeline",
+      "roleKeys": [
+        "deployment-recorder"
+      ]
+    }
+  },
+  "input": {
+    "entity": "deployment-record",
+    "operation": "create",
+    "after": {
+      "result": "deployment-succeeded",
+      "isMissingApproval": false
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "removedColumns": [
+        "isMissingApproval"
+      ],
+      "setColumns": {
+        "resultMeaning": "succeeded",
+        "performedByActorKind": "pipeline"
+      }
+    },
+    "reasons": [
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "isMissingApproval"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

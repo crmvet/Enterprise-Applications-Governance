@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-deployment-record-result-rewrite-refused",
+  "description": "An application owner rewrites a recorded deployment's result from failed to succeeded, with a new description. A deployment record is final at insert (class F; document 22, section 8.3: a wrong record is never edited, a correcting record is added). Refused.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "deployment-record",
+    "operation": "update",
+    "rowId": "fixture-deployment-1",
+    "after": {
+      "result": "deployment-succeeded",
+      "description": "rewritten"
+    }
+  },
+  "facts": {
+    "before": {
+      "result": "deployment-failed",
+      "resultMeaning": "failed"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "equal-groups-ambiguous-unavailable",
+  "description": "A target stage group and the tier 3 group match a tier 3 production change with the same specificity. The engine has no tie-break: it refuses and reports a broken configuration (V26 refuses it before activation).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-production",
+        "values": {
+          "label": "Change board authorizes production",
+          "decisionTypeKey": "change-authorization",
+          "targetStageKey": "production",
+          "approverRoleKey": "change-board",
+          "approvalMode": "first-to-respond"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "rule-group.ambiguous",
+        "severity": "error",
+        "entity": "Approval Rule"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_owner_leave input",
+  "description": "Records a planned leave or role change, with a date, for a person who holds owner roles. Stored as reported. The engine opens an owner check review for each application where the person holds an owner role. From the leave date, reminders and cards go to the deputy. A successor still needs an accepted ownership decision (propose_owner_change).",
+  "x-tool": "record_owner_leave",
+  "type": "object",
+  "required": [
+    "principalObjectId",
+    "leavesOn",
+    "kind"
+  ],
+  "properties": {
+    "principalObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "The Entra object ID of the person who leaves."
+    },
+    "leavesOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "The leave date."
+    },
+    "kind": {
+      "enum": [
+        "leave",
+        "role-change"
+      ],
+      "description": "A leave, or a role change."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "A plain note."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "principalObjectId": "20000000-0000-4000-8000-000000000002",
+      "leavesOn": "2026-12-15",
+      "kind": "role-change",
+      "note": "Moves to the finance team."
+    }
+  ]
+}

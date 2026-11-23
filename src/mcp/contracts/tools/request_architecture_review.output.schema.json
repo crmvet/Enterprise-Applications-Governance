@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "request_architecture_review output",
+  "description": "The response envelope. On success, data is the write result for the Review (O21), status due, trigger request. nextSteps point to save_decision_proposal (decision type design) and record_document_link.",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may send the request where the Tool Policy row says AI May Submit = yes for subject kind review-request. Shipped yes.",
+  "x-tool": "request_architecture_review",
+  "x-ai-write-states": [
+    "submitted"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Review (O21).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always due. A review request is a request, never a decision.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/reviewStatusMeaning",
+              "const": "due"
+            }
+          }
+        },
+        "reviewId": {
+          "description": "Null only when validateOnly was true and no open review existed.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O21 Review"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reviewTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C24 Review Type",
+          "description": "The architecture review type."
+        },
+        "trigger": {
+          "$ref": "../common.schema.json#/$defs/reviewTrigger",
+          "const": "request",
+          "description": "Always request for this tool."
+        },
+        "assignedRoleKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C29 Role",
+          "description": "The role whose queue shows the review."
+        },
+        "dueOn": {
+          "$ref": "../common.schema.json#/$defs/date"
+        },
+        "existingReviewReturned": {
+          "type": "boolean",
+          "description": "True when an open architecture review already existed. Nothing new was written."
+        },
+        "evidenceLinkIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O20 Evidence Link"
+          },
+          "description": "The Evidence Link rows written."
+        }
+      },
+      "required": [
+        "reviewId",
+        "reviewTypeKey",
+        "trigger",
+        "assignedRoleKey",
+        "dueOn",
+        "existingReviewReturned",
+        "evidenceLinkIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The architecture review is requested and due on 5 December.",
+      "data": {
+        "recordId": "b0000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Due",
+          "meaning": "due"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "reviewId": "b0000000-0000-4000-8000-000000000002",
+        "reviewTypeKey": "architecture",
+        "trigger": "request",
+        "assignedRoleKey": "architect",
+        "dueOn": "2026-12-05",
+        "existingReviewReturned": false,
+        "evidenceLinkIds": []
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/b0000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "save_decision_proposal",
+          "inputs": {
+            "decisionTypeKey": "design",
+            "subjectKind": "review",
+            "subjectId": "b0000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "tool": "record_document_link",
+          "inputs": {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "documentTypeKey": "architecture-decision-record"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

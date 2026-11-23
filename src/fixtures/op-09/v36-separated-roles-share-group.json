@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v36-separated-roles-share-group",
+  "description": "A draft keeps the AI lead and the platform admin in different groups, then binds both roles to the same group. V36 refuses it. V37 warns about the approver roles still unbound. The IDs are fictional.",
+  "ruleIds": [
+    "V36"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "separation-rule",
+        "key": "ai-lead-own-group",
+        "values": {
+          "label": "AI lead in its own group",
+          "ruleKind": "roles-in-different-groups",
+          "roleKeys": [
+            "ai-lead",
+            "platform-admin"
+          ],
+          "enforcement": "refuse"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "role-group-binding",
+        "key": "ai-leads",
+        "values": {
+          "label": "ai-leads",
+          "roleKey": "ai-lead",
+          "entraGroupObjectId": "00000000-0000-4000-8000-000000000051",
+          "bindingMethod": "entra-app-role-assignment",
+          "bindingDetail": "App role on the product registration"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "role-group-binding",
+        "key": "platform-admins",
+        "values": {
+          "label": "platform-admins",
+          "roleKey": "platform-admin",
+          "entraGroupObjectId": "00000000-0000-4000-8000-000000000051",
+          "bindingMethod": "entra-app-role-assignment",
+          "bindingDetail": "App role on the product registration"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "separation.shared-group",
+        "severity": "error",
+        "ruleId": "V36",
+        "entity": "Separation Rule",
+        "ref": "ai-lead-own-group"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "architect"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "change-board"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "change-manager"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "configuration-admin"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "security-reviewer"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

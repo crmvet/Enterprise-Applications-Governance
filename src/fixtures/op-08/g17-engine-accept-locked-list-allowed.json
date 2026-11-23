@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g17-engine-accept-locked-list-allowed",
+  "description": "A lowest-tier intake decision is accepted without a card, because OP-02 returned engine-accept for an entry of the locked list. The intake decision is also the accept gate's decision, and the gate is ready.",
+  "ruleIds": [
+    "G-17",
+    "G-14"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-8",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "intake",
+      "subjectKind": "intake-request"
+    },
+    "acceptance": {
+      "basis": "engine-accept",
+      "requiredApprovalsOutcome": "engine-accept",
+      "condition": "lowest-tier"
+    },
+    "gateReadiness": {
+      "gateKey": "accept",
+      "ready": true,
+      "requirements": []
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "engine-acceptable-decision-types",
+        "role": "matched"
+      },
+      {
+        "entity": "Gate",
+        "key": "accept",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

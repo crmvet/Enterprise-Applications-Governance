@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "intake-lowest-tier-with-rule-gets-card",
+  "description": "Once a client gives intake an approval rule, lowest-tier intake gets a card: the engine accepts only where the configuration asks no person.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "intake-approval",
+        "values": {
+          "label": "Platform admin approves intake",
+          "decisionTypeKey": "intake",
+          "approverRoleKey": "platform-admin",
+          "approvalMode": "first-to-respond"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "intake",
+    "tierKey": "tier-1",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-approval",
+          "approverRoleKey": "platform-admin"
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

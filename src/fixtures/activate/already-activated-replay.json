@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "already-activated-replay",
+  "description": "Activation runs again for a draft that already created version 2, as a re-run plug-in would. A no-op that returns its version (document 25, section 8).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "activated",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "resultingVersionNumber": 2,
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier",
+          "key": "tier-3",
+          "values": {
+            "label": "Tier 3: Critical"
+          }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "already-activated",
+    "payload": {
+      "versionNumber": 2,
+      "rowWriteCount": 0,
+      "effects": []
+    },
+    "reasons": [
+      {
+        "code": "activation.already-activated",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

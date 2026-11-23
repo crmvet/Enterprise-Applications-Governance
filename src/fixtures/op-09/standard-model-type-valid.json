@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "standard-model-type-valid",
+  "description": "A draft adds a standard change model on the standard change type, which does not allow authorization after the change. The model may stand in for a person's authorization, so the engine check standard-model.type passes. Its condition kinds are all known, so standard-model.condition-kind passes too.",
+  "tags": [
+    "engine-check"
+  ],
+  "workingDefaults": [
+    1,
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "labels-and-views",
+        "values": {
+          "label": "Labels and views only",
+          "changeTypeKey": "standard",
+          "tierKey": "tier-2",
+          "conditions": [
+            { "conditionKind": "max-tier-rank", "value": 2 },
+            { "conditionKind": "target-stages-in", "value": ["test", "production"] },
+            { "conditionKind": "max-affected-applications", "value": 1 },
+            { "conditionKind": "max-window-minutes", "value": 60 },
+            { "conditionKind": "stated", "key": "no-schema-change", "label": "No table, column or relationship changes" }
+          ]
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    },
+    "reasonsMatch": "exact"
+  }
+}

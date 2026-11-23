@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-created-application-forced-draft",
+  "description": "An AI client registers an application and names the registered status. It is created as draft; registering needs a person.",
+  "ruleIds": [
+    "G-08"
+  ],
+  "workingDefaults": [
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "create",
+    "rowId": "fixture-app-9",
+    "after": {
+      "name": "Fixture Expense App",
+      "status": "app-registered"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "setColumns": {
+        "status": "app-draft",
+        "statusMeaning": "draft",
+        "isAiCreated": true
+      }
+    },
+    "reasons": [
+      {
+        "code": "ai.forced-draft",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

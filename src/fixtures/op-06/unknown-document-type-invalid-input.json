@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "unknown-document-type-invalid-input",
+  "description": "A link of a document type that is not in the configuration in force is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "design-doc",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

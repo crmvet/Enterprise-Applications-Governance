@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_intake_draft output",
+  "description": "The response envelope. On success, data is the write result. The intake request is Draft. nextSteps point to answer_tier_questions and submit_record.",
+  "x-tool": "save_intake_draft",
+  "x-ai-write-states": [
+    "draft"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the intake request (O07).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always Draft. An AI client cannot leave an intake request in any other state through this tool.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/recordStatusMeaning",
+              "const": "draft"
+            }
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Your intake request \"Field visit planner\" is saved as a draft.",
+      "data": {
+        "recordId": "70000000-0000-4000-8000-000000000001",
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/70000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "answer_tier_questions",
+          "inputs": {
+            "intakeRequestId": "70000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "tool": "submit_record",
+          "inputs": {
+            "subjectKind": "intake-request",
+            "subjectId": "70000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

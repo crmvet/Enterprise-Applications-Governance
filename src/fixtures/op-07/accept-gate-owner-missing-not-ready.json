@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "accept-gate-owner-missing-not-ready",
+  "description": "Without an active business owner assignment the accept gate is not ready, so its gate decision cannot be accepted (G-14).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "accept",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "assignedOwnerRoleKeys": [
+      "technical-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "accept",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "accept-business-owner",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "business-owner",
+          "met": false,
+          "reasonCode": "gate.requirement-owner-missing",
+          "guidelineKey": "g2",
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-owner-missing",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "accept-business-owner"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "accept"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

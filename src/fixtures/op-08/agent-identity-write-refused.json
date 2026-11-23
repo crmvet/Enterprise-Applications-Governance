@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "agent-identity-write-refused",
+  "description": "An agent identity acting on its own creates an intake request. Document 26, RA-06: an agent identity or agent user never writes in the default configuration.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-agent-1",
+      "principalKind": "agent-identity",
+      "actorKind": "agent-identity"
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "after": {
+      "status": "intake-draft"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "actor.agent-write-refused",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

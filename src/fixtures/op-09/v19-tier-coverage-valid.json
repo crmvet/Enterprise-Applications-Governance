@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v19-tier-coverage-valid",
+  "description": "A draft adds a go-live group for tier 2 that repeats the business owner. Every active tier still has a go-live approval rule, so V19 passes.",
+  "ruleIds": [
+    "V19"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "go-live-tier-2-owner",
+        "values": {
+          "label": "Tier 2 go-live: business owner",
+          "decisionTypeKey": "go-live",
+          "tierKey": "tier-2",
+          "approverOwnerRoleKey": "business-owner",
+          "approvalMode": "everyone-must-approve"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

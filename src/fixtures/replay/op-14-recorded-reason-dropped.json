@@ -1,0 +1,49 @@
+{
+  "case": "op-14-recorded-reason-dropped",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A stored OP-14 result without the authorization.number-only warning. The replay gives the warning again and reports the reason that was not recorded.",
+  "operation": "OP-14",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": []
+    },
+    "reasons": [],
+    "snapshotHash": "c802bc0aca6bbe6bcfc5e0dfd5bbad39e5cbf28e5e54490b1556e2b128c5c24d",
+    "trace": [
+      {
+        "entity": "Role",
+        "key": "change-manager",
+        "role": "matched"
+      }
+    ]
+  },
+  "request": {
+    "attesterRoleKeys": [
+      "change-manager"
+    ],
+    "changeManagementMode": "linked",
+    "facts": [],
+    "hasExternalChangeNumber": true
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "overlays": [
+      "linked-change-management"
+    ],
+    "presetKey": "balanced"
+  },
+  "tags": [
+    "replay",
+    "tampered"
+  ],
+  "expectedDifferences": [
+    "reasons"
+  ]
+}

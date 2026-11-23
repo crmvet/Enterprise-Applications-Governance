@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "vocabulary-source-missing-row-warning",
+  "description": "A draft adds a vocabulary mapping to tier-9, which is not in the set. The mapping only labels a row with an outside term, so the engine check vocabulary.source warns and blocks nothing: the outcome stays valid, and the warning goes on the approval card.",
+  "tags": [
+    "engine-check"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "vocabulary-mapping",
+        "key": "tier-9-support",
+        "values": {
+          "label": "Tier 9 support tier",
+          "sourceEntity": "tier",
+          "sourceKey": "tier-9",
+          "vocabularyKey": "support-tier",
+          "term": "Mission critical",
+          "sourceUrl": "https://example.org/terms/support",
+          "checkedOn": "2026-11-22"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    },
+    "reasons": [
+      {
+        "code": "vocabulary.source",
+        "severity": "warning",
+        "entity": "Vocabulary Mapping",
+        "ref": "tier-9-support"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

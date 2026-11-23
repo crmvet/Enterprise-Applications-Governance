@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_my_queue output",
+  "description": "The response envelope. On success, data lists what needs the person. Approvals point to the approval card. The tool never offers to answer one.",
+  "x-tool": "get_my_queue",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "subjectKind",
+              "subjectId",
+              "title",
+              "businessApplicationId",
+              "dueOn",
+              "status",
+              "why",
+              "recordUrl",
+              "nextTool"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "approval",
+                  "review",
+                  "document",
+                  "claim",
+                  "draft",
+                  "owner-gap"
+                ]
+              },
+              "subjectKind": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "description": "The entity key of the subject, such as decision or intake-request."
+              },
+              "subjectId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "description": "The ID of the subject row."
+              },
+              "title": {
+                "type": "string",
+                "description": "A short title for the item.",
+                "x-untrusted": true
+              },
+              "businessApplicationId": {
+                "description": "The application the item is about, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dueOn": {
+                "description": "When it is due, if it has a due date.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "status": {
+                "description": "The subject's status, if it has one.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/statusValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "why": {
+                "type": "string",
+                "description": "Why the item is in the queue, in one plain sentence."
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/url",
+                "description": "Opens the record, or the approval card for an approval."
+              },
+              "nextTool": {
+                "description": "The tool that helps with this item. Never a tool that answers an approval, because none exists.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/toolName"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "You have one draft intake request that is not submitted yet.",
+      "data": {
+        "items": [
+          {
+            "kind": "draft",
+            "subjectKind": "intake-request",
+            "subjectId": "70000000-0000-4000-8000-000000000001",
+            "title": "Field visit planner",
+            "businessApplicationId": null,
+            "dueOn": null,
+            "status": {
+              "label": "Draft",
+              "meaning": "draft"
+            },
+            "why": "Your intake request is still a draft.",
+            "recordUrl": "https://product.example.org/records/70000000-0000-4000-8000-000000000001",
+            "nextTool": "submit_record"
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].title"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

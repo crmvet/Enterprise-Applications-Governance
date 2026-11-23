@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "no-tier-skips-tiered-rows",
+  "description": "With no tier yet, only the go-live requirements without a tier apply (a proposal), so no document statuses are needed. The acceptance is missing.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "applicationKindKey": "power-platform-app"
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": false,
+          "reasonCode": "gate.requirement-decision-missing",
+          "guidelineKey": "g9",
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-decision-missing",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "go-live-acceptance"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

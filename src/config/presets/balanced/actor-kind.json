@@ -1,0 +1,14 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 1): engineMeaning is a fixed engine meaning. The label stays configurable."
+  ],
+  "entity": "actor-kind",
+  "rows": [
+    { "key": "person", "label": "Person", "engineMeaning": "person" },
+    { "key": "ai-client", "label": "AI client for a person", "engineMeaning": "ai-client-for-person" },
+    { "key": "agent-identity", "label": "Agent identity", "engineMeaning": "agent-identity" },
+    { "key": "pipeline", "label": "Pipeline", "engineMeaning": "pipeline" },
+    { "key": "approval-runner", "label": "Approval runner", "engineMeaning": "approval-runner" },
+    { "key": "engine", "label": "Engine", "engineMeaning": "engine" }
+  ]
+}

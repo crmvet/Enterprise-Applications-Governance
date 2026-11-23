@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-submits-intake-allowed",
+  "description": "An AI client submits an intake request for the person. Submitted is not one of the four statuses an AI may never set, and by the working default an AI client may submit intakes for the person.",
+  "ruleIds": [
+    "G-08"
+  ],
+  "workingDefaults": [
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "update",
+    "rowId": "fixture-intake-1",
+    "after": {
+      "status": "intake-submitted"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "submitted",
+        "performedByActorKind": "ai-client-for-person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

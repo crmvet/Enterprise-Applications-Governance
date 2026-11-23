@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "repeat-reminder",
+  "description": "Due on 2026-11-29, the first reminder went on 2026-11-15. Today is 7 days later, so the second reminder repeats it.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "dueOnUtc": "2026-11-29T00:00:00Z",
+    "reviewTypeKey": "owner-check",
+    "tierKey": "tier-2"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "review",
+      "cadenceKey": "owner-check-tier-2",
+      "dueOnUtc": "2026-11-29T00:00:00Z",
+      "isOverdue": false,
+      "actions": [
+        {
+          "action": "repeat",
+          "ruleKey": "review-reminder",
+          "reminderNumber": 2,
+          "escalated": false,
+          "channelKey": "teams"
+        }
+      ],
+      "nextActionOnUtc": "2026-11-29T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

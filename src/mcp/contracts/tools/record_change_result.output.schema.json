@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_change_result output",
+  "description": "The response envelope. On success, data is the write result for the Change Request (O11), with the result stored as reported, and the post-change review the engine created, if any.",
+  "x-tool": "record_change_result",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Change Request (O11). Only the Result column changed.",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The change request's status. This tool never sets it to completed.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/recordStatusMeaning",
+              "not": {
+                "const": "completed"
+              }
+            }
+          }
+        },
+        "result": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The result as reported, from the change result value list."
+        },
+        "postChangeReviewId": {
+          "description": "The post-change review the engine created. Null when none was needed.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O21 Review"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceLinkIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O20 Evidence Link"
+          },
+          "description": "The Evidence Link rows written."
+        }
+      },
+      "required": [
+        "result",
+        "postChangeReviewId",
+        "evidenceLinkIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The result is recorded as succeeded. The change owner confirms completion on the page.",
+      "data": {
+        "recordId": "d0000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "In progress",
+          "meaning": "in-progress"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "result": {
+          "key": "succeeded",
+          "label": "Succeeded"
+        },
+        "postChangeReviewId": null,
+        "evidenceLinkIds": []
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/d0000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v29-cadence-coverage-valid",
+  "description": "A draft shortens the tier 2 owner check cadence. Every review type with a cadence still has one at every active tier, so V29 does not warn.",
+  "ruleIds": [
+    "V29"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "review-cadence",
+        "key": "owner-check-tier-2",
+        "values": {
+          "intervalDays": 120
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

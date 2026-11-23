@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_tier_questions input",
+  "description": "The plain tier questions for a kind of application, with their answers. Writes nothing.",
+  "x-tool": "get_tier_questions",
+  "type": "object",
+  "properties": {
+    "applicationKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C15 Application Kind",
+      "description": "Only the questions for this application kind."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "applicationKindKey": "agent"
+    }
+  ]
+}

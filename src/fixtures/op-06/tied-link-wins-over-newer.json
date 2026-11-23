@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "tied-link-wins-over-newer",
+  "description": "The link tied to the requirement is the best link even when another link of the same type is newer (document 25, OP-06 rule 2). The newer runbook draft does not make the tied current runbook count less.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-2",
+    "lifecycleStageKey": "operate"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-r2",
+        "documentTypeKey": "runbook",
+        "status": "draft",
+        "lastUpdatedOnUtc": "2026-11-15T08:00:00Z"
+      },
+      {
+        "documentLinkId": "fixture-link-r1",
+        "documentTypeKey": "runbook",
+        "requirementKey": "runbook-tier-2",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-09-01T08:00:00Z",
+        "lastUpdatedOnUtc": "2026-08-01T08:00:00Z"
+      },
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "complete",
+    "payload": {
+      "complete": true,
+      "items": [
+        {
+          "requirementKey": "runbook-tier-2",
+          "documentTypeKey": "runbook",
+          "status": "current",
+          "documentLinkId": "fixture-link-r1",
+          "staleOnUtc": "2027-02-28T08:00:00Z"
+        },
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "current",
+          "documentLinkId": "fixture-link-w1",
+          "staleOnUtc": "2027-06-01T10:00:00Z"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {
+        "fixture-link-r1": "2027-02-28T08:00:00Z",
+        "fixture-link-r2": "2027-05-14T08:00:00Z",
+        "fixture-link-w1": "2027-06-01T10:00:00Z"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

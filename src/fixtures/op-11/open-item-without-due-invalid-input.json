@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "open-item-without-due-invalid-input",
+  "description": "An open item needs its due date.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review"
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

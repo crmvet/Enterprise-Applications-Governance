@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "submit_record output",
+  "description": "The response envelope. On success, data is the write result for the submitted record. An intake request, a change request or a configuration draft becomes submitted. A decision stays Proposed: submitting it only starts its cards. Nothing is approved, accepted or activated by this call.",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may submit only where the Tool Policy row says AI May Submit = yes for the subject kind. Shipped yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
+  "x-tool": "submit_record",
+  "x-ai-write-states": [
+    "submitted"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the submitted record.",
+      "properties": {
+        "subjectKind": {
+          "enum": [
+            "intake-request",
+            "change-request",
+            "decision",
+            "configuration-draft"
+          ]
+        },
+        "subjectId": {
+          "$ref": "../common.schema.json#/$defs/id"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Submitted for an intake request, a change request or a configuration draft. Proposed for a decision. Never accepted, approved or activated.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/statusMeaning",
+              "enum": [
+                "submitted",
+                "proposed"
+              ]
+            }
+          }
+        },
+        "decisionId": {
+          "description": "The decision the cards are for. For a configuration draft, the Proposed configuration change or gate policy change decision the engine recorded. Null for a change request with no authorization step, or when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvalsRequested": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRecordId",
+              "approvalMode",
+              "expiresOn",
+              "channelKey",
+              "isConsultation"
+            ],
+            "properties": {
+              "approvalRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              },
+              "requiredRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C29 Role",
+                "description": "The role whose holder must answer."
+              },
+              "requiredOwnerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role",
+                "description": "The owner role whose holder must answer."
+              },
+              "approvalMode": {
+                "$ref": "../common.schema.json#/$defs/approvalMode"
+              },
+              "expiresOn": {
+                "description": "When the card expires.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "channelKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C07 List Value",
+                "description": "Where the card goes, from the channel value list."
+              },
+              "isConsultation": {
+                "type": "boolean",
+                "description": "True for a consulted role (Is Consultation on C32). Its answer is a recommendation and never counts."
+              }
+            },
+            "additionalProperties": false,
+            "description": "One approval card the engine created, with outcome pending. Only a person answers it.",
+            "oneOf": [
+              {
+                "required": [
+                  "requiredRoleKey"
+                ]
+              },
+              {
+                "required": [
+                  "requiredOwnerRoleKey"
+                ]
+              }
+            ]
+          },
+          "description": "The approval cards the engine created. Empty when validateOnly was true or when the engine accepted from the locked list."
+        },
+        "standardChangeApplied": {
+          "description": "Set when a standard change model applied. The engine applied it; the AI client did not decide the change is standard.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "modelKey",
+                "approvedByDecisionId"
+              ],
+              "properties": {
+                "modelKey": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C21 Standard Change Model"
+                },
+                "approvedByDecisionId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision",
+                  "description": "The decision in which a person approved the model."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "engineAccepted": {
+          "description": "Set only for the locked list. Null otherwise.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "decisionId",
+                "condition"
+              ],
+              "properties": {
+                "decisionId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision"
+                },
+                "condition": {
+                  "enum": [
+                    "lowest-tier",
+                    "standard-model"
+                  ],
+                  "description": "The engine acceptance condition from the locked setting engine-acceptable-decision-types."
+                }
+              },
+              "additionalProperties": false,
+              "description": "The engine accepted the decision without a card, as an engine effect stamped with actor kind engine.",
+              "$comment": "WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "subjectKind",
+        "subjectId",
+        "decisionId",
+        "approvalsRequested",
+        "standardChangeApplied",
+        "engineAccepted"
+      ],
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "subjectKind": {
+                "const": "decision"
+              }
+            },
+            "required": [
+              "subjectKind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "meaning": {
+                    "const": "proposed"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "meaning": {
+                    "const": "submitted"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The intake request is submitted. The triage card went to the PMO.",
+      "data": {
+        "recordId": "70000000-0000-4000-8000-000000000001",
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "subjectKind": "intake-request",
+        "subjectId": "70000000-0000-4000-8000-000000000001",
+        "decisionId": "60000000-0000-4000-8000-000000000012",
+        "approvalsRequested": [
+          {
+            "approvalRecordId": "d1000000-0000-4000-8000-000000000001",
+            "requiredRoleKey": "pmo",
+            "approvalMode": "first-to-respond",
+            "expiresOn": "2026-11-29T09:00:00Z",
+            "channelKey": "teams",
+            "isConsultation": false
+          }
+        ],
+        "standardChangeApplied": null,
+        "engineAccepted": null
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/70000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "get_approval_status",
+          "inputs": {
+            "subjectKind": "intake-request",
+            "subjectId": "70000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    },
+    {
+      "ok": false,
+      "summary": "Tool Policy does not let an AI client submit this kind of record. Ask the person to submit it.",
+      "error": {
+        "code": "ai_cannot_do_this",
+        "message": "An AI client may not submit this subject kind for a person.",
+        "ruleKey": "submit-record"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "correlationId": "corr-0002"
+    }
+  ]
+}

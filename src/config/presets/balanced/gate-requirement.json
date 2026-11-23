@@ -1,0 +1,62 @@
+{
+  "entity": "gate-requirement",
+  "rows": [
+    {
+      "key": "accept-business-owner",
+      "label": "A business owner is named",
+      "gateKey": "accept",
+      "requirementKind": "owner-assigned",
+      "requiredOwnerRoleKey": "business-owner",
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "design-adr-tier-3",
+      "label": "Architecture decision recorded",
+      "gateKey": "design",
+      "tierKey": "tier-3",
+      "requirementKind": "document-current",
+      "requiredDocumentTypeKey": "architecture-decision-record"
+    },
+    {
+      "key": "go-live-acceptance",
+      "label": "Owner accepted after testing",
+      "gateKey": "go-live",
+      "requirementKind": "decision-accepted",
+      "requiredDecisionTypeKey": "acceptance",
+      "guidelineKey": "g9"
+    },
+    {
+      "key": "go-live-runbook-tier-2",
+      "label": "Runbook current",
+      "gateKey": "go-live",
+      "tierKey": "tier-2",
+      "requirementKind": "document-current",
+      "requiredDocumentTypeKey": "runbook"
+    },
+    {
+      "key": "go-live-runbook-tier-3",
+      "label": "Runbook current",
+      "gateKey": "go-live",
+      "tierKey": "tier-3",
+      "requirementKind": "document-current",
+      "requiredDocumentTypeKey": "runbook"
+    },
+    {
+      "key": "go-live-security-tier-3",
+      "label": "Security review done",
+      "gateKey": "go-live",
+      "tierKey": "tier-3",
+      "requirementKind": "review-done",
+      "requiredReviewTypeKey": "security-review"
+    },
+    {
+      "key": "go-live-autonomy-agent",
+      "label": "Autonomy level agreed",
+      "gateKey": "go-live",
+      "applicationKindKey": "agent",
+      "requirementKind": "decision-accepted",
+      "requiredDecisionTypeKey": "autonomy-level",
+      "guidelineKey": "g17"
+    }
+  ]
+}

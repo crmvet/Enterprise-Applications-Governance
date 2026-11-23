@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_approval_status input",
+  "description": "Who was asked, who answered, what still counts and what is missing. Writes nothing. It never offers to answer a card.",
+  "x-tool": "get_approval_status",
+  "type": "object",
+  "required": [
+    "subjectKind",
+    "subjectId"
+  ],
+  "properties": {
+    "subjectKind": {
+      "enum": [
+        "decision",
+        "change-request",
+        "intake-request"
+      ],
+      "description": "The kind of record."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The ID of the record."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "subjectKind": "decision",
+      "subjectId": "60000000-0000-4000-8000-000000000011"
+    }
+  ]
+}

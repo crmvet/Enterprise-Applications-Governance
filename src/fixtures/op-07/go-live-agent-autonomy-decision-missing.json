@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "go-live-agent-autonomy-decision-missing",
+  "description": "An agent also needs an agreed autonomy level before go-live (guideline G17). Without that accepted decision the gate is not ready.",
+  "workingDefaults": [
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-2",
+    "applicationKindKey": "agent"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "documentation": {
+      "items": [
+        {
+          "requirementKey": "runbook-tier-2",
+          "documentTypeKey": "runbook",
+          "status": "current"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": true,
+          "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-autonomy-agent",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "autonomy-level",
+          "met": false,
+          "reasonCode": "gate.requirement-decision-missing",
+          "guidelineKey": "g17",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-runbook-tier-2",
+          "requirementKind": "document-current",
+          "requiredDocumentTypeKey": "runbook",
+          "met": true,
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-decision-missing",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "go-live-autonomy-agent"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

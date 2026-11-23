@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_claims output",
+  "description": "The response envelope. On success, data lists claims. Labels are text from the inventory.",
+  "x-tool": "list_claims",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "claimId",
+              "findingKind",
+              "status",
+              "componentKind",
+              "labelAsSeen",
+              "targetAsSeen",
+              "url",
+              "suggestedClaimant",
+              "foundOn",
+              "lastSeenOn"
+            ],
+            "properties": {
+              "claimId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O23 Claim"
+              },
+              "findingKind": {
+                "$ref": "../common.schema.json#/$defs/findingKind"
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The claim status by meaning."
+              },
+              "componentKind": {
+                "description": "The Component Kind (C16).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "labelAsSeen": {
+                "type": "string",
+                "description": "The item's name in its tool.",
+                "x-untrusted": true
+              },
+              "targetAsSeen": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "Where the item lives, as seen.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "url": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "suggestedClaimant": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "foundOn": {
+                "$ref": "../common.schema.json#/$defs/dateTime",
+                "description": "When a gap check first saw it."
+              },
+              "lastSeenOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One open claim is suggested to you.",
+      "data": {
+        "items": [
+          {
+            "claimId": "c0000000-0000-4000-8000-000000000002",
+            "findingKind": "unregistered",
+            "status": {
+              "label": "Open",
+              "meaning": "open"
+            },
+            "componentKind": {
+              "key": "canvas-app",
+              "label": "Canvas app"
+            },
+            "labelAsSeen": "Expense helper",
+            "targetAsSeen": "Default environment",
+            "url": "https://apps.example.org/app-0042",
+            "suggestedClaimant": {
+              "objectId": "20000000-0000-4000-8000-000000000003",
+              "displayLabel": "Maker (sample)"
+            },
+            "foundOn": "2026-11-22T08:30:00Z",
+            "lastSeenOn": "2026-11-22T08:30:00Z"
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].labelAsSeen",
+        "items[].targetAsSeen"
+      ],
+      "nextSteps": [
+        {
+          "tool": "claim_resource",
+          "inputs": {
+            "claimId": "c0000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

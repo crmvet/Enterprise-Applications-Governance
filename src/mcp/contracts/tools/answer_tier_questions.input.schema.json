@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "answer_tier_questions input",
+  "description": "Stores the tier answers and returns the tier they suggest. A suggestion only: the tier is set by an accepted tier decision, and lowering a tier needs a decision. Give exactly one of intakeRequestId and businessApplicationId.",
+  "x-tool": "answer_tier_questions",
+  "type": "object",
+  "required": [
+    "answers"
+  ],
+  "properties": {
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "Assess this intake request."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Assess this application."
+    },
+    "answers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "questionKey",
+          "answerKey"
+        ],
+        "properties": {
+          "questionKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C09 Tier Question",
+            "description": "The question."
+          },
+          "answerKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C10 Tier Answer Option",
+            "description": "The chosen answer."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "One answer per question."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "intakeRequestId"
+      ]
+    },
+    {
+      "required": [
+        "businessApplicationId"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "intakeRequestId": "70000000-0000-4000-8000-000000000001",
+      "answers": [
+        {
+          "questionKey": "data-change",
+          "answerKey": "changes-records"
+        }
+      ],
+      "clientRequestId": "req-0002"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "done-item-no-reminders",
+  "description": "A done item needs no reminder, whatever its due date was.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "document",
+    "dueOnUtc": "2026-11-15T00:00:00Z",
+    "doneOnUtc": "2026-11-20T10:00:00Z"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "document",
+      "isOverdue": false,
+      "actions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [],
+    "traceMatch": "exact"
+  }
+}

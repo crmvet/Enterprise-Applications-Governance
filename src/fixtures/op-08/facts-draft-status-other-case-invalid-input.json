@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "facts-draft-status-other-case-invalid-input",
+  "description": "The same case on C46: the pre-image gives Draft Status \"Activated\" and a configuration admin rewrites the rationale. An unknown status never reads as not final.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "update",
+    "rowId": "fixture-draft-1",
+    "after": {
+      "proposalRationale": "rewritten after activation"
+    }
+  },
+  "facts": {
+    "before": {
+      "draftStatus": "Activated"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.contract-value-unknown",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

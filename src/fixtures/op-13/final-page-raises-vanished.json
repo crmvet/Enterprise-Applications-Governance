@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "final-page-raises-vanished",
+  "description": "On the final page, a registered, not retired component of a covered kind in a covered estate that the run did not see gets a new vanished claim with its component set. The engine never retires the component itself.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": true,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Expense app"
+      }
+    ]
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-1",
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      },
+      {
+        "technicalComponentId": "fixture-component-2",
+        "externalId": "00000000-0000-0000-0000-000000000109",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "componentLastSeen": [
+        "fixture-component-1"
+      ],
+      "newClaims": [],
+      "vanishedClaims": [
+        {
+          "claimKey": "vanished|canvas-app|00000000-0000-0000-0000-000000000109",
+          "findingKind": "vanished",
+          "statusMeaning": "open",
+          "externalId": "00000000-0000-0000-0000-000000000109",
+          "sourceType": "canvas-app",
+          "componentKindKey": "canvas-app",
+          "estateKey": "power-platform-inventory",
+          "technicalComponentId": "fixture-component-2",
+          "lastSeenRunId": "fixture-run-2",
+          "lastSeenOnUtc": "2026-11-22T09:00:00Z",
+          "timesSeen": 1
+        }
+      ],
+      "counts": {
+        "itemsSeen": 1,
+        "newClaims": 0,
+        "vanishedClaims": 1,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

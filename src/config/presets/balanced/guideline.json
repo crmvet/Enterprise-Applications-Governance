@@ -1,0 +1,180 @@
+{
+  "$comment": [
+    "Rules follow the public guideline list, version 1.1 (G21 to G24 added for governing AI development of the apps). G10 and G11 are retired numbers, kept as retired rows so their keys are never reused (V04)."
+  ],
+  "entity": "guideline",
+  "rows": [
+    {
+      "key": "g1",
+      "label": "G1 Keep one register of business applications",
+      "number": "G1",
+      "version": "1.0",
+      "rule": "Keep one register that lists every business application your organization runs, whatever it is built on."
+    },
+    {
+      "key": "g2",
+      "label": "G2 Name the owners of every app, each with a deputy",
+      "number": "G2",
+      "version": "1.0",
+      "rule": "Every application names a business owner, a technical owner and a data owner, each with a deputy."
+    },
+    {
+      "key": "g3",
+      "label": "G3 Set a risk tier for every app, on tiers you define",
+      "number": "G3",
+      "version": "1.0",
+      "rule": "Give every application a risk tier, set from plain answers about its data, its audience, its autonomy and its impact."
+    },
+    {
+      "key": "g4",
+      "label": "G4 Record each decision in one line: what, who, when, why",
+      "number": "G4",
+      "version": "1.0",
+      "rule": "Record every significant decision about an app as a short entry: what was decided, by whom, when, and on what evidence."
+    },
+    {
+      "key": "g5",
+      "label": "G5 Define your status words once, and use them everywhere",
+      "number": "G5",
+      "version": "1.0",
+      "rule": "Agree one short list of lifecycle stages and status words, each with one meaning."
+    },
+    {
+      "key": "g6",
+      "label": "G6 Map what each app depends on, before you release or retire it",
+      "number": "G6",
+      "version": "1.0",
+      "rule": "Record what each application depends on and what depends on it: other apps, APIs, data and outside systems."
+    },
+    {
+      "key": "g7",
+      "label": "G7 Give each app identity its own narrow role",
+      "number": "G7",
+      "version": "1.0",
+      "rule": "Each app, flow, agent or integration that runs as itself gets its own identity, with only the permissions it needs."
+    },
+    {
+      "key": "g8",
+      "label": "G8 Decide how each app reaches Dataverse",
+      "number": "G8",
+      "version": "1.0",
+      "rule": "For every app, agent or AI client that reads or writes Dataverse, choose and record how it connects: as the signed-in person, as its own identity, or read-only on the person's behalf."
+    },
+    {
+      "key": "g9",
+      "label": "G9 Release the tested artifact through your own pipeline",
+      "number": "G9",
+      "version": "1.0",
+      "rule": "Promote to production the same artifact that passed test, through your organization's own pipeline."
+    },
+    {
+      "key": "g10",
+      "label": "G10 Retired",
+      "number": "G10",
+      "version": "1.0",
+      "rule": "Plan before every import: what changes, and what an upgrade deletes.",
+      "isActive": false,
+      "description": "Retired. Merged into G9. The number is never reused."
+    },
+    {
+      "key": "g11",
+      "label": "G11 Retired",
+      "number": "G11",
+      "version": "1.0",
+      "rule": "Versions only go up; fix forward by default.",
+      "isActive": false,
+      "description": "Retired. Merged into G9. The number is never reused."
+    },
+    {
+      "key": "g12",
+      "label": "G12 Approve every production change on record, never by the person who started it",
+      "number": "G12",
+      "version": "1.0",
+      "rule": "Every production change has a change record, an approval that fits its type and tier, and a planned window."
+    },
+    {
+      "key": "g13",
+      "label": "G13 Keep an emergency path that still tests and still records",
+      "number": "G13",
+      "version": "1.0",
+      "rule": "Define the emergency change path in advance: who may approve it, what may be shortened, and what must still run."
+    },
+    {
+      "key": "g14",
+      "label": "G14 Grant access through groups, review it, and keep a kill switch",
+      "number": "G14",
+      "version": "1.0",
+      "rule": "Give people roles only through Microsoft Entra groups, never one by one."
+    },
+    {
+      "key": "g15",
+      "label": "G15 Keep an evidence pack, not assurances",
+      "number": "G15",
+      "version": "1.0",
+      "rule": "For each app, keep the evidence that its rules were followed: decisions, approvals, deployments, reviews, and links to Microsoft's own logs."
+    },
+    {
+      "key": "g16",
+      "label": "G16 Record AI use on every app and agent",
+      "number": "G16",
+      "version": "1.0",
+      "rule": "Record where each app uses AI and every agent it runs, with an accountable owner, a risk tier and the agreed level of autonomy."
+    },
+    {
+      "key": "g17",
+      "label": "G17 Let AI draft and recommend; people approve",
+      "number": "G17",
+      "version": "1.0",
+      "rule": "No AI agent or tool approves work, including its own."
+    },
+    {
+      "key": "g18",
+      "label": "G18 Retire apps on purpose",
+      "number": "G18",
+      "version": "1.0",
+      "rule": "Retire an app through a recorded decision."
+    },
+    {
+      "key": "g19",
+      "label": "G19 Review anonymous access before any site goes public",
+      "number": "G19",
+      "version": "1.0",
+      "rule": "Before a Power Pages site goes public, including a site built with AI, check every table permission given to the Anonymous Users web role."
+    },
+    {
+      "key": "g20",
+      "label": "G20 Keep each app's required documents current",
+      "number": "G20",
+      "version": "1.0",
+      "rule": "Decide which documents each kind of app or tier needs, for example a wiki page, a runbook or an architecture decision."
+    },
+    {
+      "key": "g21",
+      "label": "G21 Give AI builders a paved road",
+      "number": "G21",
+      "version": "1.0",
+      "rule": "Make the governed way to build the fastest way."
+    },
+    {
+      "key": "g22",
+      "label": "G22 Let the AI builder ask before it builds",
+      "number": "G22",
+      "version": "1.0",
+      "rule": "Before an AI client builds or changes an app, have it ask the governance questions: the tier, what the tier needs, the owners, the dependants and the missing documents."
+    },
+    {
+      "key": "g23",
+      "label": "G23 Say who may build with AI, and on which path",
+      "number": "G23",
+      "version": "1.0",
+      "rule": "Publish who may build with AI, with which AI clients, at which tier and in which environments."
+    },
+    {
+      "key": "g24",
+      "label": "G24 Measure flow and coverage, not apps shipped",
+      "number": "G24",
+      "version": "1.0",
+      "rule": "Measure AI app development by flow, coverage and decisions on time, each with a baseline and a target."
+    }
+  ]
+}

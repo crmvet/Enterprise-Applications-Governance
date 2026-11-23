@@ -1,0 +1,1735 @@
+{
+  "$comment": "WORKING DEFAULT (open design question 12). The two workload roles never call MCP tools. Each non-human workload holds its role through a recorded, expiring Workload Grant (C42), not a group binding.",
+  "description": "Index of the product's MCP tools: name, toolset, read or write, default roles, AI write state, release, annotations and contract files. Source: document 24, sections 2.1, 2.3, 3.6, 6.0, 6.1, 6.13 and 7. The default roles and AI write states are the shipped defaults of the Tool Policy rows (proposed C41). Configuration can only tighten them. inputSchema and outputSchema are null where the contract is not written yet.",
+  "toolCount": 51,
+  "toolsets": [
+    {
+      "key": "session",
+      "label": "Session",
+      "covers": "Who am I, what needs me, who holds a role"
+    },
+    {
+      "key": "portfolio",
+      "label": "Portfolio",
+      "covers": "Portfolio questions: owners, card, impact, summary, requirements"
+    },
+    {
+      "key": "intake",
+      "label": "Intake",
+      "covers": "The front door: duplicates, tier questions, intake drafts, registering an app already built, components, owner changes and leaves"
+    },
+    {
+      "key": "decisions",
+      "label": "Decisions",
+      "covers": "Decision proposals, submitting and withdrawing records, the decision log, approval status, architecture review requests"
+    },
+    {
+      "key": "change",
+      "label": "Change",
+      "covers": "Change request drafts, the standard change check, the schedule, change results"
+    },
+    {
+      "key": "deployment",
+      "label": "Deployment",
+      "covers": "Deployment records and corrections, what runs where, the pipeline map, the later gate check"
+    },
+    {
+      "key": "documentation",
+      "label": "Documentation",
+      "covers": "Required documents, document links and status"
+    },
+    {
+      "key": "gapcheck",
+      "label": "Gap check",
+      "covers": "The live gap check, the owner check and the claim list"
+    },
+    {
+      "key": "configuration",
+      "label": "Configuration",
+      "covers": "Reading configuration, rule traces, configuration health, proposing changes, presets, role binding checks"
+    },
+    {
+      "key": "links",
+      "label": "Links",
+      "covers": "Delivery and evidence links"
+    }
+  ],
+  "aiWriteStates": [
+    {
+      "state": "read-only",
+      "meaning": "The tool writes nothing."
+    },
+    {
+      "state": "draft",
+      "meaning": "Creates or edits a row whose status meaning is draft."
+    },
+    {
+      "state": "proposed",
+      "meaning": "Creates a decision whose status meaning is proposed."
+    },
+    {
+      "state": "submitted",
+      "meaning": "Moves a draft or proposed record to submitted and starts the approval cards, or sends a request such as a review request. A request, never an approval. Allowed only where Tool Policy says so."
+    },
+    {
+      "state": "as-reported",
+      "meaning": "Stores a fact the caller reports, such as a deployment or a change result. Never a decision. Stamped with the actor kind."
+    },
+    {
+      "state": "link",
+      "meaning": "Stores an ID, a URL, a label and a last seen date for something another tool owns."
+    },
+    {
+      "state": "candidate",
+      "meaning": "A configuration draft: a patch stored on a Configuration Draft row (C46), never in force. The Configuration Set Version (C02) is created only at activation, after a person accepts the configuration change decision."
+    },
+    {
+      "state": "withdrawn",
+      "meaning": "The caller withdraws a record it created and that is not final."
+    }
+  ],
+  "aiRules": [
+    "AI never approves. No tool approves, rejects, accepts, authorizes, sets a tier, moves a stage, activates configuration, assigns a role or deletes.",
+    "A governed record that an AI client creates starts as draft or proposed.",
+    "Submitted is a request act, never an approval. An AI client may submit only where the Tool Policy row says AI May Submit = yes for that subject kind. Submission only starts approval cards that people answer.",
+    "Facts an AI client reports are stored as reported, with the actor kind. Links store an ID, a URL, a label and a last seen date. Neither is a decision.",
+    "A configuration change from an AI client is a candidate draft only. A person accepts its decision on a card, then the engine activates it.",
+    "Max AI State on a Tool Policy row can only tighten these states, never widen them. The engine contract caps it.",
+    "Whatever the tool or route, the engine refuses these writes from an AI client, an agent identity or a pipeline: a decision status of accepted or rejected, any approval outcome, registration status registered, the current tier, the current stage, a new configuration set version, a configuration table row and a role binding."
+  ],
+  "notTools": [
+    {
+      "act": "Approve, reject, accept, authorize",
+      "why": "AI never approves (D-02, D-10).",
+      "insteadWhere": "Approval cards in Outlook and Teams. The approval runner writes the outcome as the approval writer."
+    },
+    {
+      "act": "Set a tier, move a stage, mark a change standard",
+      "why": "These are decisions.",
+      "insteadWhere": "An accepted decision of the right type. The engine applies a pre-approved standard change model."
+    },
+    {
+      "act": "Activate configuration",
+      "why": "Nobody activates by hand. Activation follows the accepted decision.",
+      "insteadWhere": "Acceptance of the configuration change decision on an approval card."
+    },
+    {
+      "act": "Assign or remove a role, add a group member",
+      "why": "Membership is administered in Entra (D-11).",
+      "insteadWhere": "Entra and Entra ID Governance."
+    },
+    {
+      "act": "Write configuration rows directly",
+      "why": "Live configuration rows change only inside the activation operation.",
+      "insteadWhere": "propose_configuration_change stores a draft. Activation follows the accepted decision."
+    },
+    {
+      "act": "Delete anything",
+      "why": "Records are append-only where it matters. Others are retired or withdrawn.",
+      "insteadWhere": "withdraw_record, record_deployment_correction, link_component with outcome retired, retire through configuration."
+    },
+    {
+      "act": "Write a wiki page, a work item or a pipeline",
+      "why": "The product never writes into other tools (D-17, D-19).",
+      "insteadWhere": "The person's AI client, through the Azure DevOps or GitHub MCP servers, as the person."
+    },
+    {
+      "act": "Import Microsoft's inventory on a schedule",
+      "why": "Links, not copies (D-15).",
+      "insteadWhere": "run_gap_check, on demand."
+    },
+    {
+      "act": "Generic table read and write",
+      "why": "That is the Dataverse MCP server's job on Dataverse (D-16).",
+      "insteadWhere": "The Dataverse MCP server, under the same table rules."
+    }
+  ],
+  "relations": [
+    {
+      "key": "anyone-signed-in",
+      "meaning": "Any signed-in person, with or without a product role."
+    },
+    {
+      "key": "any-role",
+      "meaning": "Any person who holds at least one product role."
+    },
+    {
+      "key": "owner-of-application",
+      "meaning": "A holder of an active owner role (C28) on the subject's application, through an accepted ownership decision."
+    },
+    {
+      "key": "technical-owner-of-application",
+      "meaning": "A holder of an active technical owner role on the subject's application."
+    },
+    {
+      "key": "owner-of-subject-application",
+      "meaning": "A holder of an active owner role on the application of the record the link belongs to."
+    },
+    {
+      "key": "intake-requester",
+      "meaning": "The requester of the intake request."
+    },
+    {
+      "key": "leaving-person",
+      "meaning": "The person whose leave is recorded, whatever their role."
+    },
+    {
+      "key": "owner-of-leaving-persons-application",
+      "meaning": "An owner of an application the leaving person owns."
+    },
+    {
+      "key": "record-requester-or-creator",
+      "meaning": "The requester or creator of the record."
+    },
+    {
+      "key": "decision-right-responsible-or-consulted",
+      "meaning": "A holder of the R or C letter for the decision type (C31)."
+    },
+    {
+      "key": "document-owner",
+      "meaning": "The document owner on the Document Link (O19)."
+    },
+    {
+      "key": "writer-of-evidence-subject",
+      "meaning": "For evidence: a person who may write the record the evidence supports."
+    }
+  ],
+  "humanRoleKeys": [
+    "requester",
+    "maker",
+    "application-owner",
+    "data-owner",
+    "architect",
+    "security-reviewer",
+    "change-manager",
+    "change-board",
+    "pmo",
+    "ai-lead",
+    "platform-admin",
+    "configuration-admin",
+    "auditor",
+    "reader"
+  ],
+  "workloadRoleKeys": [
+    "deployment-recorder",
+    "approval-writer"
+  ],
+  "tools": [
+    {
+      "number": 1,
+      "name": "whoami",
+      "toolset": "session",
+      "access": "read",
+      "question": "Who am I here, and what may I do?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "anyone-signed-in"
+        ],
+        "text": "Anyone signed in"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/whoami.input.schema.json",
+      "outputSchema": "tools/whoami.output.schema.json"
+    },
+    {
+      "number": 2,
+      "name": "get_my_queue",
+      "toolset": "session",
+      "access": "read",
+      "question": "What needs me?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_my_queue.input.schema.json",
+      "outputSchema": "tools/get_my_queue.output.schema.json"
+    },
+    {
+      "number": 3,
+      "name": "get_role_holders",
+      "toolset": "session",
+      "access": "read",
+      "question": "Who is on the change board?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_role_holders.input.schema.json",
+      "outputSchema": "tools/get_role_holders.output.schema.json"
+    },
+    {
+      "number": 4,
+      "name": "find_applications",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Which apps match?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/find_applications.input.schema.json",
+      "outputSchema": "tools/find_applications.output.schema.json"
+    },
+    {
+      "number": 5,
+      "name": "get_application_owners",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Who owns this app?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_application_owners.input.schema.json",
+      "outputSchema": "tools/get_application_owners.output.schema.json"
+    },
+    {
+      "number": 6,
+      "name": "get_application_card",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Everything about this app, in one card",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_application_card.input.schema.json",
+      "outputSchema": "tools/get_application_card.output.schema.json"
+    },
+    {
+      "number": 7,
+      "name": "get_dependency_impact",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "What breaks if it retires?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_dependency_impact.input.schema.json",
+      "outputSchema": "tools/get_dependency_impact.output.schema.json"
+    },
+    {
+      "number": 8,
+      "name": "get_portfolio_summary",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "How does the portfolio look, and which apps lack an owner?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_portfolio_summary.input.schema.json",
+      "outputSchema": "tools/get_portfolio_summary.output.schema.json"
+    },
+    {
+      "number": 9,
+      "name": "get_requirements",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "What does my tier need?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_requirements.input.schema.json",
+      "outputSchema": "tools/get_requirements.output.schema.json"
+    },
+    {
+      "number": 10,
+      "name": "check_duplicates",
+      "toolset": "intake",
+      "access": "read",
+      "question": "Does this already exist?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/check_duplicates.input.schema.json",
+      "outputSchema": "tools/check_duplicates.output.schema.json"
+    },
+    {
+      "number": 11,
+      "name": "get_tier_questions",
+      "toolset": "intake",
+      "access": "read",
+      "question": "Which questions set the tier?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_tier_questions.input.schema.json",
+      "outputSchema": "tools/get_tier_questions.output.schema.json"
+    },
+    {
+      "number": 12,
+      "name": "save_intake_draft",
+      "toolset": "intake",
+      "access": "write",
+      "question": "Start or edit an intake request",
+      "writes": [
+        "O07"
+      ],
+      "aiWriteStates": [
+        "draft"
+      ],
+      "aiWriteStateText": "Draft",
+      "defaultRoles": {
+        "roleKeys": [
+          "requester",
+          "maker",
+          "application-owner",
+          "pmo",
+          "ai-lead",
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "requester, maker, application-owner, pmo, ai-lead, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_intake_draft.input.schema.json",
+      "outputSchema": "tools/save_intake_draft.output.schema.json"
+    },
+    {
+      "number": 13,
+      "name": "answer_tier_questions",
+      "toolset": "intake",
+      "access": "write",
+      "question": "Which tier do my answers suggest?",
+      "writes": [
+        "O08"
+      ],
+      "aiWriteStates": [
+        "draft"
+      ],
+      "aiWriteStateText": "Draft (an assessment, not a decision)",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "intake-requester",
+          "owner-of-application"
+        ],
+        "text": "Requester of the intake, owner of the app"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/answer_tier_questions.input.schema.json",
+      "outputSchema": "tools/answer_tier_questions.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 9). Registering an application sends the person a confirmation card. The AI client's call alone never registers it.",
+      "number": 14,
+      "name": "save_application_draft",
+      "toolset": "intake",
+      "access": "write",
+      "question": "Register an app already built",
+      "writes": [
+        "O02",
+        "O03",
+        "O06",
+        "O09"
+      ],
+      "aiWriteStates": [
+        "draft",
+        "proposed"
+      ],
+      "aiWriteStateText": "Draft and Proposed",
+      "defaultRoles": {
+        "roleKeys": [
+          "requester",
+          "maker",
+          "application-owner",
+          "ai-lead",
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "requester, maker, application-owner, ai-lead, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_application_draft.input.schema.json",
+      "outputSchema": "tools/save_application_draft.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 9). An AI client may record a retired component as reported. It is a link fact, not a decision.",
+      "number": 15,
+      "name": "link_component",
+      "toolset": "intake",
+      "access": "write",
+      "question": "This app, function or agent belongs to my app; it moved; it is gone",
+      "writes": [
+        "O03",
+        "O23"
+      ],
+      "aiWriteStates": [
+        "link",
+        "as-reported"
+      ],
+      "aiWriteStateText": "Link (retired as reported)",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/link_component.input.schema.json",
+      "outputSchema": "tools/link_component.output.schema.json"
+    },
+    {
+      "number": 16,
+      "name": "propose_owner_change",
+      "toolset": "intake",
+      "access": "write",
+      "question": "Hand over or add an owner",
+      "writes": [
+        "O09",
+        "O06"
+      ],
+      "aiWriteStates": [
+        "proposed"
+      ],
+      "aiWriteStateText": "Proposed",
+      "defaultRoles": {
+        "roleKeys": [
+          "ai-lead",
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, ai-lead (agents), platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/propose_owner_change.input.schema.json",
+      "outputSchema": "tools/propose_owner_change.output.schema.json"
+    },
+    {
+      "number": 46,
+      "name": "record_owner_leave",
+      "toolset": "intake",
+      "access": "write",
+      "question": "This owner leaves on this date",
+      "writes": [
+        "O05",
+        "O21"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [
+          "leaving-person",
+          "owner-of-leaving-persons-application"
+        ],
+        "text": "The leaving person (any role), an owner of an app the person owns, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/record_owner_leave.input.schema.json",
+      "outputSchema": "tools/record_owner_leave.output.schema.json"
+    },
+    {
+      "number": 17,
+      "name": "save_decision_proposal",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Record a decision for acceptance",
+      "writes": [
+        "O09",
+        "O20"
+      ],
+      "aiWriteStates": [
+        "proposed"
+      ],
+      "aiWriteStateText": "Proposed",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "decision-right-responsible-or-consulted"
+        ],
+        "text": "Holders of R or C for the decision type (C31)"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_decision_proposal.input.schema.json",
+      "outputSchema": "tools/save_decision_proposal.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 9). AI May Submit is yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
+      "number": 18,
+      "name": "submit_record",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Send it for approval",
+      "writes": [
+        "O07",
+        "O11",
+        "O09",
+        "O10",
+        "C46"
+      ],
+      "aiWriteStates": [
+        "submitted"
+      ],
+      "aiWriteStateText": "Submitted",
+      "aiMaySubmit": {
+        "intake-request": true,
+        "change-request": true,
+        "decision": true,
+        "configuration-draft": true
+      },
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "record-requester-or-creator"
+        ],
+        "text": "The record's requester or creator"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/submit_record.input.schema.json",
+      "outputSchema": "tools/submit_record.output.schema.json"
+    },
+    {
+      "number": 19,
+      "name": "withdraw_record",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Take it back",
+      "writes": [
+        "O07",
+        "O11",
+        "O09",
+        "O02",
+        "C46"
+      ],
+      "aiWriteStates": [
+        "withdrawn"
+      ],
+      "aiWriteStateText": "Withdrawn",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "record-requester-or-creator"
+        ],
+        "text": "The record's requester or creator"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/withdraw_record.input.schema.json",
+      "outputSchema": "tools/withdraw_record.output.schema.json"
+    },
+    {
+      "number": 20,
+      "name": "get_decision_log",
+      "toolset": "decisions",
+      "access": "read",
+      "question": "What was decided, by whom, and why?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_decision_log.input.schema.json",
+      "outputSchema": "tools/get_decision_log.output.schema.json"
+    },
+    {
+      "number": 21,
+      "name": "get_approval_status",
+      "toolset": "decisions",
+      "access": "read",
+      "question": "Who still has to approve?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_approval_status.input.schema.json",
+      "outputSchema": "tools/get_approval_status.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 9). AI May Submit is yes for review requests.",
+      "number": 47,
+      "name": "request_architecture_review",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Please review this design",
+      "writes": [
+        "O21",
+        "O20"
+      ],
+      "aiWriteStates": [
+        "submitted"
+      ],
+      "aiWriteStateText": "Submitted (a request, never a decision)",
+      "aiMaySubmit": {
+        "review-request": true
+      },
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "architect",
+          "change-manager",
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, maker, architect, change-manager, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/request_architecture_review.input.schema.json",
+      "outputSchema": "tools/request_architecture_review.output.schema.json"
+    },
+    {
+      "number": 22,
+      "name": "save_change_request_draft",
+      "toolset": "change",
+      "access": "write",
+      "question": "Start or edit a change request",
+      "writes": [
+        "O11",
+        "O12",
+        "O18"
+      ],
+      "aiWriteStates": [
+        "draft"
+      ],
+      "aiWriteStateText": "Draft",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "change-manager"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, maker, change-manager"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_change_request_draft.input.schema.json",
+      "outputSchema": "tools/save_change_request_draft.output.schema.json"
+    },
+    {
+      "number": 23,
+      "name": "check_standard_change",
+      "toolset": "change",
+      "access": "read",
+      "question": "Does this change fit a pre-approved model?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/check_standard_change.input.schema.json",
+      "outputSchema": "tools/check_standard_change.output.schema.json"
+    },
+    {
+      "number": 24,
+      "name": "get_change_request",
+      "toolset": "change",
+      "access": "read",
+      "question": "Where is this change?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_change_request.input.schema.json",
+      "outputSchema": "tools/get_change_request.output.schema.json"
+    },
+    {
+      "number": 25,
+      "name": "get_change_schedule",
+      "toolset": "change",
+      "access": "read",
+      "question": "What is planned, where, when?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_change_schedule.input.schema.json",
+      "outputSchema": "tools/get_change_schedule.output.schema.json"
+    },
+    {
+      "number": 26,
+      "name": "record_change_result",
+      "toolset": "change",
+      "access": "write",
+      "question": "How did the change end?",
+      "writes": [
+        "O11",
+        "O20",
+        "O21"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [
+          "change-manager"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, change-manager"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/record_change_result.input.schema.json",
+      "outputSchema": "tools/record_change_result.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 7). AI-only code approvals reported with a deployment never count as authorization. The shipped gate default flags them. WORKING DEFAULT (open design question 12). Pipelines call the record endpoint with this contract, not MCP. Each pipeline identity holds the deployment recorder role through a Workload Grant (C42).",
+      "number": 27,
+      "name": "record_deployment",
+      "toolset": "deployment",
+      "access": "write",
+      "question": "This version reached this target",
+      "writes": [
+        "O13",
+        "O14"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "change-manager"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, maker, change-manager"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/record_deployment.input.schema.json",
+      "outputSchema": "tools/record_deployment.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 12). Pipelines call the corrections endpoint with this contract, not MCP, under a Workload Grant (C42).",
+      "number": 48,
+      "name": "record_deployment_correction",
+      "toolset": "deployment",
+      "access": "write",
+      "question": "That deployment belongs to this change, or a fact was wrong",
+      "writes": [
+        "O14"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "change-manager",
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, maker, change-manager, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/record_deployment_correction.input.schema.json",
+      "outputSchema": "tools/record_deployment_correction.output.schema.json"
+    },
+    {
+      "number": 28,
+      "name": "get_deployments",
+      "toolset": "deployment",
+      "access": "read",
+      "question": "What runs where?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_deployments.input.schema.json",
+      "outputSchema": "tools/get_deployments.output.schema.json"
+    },
+    {
+      "number": 29,
+      "name": "map_pipeline",
+      "toolset": "deployment",
+      "access": "write",
+      "question": "This pipeline deploys this app to these targets",
+      "writes": [
+        "O16",
+        "O17"
+      ],
+      "aiWriteStates": [
+        "link"
+      ],
+      "aiWriteStateText": "Link",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [
+          "technical-owner-of-application"
+        ],
+        "text": "Owner of the app (technical), platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/map_pipeline.input.schema.json",
+      "outputSchema": "tools/map_pipeline.output.schema.json"
+    },
+    {
+      "number": 30,
+      "name": "get_pipeline_map",
+      "toolset": "deployment",
+      "access": "read",
+      "question": "Which pipelines deploy this app?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_pipeline_map.input.schema.json",
+      "outputSchema": "tools/get_pipeline_map.output.schema.json"
+    },
+    {
+      "number": 31,
+      "name": "check_change_approval",
+      "toolset": "deployment",
+      "access": "read",
+      "question": "Does this change have the approvals its policy requires?",
+      "writes": [
+        "L05"
+      ],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only (logs the question)",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "appRoles": [
+          "GateCheck.Ask"
+        ],
+        "text": "Any role (preview); GateCheck.Ask app role on the record endpoint"
+      },
+      "release": "Later",
+      "releaseNote": "After the gate decision (D-03).",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/check_change_approval.input.schema.json",
+      "outputSchema": "tools/check_change_approval.output.schema.json"
+    },
+    {
+      "number": 32,
+      "name": "get_documentation_status",
+      "toolset": "documentation",
+      "access": "read",
+      "question": "What documentation is missing or stale for my app?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_documentation_status.input.schema.json",
+      "outputSchema": "tools/get_documentation_status.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 9). Marking current a document whose type has Current Needs Person = yes sends the person a confirmation card.",
+      "number": 33,
+      "name": "record_document_link",
+      "toolset": "documentation",
+      "access": "write",
+      "question": "Here is the page, and its status",
+      "writes": [
+        "O19"
+      ],
+      "aiWriteStates": [
+        "link",
+        "as-reported"
+      ],
+      "aiWriteStateText": "Link, status as reported",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "owner-of-application",
+          "document-owner"
+        ],
+        "text": "Owner of the app, document owner"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/record_document_link.input.schema.json",
+      "outputSchema": "tools/record_document_link.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 9). Marking current a document whose type has Current Needs Person = yes sends the person a confirmation card.",
+      "number": 34,
+      "name": "confirm_document_checked",
+      "toolset": "documentation",
+      "access": "write",
+      "question": "Is this document still true?",
+      "writes": [
+        "O19"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "owner-of-application",
+          "document-owner"
+        ],
+        "text": "Owner of the app, document owner"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/confirm_document_checked.input.schema.json",
+      "outputSchema": "tools/confirm_document_checked.output.schema.json"
+    },
+    {
+      "number": 35,
+      "name": "run_gap_check",
+      "toolset": "gapcheck",
+      "access": "write",
+      "question": "What is running that is not in the register?",
+      "writes": [
+        "O22",
+        "O23",
+        "O03"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported (claims are open items)",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "alsoRequires": [
+          "inventory-entra-role"
+        ],
+        "text": "platform-admin, plus an inventory Entra role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/run_gap_check.input.schema.json",
+      "outputSchema": "tools/run_gap_check.output.schema.json"
+    },
+    {
+      "number": 36,
+      "name": "compare_inventory_list",
+      "toolset": "gapcheck",
+      "access": "write",
+      "question": "Compare this list I fetched myself",
+      "writes": [
+        "O22",
+        "O23"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/compare_inventory_list.input.schema.json",
+      "outputSchema": "tools/compare_inventory_list.output.schema.json"
+    },
+    {
+      "number": 49,
+      "name": "run_owner_check",
+      "toolset": "gapcheck",
+      "access": "write",
+      "question": "Which owners are disabled, deleted or leaving?",
+      "writes": [
+        "O22",
+        "O05",
+        "O21"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/run_owner_check.input.schema.json",
+      "outputSchema": "tools/run_owner_check.output.schema.json"
+    },
+    {
+      "number": 37,
+      "name": "list_claims",
+      "toolset": "gapcheck",
+      "access": "read",
+      "question": "What is waiting to be claimed?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "application-owner",
+          "ai-lead",
+          "pmo",
+          "platform-admin",
+          "auditor"
+        ],
+        "relations": [],
+        "text": "maker, application-owner, ai-lead, pmo, platform-admin, auditor"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_claims.input.schema.json",
+      "outputSchema": "tools/list_claims.output.schema.json"
+    },
+    {
+      "number": 38,
+      "name": "claim_resource",
+      "toolset": "gapcheck",
+      "access": "write",
+      "question": "That one is mine",
+      "writes": [
+        "O23",
+        "O03",
+        "O02",
+        "O09"
+      ],
+      "aiWriteStates": [
+        "link",
+        "draft",
+        "proposed"
+      ],
+      "aiWriteStateText": "Link, Draft and Proposed",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "application-owner",
+          "ai-lead",
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "maker, application-owner, ai-lead, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/claim_resource.input.schema.json",
+      "outputSchema": "tools/claim_resource.output.schema.json"
+    },
+    {
+      "number": 39,
+      "name": "dismiss_claim",
+      "toolset": "gapcheck",
+      "access": "write",
+      "question": "That one is not a business application",
+      "writes": [
+        "O23"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported (reversible)",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/dismiss_claim.input.schema.json",
+      "outputSchema": "tools/dismiss_claim.output.schema.json"
+    },
+    {
+      "number": 40,
+      "name": "get_configuration",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "What rules are in force, and what changed?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_configuration.input.schema.json",
+      "outputSchema": "tools/get_configuration.output.schema.json"
+    },
+    {
+      "number": 50,
+      "name": "explain_rules",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Which rule applied to this record, and why?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/explain_rules.input.schema.json",
+      "outputSchema": "tools/explain_rules.output.schema.json"
+    },
+    {
+      "number": 51,
+      "name": "get_configuration_health",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Which versions exist, which drafts wait, and does the configuration load?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_configuration_health.input.schema.json",
+      "outputSchema": "tools/get_configuration_health.output.schema.json"
+    },
+    {
+      "number": 41,
+      "name": "list_presets",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Which ready-made configurations exist?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_presets.input.schema.json",
+      "outputSchema": "tools/list_presets.output.schema.json"
+    },
+    {
+      "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on one card. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
+      "number": 42,
+      "name": "propose_configuration_change",
+      "toolset": "configuration",
+      "access": "write",
+      "question": "Change the rules the way the admin said",
+      "writes": [
+        "C46"
+      ],
+      "aiWriteStates": [
+        "candidate"
+      ],
+      "aiWriteStateText": "Candidate",
+      "defaultRoles": {
+        "roleKeys": [
+          "configuration-admin"
+        ],
+        "relations": [],
+        "text": "configuration-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/propose_configuration_change.input.schema.json",
+      "outputSchema": "tools/propose_configuration_change.output.schema.json"
+    },
+    {
+      "number": 43,
+      "name": "export_configuration",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Give me the configuration as files",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [
+          "configuration-admin",
+          "platform-admin",
+          "auditor"
+        ],
+        "relations": [],
+        "text": "configuration-admin, platform-admin, auditor"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/export_configuration.input.schema.json",
+      "outputSchema": "tools/export_configuration.output.schema.json"
+    },
+    {
+      "number": 44,
+      "name": "check_role_bindings",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Is every role held only through its group, or a recorded workload grant?",
+      "writes": [
+        "O24"
+      ],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only (logs the check)",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/check_role_bindings.input.schema.json",
+      "outputSchema": "tools/check_role_bindings.output.schema.json"
+    },
+    {
+      "number": 45,
+      "name": "save_link",
+      "toolset": "links",
+      "access": "write",
+      "question": "Link this work item or this evidence",
+      "writes": [
+        "O18",
+        "O20"
+      ],
+      "aiWriteStates": [
+        "link"
+      ],
+      "aiWriteStateText": "Link",
+      "defaultRoles": {
+        "roleKeys": [
+          "change-manager",
+          "pmo"
+        ],
+        "relations": [
+          "owner-of-subject-application",
+          "writer-of-evidence-subject"
+        ],
+        "text": "Owner of the subject's app, change-manager, pmo; evidence on records the caller can write"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_link.input.schema.json",
+      "outputSchema": "tools/save_link.output.schema.json"
+    }
+  ]
+}

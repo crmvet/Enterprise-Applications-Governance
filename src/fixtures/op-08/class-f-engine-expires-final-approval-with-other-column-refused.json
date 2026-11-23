@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-engine-expires-final-approval-with-other-column-refused",
+  "description": "Class F, O10: the same outcome again is a no-op only on its own. The engine sends expired again with another Decision on an expired record, so the write would move a final record. Refused.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-expired",
+      "decision": "fixture-decision-2"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-expired",
+      "outcomeMeaning": "expired",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

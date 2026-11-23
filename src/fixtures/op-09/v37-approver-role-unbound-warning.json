@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v37-approver-role-unbound-warning",
+  "description": "A client binding draft binds only the configuration admin. Four roles that approval rules name have no binding, so nobody can answer their cards. V37 warns, and the set stays valid. The ID is fictional.",
+  "ruleIds": [
+    "V37"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "role-group-binding",
+        "key": "configuration-admins",
+        "values": {
+          "label": "configuration-admins",
+          "roleKey": "configuration-admin",
+          "entraGroupObjectId": "00000000-0000-4000-8000-000000000061",
+          "bindingMethod": "entra-app-role-assignment",
+          "bindingDetail": "App role on the product registration"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    },
+    "reasons": [
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "architect"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "change-board"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "change-manager"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "security-reviewer"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "repeat-after-escalation-goes-to-deputy",
+  "description": "A document due on 2026-10-11 was escalated on 2026-11-10 (30 days). Today a repeat falls due, and it goes to the deputy. It is the fifth step: the first reminder, three repeats and the escalation.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "document",
+    "dueOnUtc": "2026-10-11T00:00:00Z"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "document",
+      "dueOnUtc": "2026-10-11T00:00:00Z",
+      "isOverdue": true,
+      "actions": [
+        {
+          "action": "repeat",
+          "ruleKey": "document-reminder",
+          "reminderNumber": 5,
+          "escalated": true,
+          "channelKey": "teams"
+        }
+      ],
+      "nextActionOnUtc": "2026-12-06T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

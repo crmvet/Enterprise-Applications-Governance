@@ -1,0 +1,63 @@
+{
+  "ok": true,
+  "summary": "Version 7 is in force. It has 4 deployment-route rows.",
+  "data": {
+    "configurationSet": {
+      "key": "working",
+      "version": 7,
+      "publishedOn": "2026-11-18T10:00:00Z",
+      "contentHash": "5c2e8a71d4f09b3e6a1c7d2f8e4b0a9c3d6f1e7a2b8c4d0e9f5a1b6c2d7e3f80"
+    },
+    "rows": [
+      {
+        "entity": "deployment-route",
+        "key": "pipeline-step",
+        "label": "Pipeline step",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "engineMeaning": "pipeline-step"
+        }
+      },
+      {
+        "entity": "deployment-route",
+        "key": "ai-tool",
+        "label": "Owner's AI tool",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "engineMeaning": "ai-tool"
+        }
+      },
+      {
+        "entity": "deployment-route",
+        "key": "person-in-app",
+        "label": "Person in the app",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "engineMeaning": "person-in-app"
+        }
+      },
+      {
+        "entity": "deployment-route",
+        "key": "other",
+        "label": "Other, found later",
+        "isActive": true,
+        "origin": "shipped",
+        "fields": {
+          "engineMeaning": "other"
+        }
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "rows[].label"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0003"
+}

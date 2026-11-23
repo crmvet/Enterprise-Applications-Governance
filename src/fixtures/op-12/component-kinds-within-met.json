@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "component-kinds-within-met",
+  "description": "A model with one component-kinds-within condition: the change meets it at the limit, so it qualifies.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-component-kinds-within",
+        "values": {
+          "label": "Model only-component-kinds-within",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app"
+              ]
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "componentKindKeys": [
+        "canvas-app"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "only-component-kinds-within",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "qualifies",
+    "payload": {
+      "qualifies": true,
+      "modelKey": "only-component-kinds-within",
+      "approvedByDecisionId": "fixture-decision-model-1",
+      "failedConditions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "standard-model.qualifies",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-component-kinds-within"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

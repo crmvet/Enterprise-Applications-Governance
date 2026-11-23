@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "pending-record-past-expiry-expired",
+  "description": "A card nobody answered before it expired: the requirement is expired.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "pending",
+        "expiresOnUtc": "2026-11-21T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "expired",
+    "payload": {
+      "overall": "expired",
+      "countsByRecord": {
+        "r1": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.expired",
+        "severity": "info",
+        "ref": "r1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

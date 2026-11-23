@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_link output",
+  "description": "The response envelope. On success, data is the write result for the Delivery Link (O18) or Evidence Link (O20). Links have no status.",
+  "x-tool": "save_link",
+  "x-ai-write-states": [
+    "link"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the link.",
+      "properties": {
+        "status": {
+          "type": "null",
+          "description": "A link has no status."
+        },
+        "linkId": {
+          "description": "Null only when validateOnly was true and the link is new.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "linkCategory": {
+          "enum": [
+            "delivery",
+            "evidence"
+          ]
+        }
+      },
+      "required": [
+        "linkId",
+        "linkCategory"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The work item is linked to the change.",
+      "data": {
+        "recordId": "d8000000-0000-4000-8000-000000000002",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "linkId": "d8000000-0000-4000-8000-000000000002",
+        "linkCategory": "delivery"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

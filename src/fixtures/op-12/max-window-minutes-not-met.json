@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "max-window-minutes-not-met",
+  "description": "A model with one max-window-minutes condition: the change goes past it, so it does not qualify, and the failed condition is listed with its index.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-max-window-minutes",
+        "values": {
+          "label": "Model only-max-window-minutes",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 240
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "windowMinutes": 241
+    },
+    "models": [
+      {
+        "modelKey": "only-max-window-minutes",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "only-max-window-minutes",
+          "conditionIndex": 0,
+          "conditionKind": "max-window-minutes",
+          "why": "the change window lasts 241 minutes, longer than 240"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-max-window-minutes"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "only-max-window-minutes",
+        "role": "skipped"
+      }
+    ]
+  }
+}

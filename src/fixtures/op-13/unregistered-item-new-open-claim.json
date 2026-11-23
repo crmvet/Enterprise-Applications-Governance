@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "unregistered-item-new-open-claim",
+  "description": "An item with no registered component becomes one new open claim, keyed by finding kind, source type and External Id. The suggested claimant is kept as a hint only.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000102",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Travel planner",
+        "targetAsSeen": "Contoso Dev",
+        "suggestedClaimantObjectId": "fixture-person-7"
+      }
+    ]
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "componentLastSeen": [],
+      "newClaims": [
+        {
+          "claimKey": "unregistered|microsoft.powerapps/canvasapps|00000000-0000-0000-0000-000000000102",
+          "findingKind": "unregistered",
+          "statusMeaning": "open",
+          "externalId": "00000000-0000-0000-0000-000000000102",
+          "sourceType": "microsoft.powerapps/canvasapps",
+          "componentKindKey": "canvas-app",
+          "estateKey": "power-platform-inventory",
+          "labelAsSeen": "Travel planner",
+          "targetAsSeen": "Contoso Dev",
+          "suggestedClaimantObjectId": "fixture-person-7",
+          "lastSeenRunId": "fixture-run-2",
+          "lastSeenOnUtc": "2026-11-22T09:00:00Z",
+          "timesSeen": 1
+        }
+      ],
+      "updatedClaims": [],
+      "vanishedClaims": [],
+      "counts": {
+        "itemsSeen": 1,
+        "newClaims": 1,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

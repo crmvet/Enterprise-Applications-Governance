@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "duplicate-link-id-invalid-input",
+  "description": "The same Document Link twice is refused, so no row is counted twice.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      },
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "draft",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

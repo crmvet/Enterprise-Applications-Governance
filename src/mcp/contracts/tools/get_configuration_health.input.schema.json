@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_configuration_health input",
+  "description": "The state of the configuration as a whole: the active version and its history, drafts that wait, the engine's own version, and whether the snapshot loads and validates. An upgrade draft from a product release shows here too. Writes nothing.",
+  "x-tool": "get_configuration_health",
+  "type": "object",
+  "properties": {
+    "includeHistory": {
+      "type": "boolean",
+      "default": true,
+      "description": "True also lists earlier versions."
+    },
+    "includeDrafts": {
+      "type": "boolean",
+      "default": true,
+      "description": "True also lists drafts that wait."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "includeHistory": false
+    }
+  ]
+}

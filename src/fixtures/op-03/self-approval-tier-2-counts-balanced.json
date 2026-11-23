@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "self-approval-tier-2-counts-balanced",
+  "description": "Balanced refuses self-approval only at tier 3, so at tier 2 the proposer who is the business owner may approve.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-2",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-owner",
+        "approverOwnerRoleKey": "business-owner",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": false
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-owner",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-proposer",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": false,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied",
+      "countsByRecord": {
+        "r1": true
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "ignored-later-fact-does-not-revoke",
+  "description": "An authorized ITSM step fact, then a later cancelled fact written by an AI client: the AI fact does not count, so the change stays authorized.",
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      },
+      {
+        "factId": "fixture-fact-2",
+        "sourceKind": "itsm-step",
+        "state": "cancelled",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T12:00:00Z",
+        "actorKind": "ai-client-for-person",
+        "principalKind": "user"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "authorized",
+    "payload": {
+      "authorized": true,
+      "basis": "itsm-step",
+      "ignoredFacts": [
+        {
+          "factId": "fixture-fact-2",
+          "code": "authorization.ai-not-counted"
+        }
+      ],
+      "decidingFactId": "fixture-fact-1"
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.ai-not-counted",
+        "severity": "warning",
+        "entity": "Evidence Link",
+        "ref": "fixture-fact-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

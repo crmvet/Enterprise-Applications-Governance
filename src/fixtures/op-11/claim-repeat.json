@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "claim-repeat",
+  "description": "An open claim due on 2026-11-08 gets its weekly repeat today. It escalates on 2026-11-29.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "claim",
+    "dueOnUtc": "2026-11-08T00:00:00Z"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "claim",
+      "dueOnUtc": "2026-11-08T00:00:00Z",
+      "isOverdue": true,
+      "actions": [
+        {
+          "action": "repeat",
+          "ruleKey": "claim-reminder",
+          "reminderNumber": 3,
+          "escalated": false,
+          "channelKey": "teams"
+        }
+      ],
+      "nextActionOnUtc": "2026-11-29T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

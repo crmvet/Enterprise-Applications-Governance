@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_owner_check output",
+  "description": "The response envelope. On success, data is the write result for the Gap Check Run (O22, estate entra-owners), with the findings and the owner check reviews the engine opened. Directory state and leave dates are stored as reported.",
+  "x-tool": "run_owner_check",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Gap Check Run (O22).",
+      "properties": {
+        "status": {
+          "type": "null",
+          "description": "A Gap Check Run has no status."
+        },
+        "gapCheckRunId": {
+          "description": "Null only when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O22 Gap Check Run"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "principalsChecked": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Principals read on this page."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "principal",
+              "directoryState",
+              "leavesOn",
+              "applications",
+              "ownerCheckReviewIds"
+            ],
+            "properties": {
+              "principal": {
+                "$ref": "../common.schema.json#/$defs/principalRef"
+              },
+              "directoryState": {
+                "$ref": "../common.schema.json#/$defs/directoryState"
+              },
+              "leavesOn": {
+                "description": "The leave date Entra holds, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "applications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "businessApplicationId",
+                    "ownerRoleKey",
+                    "hasDeputy"
+                  ],
+                  "properties": {
+                    "businessApplicationId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O02 Business Application"
+                    },
+                    "ownerRoleKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C28 Owner Role"
+                    },
+                    "hasDeputy": {
+                      "type": "boolean",
+                      "description": "True when the role has a deputy."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "ownerCheckReviewIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O21 Review"
+                },
+                "description": "The owner check reviews the engine opened, one per affected application."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Owners who are disabled, deleted or leaving."
+        },
+        "more": {
+          "type": "boolean",
+          "description": "True when more pages remain."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "required": [
+        "gapCheckRunId",
+        "principalsChecked",
+        "findings",
+        "more"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Two owners checked. One is disabled; an owner check review is open.",
+      "data": {
+        "recordId": "d9000000-0000-4000-8000-000000000003",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "gapCheckRunId": "d9000000-0000-4000-8000-000000000003",
+        "principalsChecked": 2,
+        "findings": [
+          {
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000004",
+              "displayLabel": "Former owner (sample)"
+            },
+            "directoryState": "disabled",
+            "leavesOn": null,
+            "applications": [
+              {
+                "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+                "ownerRoleKey": "technical-owner",
+                "hasDeputy": true
+              }
+            ],
+            "ownerCheckReviewIds": [
+              "b0000000-0000-4000-8000-000000000003"
+            ]
+          }
+        ],
+        "more": false
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "propose_owner_change",
+          "inputs": {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g17-accept-supersedes-earlier-decision",
+  "description": "An accepted exception decision supersedes an earlier one. The engine plans the supersede-decision effect on the earlier decision.",
+  "ruleIds": [
+    "G-17"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-2",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "exception",
+      "subjectKind": "business-application",
+      "supersedes": "fixture-decision-1"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "effects": [
+        {
+          "kind": "write-audit-entry"
+        },
+        {
+          "kind": "supersede-decision",
+          "entity": "Decision",
+          "rowId": "fixture-decision-1",
+          "columns": {
+            "supersededBy": "fixture-decision-2"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-runner-sends-only-outcome-meaning-refused",
+  "description": "The approval runner sends only Outcome Meaning on a pending record. G-09 used to drop the value and let the write through, so the record's stamps changed with no answer. The approval runner writes an Approval Record only with its answer, which names the outcome. Refused.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcomeMeaning": "approved"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-pending",
+      "outcomeMeaning": "pending",
+      "decision": "fixture-decision-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "approval.outcome-writer",
+          "ruleId": "G-06"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_portfolio_summary input",
+  "description": "Counts for a portfolio, from the product's own data. With includeOwnerGaps it also lists every application with an owner role that has no holder or no deputy. Paging applies to the owner gap list. Writes nothing.",
+  "x-tool": "get_portfolio_summary",
+  "type": "object",
+  "properties": {
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only this portfolio. The whole organization when left out."
+    },
+    "groupBy": {
+      "enum": [
+        "tier",
+        "stage",
+        "kind",
+        "status",
+        "portfolio"
+      ],
+      "default": "tier",
+      "description": "How to group the counts."
+    },
+    "includeOwnerGaps": {
+      "type": "boolean",
+      "default": false,
+      "description": "Also list the applications with owner gaps."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "portfolioId": "a0000000-0000-4000-8000-000000000001",
+      "groupBy": "stage",
+      "includeOwnerGaps": true,
+      "top": 50
+    }
+  ]
+}

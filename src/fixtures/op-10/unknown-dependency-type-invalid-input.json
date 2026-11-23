@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "unknown-dependency-type-invalid-input",
+  "description": "A dependency type that is not in the configuration in force is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 2
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "depends-on"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

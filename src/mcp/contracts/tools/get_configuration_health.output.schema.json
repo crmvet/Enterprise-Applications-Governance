@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_configuration_health output",
+  "description": "The response envelope. On success, data is the active version, the engine information, the version history and the waiting drafts when asked for, and any findings. It answers also when the configuration does not load, so an admin can see why.",
+  "x-tool": "get_configuration_health",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "active",
+        "engine",
+        "findings",
+        "reviewDueOn"
+      ],
+      "properties": {
+        "active": {
+          "description": "The version in force. Null when no valid version is active.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "version",
+                "activatedOn",
+                "contentHash",
+                "decisionId"
+              ],
+              "properties": {
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "activatedOn": {
+                  "$ref": "../common.schema.json#/$defs/dateTime"
+                },
+                "contentHash": {
+                  "$ref": "../common.schema.json#/$defs/contentHash"
+                },
+                "decisionId": {
+                  "description": "The accepted configuration change decision behind it.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O09 Decision"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "engine": {
+          "type": "object",
+          "required": [
+            "engineVersion",
+            "snapshotSchemaVersion",
+            "snapshotHash",
+            "loaded"
+          ],
+          "properties": {
+            "engineVersion": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+            },
+            "snapshotSchemaVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "snapshotHash": {
+              "description": "The hash of the loaded snapshot. Null when none loaded.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/contentHash"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "loaded": {
+              "type": "boolean",
+              "description": "True when the engine loaded and validated the active snapshot."
+            }
+          },
+          "additionalProperties": false
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "version",
+              "status",
+              "activatedOn",
+              "decisionId",
+              "summary"
+            ],
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "status": {
+                "enum": [
+                  "active",
+                  "superseded"
+                ],
+                "description": "Derived, never stored."
+              },
+              "activatedOn": {
+                "$ref": "../common.schema.json#/$defs/dateTime"
+              },
+              "decisionId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "description": "The change summary the engine computed."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Present when includeHistory is true. Newest first."
+        },
+        "drafts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "configurationDraftId",
+              "status",
+              "baseVersion",
+              "submittedOn",
+              "expiresOn",
+              "isUpgradeDraft"
+            ],
+            "properties": {
+              "configurationDraftId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "C46 Configuration Draft"
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/draftStatusMeaning"
+              },
+              "baseVersion": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "submittedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expiresOn": {
+                "description": "When an unsubmitted draft is discarded (draft-expiry-days).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isUpgradeDraft": {
+                "type": "boolean",
+                "description": "True for a draft a product release proposed. A configuration admin accepts it like any other."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Present when includeDrafts is true. Drafts in draft or submitted status."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ruleKey",
+              "message"
+            ],
+            "properties": {
+              "ruleKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "description": "The validation rule, such as V23, or the engine reason code."
+              },
+              "message": {
+                "type": "string",
+                "description": "One plain sentence."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "What is wrong. Empty when the configuration is healthy."
+        },
+        "reviewDueOn": {
+          "description": "When the whole configuration is next due for review (configuration-review-days).",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Version 3 is active and loads. One draft waits for acceptance.",
+      "data": {
+        "active": {
+          "version": 3,
+          "activatedOn": "2026-11-20T10:00:00Z",
+          "contentHash": "a3f1c2d4e5b60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00",
+          "decisionId": "60000000-0000-4000-8000-000000000016"
+        },
+        "engine": {
+          "engineVersion": "0.1.0",
+          "snapshotSchemaVersion": "1.0",
+          "snapshotHash": "a3f1c2d4e5b60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00",
+          "loaded": true
+        },
+        "drafts": [
+          {
+            "configurationDraftId": "da000000-0000-4000-8000-000000000001",
+            "status": "submitted",
+            "baseVersion": 3,
+            "submittedOn": "2026-11-22T08:00:00Z",
+            "expiresOn": null,
+            "isUpgradeDraft": false
+          }
+        ],
+        "findings": [],
+        "reviewDueOn": "2027-05-19"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

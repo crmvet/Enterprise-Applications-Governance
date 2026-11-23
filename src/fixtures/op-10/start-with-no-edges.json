@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "start-with-no-edges",
+  "description": "An application nothing depends on reaches nothing. The answer is still walked, with an empty list.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 3
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 3,
+      "reached": [],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "impact-max-depth",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

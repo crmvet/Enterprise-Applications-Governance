@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g17-bootstrap-decision-allowed",
+  "description": "The bootstrap of version 1 records the configuration change decision as accepted, inside the activation of version 1, when no version exists. The one acceptance outside the locked list with no card.",
+  "ruleIds": [
+    "G-17"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "create",
+    "after": {
+      "decisionType": "configuration-change",
+      "status": "decision-accepted",
+      "decider": "fixture-person-1"
+    },
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "acceptance": {
+      "basis": "bootstrap",
+      "noVersionExists": true
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "accepted",
+        "performedByActorKind": "engine",
+        "onBehalfOf": "fixture-person-1"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

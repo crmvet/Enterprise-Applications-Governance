@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "answer_tier_questions output",
+  "description": "The response envelope. On success, data is the write result for the Tier Assessment (O08), plus the suggested tier. An assessment, never a decision.",
+  "x-tool": "answer_tier_questions",
+  "x-ai-write-states": [
+    "draft"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Tier Assessment (O08).",
+      "properties": {
+        "status": {
+          "type": "null",
+          "description": "A Tier Assessment has no status."
+        },
+        "tierAssessmentId": {
+          "description": "Null only when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O08 Tier Assessment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "computedTier": {
+          "type": "object",
+          "required": [
+            "key",
+            "label",
+            "rank"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C08 Tier"
+            },
+            "label": {
+              "type": "string"
+            },
+            "rank": {
+              "type": "integer",
+              "description": "The tier's rank. Higher is more serious."
+            }
+          },
+          "additionalProperties": false
+        },
+        "drivingAnswers": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C09 Tier Question"
+          },
+          "description": "The questions whose answers set the computed tier."
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reviewTypeKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C24 Review Type"
+              },
+              "gateRequirementKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C14 Gate Requirement"
+              }
+            },
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "required": [
+                  "reviewTypeKey"
+                ]
+              },
+              {
+                "required": [
+                  "gateRequirementKey"
+                ]
+              }
+            ]
+          },
+          "description": "Reviews or gate requirements the answers trigger."
+        },
+        "note": {
+          "const": "A suggestion. The tier is set only by an accepted tier decision."
+        }
+      },
+      "required": [
+        "tierAssessmentId",
+        "computedTier",
+        "drivingAnswers",
+        "triggers",
+        "note"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Your answers suggest tier 2. A tier decision sets the tier.",
+      "data": {
+        "recordId": "90000000-0000-4000-8000-000000000001",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "tierAssessmentId": "90000000-0000-4000-8000-000000000001",
+        "computedTier": {
+          "key": "tier-2",
+          "label": "Tier 2",
+          "rank": 2
+        },
+        "drivingAnswers": [
+          "data-change"
+        ],
+        "triggers": [],
+        "note": "A suggestion. The tier is set only by an accepted tier decision."
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "submit_record",
+          "inputs": {
+            "subjectKind": "intake-request",
+            "subjectId": "70000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

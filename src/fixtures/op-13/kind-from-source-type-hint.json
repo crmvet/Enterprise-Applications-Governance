@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "kind-from-source-type-hint",
+  "description": "An item without a component kind is matched to a kind through the C16 Source Type Hint, ignoring case.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "component-kind",
+        "key": "cloud-flow",
+        "values": {
+          "sourceTypeHint": "microsoft.flow/flows"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": false,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000114",
+        "sourceType": "Microsoft.Flow/Flows",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Approvals flow"
+      }
+    ]
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "newClaims": [
+        {
+          "claimKey": "unregistered|microsoft.flow/flows|00000000-0000-0000-0000-000000000114",
+          "componentKindKey": "cloud-flow",
+          "sourceType": "Microsoft.Flow/Flows"
+        }
+      ],
+      "counts": {
+        "itemsSeen": 1,
+        "newClaims": 1,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.partial-run",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

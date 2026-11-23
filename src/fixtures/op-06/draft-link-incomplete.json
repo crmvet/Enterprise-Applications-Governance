@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "draft-link-incomplete",
+  "description": "At design and review a tier 3 application needs an architecture decision record. A draft one does not count, so the application is incomplete. The type has no freshness, so no Stale On date exists.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-3",
+    "lifecycleStageKey": "design-and-review"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-a1",
+        "documentTypeKey": "architecture-decision-record",
+        "status": "draft",
+        "lastUpdatedOnUtc": "2026-11-20T12:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "adr-tier-3",
+          "documentTypeKey": "architecture-decision-record",
+          "status": "draft",
+          "documentLinkId": "fixture-link-a1"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 1,
+      "staleCount": 0,
+      "staleOnByLink": {}
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "documentation.draft",
+        "severity": "warning",
+        "entity": "Documentation Requirement",
+        "ref": "adr-tier-3"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

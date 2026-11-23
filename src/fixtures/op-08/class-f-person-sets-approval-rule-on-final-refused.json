@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-person-sets-approval-rule-on-final-refused",
+  "description": "A person changes Approval Rule on an approved record, so the approval would count for another rule. Refused.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "approvalRule": "risk-acceptance-approval"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcome": "approval-approved",
+      "outcomeMeaning": "approved",
+      "decision": "fixture-decision-1",
+      "approver": "fixture-person-3",
+      "approverActorMeaning": "person",
+      "approverPrincipalKind": "user",
+      "approverHoldsRequiredRole": false
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "engine.effect-only"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

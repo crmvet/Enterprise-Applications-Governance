@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "unknown-triggered-requirement-invalid-input",
+  "description": "A triggered gate requirement that does not exist is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-1",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "triggeredGateRequirementKeys": [
+      "no-such-requirement"
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

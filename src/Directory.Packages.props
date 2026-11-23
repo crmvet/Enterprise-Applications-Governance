@@ -1,0 +1,25 @@
+<Project>
+  <!--
+    Central package versions. Every version is exact and pinned.
+    Only well-known packages from nuget.org with MIT, Apache 2.0 or BSD licenses.
+    Record each package, its version and its license in THIRD-PARTY.md.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build only: net48 reference assemblies. Not shipped. -->
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+
+    <!-- Build only: lifts the netstandard2.0 transitive 1.1.0 (Microsoft .NET Library license) to MIT. -->
+    <PackageVersion Include="Microsoft.NETCore.Platforms" Version="7.0.4" />
+
+    <!-- Engine configuration on net48 and netstandard2.0. On net10.0 the runtime already has it.
+         Packed explicitly into the plug-in package (document 25, section 4.2). -->
+    <PackageVersion Include="System.Text.Json" Version="10.0.15" />
+
+    <!-- Tests only. xUnit v3 on Microsoft.Testing.Platform (see global.json). -->
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
+  </ItemGroup>
+</Project>

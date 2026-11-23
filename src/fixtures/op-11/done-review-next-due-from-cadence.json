@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "done-review-next-due-from-cadence",
+  "description": "A tier 3 owner check done on 2026-11-01 is next due 90 days later (C25 Interval Days). A done review needs no reminder.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "doneOnUtc": "2026-11-01T10:00:00Z",
+    "reviewTypeKey": "owner-check",
+    "tierKey": "tier-3"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "review",
+      "cadenceKey": "owner-check-tier-3",
+      "nextDueOnUtc": "2027-01-30T10:00:00Z",
+      "isOverdue": false,
+      "actions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Review Cadence",
+        "key": "owner-check-tier-3",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

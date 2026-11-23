@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "linked-op-14-number-only-missing-approval",
+  "description": "The OP-14 result for a change with only an external change number (not authorized, basis none), passed on unchanged: the approval is missing. A recorded number alone never counts (28, Q22; D-08).",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "record",
+    "tierKey": "tier-1",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "linked",
+      "hasExternalChangeNumber": true,
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z",
+      "linkedAuthorization": {
+        "authorized": false,
+        "basis": "none",
+        "ignoredFacts": []
+      }
+    }
+  },
+  "expected": {
+    "outcome": "allow",
+    "payload": {
+      "isMissingApproval": true,
+      "notify": true
+    },
+    "reasons": [
+      {
+        "code": "gate.missing-approval"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

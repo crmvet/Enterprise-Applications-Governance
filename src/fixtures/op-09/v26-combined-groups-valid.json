@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v26-combined-groups-valid",
+  "description": "The same production group plus groups for each combined case: tier 3 in production, an emergency in production, and a tier 3 emergency in production. The most specific group always wins alone, so V26 passes.",
+  "ruleIds": [
+    "V26"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-production",
+        "values": {
+          "label": "Change manager: change-auth-production",
+          "decisionTypeKey": "change-authorization",
+          "targetStageKey": "production",
+          "approverRoleKey": "change-manager",
+          "approvalMode": "first-to-respond"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3-production",
+        "values": {
+          "label": "Change manager: change-auth-tier-3-production",
+          "decisionTypeKey": "change-authorization",
+          "tierKey": "tier-3",
+          "targetStageKey": "production",
+          "approverRoleKey": "change-manager",
+          "approvalMode": "first-to-respond"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-emergency-production",
+        "values": {
+          "label": "Change manager: change-auth-emergency-production",
+          "decisionTypeKey": "change-authorization",
+          "changeTypeKey": "emergency",
+          "targetStageKey": "production",
+          "approverRoleKey": "change-manager",
+          "approvalMode": "first-to-respond"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "change-auth-tier-3-emergency-production",
+        "values": {
+          "label": "Change manager: change-auth-tier-3-emergency-production",
+          "decisionTypeKey": "change-authorization",
+          "tierKey": "tier-3",
+          "changeTypeKey": "emergency",
+          "targetStageKey": "production",
+          "approverRoleKey": "change-manager",
+          "approvalMode": "first-to-respond"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

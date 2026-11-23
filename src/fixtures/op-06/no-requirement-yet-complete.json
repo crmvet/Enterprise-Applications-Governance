@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "no-requirement-yet-complete",
+  "description": "At the idea stage no documentation requirement applies yet, so the application is complete. Its link still gets a Stale On date for O19.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "idea"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "complete",
+    "payload": {
+      "complete": true,
+      "items": [],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {
+        "fixture-link-w1": "2027-06-01T10:00:00Z"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [],
+    "traceMatch": "exact"
+  }
+}

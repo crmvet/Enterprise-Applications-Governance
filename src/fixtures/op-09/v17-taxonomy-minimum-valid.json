@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v17-taxonomy-minimum-valid",
+  "description": "A draft retires one of three delivery link kinds. Every category, actor meaning and the pipeline step route keep an active row, so V17 passes.",
+  "ruleIds": [
+    "V17"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "link-kind",
+        "key": "planner-plan"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

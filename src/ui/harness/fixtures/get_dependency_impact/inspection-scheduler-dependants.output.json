@@ -1,0 +1,243 @@
+{
+  "ok": true,
+  "summary": "Seven applications depend on Inspection Scheduler within 3 hops. Three of the links are high criticality.",
+  "data": {
+    "root": {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "technicalComponentId": null,
+      "name": "Inspection Scheduler"
+    },
+    "nodes": [
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000006",
+        "name": "Visit Report Agent",
+        "tier": {
+          "key": "tier-2",
+          "label": "Tier 2"
+        },
+        "lifecycleMeaning": "pre-live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000007",
+          "displayLabel": "Ravi Holm",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000008",
+          "displayLabel": "Elif Dunmore",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "reads-data-from",
+        "criticalityKey": "high",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000006"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000009",
+        "name": "Route Planner",
+        "tier": {
+          "key": "tier-2",
+          "label": "Tier 2"
+        },
+        "lifecycleMeaning": "pre-live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Ines Varga",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000009",
+          "displayLabel": "Owen Achterberg",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "calls-api-of",
+        "criticalityKey": "high",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000009"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000007",
+        "name": "Safety Findings Tracker",
+        "tier": {
+          "key": "tier-1",
+          "label": "Tier 1"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": null,
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000006",
+          "displayLabel": "Sana Kowalczyk",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "reads-data-from",
+        "criticalityKey": "medium",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000007"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000008",
+        "name": "Customer Notice Sender",
+        "tier": {
+          "key": "tier-1",
+          "label": "Tier 1"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000010",
+          "displayLabel": "Nadia Ferreira",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000011",
+          "displayLabel": "Tomas Rendel",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "calls-api-of",
+        "criticalityKey": "low",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000008"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000010",
+        "name": "Contractor Portal",
+        "tier": {
+          "key": "tier-3",
+          "label": "Tier 3"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000010",
+          "displayLabel": "Nadia Ferreira",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000012",
+          "displayLabel": "Priya Castell",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "calls-api-of",
+        "criticalityKey": "high",
+        "depth": 2,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000008",
+          "10000000-0000-4000-8000-000000000010"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000021",
+        "name": "Crew Shift Mobile",
+        "tier": {
+          "key": "tier-1",
+          "label": "Tier 1"
+        },
+        "lifecycleMeaning": "pre-live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Ines Varga",
+          "principalKind": "user"
+        },
+        "technicalOwner": null,
+        "dependencyTypeKey": "reads-data-from",
+        "criticalityKey": "medium",
+        "depth": 2,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000009",
+          "10000000-0000-4000-8000-000000000021"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000022",
+        "name": "Customer Self-Service Hub",
+        "tier": {
+          "key": "tier-2",
+          "label": "Tier 2"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000010",
+          "displayLabel": "Nadia Ferreira",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000012",
+          "displayLabel": "Priya Castell",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "calls-api-of",
+        "criticalityKey": null,
+        "depth": 3,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000008",
+          "10000000-0000-4000-8000-000000000010",
+          "10000000-0000-4000-8000-000000000022"
+        ]
+      }
+    ],
+    "counts": {
+      "byTier": [
+        {
+          "key": "tier-3",
+          "label": "Tier 3",
+          "count": 1
+        },
+        {
+          "key": "tier-2",
+          "label": "Tier 2",
+          "count": 3
+        },
+        {
+          "key": "tier-1",
+          "label": "Tier 1",
+          "count": 3
+        }
+      ],
+      "byCriticality": [
+        {
+          "key": "high",
+          "label": "High",
+          "count": 3
+        },
+        {
+          "key": "medium",
+          "label": "Medium",
+          "count": 2
+        },
+        {
+          "key": "low",
+          "label": "Low",
+          "count": 1
+        },
+        {
+          "key": null,
+          "label": "Not set",
+          "count": 1
+        }
+      ]
+    },
+    "truncatedAtDepth": true
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "root.name",
+    "nodes[].name"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0014"
+}

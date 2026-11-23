@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "propose_owner_change input",
+  "description": "Hands over, adds or ends an owner role. It records an ownership decision as Proposed. The current and new holders confirm on approval cards, as the approval rules say. Nothing changes until the decision is accepted. Each change needs addObjectId, endAssignmentId or both.",
+  "x-tool": "propose_owner_change",
+  "type": "object",
+  "required": [
+    "businessApplicationId",
+    "changes",
+    "reason"
+  ],
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "changes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "ownerRoleKey"
+        ],
+        "properties": {
+          "ownerRoleKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C28 Owner Role",
+            "description": "The owner role."
+          },
+          "addObjectId": {
+            "$ref": "../common.schema.json#/$defs/guid",
+            "description": "The Entra object ID of the new holder."
+          },
+          "endAssignmentId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O06 Owner Assignment",
+            "description": "The assignment to end."
+          },
+          "isDeputy": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for a deputy."
+          },
+          "startOn": {
+            "$ref": "../common.schema.json#/$defs/date",
+            "description": "When the new assignment starts, once accepted."
+          }
+        },
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "addObjectId"
+            ]
+          },
+          {
+            "required": [
+              "endAssignmentId"
+            ]
+          }
+        ]
+      },
+      "description": "The owner changes to propose."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Why the change is needed."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "changes": [
+        {
+          "ownerRoleKey": "business-owner",
+          "addObjectId": "20000000-0000-4000-8000-000000000003",
+          "endAssignmentId": "50000000-0000-4000-8000-000000000001",
+          "startOn": "2026-12-01"
+        }
+      ],
+      "reason": "The current owner moves to another team in December.",
+      "clientRequestId": "req-0005"
+    }
+  ]
+}

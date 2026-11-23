@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Record endpoint index",
+  "description": "Schema for record-endpoint.json: the plain HTTPS endpoints that pipeline record steps call instead of MCP.",
+  "type": "object",
+  "required": [
+    "$comment",
+    "description",
+    "failSoft",
+    "authentication",
+    "endpoints"
+  ],
+  "properties": {
+    "$comment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failSoft": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authentication": {
+      "type": "object",
+      "required": [
+        "tokenKind",
+        "appRole",
+        "workloadRole",
+        "holdsRoleThrough",
+        "notAccepted"
+      ],
+      "properties": {
+        "tokenKind": {
+          "const": "app-only"
+        },
+        "appRole": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z]*\\.[A-Z][A-Za-z]*$"
+        },
+        "workloadRole": {
+          "const": "deployment-recorder"
+        },
+        "holdsRoleThrough": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notAccepted": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "idempotency": {
+      "type": "string",
+      "minLength": 1
+    },
+    "endpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "operation",
+          "method",
+          "azurePath",
+          "dataverseCustomApi",
+          "toolContract",
+          "requestSchema",
+          "responseSchema",
+          "statuses"
+        ],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "method": {
+            "const": "POST"
+          },
+          "azurePath": {
+            "type": "string",
+            "pattern": "^/api/[a-z/-]+$"
+          },
+          "dataverseCustomApi": {
+            "type": "string",
+            "pattern": "^<prefix>_[A-Z][A-Za-z]+$"
+          },
+          "toolContract": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "requestSchema": {
+            "type": "string",
+            "pattern": "^record-endpoint/[a-z-]+\\.request\\.schema\\.json$"
+          },
+          "responseSchema": {
+            "type": "string",
+            "pattern": "^record-endpoint/[a-z-]+\\.response\\.schema\\.json$"
+          },
+          "statuses": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "status",
+                "when"
+              ],
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "minimum": 200,
+                  "maximum": 599
+                },
+                "errorCode": {
+                  "$ref": "./envelope.schema.json#/$defs/errorCode"
+                },
+                "when": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

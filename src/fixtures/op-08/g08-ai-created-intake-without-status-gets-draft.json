@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-created-intake-without-status-gets-draft",
+  "description": "An AI client drafts an intake request and names no status. The engine sets the draft status.",
+  "ruleIds": [
+    "G-08"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "after": {
+      "need": "A tool to track equipment loans."
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "setColumns": {
+        "status": "intake-draft",
+        "statusMeaning": "draft",
+        "isAiCreated": true
+      }
+    },
+    "reasons": [
+      {
+        "code": "ai.forced-draft",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

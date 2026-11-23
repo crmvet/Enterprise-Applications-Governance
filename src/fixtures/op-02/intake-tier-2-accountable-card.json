@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "intake-tier-2-accountable-card",
+  "description": "Intake above the lowest tier has no approval rule group, so it goes on one card to the holder of the accountable letter (28, issue 1).",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "intake",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "accountable",
+          "decisionRightKey": "intake-a",
+          "approverRoleKey": "platform-admin",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "requiresTypedReason": false
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Decision Right",
+        "key": "intake-a",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

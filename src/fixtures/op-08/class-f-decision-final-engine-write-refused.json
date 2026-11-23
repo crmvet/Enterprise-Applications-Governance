@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-decision-final-engine-write-refused",
+  "description": "Class F, O09 (G-05): an accepted decision never changes. An engine-nested write of the accept-decision effect that changes the statement is refused; only the supersede-decision effect may set Superseded By.",
+  "ruleIds": [
+    "G-05"
+  ],
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "statement": "Decided: something else."
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "accepted",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "decision.final",
+          "ruleId": "G-05"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "decision.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

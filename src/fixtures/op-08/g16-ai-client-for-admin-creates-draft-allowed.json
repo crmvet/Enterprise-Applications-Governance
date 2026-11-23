@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g16-ai-client-for-admin-creates-draft-allowed",
+  "description": "An AI client acting for a configuration admin starts a Configuration Draft with a patch and a rationale. Allowed: the person behind it holds a role with Can Change Configuration.",
+  "ruleIds": [
+    "G-16"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    },
+    "clientApp": "Fixture Client"
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "create",
+    "after": {
+      "changeJson": {
+        "operations": [
+          {
+            "op": "upsert",
+            "entity": "tier",
+            "key": "tier-3",
+            "values": {
+              "label": "Tier 3: Critical"
+            }
+          }
+        ]
+      },
+      "proposalRationale": "Clearer tier names."
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "performedByActorKind": "ai-client-for-person",
+        "isAiCreated": true
+      }
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Role",
+        "key": "configuration-admin",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

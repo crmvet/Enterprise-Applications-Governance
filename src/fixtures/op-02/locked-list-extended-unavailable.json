@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "locked-list-extended-unavailable",
+  "description": "A snapshot whose locked engine acceptance list holds an extra entry is broken (V33). The engine honors only the list it ships, so it refuses.",
+  "tags": [
+    "invariant"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "engine-acceptable-decision-types",
+        "values": {
+          "value": [
+            {
+              "decisionTypeKey": "intake",
+              "condition": "lowest-tier"
+            },
+            {
+              "decisionTypeKey": "change-authorization",
+              "condition": "standard-model"
+            },
+            {
+              "decisionTypeKey": "go-live",
+              "condition": "lowest-tier"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "go-live",
+    "tierKey": "tier-1",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "setting.locked-changed",
+        "severity": "error",
+        "entity": "Setting",
+        "ref": "engine-acceptable-decision-types"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "ok": true,
+  "summary": "Inspection Scheduler has six owner assignments. The business owner has no deputy.",
+  "data": {
+    "owners": [
+      {
+        "ownerAssignmentId": "50000000-0000-4000-8000-000000000001",
+        "ownerRoleKey": "business-owner",
+        "label": "Business owner",
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Ines Varga",
+          "principalKind": "user"
+        },
+        "isDeputy": false,
+        "deputyFor": null,
+        "startOn": "2025-09-01",
+        "endOn": null,
+        "ownershipDecisionId": "60000000-0000-4000-8000-000000000011"
+      },
+      {
+        "ownerAssignmentId": "50000000-0000-4000-8000-000000000002",
+        "ownerRoleKey": "technical-owner",
+        "label": "Technical owner",
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000002",
+          "displayLabel": "Jonah Pereira",
+          "principalKind": "user"
+        },
+        "isDeputy": false,
+        "deputyFor": null,
+        "startOn": "2025-09-01",
+        "endOn": null,
+        "ownershipDecisionId": "60000000-0000-4000-8000-000000000011"
+      },
+      {
+        "ownerAssignmentId": "50000000-0000-4000-8000-000000000003",
+        "ownerRoleKey": "technical-owner",
+        "label": "Technical owner",
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000003",
+          "displayLabel": "Lena Okoro",
+          "principalKind": "user"
+        },
+        "isDeputy": true,
+        "deputyFor": "50000000-0000-4000-8000-000000000002",
+        "startOn": "2026-02-02",
+        "endOn": null,
+        "ownershipDecisionId": "60000000-0000-4000-8000-000000000012"
+      },
+      {
+        "ownerAssignmentId": "50000000-0000-4000-8000-000000000004",
+        "ownerRoleKey": "data-owner",
+        "label": "Data owner",
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000004",
+          "displayLabel": "Mateo Brandt",
+          "principalKind": "user"
+        },
+        "isDeputy": false,
+        "deputyFor": null,
+        "startOn": "2025-09-01",
+        "endOn": null,
+        "ownershipDecisionId": "60000000-0000-4000-8000-000000000011"
+      },
+      {
+        "ownerAssignmentId": "50000000-0000-4000-8000-000000000005",
+        "ownerRoleKey": "support-owner",
+        "label": "Support owner",
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000005",
+          "displayLabel": "Field Apps Support",
+          "principalKind": "group"
+        },
+        "isDeputy": false,
+        "deputyFor": null,
+        "startOn": "2026-03-16",
+        "endOn": null,
+        "ownershipDecisionId": "60000000-0000-4000-8000-000000000013"
+      },
+      {
+        "ownerAssignmentId": "50000000-0000-4000-8000-000000000006",
+        "ownerRoleKey": "builder",
+        "label": "Builder",
+        "principal": {
+          "objectId": "20000000-0000-4000-8000-000000000006",
+          "displayLabel": "Sana Kowalczyk",
+          "principalKind": "user"
+        },
+        "isDeputy": false,
+        "deputyFor": null,
+        "startOn": "2025-09-01",
+        "endOn": null,
+        "ownershipDecisionId": "60000000-0000-4000-8000-000000000011"
+      }
+    ],
+    "gaps": [
+      {
+        "ownerRoleKey": "business-owner",
+        "missing": "deputy"
+      }
+    ],
+    "microsoftOwnerDiffers": true,
+    "ownerCheckedOn": "2026-11-03T07:00:00Z"
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [],
+  "nextSteps": [
+    {
+      "tool": "propose_owner_change",
+      "inputs": {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+      }
+    }
+  ],
+  "correlationId": "harness-0013"
+}

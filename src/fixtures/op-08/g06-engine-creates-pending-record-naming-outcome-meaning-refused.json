@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-creates-pending-record-naming-outcome-meaning-refused",
+  "description": "The engine creates a pending record and also names Outcome Meaning approved. Earlier, the guard's meaning copy won and stored pending; now a nested write that names Outcome Meaning is refused outright, so no write can carry a meaning the outcome does not have.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "create",
+    "rowId": "fixture-approval-3",
+    "after": {
+      "decision": "fixture-decision-1",
+      "approvalRule": "acceptance-approval",
+      "requiredOwnerRole": "business-owner",
+      "outcome": "approval-pending",
+      "outcomeMeaning": "approved",
+      "requestedOn": "2026-11-22T09:00:00Z",
+      "expiresOn": "2026-12-02T09:00:00Z"
+    }
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "approval.outcome-writer",
+          "ruleId": "G-06"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

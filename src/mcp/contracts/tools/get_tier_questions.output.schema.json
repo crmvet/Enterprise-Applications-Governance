@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_tier_questions output",
+  "description": "The response envelope. On success, data lists the questions and the tier each answer implies.",
+  "x-tool": "get_tier_questions",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "questions"
+      ],
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "questionKey",
+              "text",
+              "helpText",
+              "answers"
+            ],
+            "properties": {
+              "questionKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C09 Tier Question"
+              },
+              "text": {
+                "type": "string",
+                "description": "The question."
+              },
+              "helpText": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "Help for the person answering."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "answers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "answerKey",
+                    "text",
+                    "impliedTier"
+                  ],
+                  "properties": {
+                    "answerKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C10 Tier Answer Option"
+                    },
+                    "text": {
+                      "type": "string",
+                      "description": "The answer."
+                    },
+                    "impliedTier": {
+                      "$ref": "../common.schema.json#/$defs/labelledKey",
+                      "description": "The tier this answer implies (C08)."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Five questions set the tier for an agent.",
+      "data": {
+        "questions": [
+          {
+            "questionKey": "data-change",
+            "text": "Does it change business data?",
+            "helpText": null,
+            "answers": [
+              {
+                "answerKey": "reads-only",
+                "text": "It only reads data.",
+                "impliedTier": {
+                  "key": "tier-1",
+                  "label": "Tier 1"
+                }
+              },
+              {
+                "answerKey": "changes-records",
+                "text": "It changes records.",
+                "impliedTier": {
+                  "key": "tier-2",
+                  "label": "Tier 2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

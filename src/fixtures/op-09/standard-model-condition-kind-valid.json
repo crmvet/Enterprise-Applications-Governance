@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "standard-model-condition-kind-valid",
+  "description": "A draft adds a standard change model that uses every condition kind the engine knows: max-tier-rank, target-stages-in, max-affected-applications, component-kinds-within, max-window-minutes and stated. The engine check standard-model.condition-kind passes.",
+  "tags": [
+    "engine-check"
+  ],
+  "workingDefaults": [
+    1,
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "every-condition-kind",
+        "values": {
+          "label": "Small change to one tier 1 application",
+          "changeTypeKey": "standard",
+          "conditions": [
+            { "conditionKind": "max-tier-rank", "value": 1 },
+            { "conditionKind": "target-stages-in", "value": ["production"] },
+            { "conditionKind": "max-affected-applications", "value": 1 },
+            { "conditionKind": "component-kinds-within", "value": ["canvas-app"] },
+            { "conditionKind": "max-window-minutes", "value": 30 },
+            { "conditionKind": "stated", "key": "labels-only", "label": "Labels and help text only" }
+          ]
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    },
+    "reasonsMatch": "exact"
+  }
+}

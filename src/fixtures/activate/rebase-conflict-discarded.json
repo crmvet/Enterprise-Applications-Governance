@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "rebase-conflict-discarded",
+  "description": "Version 2 changed the same Tier row the draft changes. Nothing merges silently: the accepted draft is discarded with the reason rebase conflict, and no version is created.",
+  "ruleIds": [
+    "V42"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 2,
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "tier",
+        "key": "tier-3",
+        "values": {
+          "label": "Tier 3: High"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "submitted",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier",
+          "key": "tier-3",
+          "values": {
+            "label": "Tier 3: Critical"
+          }
+        }
+      ]
+    }
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 2
+  },
+  "expected": {
+    "outcome": "discarded",
+    "payload": {
+      "discardReason": "rebase conflict",
+      "rebaseOutcome": "conflict",
+      "rowWriteCount": 0,
+      "effects": [
+        {
+          "kind": "activate-configuration",
+          "entity": "Configuration Draft",
+          "operation": "update",
+          "rowId": "fixture-draft-1",
+          "columns": {
+            "draftStatus": "discarded",
+            "discardReason": "rebase conflict",
+            "discardedOn": "2026-11-22T09:00:00Z"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "operation": "create",
+          "columns": {
+            "operation": "configuration-activation-refused"
+          }
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "config.base-moved",
+        "severity": "error",
+        "ruleId": "V42",
+        "ref": "tier-3"
+      },
+      {
+        "code": "activation.discarded",
+        "severity": "warning",
+        "ref": "fixture-draft-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

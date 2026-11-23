@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "confirm_document_checked output",
+  "description": "The response envelope. On success, data is the write result for the Document Link (O19), with the new status, Last Checked On and staleOn.",
+  "$comment": "WORKING DEFAULT (open design question 9). For a document type with Current Needs Person = yes (C22), current from an AI client is stored as draft until the person confirms on a confirmation card.",
+  "x-tool": "confirm_document_checked",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Document Link (O19).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Current or stale after the check. Draft while a confirmation card is out.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/documentStatusMeaning",
+              "enum": [
+                "draft",
+                "current",
+                "stale"
+              ]
+            }
+          }
+        },
+        "lastCheckedOn": {
+          "$ref": "../common.schema.json#/$defs/date"
+        },
+        "staleOn": {
+          "description": "When the document becomes stale next. Null when it is stale or draft.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confirmationCardSent": {
+          "type": "boolean",
+          "$comment": "WORKING DEFAULT (open design question 9). For a document type with Current Needs Person = yes (C22), current from an AI client is stored as draft until the person confirms on a confirmation card.",
+          "description": "True when a confirmation card went to the person, because an AI client asked for current on a document type with Current Needs Person = yes. The link stays draft until the person confirms. False when validateOnly was true."
+        }
+      },
+      "required": [
+        "lastCheckedOn",
+        "staleOn",
+        "confirmationCardSent"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The design notes are confirmed as still true until May 2027.",
+      "data": {
+        "recordId": "e0000000-0000-4000-8000-000000000001",
+        "status": {
+          "label": "Current",
+          "meaning": "current"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "lastCheckedOn": "2026-11-22",
+        "staleOn": "2027-05-21",
+        "confirmationCardSent": false
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/e0000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

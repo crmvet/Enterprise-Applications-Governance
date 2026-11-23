@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "proposed-same-tier-no-warning",
+  "description": "A proposal equal to the computed tier is not lower, so no warning.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "own-identity"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "team-slowed"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "department"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ],
+    "proposedTierKey": "tier-3"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "computedTierKey": "tier-3",
+      "proposedIsLower": false
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

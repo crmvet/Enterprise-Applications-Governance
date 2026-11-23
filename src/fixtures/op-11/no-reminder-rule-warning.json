@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "no-reminder-rule-warning",
+  "description": "With the claim reminder rule retired, no rule covers claims. Nobody is reminded, and the answer warns about it.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "reminder-rule",
+        "key": "claim-reminder"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "claim",
+    "dueOnUtc": "2026-11-22T00:00:00Z"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "claim",
+      "dueOnUtc": "2026-11-22T00:00:00Z",
+      "isOverdue": true,
+      "actions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "reminder.no-rule",
+        "severity": "warning",
+        "entity": "Reminder Rule"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

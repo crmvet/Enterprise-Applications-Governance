@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g11-url-with-signature-refused",
+  "description": "A document link carries a signature in its query string. The forbidden-url-patterns setting refuses links that may carry a secret (document 26, SR-09).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "document-link",
+    "operation": "create",
+    "after": {
+      "linkKind": "sharepoint-page",
+      "url": "https://example.sharepoint.com/sites/apps/doc.aspx?SIG=abc",
+      "status": "document-draft"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "link.forbidden-url",
+        "severity": "error",
+        "ref": "forbidden-url-patterns"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

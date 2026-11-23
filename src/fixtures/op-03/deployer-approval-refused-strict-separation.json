@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "deployer-approval-refused-strict-separation",
+  "description": "The strict separation overlay refuses a deployer as approver of the production change.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "strict-separation"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer",
+      "deployerPrincipalIds": [
+        "fixture-person-approver"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "pending",
+    "payload": {
+      "overall": "pending",
+      "countsByRecord": {
+        "r1": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.separation-refused",
+        "severity": "warning",
+        "ref": "r1"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Separation Rule",
+        "key": "no-self-approval-all",
+        "role": "won"
+      },
+      {
+        "entity": "Separation Rule",
+        "key": "deployer-not-sole-approver",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

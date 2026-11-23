@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g07-audit-entry-update-refused",
+  "description": "An auditor edits an Audit Entry. Audit entries are never updated or deleted.",
+  "ruleIds": [
+    "G-07"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "auditor"
+      ]
+    }
+  },
+  "input": {
+    "entity": "audit-entry",
+    "operation": "update",
+    "rowId": "fixture-audit-1",
+    "after": {
+      "operation": "nothing happened"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "audit.append-only",
+          "ruleId": "G-07"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "audit.append-only",
+        "severity": "error",
+        "entity": "Audit Entry"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

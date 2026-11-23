@@ -1,0 +1,42 @@
+{
+  "entity": "component-kind",
+  "rows": [
+    { "key": "canvas-app", "label": "Canvas app", "sourceToolKey": "power-platform", "isGapCheckCovered": true },
+    {
+      "key": "model-driven-app",
+      "label": "Model-driven app",
+      "sourceToolKey": "power-platform",
+      "isGapCheckCovered": true
+    },
+    { "key": "code-app", "label": "Code app", "sourceToolKey": "power-platform", "isGapCheckCovered": true },
+    { "key": "cloud-flow", "label": "Cloud flow", "sourceToolKey": "power-platform", "isGapCheckCovered": true },
+    {
+      "key": "copilot-studio-agent",
+      "label": "Copilot Studio agent",
+      "sourceToolKey": "power-platform",
+      "isGapCheckCovered": true
+    },
+    {
+      "key": "copilot-managed-runtime-app",
+      "label": "Copilot managed runtime app",
+      "sourceToolKey": "microsoft-365",
+      "isGapCheckCovered": true
+    },
+    {
+      "key": "power-pages-site",
+      "label": "Power Pages site",
+      "sourceToolKey": "power-platform",
+      "isGapCheckCovered": true,
+      "description": "Inventory coverage is preview."
+    },
+    { "key": "solution", "label": "Solution", "sourceToolKey": "power-platform", "isGapCheckCovered": false },
+    {
+      "key": "entra-agent-identity",
+      "label": "Entra agent identity",
+      "sourceToolKey": "entra",
+      "isGapCheckCovered": false
+    },
+    { "key": "repository", "label": "Repository", "sourceToolKey": "github", "isGapCheckCovered": false },
+    { "key": "azure-resource", "label": "Azure resource", "sourceToolKey": "azure", "isGapCheckCovered": false }
+  ]
+}

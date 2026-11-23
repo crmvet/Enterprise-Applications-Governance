@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "agent-user-refused",
+  "description": "An agent user claims to act as a person. Only a user principal can be the decider of version 1.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-agent-1",
+      "principalKind": "agent-user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "presetKey": "balanced",
+    "noVersionExists": true,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "bootstrap.not-allowed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

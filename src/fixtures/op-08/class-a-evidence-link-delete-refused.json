@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-a-evidence-link-delete-refused",
+  "description": "Class A: an Evidence Link is never deleted, also by the person who added it, within the link undo window or not.",
+  "tags": [
+    "hardening-1",
+    "class-a"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "evidence-link",
+    "operation": "delete",
+    "rowId": "fixture-evidence-1"
+  },
+  "facts": {
+    "before": {
+      "createdByPrincipal": "fixture-person-1",
+      "createdOn": "2026-11-22T08:59:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.delete-not-allowed"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.delete-not-allowed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

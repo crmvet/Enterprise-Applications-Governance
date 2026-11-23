@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "no-overlap-rebased-valid",
+  "description": "The draft starts from version 1 and renames tier 3. Meanwhile version 2 renamed tier 2 and is active. No operation of the draft touches a row that changed, so the engine re-applies the draft to version 2, validates it again as rebased, and returns the updated diff. The patch as applied now names version 2 as its base.",
+  "ruleIds": [
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "upsert", "entity": "tier", "key": "tier-2", "values": { "label": "Tier 2: Important" } }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1, "summary": "Name tier 3 after its risk" },
+      "operations": [
+        { "op": "upsert", "entity": "tier", "key": "tier-3", "values": { "label": "Tier 3: Critical" } }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "rebased",
+    "payload": {
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 2,
+      "canActivate": true,
+      "changedRows": [
+        { "entity": "tier", "key": "tier-2", "change": "changed" }
+      ],
+      "overlaps": [],
+      "patch": {
+        "schemaVersion": "1.0",
+        "manifest": { "kind": "patch", "baseVersionNumber": 2, "summary": "Name tier 3 after its risk" },
+        "operations": [
+          { "op": "upsert", "entity": "tier", "key": "tier-3", "values": { "label": "Tier 3: Critical" } }
+        ]
+      },
+      "previousChangeSummary": ["Changed Tier `tier-3`: label."],
+      "diffChanged": false,
+      "validation": {
+        "isValid": true,
+        "issues": [],
+        "changeSummary": ["Changed Tier `tier-3`: label."]
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "regulated-changes-from-balanced-valid",
+  "description": "The Regulated preset, compared with Balanced as the active version. The change summary pins the production and emergency gate rows, the configuration review days, the tier 2 go-live group and the separation rules.",
+  "tags": ["preset"],
+  "ruleIds": ["V01", "V02", "V03", "V04", "V05", "V06", "V07", "V08", "V09", "V10", "V11", "V12", "V44"],
+  "workingDefaults": [4, 7],
+  "snapshot": { "presetKey": "regulated" },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build", "activeSnapshot": { "presetKey": "balanced" } },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": [],
+      "changeSummary": [
+        "Added Approval Rule `go-live-tier-2-data-owner`.",
+        "Added Approval Rule `go-live-tier-2-owner`.",
+        "Changed Gate Policy `gp-emergency-prod-tier-1`: aiOnlyCodeApprovalHandling, failMode, gateLevel.",
+        "Changed Gate Policy `gp-emergency-prod-tier-2`: aiOnlyCodeApprovalHandling, failMode, gateLevel.",
+        "Changed Gate Policy `gp-emergency-prod-tier-3`: aiOnlyCodeApprovalHandling, failMode, gateLevel.",
+        "Changed Gate Policy `gp-emergency-test--tier-1`: gateLevel, label.",
+        "Changed Gate Policy `gp-emergency-test--tier-2`: gateLevel, label.",
+        "Changed Gate Policy `gp-emergency-test--tier-3`: gateLevel, label.",
+        "Changed Gate Policy `gp-prod-tier-2--normal`: aiOnlyCodeApprovalHandling, failMode, gateLevel, label.",
+        "Changed Gate Policy `gp-prod-tier-2--standard`: aiOnlyCodeApprovalHandling, failMode, gateLevel, label.",
+        "Changed Gate Policy `gp-prod-tier-3--normal`: aiOnlyCodeApprovalHandling.",
+        "Changed Gate Policy `gp-prod-tier-3--standard`: aiOnlyCodeApprovalHandling.",
+        "Added Separation Rule `config-accepter-differs`.",
+        "Added Separation Rule `gate-policy-accepter-differs`.",
+        "Added Separation Rule `no-self-approval-all`.",
+        "Retired Separation Rule `no-self-approval-tier-3`.",
+        "Changed Setting `configuration-review-days`: value."
+      ]
+    }
+  }
+}

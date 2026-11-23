@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "component-outside-covered-estate-not-vanished",
+  "description": "A registered component in an estate the run does not cover is never vanished by it.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "isFinalPage": true,
+    "items": []
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-10",
+        "externalId": "00000000-0000-0000-0000-000000000110",
+        "componentKindKey": "canvas-app",
+        "estateKey": "entra-owners"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "vanishedClaims": [],
+      "counts": {
+        "itemsSeen": 0,
+        "newClaims": 0,
+        "vanishedClaims": 0,
+        "ignored": 0
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

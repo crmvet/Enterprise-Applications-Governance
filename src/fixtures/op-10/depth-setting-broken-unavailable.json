@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "depth-setting-broken-unavailable",
+  "description": "An impact-max-depth of 0 cannot cap a walk. The engine refuses and reports the broken setting instead of picking a depth of its own (document 21, rule 8).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "impact-max-depth",
+        "values": {
+          "value": 0
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 2
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "setting.required",
+        "severity": "error",
+        "entity": "Setting",
+        "ref": "impact-max-depth"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

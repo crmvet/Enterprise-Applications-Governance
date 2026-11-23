@@ -1,0 +1,393 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "propose_configuration_change output",
+  "description": "The response envelope. On success, data is the write result for the Configuration Draft (C46), always draft, with the validation result, the engine's diff, the effect on live applications and the approvals the change will need. impact comes back also with validateOnly. Nothing is in force.",
+  "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on one card. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
+  "x-tool": "propose_configuration_change",
+  "x-ai-write-states": [
+    "candidate"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Configuration Draft (C46). A candidate, never in force.",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always draft. submit_record freezes it. Only the engine activates, after a person accepts the decision.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/draftStatusMeaning",
+              "const": "draft"
+            }
+          }
+        },
+        "valid": {
+          "type": "boolean",
+          "description": "True when the draft passes every validation rule."
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "key",
+              "ruleKey",
+              "message"
+            ],
+            "properties": {
+              "entity": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/entityKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "key": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/keyPath"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ruleKey": {
+                "type": "string",
+                "pattern": "^V[0-9]{2}$",
+                "description": "The validation rule, such as V23."
+              },
+              "message": {
+                "type": "string",
+                "description": "Names the rule, the entity, the key and the fix."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Validation errors. Empty when valid."
+        },
+        "configurationDraftId": {
+          "description": "Null only when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "C46 Configuration Draft"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "diffSummary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "key",
+              "op",
+              "before",
+              "after"
+            ],
+            "properties": {
+              "entity": {
+                "$ref": "../common.schema.json#/$defs/entityKey"
+              },
+              "key": {
+                "$ref": "../common.schema.json#/$defs/keyPath"
+              },
+              "op": {
+                "enum": [
+                  "added",
+                  "updated",
+                  "retired"
+                ]
+              },
+              "before": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "after": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The diff the engine computed. The card shows this diff, never the AI's description."
+        },
+        "contentHash": {
+          "description": "The hash of the previewed snapshot. Null when the draft does not validate.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/contentHash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "impact": {
+          "type": "object",
+          "required": [
+            "applicationsAffected",
+            "byChange",
+            "gateChanges",
+            "recordsInFlight"
+          ],
+          "properties": {
+            "applicationsAffected": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Live applications whose rules would change."
+            },
+            "byChange": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "entity",
+                  "key",
+                  "applicationsAffected",
+                  "sampleApplicationIds"
+                ],
+                "properties": {
+                  "entity": {
+                    "$ref": "../common.schema.json#/$defs/entityKey"
+                  },
+                  "key": {
+                    "$ref": "../common.schema.json#/$defs/keyPath"
+                  },
+                  "applicationsAffected": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "sampleApplicationIds": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O02 Business Application"
+                    },
+                    "description": "Up to 10 examples."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "gateChanges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "tierKey",
+                  "changeTypeKey",
+                  "targetStageKey",
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "tierKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C08 Tier"
+                  },
+                  "changeTypeKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C20 Change Type"
+                  },
+                  "targetStageKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C34 Target Stage"
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/gateLevel"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "to": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/gateLevel"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "recordsInFlight": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Records already submitted. They keep the requirements frozen at their submission."
+            }
+          },
+          "additionalProperties": false,
+          "description": "The effect on live applications."
+        },
+        "approvalsNeeded": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalNeeded"
+          },
+          "description": "The approvals the configuration change decision will need, judged by the active rules."
+        },
+        "activation": {
+          "const": "Submit the draft. A person accepts the decision on an approval card. Nothing changes until then."
+        }
+      },
+      "required": [
+        "valid",
+        "errors",
+        "configurationDraftId",
+        "diffSummary",
+        "contentHash",
+        "impact",
+        "approvalsNeeded",
+        "activation"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The draft is valid. It would change approvals for 4 tier 2 applications. Nothing is saved yet.",
+      "data": {
+        "recordId": null,
+        "status": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "valid": true,
+        "errors": [],
+        "configurationDraftId": null,
+        "diffSummary": [
+          {
+            "entity": "approval-rule",
+            "key": "go-live-tier-2-data-owner",
+            "op": "added",
+            "before": null,
+            "after": {
+              "decisionTypeKey": "go-live",
+              "tierKey": "tier-2",
+              "approverOwnerRoleKey": "data-owner"
+            }
+          }
+        ],
+        "contentHash": "b4e2d3c5f6a71829304b5c6d7e8f9a01223344556677889900aabbccddeeff11",
+        "impact": {
+          "applicationsAffected": 4,
+          "byChange": [
+            {
+              "entity": "approval-rule",
+              "key": "go-live-tier-2-data-owner",
+              "applicationsAffected": 4,
+              "sampleApplicationIds": [
+                "10000000-0000-4000-8000-000000000001"
+              ]
+            }
+          ],
+          "gateChanges": [],
+          "recordsInFlight": 1
+        },
+        "approvalsNeeded": [
+          {
+            "decisionTypeKey": "configuration-change",
+            "approverRoleKey": "configuration-admin",
+            "approvalMode": "first-to-respond",
+            "minimumCount": 1
+          }
+        ],
+        "activation": "Submit the draft. A person accepts the decision on an approval card. Nothing changes until then."
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "propose_configuration_change",
+          "inputs": {
+            "baseVersionNumber": 3,
+            "validateOnly": false
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    },
+    {
+      "ok": false,
+      "summary": "The AI approval lock is locked. No tool can change it.",
+      "error": {
+        "code": "locked",
+        "message": "The setting ai-approval-lock is locked.",
+        "field": "operations[0]",
+        "ruleKey": "ai-approval-lock"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "correlationId": "corr-0002"
+    }
+  ]
+}

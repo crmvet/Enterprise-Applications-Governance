@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-marks-wiki-page-current-allowed",
+  "description": "A wiki page has no Current Needs Person, so an AI client for the owner may mark it current (RA-03 asks a card only for gate-relevant documents).",
+  "workingDefaults": [
+    9
+  ],
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "document-link",
+    "operation": "update",
+    "rowId": "fixture-doc-2",
+    "after": {
+      "status": "document-current"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft",
+      "documentType": "wiki-page"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "current",
+        "performedByActorKind": "ai-client-for-person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

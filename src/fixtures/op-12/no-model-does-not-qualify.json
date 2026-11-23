@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "no-model-does-not-qualify",
+  "description": "Balanced ships no standard change model: a standard change of a client that has listed none is not standard, and the reason says so.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 2,
+      "targetStageKeys": [
+        "production"
+      ],
+      "affectedApplicationCount": 1,
+      "componentKindKeys": [
+        "canvas-app"
+      ],
+      "windowMinutes": 60,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "standard-model.no-candidate",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "standard"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Change Type",
+        "key": "standard",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

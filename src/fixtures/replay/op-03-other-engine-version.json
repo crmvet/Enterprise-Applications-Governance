@@ -1,0 +1,107 @@
+{
+  "case": "op-03-other-engine-version",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A result recorded by another engine build (0.0.9). The answer is the same, and the replay reports only the engine version.",
+  "operation": "OP-03",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.0.9",
+    "outcome": "pending",
+    "payload": {
+      "consultations": [],
+      "countsByRecord": {
+        "r1": false
+      },
+      "overall": "pending",
+      "requirements": [
+        {
+          "approvalMode": "first-to-respond",
+          "countingRecordIds": [],
+          "nonCountingRecords": [
+            {
+              "approvalRecordId": "r1",
+              "reasonCodes": [
+                "approval.ai-actor-not-counted"
+              ]
+            }
+          ],
+          "pendingRecordIds": [],
+          "requirementKey": "change-auth-tier-3",
+          "source": "approval-rule",
+          "state": "pending"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "approval.ai-actor-not-counted",
+        "entity": "Approval Record",
+        "message": "The answer came from an AI client or an agent identity, and AI never approves.",
+        "ref": "r1",
+        "severity": "warning"
+      }
+    ],
+    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "trace": [
+      {
+        "entity": "Separation Rule",
+        "key": "deployer-not-sole-approver",
+        "role": "won"
+      },
+      {
+        "entity": "Separation Rule",
+        "key": "no-self-approval-tier-3",
+        "role": "won"
+      }
+    ]
+  },
+  "request": {
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    },
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "expiresOnUtc": "2026-11-26T10:00:00Z",
+        "hasTypedReason": true,
+        "outcome": "approved",
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "responderActorKind": "ai-client-for-person",
+        "responderHoldsRequiredRole": true,
+        "responderPrincipalId": "fixture-person-approver",
+        "responderPrincipalKind": "user",
+        "ruleKey": "change-auth-tier-3"
+      }
+    ],
+    "requiredApprovals": [
+      {
+        "approvalMode": "first-to-respond",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "minimumCount": 1,
+        "requiresTypedReason": true,
+        "ruleKey": "change-auth-tier-3",
+        "source": "approval-rule",
+        "timeoutDays": 5
+      }
+    ],
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "targetStageKey": "production",
+      "tierKey": "tier-3"
+    }
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": [
+    "replay",
+    "tampered"
+  ],
+  "expectedDifferences": [
+    "engine-version"
+  ]
+}

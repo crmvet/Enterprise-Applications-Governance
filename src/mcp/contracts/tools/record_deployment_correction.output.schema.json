@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_deployment_correction output",
+  "description": "The response envelope. On success, data is the write result for the new, correcting Deployment Record (O14), with its flags. reason is text people typed and stays on the record.",
+  "$comment": "WORKING DEFAULT (open design question 12). Pipelines do not use MCP. They call the record endpoint with this contract, as a workload identity that holds the deployment recorder role through a Workload Grant (C42).",
+  "x-tool": "record_deployment_correction",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "#/$defs/correctionResult"
+    },
+    "correctionResult": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the new Deployment Record (O14) that corrects the old one.",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The deployment result of the new record, as reported or copied.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/deploymentResultMeaning"
+            }
+          }
+        },
+        "deploymentRecordId": {
+          "description": "The new record. Null only when validateOnly was true and the key is new.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O14 Deployment Record"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "correctsRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O14 Deployment Record",
+          "description": "The record this one corrects. It is never changed."
+        },
+        "flags": {
+          "$ref": "../common.schema.json#/$defs/deploymentFlags",
+          "description": "Computed by the engine. The caller cannot set them."
+        },
+        "gateLevelApplied": {
+          "$ref": "../common.schema.json#/$defs/gateLevel",
+          "description": "The gate level the engine applied, from the Gate Policy row for the tier, change type and target stage."
+        }
+      },
+      "required": [
+        "deploymentRecordId",
+        "correctsRecordId",
+        "flags",
+        "gateLevelApplied"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The correction is recorded. The deployment now belongs to the photo upload change.",
+      "data": {
+        "recordId": "d2000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Succeeded",
+          "meaning": "succeeded"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "deploymentRecordId": "d2000000-0000-4000-8000-000000000002",
+        "correctsRecordId": "d2000000-0000-4000-8000-000000000001",
+        "flags": {
+          "outsideWindow": false,
+          "otherPath": false,
+          "missingApproval": false,
+          "aiOnlyCodeApproval": false
+        },
+        "gateLevelApplied": "advise"
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/d2000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

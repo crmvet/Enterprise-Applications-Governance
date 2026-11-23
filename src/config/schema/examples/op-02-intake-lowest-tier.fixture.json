@@ -1,0 +1,13 @@
+{
+  "$comment": "WORKING DEFAULT (open design question 8): lowest-tier intake is on the locked engine acceptance list. If the answer to the question goes the other way, this case changes to outcome required.",
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "intake-lowest-tier",
+  "description": "Intake at the lowest tier, with no counting approval rule group, is accepted by the engine with no card.",
+  "workingDefaults": [8],
+  "snapshot": { "presetKey": "balanced" },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "facts": {},
+  "input": { "decisionTypeKey": "intake", "tierKey": "tier-1", "portfolioPath": [] },
+  "expected": { "outcome": "engine-accept", "payload": { "requirements": [] } }
+}

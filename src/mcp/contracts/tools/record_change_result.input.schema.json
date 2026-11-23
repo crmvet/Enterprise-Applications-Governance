@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_change_result input",
+  "description": "Records how a change ended, as reported. The engine creates a post-change review when the change type requires one or the result failed. This tool never moves the change request to completed: the change owner confirms that on the page, because it is a person's act.",
+  "x-tool": "record_change_result",
+  "type": "object",
+  "required": [
+    "changeRequestId",
+    "resultKey"
+  ],
+  "properties": {
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change."
+    },
+    "resultKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "From the change result value list, such as succeeded or rolled back."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "A plain note on the result."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/evidenceInput"
+      },
+      "description": "Links to proof, such as a test result. Each becomes an Evidence Link (O20)."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "changeRequestId": "d0000000-0000-4000-8000-000000000002",
+      "resultKey": "succeeded",
+      "note": "Deployed in the window, smoke test passed.",
+      "clientRequestId": "req-0202"
+    }
+  ]
+}

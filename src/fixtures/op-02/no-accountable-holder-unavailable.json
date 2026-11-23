@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "no-accountable-holder-unavailable",
+  "description": "With no accountable row for intake, a tier 2 intake has nobody to answer its card. The engine refuses and reports it (V22), never accepting it instead.",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "decision-right",
+        "key": "intake-a"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "intake",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "decision-right.accountable",
+        "severity": "error",
+        "entity": "Decision Right"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

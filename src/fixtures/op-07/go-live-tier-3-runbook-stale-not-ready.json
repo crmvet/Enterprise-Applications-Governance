@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "go-live-tier-3-runbook-stale-not-ready",
+  "description": "A stale runbook is not current, so the tier 3 go-live gate is not ready.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-3",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "documentation": {
+      "items": [
+        {
+          "requirementKey": "runbook-tier-3",
+          "documentTypeKey": "runbook",
+          "status": "stale",
+          "documentLinkId": "fixture-link-r1"
+        }
+      ]
+    },
+    "doneReviewTypeKeys": [
+      "security-review"
+    ]
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": true,
+          "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-runbook-tier-3",
+          "requirementKind": "document-current",
+          "requiredDocumentTypeKey": "runbook",
+          "met": false,
+          "reasonCode": "gate.requirement-document-not-current",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-security-tier-3",
+          "requirementKind": "review-done",
+          "requiredReviewTypeKey": "security-review",
+          "met": true,
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-document-not-current",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "go-live-runbook-tier-3"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

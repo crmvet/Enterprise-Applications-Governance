@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v08-removed-used-by-record",
+  "description": "No configuration row uses the dropped document type, but the facts say an operational record does. V08 still refuses the removal.",
+  "ruleIds": ["V08"],
+  "snapshot": { "presetKey": "balanced" },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "facts": { "rowsInUse": [{ "entity": "document-type", "key": "fixture-template" }] },
+  "input": {
+    "mode": "draft",
+    "activeSnapshot": {
+      "presetKey": "balanced",
+      "operations": [{ "op": "upsert", "entity": "document-type", "key": "fixture-template", "values": { "label": "Fixture template" } }]
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [{ "code": "ref.in-use", "severity": "error", "ruleId": "V08", "entity": "Document Type", "ref": "fixture-template" }],
+    "reasonsMatch": "exact"
+  }
+}

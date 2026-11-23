@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g07-audit-entry-delete-refused-even-nested",
+  "description": "Even an engine-nested write never deletes an Audit Entry.",
+  "ruleIds": [
+    "G-07"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "audit-entry",
+    "operation": "delete",
+    "rowId": "fixture-audit-1",
+    "nestedEffect": "write-audit-entry"
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "audit.append-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "intake-without-tier-accountable-card",
+  "description": "An intake whose tier is not known yet cannot meet the lowest-tier condition, so a person answers a card.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "intake",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "accountable",
+          "decisionRightKey": "intake-a"
+        }
+      ]
+    }
+  }
+}

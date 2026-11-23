@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_portfolio_summary output",
+  "description": "The response envelope. On success, data holds the counts, and the owner gap list when asked for.",
+  "x-tool": "get_portfolio_summary",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "buckets",
+        "ownerGaps",
+        "reviewsOverdue",
+        "documentsMissingOrStale",
+        "draftsOlderThanDays"
+      ],
+      "properties": {
+        "buckets": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/bucket"
+          }
+        },
+        "ownerGaps": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many owner roles have no holder or no deputy."
+        },
+        "reviewsOverdue": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many reviews are past their due date."
+        },
+        "documentsMissingOrStale": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many required documents are missing or stale."
+        },
+        "draftsOlderThanDays": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many drafts are older than the draft age the configuration sets. The age comes from configuration, never from the tool."
+        },
+        "ownerGapList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "portfolio",
+              "ownerRoleKey",
+              "missing",
+              "holderDirectoryState"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "portfolio": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "portfolioId",
+                      "name"
+                    ],
+                    "properties": {
+                      "portfolioId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O01 Portfolio"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The portfolio name."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "missing": {
+                "enum": [
+                  "holder",
+                  "deputy"
+                ]
+              },
+              "holderDirectoryState": {
+                "description": "From the last owner check (run_owner_check).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/directoryState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Present only when includeOwnerGaps was true."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The portfolio has 12 applications. One owner role has no deputy.",
+      "data": {
+        "buckets": [
+          {
+            "key": "live",
+            "label": "Live",
+            "count": 9
+          },
+          {
+            "key": "build",
+            "label": "Build",
+            "count": 3
+          }
+        ],
+        "ownerGaps": 1,
+        "reviewsOverdue": 0,
+        "documentsMissingOrStale": 2,
+        "draftsOlderThanDays": 1,
+        "ownerGapList": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "name": "Field visit planner",
+            "portfolio": {
+              "portfolioId": "a0000000-0000-4000-8000-000000000001",
+              "name": "Field operations"
+            },
+            "ownerRoleKey": "technical-owner",
+            "missing": "deputy",
+            "holderDirectoryState": "enabled"
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "ownerGapList[].name"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

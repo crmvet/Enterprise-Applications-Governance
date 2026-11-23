@@ -1,0 +1,26 @@
+{
+  "$comment": [
+    "The Microsoft CoE baseline is Balanced mapped to Microsoft's agent risk tiers and sample RACI (document 21, section 6.4). The changes are in patch.json.",
+    "Sweep proposal (document 20 explains the term). It ships in the first release by working default (document 28, Q6) and is re-checked against Microsoft's guidance each release. checkedOn is the date the Learn pages were last read (document 21, section 15, S2 and T1).",
+    "The two setup notes come from the sweep and were not re-checked at their sources, so they carry no link."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "microsoft-coe-baseline",
+  "label": "Microsoft CoE baseline",
+  "description": "Balanced mapped one to one to Microsoft's agent risk tiers and sample RACI, for a CoE that starts from Microsoft's agentic CoE guidance. Microsoft's tiers are written for agents; this preset applies them to every application kind and keeps the agent-only controls for agents and AI-built apps.",
+  "presetKind": "full",
+  "extends": "balanced",
+  "conflictsWith": [],
+  "areas": ["taxonomy", "people", "rules", "gates", "documentation"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "checkedOn": "2026-11-22",
+  "setupNotes": [
+    {
+      "text": "Point to Microsoft's own controls instead of rebuilding them here. Where the tenant has it, use the Work IQ tenant ceiling on agent actions (preview). Check the current status at its source first."
+    },
+    {
+      "text": "Where the tenant has it, use Microsoft's control for sharing agents that carry embedded maker credentials (preview). Check the current status at its source first."
+    }
+  ]
+}

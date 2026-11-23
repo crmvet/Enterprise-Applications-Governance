@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v34-protected-change-old-rules",
+  "description": "At activation, a draft changes the approval rule for configuration changes. Its approvals came from the rules of version 1, but version 2 is active now. A protected change is approved under the active rules, so V34 refuses it.",
+  "ruleIds": [
+    "V34"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "configuration-change-approval",
+        "values": {
+          "requiresTypedReason": false
+        }
+      }
+    ],
+    "versionNumber": 3
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 1
+  },
+  "input": {
+    "mode": "activation",
+    "baseVersionNumber": 2,
+    "activeSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 2
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "config.protected-change",
+        "severity": "error",
+        "ruleId": "V34",
+        "entity": "Approval Rule",
+        "ref": "configuration-change-approval"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

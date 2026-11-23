@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_application_owners output",
+  "description": "The response envelope. On success, data lists the owner assignments and the owner roles with no holder or deputy.",
+  "x-tool": "get_application_owners",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "owners",
+        "gaps",
+        "microsoftOwnerDiffers",
+        "ownerCheckedOn"
+      ],
+      "properties": {
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/ownerAssignment"
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/ownerGap"
+          },
+          "description": "Owner roles with no holder or no deputy."
+        },
+        "microsoftOwnerDiffers": {
+          "description": "True when the last gap check found that Microsoft's listed owner differs from the register. Null when never checked. The Microsoft owner itself is never returned.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerCheckedOn": {
+          "description": "When the owner comparison last ran.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The business owner has a deputy. The technical owner role has no holder.",
+      "data": {
+        "owners": [
+          {
+            "ownerAssignmentId": "50000000-0000-4000-8000-000000000001",
+            "ownerRoleKey": "business-owner",
+            "label": "Business owner",
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Business owner (sample)"
+            },
+            "isDeputy": false,
+            "deputyFor": null,
+            "startOn": "2026-01-05",
+            "endOn": null,
+            "ownershipDecisionId": "60000000-0000-4000-8000-000000000001"
+          },
+          {
+            "ownerAssignmentId": "50000000-0000-4000-8000-000000000002",
+            "ownerRoleKey": "business-owner",
+            "label": "Business owner",
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000003",
+              "displayLabel": "Deputy owner (sample)"
+            },
+            "isDeputy": true,
+            "deputyFor": "50000000-0000-4000-8000-000000000001",
+            "startOn": "2026-01-05",
+            "endOn": null,
+            "ownershipDecisionId": "60000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "gaps": [
+          {
+            "ownerRoleKey": "technical-owner",
+            "missing": "holder"
+          }
+        ],
+        "microsoftOwnerDiffers": false,
+        "ownerCheckedOn": "2026-11-15T07:30:00Z"
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/10000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

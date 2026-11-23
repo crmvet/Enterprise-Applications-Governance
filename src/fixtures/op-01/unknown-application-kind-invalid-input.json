@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "unknown-application-kind-invalid-input",
+  "description": "An application kind that is not in the configuration is invalid input.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "spreadsheet",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "reads-only"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "little"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "small-team"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error",
+        "ref": "spreadsheet"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

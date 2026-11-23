@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "client-binding-patch-valid",
+  "description": "A client binding patch over Balanced as version 1 binds the five human roles that approval rules name to directory groups, and gives the release pipeline the deployment recorder role through a workload grant that expires within workload-grant-max-days. In a working set bindings are expected, so V44 does not apply, every approver role is bound (V37), the facts say each group ID is a group and the pipeline is a service principal (V35), and the draft is valid. The IDs are fictional.",
+  "tags": [
+    "client-binding"
+  ],
+  "ruleIds": [
+    "V01",
+    "V06",
+    "V28",
+    "V35",
+    "V36",
+    "V37",
+    "V44"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1,
+        "summary": "Bind the approver roles and grant the release pipeline its workload role"
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "configuration-admins",
+          "values": {
+            "label": "Configuration admins",
+            "roleKey": "configuration-admin",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000001",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "change-managers",
+          "values": {
+            "label": "Change managers",
+            "roleKey": "change-manager",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000002",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "change-board",
+          "values": {
+            "label": "Change board",
+            "roleKey": "change-board",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000003",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "architects",
+          "values": {
+            "label": "Architects",
+            "roleKey": "architect",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000004",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "security-reviewers",
+          "values": {
+            "label": "Security reviewers",
+            "roleKey": "security-reviewer",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000005",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "workload-grant",
+          "key": "release-pipeline",
+          "values": {
+            "label": "Release pipeline",
+            "principalObjectId": "00000000-0000-4000-8000-000000000009",
+            "workloadRoleKey": "deployment-recorder",
+            "reason": "The release pipeline writes deployment records.",
+            "usesFederatedCredential": true,
+            "bindingDetail": "App role assignment on the product registration",
+            "expiresOn": "2027-06-30"
+          }
+        }
+      ]
+    }
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "facts": {
+    "principals": [
+      {
+        "objectId": "00000000-0000-4000-8000-000000000001",
+        "principalKind": "group"
+      },
+      {
+        "objectId": "00000000-0000-4000-8000-000000000002",
+        "principalKind": "group"
+      },
+      {
+        "objectId": "00000000-0000-4000-8000-000000000003",
+        "principalKind": "group"
+      },
+      {
+        "objectId": "00000000-0000-4000-8000-000000000004",
+        "principalKind": "group"
+      },
+      {
+        "objectId": "00000000-0000-4000-8000-000000000005",
+        "principalKind": "group"
+      },
+      {
+        "objectId": "00000000-0000-4000-8000-000000000009",
+        "principalKind": "service-principal"
+      }
+    ]
+  },
+  "input": {
+    "mode": "draft",
+    "activeSnapshot": {
+      "presetKey": "balanced"
+    }
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": [],
+      "changeSummary": [
+        "Added Role Group Binding `architects`.",
+        "Added Role Group Binding `change-board`.",
+        "Added Role Group Binding `change-managers`.",
+        "Added Role Group Binding `configuration-admins`.",
+        "Added Role Group Binding `security-reviewers`.",
+        "Added Workload Grant `release-pipeline`."
+      ]
+    }
+  }
+}

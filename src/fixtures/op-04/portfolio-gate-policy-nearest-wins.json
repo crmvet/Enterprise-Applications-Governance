@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-04",
+  "case": "portfolio-gate-policy-nearest-wins",
+  "description": "Portfolio rows come first and the nearest portfolio wins (28, Q2). The child portfolio enforces tier 1 production; the parent row and the row without a portfolio drop out.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "gate-policy",
+        "key": "gp-portfolio-parent-tier-1",
+        "values": {
+          "label": "Parent portfolio: advise",
+          "tierKey": "tier-1",
+          "changeTypeKey": "normal",
+          "targetStageKey": "production",
+          "portfolioId": "fixture-portfolio-parent",
+          "gateLevel": "advise"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "gate-policy",
+        "key": "gp-portfolio-child-tier-1",
+        "values": {
+          "label": "Child portfolio: enforce",
+          "tierKey": "tier-1",
+          "changeTypeKey": "normal",
+          "targetStageKey": "production",
+          "portfolioId": "fixture-portfolio-child",
+          "gateLevel": "enforce",
+          "failMode": "fail-open"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "check",
+    "tierKey": "tier-1",
+    "changeTypeKey": "normal",
+    "targetStageKey": "production",
+    "portfolioPath": [
+      "fixture-portfolio-child",
+      "fixture-portfolio-parent"
+    ],
+    "routeKey": "pipeline-step",
+    "eventUtc": "2026-11-20T15:00:00Z"
+  },
+  "facts": {
+    "allowedRouteKeys": [
+      "pipeline-step"
+    ],
+    "change": {
+      "changeManagementMode": "built-in",
+      "approvalOverall": "pending",
+      "windowStartUtc": "2026-11-20T14:00:00Z",
+      "windowEndUtc": "2026-11-20T18:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "stop",
+    "payload": {
+      "gateLevel": "enforce",
+      "verdict": "stop",
+      "failMode": "fail-open",
+      "gatePolicyKey": "gp-portfolio-child-tier-1"
+    },
+    "reasons": [
+      {
+        "code": "gate.missing-approval"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Gate Policy",
+        "key": "gp-portfolio-child-tier-1",
+        "role": "won"
+      },
+      {
+        "entity": "Gate Policy",
+        "key": "gp-portfolio-parent-tier-1",
+        "role": "dropped"
+      },
+      {
+        "entity": "Gate Policy",
+        "key": "gp-prod-tier-1--normal",
+        "role": "dropped"
+      }
+    ]
+  }
+}

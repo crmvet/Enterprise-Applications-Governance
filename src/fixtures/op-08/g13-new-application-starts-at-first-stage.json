@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g13-new-application-starts-at-first-stage",
+  "description": "A requester registers a draft application without a stage. The engine sets the first lifecycle stage and Stage Since.",
+  "ruleIds": [
+    "G-13"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "create",
+    "after": {
+      "name": "Fixture Loan Tracker",
+      "status": "app-draft"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "setColumns": {
+        "lifecycleStage": "idea",
+        "stageSince": "2026-11-22T09:00:00Z",
+        "statusMeaning": "draft"
+      }
+    },
+    "reasons": [],
+    "trace": [
+      {
+        "entity": "Lifecycle Stage",
+        "key": "idea",
+        "role": "matched"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

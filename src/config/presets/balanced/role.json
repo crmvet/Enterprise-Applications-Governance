@@ -1,0 +1,117 @@
+{
+  "$comment": [
+    "Fourteen human roles and the two adopted workload roles, as agreed in document 28, issue 7.",
+    "WORKING DEFAULT (open design question 12): deployment-recorder and approval-writer are workload roles, held only through a Workload Grant (C42), never through a group.",
+    "Proposal, not adopted yet: authorization-reporter and consistency-checker are two more workload roles. They also rest on WORKING DEFAULT (open design question 12)."
+  ],
+  "entity": "role",
+  "rows": [
+    { "key": "requester", "label": "Requester", "partyKey": "business", "duties": "Submits intake requests." },
+    {
+      "key": "maker",
+      "label": "Maker",
+      "partyKey": "citizen-developers",
+      "duties": "Builds in approved environments and records links."
+    },
+    {
+      "key": "application-owner",
+      "label": "Application owner",
+      "partyKey": "business",
+      "duties": "Holds owner roles on applications."
+    },
+    {
+      "key": "data-owner",
+      "label": "Data owner",
+      "partyKey": "business",
+      "duties": "Decides data use for a data area."
+    },
+    {
+      "key": "architect",
+      "label": "Architect",
+      "partyKey": "architects",
+      "duties": "Reviews designs and grants exceptions to standards."
+    },
+    {
+      "key": "change-manager",
+      "label": "Change manager",
+      "partyKey": "change-control",
+      "duties": "Runs the change schedule; authorizes tier 3 changes and emergencies."
+    },
+    {
+      "key": "change-board",
+      "label": "Change board",
+      "partyKey": "change-control",
+      "duties": "Decides exceptions about changes, and windows that cover several applications, as a group."
+    },
+    { "key": "pmo", "label": "PMO", "partyKey": "pmo", "duties": "Scores demand and runs portfolio reviews." },
+    {
+      "key": "ai-lead",
+      "label": "AI lead",
+      "partyKey": "ai",
+      "duties": "Keeps the AI guidelines, is consulted on agent autonomy, decides on agents Microsoft flags."
+    },
+    {
+      "key": "security-reviewer",
+      "label": "Security reviewer",
+      "partyKey": "it",
+      "duties": "Runs security reviews and agrees agent autonomy levels."
+    },
+    {
+      "key": "platform-admin",
+      "label": "Platform admin",
+      "partyKey": "it",
+      "duties": "Triages intake, confirms tiers, runs the gap check."
+    },
+    {
+      "key": "configuration-admin",
+      "label": "Configuration admin",
+      "partyKey": "it",
+      "duties": "Instructs and accepts configuration changes.",
+      "canChangeConfiguration": true
+    },
+    {
+      "key": "auditor",
+      "label": "Auditor",
+      "partyKey": "change-control",
+      "duties": "Reads everything, including audit entries, and changes nothing.",
+      "isReadOnly": true
+    },
+    {
+      "key": "reader",
+      "label": "Reader",
+      "partyKey": "business",
+      "duties": "Reads the register, decisions and the change schedule. No audit entries, no restricted columns. Never writes.",
+      "isReadOnly": true
+    },
+    {
+      "key": "deployment-recorder",
+      "label": "Deployment recorder",
+      "partyKey": "it",
+      "duties": "Held by pipeline identities through a workload grant. Writes deployment records.",
+      "isWorkloadRole": true
+    },
+    {
+      "key": "approval-writer",
+      "label": "Approval writer",
+      "partyKey": "it",
+      "duties": "Held by the approval runner through a workload grant. Writes the person's answer on an approval record; never decides.",
+      "isWorkloadRole": true
+    },
+    {
+      "key": "authorization-reporter",
+      "label": "Authorization reporter",
+      "partyKey": "it",
+      "duties": "Held by the client-built ITSM step through a workload grant. Writes authorization facts and evidence links only.",
+      "isWorkloadRole": true,
+      "description": "Proposal, not adopted yet."
+    },
+    {
+      "key": "consistency-checker",
+      "label": "Consistency checker",
+      "partyKey": "it",
+      "duties": "Held by the scheduled consistency check through a workload grant. Reads product rows and writes only \"write outside the engine\" audit findings.",
+      "isWorkloadRole": true,
+      "description": "Proposal, not adopted yet."
+    }
+  ]
+}

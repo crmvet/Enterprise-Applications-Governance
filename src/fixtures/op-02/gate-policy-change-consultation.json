@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "gate-policy-change-consultation",
+  "description": "A gate policy change needs the configuration admin and consults the change manager. The consultation is a card whose answer never counts (rule 9).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "gate-policy-change",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "gate-policy-change-config-admin",
+          "approverRoleKey": "configuration-admin",
+          "isConsultation": false
+        }
+      ],
+      "consultations": [
+        {
+          "ruleKey": "gate-policy-change-change-manager",
+          "approverRoleKey": "change-manager",
+          "isConsultation": true
+        }
+      ]
+    }
+  }
+}

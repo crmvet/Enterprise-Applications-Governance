@@ -1,0 +1,24 @@
+{
+  "$comment": [
+    "Small team overlay (document 21, section 6.5; D-20 small team). The operations are in patch.json.",
+    "It conflicts with strict-separation (V43). Regulated also lists small-team in its conflictsWith (a proposal, see regulated/preset.json)."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "small-team",
+  "label": "Small team",
+  "description": "For a team too small to separate duties. One group may carry several roles, no change board is needed, and self-approval at the top tier needs a recorded exception decision.",
+  "presetKind": "overlay",
+  "extends": null,
+  "conflictsWith": ["strict-separation"],
+  "areas": ["people"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "setupNotes": [
+    {
+      "text": "One Entra group may carry the platform admin, AI lead, configuration admin and change manager roles. No separation rule of the kind roles in different groups names them in this overlay."
+    },
+    {
+      "text": "Self-approval at tier 3 needs an accepted exception decision each time. Once a second person can approve, the exception is no longer needed."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g01-person-without-role-creates-setting-refused",
+  "description": "A person with no product role, such as an environment system administrator, creates a Setting row. Refused: no person, role or tool writes configuration tables directly.",
+  "ruleIds": [
+    "G-01"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "entity": "setting",
+    "operation": "create",
+    "after": {
+      "key": "working-days",
+      "value": [
+        "monday"
+      ]
+    }
+  },
+  "facts": {
+    "configurationSetKind": "working"
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "config.activation-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

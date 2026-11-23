@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_documentation_status output",
+  "description": "The response envelope. On success, data lists, per application, the required documents, the recorded links with their status, what is missing and what is stale. The product never writes the documents themselves.",
+  "x-tool": "get_documentation_status",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "applications"
+      ],
+      "properties": {
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "required",
+              "documents",
+              "missing",
+              "stale"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "required": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "documentTypeKey",
+                    "fromStageKey",
+                    "requirementKey"
+                  ],
+                  "properties": {
+                    "documentTypeKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C22 Document Type"
+                    },
+                    "fromStageKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C12 Lifecycle Stage",
+                      "description": "The stage from which the document is required."
+                    },
+                    "requirementKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C23 Documentation Requirement"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "The documents configuration requires for this application."
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "documentLinkId",
+                    "documentTypeKey",
+                    "url",
+                    "status",
+                    "owner",
+                    "lastUpdatedOn",
+                    "lastCheckedOn",
+                    "staleOn"
+                  ],
+                  "properties": {
+                    "documentLinkId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O19 Document Link"
+                    },
+                    "documentTypeKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C22 Document Type"
+                    },
+                    "url": {
+                      "$ref": "../common.schema.json#/$defs/url"
+                    },
+                    "status": {
+                      "$ref": "../common.schema.json#/$defs/statusValue",
+                      "description": "Draft, current or stale by meaning, as reported."
+                    },
+                    "owner": {
+                      "description": "The document owner.",
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/principalRef"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lastUpdatedOn": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/date"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lastCheckedOn": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/date"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "staleOn": {
+                      "description": "When the document becomes stale, from the document type's freshness.",
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/date"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "The recorded Document Link rows (O19)."
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C22 Document Type"
+                },
+                "description": "Required document types with no link yet. Computed, never stored."
+              },
+              "stale": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O19 Document Link"
+                },
+                "description": "Links that are stale."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The application misses its support guide. Its design notes are current.",
+      "data": {
+        "applications": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "name": "Field visit planner",
+            "required": [
+              {
+                "documentTypeKey": "design-notes",
+                "fromStageKey": "build",
+                "requirementKey": "design-notes-tier-2"
+              },
+              {
+                "documentTypeKey": "support-guide",
+                "fromStageKey": "live",
+                "requirementKey": "support-guide-tier-2"
+              }
+            ],
+            "documents": [
+              {
+                "documentLinkId": "e0000000-0000-4000-8000-000000000001",
+                "documentTypeKey": "design-notes",
+                "url": "https://wiki.example.org/visit-planner/design",
+                "status": {
+                  "label": "Current",
+                  "meaning": "current"
+                },
+                "owner": {
+                  "objectId": "20000000-0000-4000-8000-000000000002",
+                  "displayLabel": "Owner (sample)"
+                },
+                "lastUpdatedOn": "2026-11-10",
+                "lastCheckedOn": "2026-11-10",
+                "staleOn": "2027-05-09"
+              }
+            ],
+            "missing": [
+              "support-guide"
+            ],
+            "stale": []
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "applications[].name"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

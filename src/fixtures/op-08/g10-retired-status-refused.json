@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g10-retired-status-refused",
+  "description": "The configuration retired the cancelled intake status. New writes cannot pick a retired status.",
+  "ruleIds": [
+    "G-10"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "status",
+        "key": "intake-cancelled"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "pmo"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "update",
+    "rowId": "fixture-intake-1",
+    "after": {
+      "status": "intake-cancelled"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "submitted"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "status.unknown",
+        "severity": "error",
+        "ref": "intake-cancelled"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

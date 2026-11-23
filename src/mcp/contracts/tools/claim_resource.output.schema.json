@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "claim_resource output",
+  "description": "The response envelope. On success, data is the write result for the Claim (O23), now claimed, with the component link, the application and, when needed, the Proposed ownership decision.",
+  "x-tool": "claim_resource",
+  "x-ai-write-states": [
+    "link",
+    "draft",
+    "proposed"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Claim (O23).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always claimed.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/claimStatusMeaning",
+              "const": "claimed"
+            }
+          }
+        },
+        "technicalComponentId": {
+          "description": "The component link written. Null only when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O03 Technical Component"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "businessApplicationId": {
+          "description": "Null only when validateOnly was true and a new application was asked for.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O02 Business Application"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applicationCreated": {
+          "type": "boolean",
+          "description": "True when a new application was started as Draft."
+        },
+        "applicationStatus": {
+          "description": "Null only when validateOnly was true and a new application was asked for.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/statusValue",
+              "description": "The application's registration status. Draft for a new application.",
+              "properties": {
+                "meaning": {
+                  "$ref": "../common.schema.json#/$defs/registrationStatusMeaning",
+                  "enum": [
+                    "draft",
+                    "registered",
+                    "archived"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownershipDecisionId": {
+          "description": "The Proposed ownership decision, when the caller does not own the application. Null otherwise.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvalsNeeded": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalNeeded"
+          },
+          "description": "The approvals the ownership decision needs."
+        }
+      },
+      "required": [
+        "technicalComponentId",
+        "businessApplicationId",
+        "applicationCreated",
+        "applicationStatus",
+        "ownershipDecisionId",
+        "approvalsNeeded"
+      ],
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "applicationCreated": {
+                "const": true
+              }
+            },
+            "required": [
+              "applicationCreated"
+            ]
+          },
+          "then": {
+            "properties": {
+              "applicationStatus": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "meaning": {
+                        "const": "draft"
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The item is claimed. A new draft application holds it.",
+      "data": {
+        "recordId": "c0000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Claimed",
+          "meaning": "claimed"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "technicalComponentId": "80000000-0000-4000-8000-000000000003",
+        "businessApplicationId": "10000000-0000-4000-8000-000000000004",
+        "applicationCreated": true,
+        "applicationStatus": {
+          "label": "Draft",
+          "meaning": "draft"
+        },
+        "ownershipDecisionId": null,
+        "approvalsNeeded": []
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/10000000-0000-4000-8000-000000000004"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

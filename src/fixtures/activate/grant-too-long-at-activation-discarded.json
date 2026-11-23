@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "grant-too-long-at-activation-discarded",
+  "description": "The draft adds a workload grant that expires on 2027-11-30. Activation passes its own moment, 2026-11-22, to OP-09 as the validation date, so V28 finds the grant runs more than 365 days and the draft is discarded. A grant never takes effect unchecked.",
+  "ruleIds": [
+    "V28"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 1
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "submitted",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "workload-grant",
+          "key": "release-pipeline",
+          "values": {
+            "label": "release-pipeline",
+            "principalObjectId": "00000000-0000-4000-8000-000000000031",
+            "workloadRoleKey": "deployment-recorder",
+            "reason": "The release pipeline writes deployment records.",
+            "usesFederatedCredential": true,
+            "bindingDetail": "App role assignment on the product registration",
+            "expiresOn": "2027-11-30"
+          }
+        }
+      ]
+    }
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "discarded",
+    "payload": {
+      "discardReason": "invalid at activation",
+      "rebaseOutcome": "invalid"
+    },
+    "reasons": [
+      {
+        "code": "value.range",
+        "severity": "error",
+        "ruleId": "V28",
+        "entity": "Workload Grant",
+        "ref": "release-pipeline"
+      },
+      {
+        "code": "activation.discarded",
+        "severity": "warning"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

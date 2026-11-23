@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "depth-capped-by-setting",
+  "description": "The impact-max-depth setting is 2 here, so a walk that asks for 4 hops goes 2 deep and says the setting capped it.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "impact-max-depth",
+        "values": {
+          "value": 2
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 4
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "reads-data-from"
+      },
+      {
+        "fromId": "fixture-app-c",
+        "toApplicationId": "fixture-app-b",
+        "dependencyTypeKey": "reads-data-from"
+      },
+      {
+        "fromId": "fixture-app-d",
+        "toApplicationId": "fixture-app-c",
+        "dependencyTypeKey": "reads-data-from"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 2,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-c",
+          "direction": "dependants",
+          "depth": 2,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b",
+            "fixture-app-c"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": true
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "impact.depth-capped",
+        "severity": "info",
+        "entity": "Setting",
+        "ref": "impact-max-depth"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

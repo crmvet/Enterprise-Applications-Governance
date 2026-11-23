@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "all-lowest-answers-tier-1",
+  "description": "Every answer implies tier 1, so the computed tier is tier 1 and every answer is decisive.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "reads-only"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "little"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "small-team"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "decisiveAnswers": [
+        {
+          "questionKey": "data-change",
+          "answerKey": "reads-only"
+        },
+        {
+          "questionKey": "failure-impact",
+          "answerKey": "little"
+        },
+        {
+          "questionKey": "reach",
+          "answerKey": "small-team"
+        },
+        {
+          "questionKey": "sensitivity",
+          "answerKey": "none"
+        }
+      ],
+      "missingQuestionKeys": [],
+      "triggeredReviewTypeKeys": [],
+      "triggeredGateRequirementKeys": [],
+      "proposedIsLower": false,
+      "ignoredAnswers": [],
+      "computedTierKey": "tier-1",
+      "computedTierRank": 1
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_link input",
+  "description": "Links a record to work or proof held elsewhere: a work item, an issue, a plan, a test result, an assessment export, an impact list. Also marks a delivery link as moved. A link only: an ID, a URL, a label and a last seen date. Delivery links accept only application, change request and intake request subjects. Evidence links accept decision, approval record, change request, deployment record, review and claim subjects.",
+  "x-tool": "save_link",
+  "type": "object",
+  "required": [
+    "linkCategory",
+    "subjectKind",
+    "subjectId",
+    "linkKindKey",
+    "url",
+    "label"
+  ],
+  "properties": {
+    "linkId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "Update this Delivery Link (O18) or Evidence Link (O20). Leave out to add one."
+    },
+    "linkCategory": {
+      "enum": [
+        "delivery",
+        "evidence"
+      ],
+      "description": "Delivery (O18) or evidence (O20)."
+    },
+    "subjectKind": {
+      "enum": [
+        "business-application",
+        "change-request",
+        "intake-request",
+        "decision",
+        "approval-record",
+        "deployment-record",
+        "review",
+        "claim"
+      ],
+      "description": "The kind of record the link belongs to."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The ID of the record."
+    },
+    "linkKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C37 Link Kind",
+      "description": "The link kind. Its category must match linkCategory."
+    },
+    "externalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "The item's ID in its own tool. Delivery links only."
+    },
+    "url": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "Opens the item. Checked against the link kind's Url Pattern and the forbidden URL patterns."
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "A short label."
+    },
+    "evidenceLevelKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "Evidence links only: from the evidence level value list."
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Evidence links only: the hash of the evidence file."
+    },
+    "movedToUrl": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "Delivery links only: where the item moved, for example after a repository migration."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "linkCategory": {
+            "const": "delivery"
+          }
+        },
+        "required": [
+          "linkCategory"
+        ]
+      },
+      "then": {
+        "properties": {
+          "subjectKind": {
+            "enum": [
+              "business-application",
+              "change-request",
+              "intake-request"
+            ]
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "evidenceLevelKey"
+              ]
+            },
+            {
+              "required": [
+                "digest"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "linkCategory": {
+            "const": "evidence"
+          }
+        },
+        "required": [
+          "linkCategory"
+        ]
+      },
+      "then": {
+        "properties": {
+          "subjectKind": {
+            "enum": [
+              "decision",
+              "approval-record",
+              "change-request",
+              "deployment-record",
+              "review",
+              "claim"
+            ]
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "externalId"
+              ]
+            },
+            {
+              "required": [
+                "movedToUrl"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "linkCategory": "delivery",
+      "subjectKind": "change-request",
+      "subjectId": "d0000000-0000-4000-8000-000000000002",
+      "linkKindKey": "work-item",
+      "externalId": "101",
+      "url": "https://devops.example.org/items/101",
+      "label": "Photo upload story",
+      "clientRequestId": "req-0601"
+    },
+    {
+      "linkCategory": "evidence",
+      "subjectKind": "change-request",
+      "subjectId": "d0000000-0000-4000-8000-000000000002",
+      "linkKindKey": "test-result",
+      "url": "https://tests.example.org/runs/77",
+      "label": "Smoke test run",
+      "evidenceLevelKey": "linked"
+    }
+  ]
+}

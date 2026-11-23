@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v07-retire-both-allowed",
+  "description": "Retiring the support guide type together with the only rows that use it leaves no active row pointing at a retired one. V07 passes.",
+  "ruleIds": ["V07"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "retire", "entity": "documentation-requirement", "key": "support-guide-tier-3" },
+      { "op": "retire", "entity": "document-type", "key": "support-guide" }
+    ]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "baseVersionNumber": 1 },
+  "expected": { "outcome": "valid", "payload": { "isValid": true } }
+}

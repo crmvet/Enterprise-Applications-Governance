@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "evidence-link-update-refused",
+  "description": "An Evidence Link is written once (class A) and never changes. Add a new one instead.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "change-manager"
+      ]
+    }
+  },
+  "input": {
+    "entity": "evidence-link",
+    "operation": "update",
+    "rowId": "fixture-evidence-1",
+    "after": {
+      "url": "https://example.org/evidence/2"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "record.append-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

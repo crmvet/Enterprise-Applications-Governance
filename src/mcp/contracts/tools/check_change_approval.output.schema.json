@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_change_approval output",
+  "description": "The response envelope. On success, data is the answer: the gate level, whether the change is approved, what is missing, the fail mode and whether the emergency path applies. The answer is advice to the pipeline. Release Later.",
+  "$comment": "Release Later, after the gate decision (D-03). The pipeline acts on the answer at Advise or Enforce. The product never stops anything itself.",
+  "x-tool": "check_change_approval",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "gateLevel",
+        "answer",
+        "approved",
+        "missing",
+        "failMode",
+        "emergencyPath",
+        "message",
+        "gateCheckId"
+      ],
+      "properties": {
+        "gateLevel": {
+          "$ref": "../common.schema.json#/$defs/gateLevel"
+        },
+        "answer": {
+          "enum": [
+            "go",
+            "warn",
+            "stop"
+          ],
+          "description": "The gate answer (later contract list). The pipeline decides what to do with it."
+        },
+        "approved": {
+          "type": "boolean",
+          "description": "True when the change has the approvals its policy requires."
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "requirement",
+              "why"
+            ],
+            "properties": {
+              "requirement": {
+                "type": "string",
+                "description": "What is missing, such as change authorization."
+              },
+              "why": {
+                "type": "string",
+                "description": "One plain sentence from the engine."
+              },
+              "decisionTypeKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C18 Decision Type"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "What is missing. Empty when approved."
+        },
+        "failMode": {
+          "$ref": "../common.schema.json#/$defs/failMode"
+        },
+        "emergencyPath": {
+          "type": "boolean",
+          "description": "True when the emergency rule applies: the deployment may go first, and the authorization follows within the emergency follow-up time."
+        },
+        "message": {
+          "type": "string",
+          "description": "One or two plain sentences for the pipeline log."
+        },
+        "gateCheckId": {
+          "description": "The Gate Check row that logs the question and the answer.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "L05 Gate Check"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change is not authorized yet. At Advise the pipeline warns and goes on.",
+      "data": {
+        "gateLevel": "advise",
+        "answer": "warn",
+        "approved": false,
+        "missing": [
+          {
+            "requirement": "change authorization",
+            "why": "The business owner has not approved the change yet.",
+            "decisionTypeKey": "change-authorization"
+          }
+        ],
+        "failMode": "fail-open",
+        "emergencyPath": false,
+        "message": "Change not authorized. Advise: continue and flag.",
+        "gateCheckId": "dc000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

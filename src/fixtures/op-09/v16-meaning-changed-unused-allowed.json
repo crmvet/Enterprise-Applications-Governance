@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v16-meaning-changed-unused-allowed",
+  "description": "The same meaning change with no record using the stage. Nothing was judged by the old meaning, so V16 passes.",
+  "ruleIds": [
+    "V16"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "lifecycle-stage",
+        "key": "test",
+        "values": {
+          "engineMeaning": "live"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

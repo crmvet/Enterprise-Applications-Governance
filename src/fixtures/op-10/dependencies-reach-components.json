@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "dependencies-reach-components",
+  "description": "What does application A need? Application B at one hop and component X at one hop; component Y, which B is hosted on, at two. Components are leaves: they depend on nothing.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependencies",
+    "maxDepth": 3
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-a",
+        "toApplicationId": "fixture-app-b",
+        "dependencyTypeKey": "calls-api-of"
+      },
+      {
+        "fromId": "fixture-app-a",
+        "toComponentId": "fixture-component-x",
+        "dependencyTypeKey": "run-time-need-in-target"
+      },
+      {
+        "fromId": "fixture-app-b",
+        "toComponentId": "fixture-component-y",
+        "dependencyTypeKey": "hosted-on"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependencies",
+      "maxDepthApplied": 3,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependencies",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "calls-api-of"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        },
+        {
+          "componentId": "fixture-component-x",
+          "direction": "dependencies",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "run-time-need-in-target"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-component-x"
+          ]
+        },
+        {
+          "componentId": "fixture-component-y",
+          "direction": "dependencies",
+          "depth": 2,
+          "dependencyTypeKeys": [
+            "calls-api-of",
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b",
+            "fixture-component-y"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

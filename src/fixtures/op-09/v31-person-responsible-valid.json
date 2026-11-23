@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v31-person-responsible-valid",
+  "description": "The same letter given to the PMO, a human role. AI keeps only supports rows with no holder, so V31 passes.",
+  "ruleIds": [
+    "V31"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "decision-right",
+        "key": "intake-r-pmo",
+        "values": {
+          "label": "Intake: PMO",
+          "decisionTypeKey": "intake",
+          "letter": "responsible",
+          "roleKey": "pmo"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

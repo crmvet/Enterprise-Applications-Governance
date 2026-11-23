@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "standard-model-type-emergency",
+  "description": "A draft adds a standard change model on the emergency change type. That type allows authorization after the change, so it is an emergency type, and a standard change model never stands in for its authorization. The engine check standard-model.type refuses the draft.",
+  "tags": [
+    "engine-check"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "urgent-restart",
+        "values": {
+          "label": "Urgent service restart",
+          "changeTypeKey": "emergency",
+          "conditions": [
+            { "conditionKind": "max-affected-applications", "value": 1 },
+            { "conditionKind": "stated", "key": "restart-only", "label": "A restart only, no code or configuration change" }
+          ]
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "standard-model.type",
+        "severity": "error",
+        "entity": "Standard Change Model",
+        "ref": "urgent-restart"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

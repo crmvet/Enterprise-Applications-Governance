@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v02-key-format",
+  "description": "A draft adds a tier whose key has a capital letter. V02 refuses the key and suggests one in the right format.",
+  "ruleIds": ["V02"],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1, "summary": "Add a fourth tier" },
+      "operations": [{ "op": "upsert", "entity": "tier", "key": "Tier-4", "values": { "label": "Tier 4", "rank": 4 } }]
+    }
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "activeSnapshot": { "presetKey": "balanced" } },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false },
+    "reasons": [{ "code": "key.format", "severity": "error", "ruleId": "V02", "entity": "Tier", "ref": "Tier-4" }],
+    "reasonsMatch": "includes"
+  }
+}

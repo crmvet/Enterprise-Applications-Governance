@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v33-ai-approval-lock-off",
+  "description": "A draft turns the AI approval lock off. AI never approves, and the lock is a safety floor, so V33 refuses it.",
+  "ruleIds": [
+    "V33"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "ai-approval-lock",
+        "values": {
+          "value": false
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "setting.ai-approval-lock-off",
+        "severity": "error",
+        "ruleId": "V33",
+        "entity": "Setting",
+        "ref": "ai-approval-lock"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

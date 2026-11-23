@@ -1,0 +1,26 @@
+{
+  "$comment": [
+    "Balanced refuses self-approval at tier 3 and flags a deployer who is the only approver of a production change (document 28, Q10).",
+    "WORKING DEFAULT (open design question 4): Balanced has no config-accepter-differs rule, so the instructing admin may accept their own AI's draft."
+  ],
+  "entity": "separation-rule",
+  "rows": [
+    {
+      "key": "no-self-approval-tier-3",
+      "label": "No self-approval at tier 3",
+      "ruleKind": "approver-differs",
+      "tierKey": "tier-3",
+      "mustDifferFrom": "proposer",
+      "enforcement": "refuse"
+    },
+    {
+      "key": "deployer-not-sole-approver",
+      "label": "Deployer is not the only approver",
+      "ruleKind": "approver-differs",
+      "decisionTypeKey": "change-authorization",
+      "targetStageKey": "production",
+      "mustDifferFrom": "deployer",
+      "enforcement": "flag"
+    }
+  ]
+}

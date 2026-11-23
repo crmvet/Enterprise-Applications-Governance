@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "most-serious-answer-wins",
+  "description": "Balanced, a Power Platform app. One tier 3 answer, two tier 2 answers and one tier 1 answer compute tier 3: the most serious answer wins, and it is the only decisive answer.",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "own-identity"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "team-slowed"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "department"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "decisiveAnswers": [
+        {
+          "questionKey": "data-change",
+          "answerKey": "own-identity"
+        }
+      ],
+      "missingQuestionKeys": [],
+      "triggeredReviewTypeKeys": [],
+      "triggeredGateRequirementKeys": [],
+      "proposedIsLower": false,
+      "ignoredAnswers": [],
+      "computedTierKey": "tier-3",
+      "computedTierRank": 3
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Tier Answer Option",
+        "key": "data-change/own-identity",
+        "role": "won"
+      },
+      {
+        "entity": "Tier Answer Option",
+        "key": "failure-impact/team-slowed",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier Answer Option",
+        "key": "reach/department",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier Answer Option",
+        "key": "sensitivity/none",
+        "role": "matched"
+      },
+      {
+        "entity": "Tier",
+        "key": "tier-3",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

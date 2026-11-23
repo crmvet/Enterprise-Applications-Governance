@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v34-protected-change-active-rules-valid",
+  "description": "The same protected change at activation, with approvals created from the rules of version 2, the active version. V34 passes.",
+  "ruleIds": [
+    "V34",
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "configuration-change-approval",
+        "values": {
+          "requiresTypedReason": false
+        }
+      }
+    ],
+    "versionNumber": 3
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 2
+  },
+  "input": {
+    "mode": "activation",
+    "baseVersionNumber": 2,
+    "activeSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 2
+    }
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

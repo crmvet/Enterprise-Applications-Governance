@@ -1,0 +1,1192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fixture.schema.json",
+  "title": "Engine fixture",
+  "description": "One engine test case: fixtures/<operation>/<case>.json (document 25, section 10). A fixture names the configuration (a preset key plus inline overrides), the evaluation context, the fetched facts, the operation input and the expected result. Fictional data only. The same fixtures run on net10.0 and net48, and later through each adapter (binding parity).",
+  "$comment": "Outcome words come from document 25, section 5 where it names them. OP-08 (allowed, refused), OP-09 (valid, invalid), OP-10 (walked) and OP-11 (computed) are proposals of this schema. The words invalid-input, refused, not-found, conflict and unavailable follow the error categories of document 25, section 7. OP-01 to OP-07, OP-10 and OP-11 and OP-12 to OP-14 describe input (what the caller sends) and facts (what the adapter fetches) as the contract records of document 25, section 5; the runner joins the two into the operation's wire input, and the core's wire readers are just as strict. OP-08 keeps open objects until it is built.",
+  "type": "object",
+  "required": ["schemaVersion", "operation", "case", "snapshot", "context", "expected"],
+  "properties": {
+    "$comment": { "$ref": "config-bundle.schema.json#/$defs/comment" },
+    "schemaVersion": { "const": "1.0" },
+    "operation": {
+      "enum": [
+        "OP-01",
+        "OP-02",
+        "OP-03",
+        "OP-04",
+        "OP-05",
+        "OP-06",
+        "OP-07",
+        "OP-08",
+        "OP-09",
+        "OP-10",
+        "OP-11",
+        "OP-12",
+        "OP-13",
+        "OP-14",
+        "rebase",
+        "activate",
+        "bootstrap"
+      ],
+      "description": "The engine operation under test: OP-01 to OP-14 (document 25, section 5.2), or a configuration operation of document 21 that has no OP number, such as rebase (document 21, section 4.5), activate (document 25, section 6.4) or bootstrap (document 21, section 4.8).",
+      "$comment": "rebase, activate and bootstrap are proposals of this schema: documents 21 and 25 name the operations, but give them no ID or outcome words. The other configuration operations (upgrade draft, revert, seed staging, draft expiry) are added the same way."
+    },
+    "case": {
+      "$ref": "config-bundle.schema.json#/$defs/key",
+      "description": "The case name. It matches the file name without .json."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What the case proves, in one or two plain sentences."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "$ref": "config-bundle.schema.json#/$defs/key" },
+      "uniqueItems": true,
+      "description": "Free tags, for example invariant, preset, ruleid-v11."
+    },
+    "ruleIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^(V[0-9]{2}|G-[0-9]{2})$" },
+      "uniqueItems": true,
+      "description": "The validation rules (V01 to V44) or guard rules (G-01 to G-17) the case covers."
+    },
+    "workingDefaults": {
+      "type": "array",
+      "items": { "enum": [1, 4, 7, 8, 9, 12] },
+      "uniqueItems": true,
+      "description": "The open design questions (document 28, section 3) whose working default this case rests on. An override changes or removes the case.",
+      "$comment": "WORKING DEFAULT (open design question 1), WORKING DEFAULT (open design question 4), WORKING DEFAULT (open design question 7), WORKING DEFAULT (open design question 8), WORKING DEFAULT (open design question 9), WORKING DEFAULT (open design question 12): list the question numbers here so a search finds every case an answer would change."
+    },
+    "snapshot": { "$ref": "#/$defs/snapshot" },
+    "context": { "$ref": "#/$defs/context" },
+    "facts": {
+      "type": "object",
+      "description": "The facts the core asked for in its fact plan, held inline (document 25, section 3.3). Operation specific."
+    },
+    "input": {
+      "type": "object",
+      "description": "The operation input record (document 25, section 5). Operation specific."
+    },
+    "expected": { "$ref": "#/$defs/expected" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-01" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": ["computed", "incomplete", "invalid-input", "refused", "not-found", "conflict", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-02" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "required",
+                  "engine-accept",
+                  "invalid-input",
+                  "refused",
+                  "not-found",
+                  "conflict",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-03" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "pending",
+                  "satisfied",
+                  "rejected",
+                  "expired",
+                  "invalid-input",
+                  "refused",
+                  "not-found",
+                  "conflict",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-04" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "not-applicable",
+                  "allow",
+                  "warn",
+                  "stop",
+                  "allow-with-exception",
+                  "invalid-input",
+                  "refused",
+                  "not-found",
+                  "conflict",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-05" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "inside",
+                  "outside",
+                  "no-window",
+                  "invalid-input",
+                  "refused",
+                  "not-found",
+                  "conflict",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-06" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": ["complete", "incomplete", "invalid-input", "refused", "not-found", "conflict", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-07" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": ["ready", "not-ready", "invalid-input", "refused", "not-found", "conflict", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-08" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "input": { "$ref": "#/$defs/guardInput" },
+          "facts": { "$ref": "#/$defs/guardFacts" },
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": ["allowed", "refused", "invalid-input", "refused", "not-found", "conflict", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-09" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": ["valid", "invalid", "invalid-input", "refused", "not-found", "conflict", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-10" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["walked", "invalid-input", "refused", "not-found", "conflict", "unavailable"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-11" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["computed", "invalid-input", "refused", "not-found", "conflict", "unavailable"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-12" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "qualifies",
+                  "does-not-qualify",
+                  "invalid-input",
+                  "refused",
+                  "not-found",
+                  "conflict",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-13" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["compared", "invalid-input", "refused", "not-found", "conflict", "unavailable"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-14" } } },
+      "then": {
+        "properties": {
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "authorized",
+                  "not-authorized",
+                  "not-applicable",
+                  "invalid-input",
+                  "refused",
+                  "not-found",
+                  "conflict",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-01" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/tierInput" }, "facts": { "$ref": "#/$defs/noFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-02" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/approvalScopeInput" }, "facts": { "$ref": "#/$defs/approvalScopeFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-03" } } },
+      "then": {
+        "required": ["input", "facts"],
+        "properties": { "input": { "$ref": "#/$defs/approvalStatusInput" }, "facts": { "$ref": "#/$defs/approvalStatusFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-04" } } },
+      "then": {
+        "required": ["input", "facts"],
+        "properties": { "input": { "$ref": "#/$defs/gateInput" }, "facts": { "$ref": "#/$defs/gateFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-05" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "snapshot": { "required": ["none"] },
+          "input": { "$ref": "#/$defs/windowInput" },
+          "facts": { "$ref": "#/$defs/noFacts" }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-06" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/documentationInput" }, "facts": { "$ref": "#/$defs/documentationFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-07" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/readinessInput" }, "facts": { "$ref": "#/$defs/readinessFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-10" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/impactInput" }, "facts": { "$ref": "#/$defs/impactFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-11" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/dueInput" }, "facts": { "$ref": "#/$defs/noFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-12" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/standardChangeInput" }, "facts": { "$ref": "#/$defs/standardChangeFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-13" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/gapCompareInput" }, "facts": { "$ref": "#/$defs/gapCompareFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-14" } } },
+      "then": {
+        "required": ["input"],
+        "properties": { "input": { "$ref": "#/$defs/linkedAuthorizationInput" }, "facts": { "$ref": "#/$defs/linkedAuthorizationFacts" } }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-09" } } },
+      "then": { "properties": { "input": { "$ref": "#/$defs/validateInput" } } }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "rebase" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "input": { "$ref": "#/$defs/rebaseInput" },
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["same-base", "rebased", "invalid", "conflict", "invalid-input"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "activate" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "input": { "$ref": "#/$defs/activateInput" },
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["activated", "already-activated", "discarded", "refused", "invalid-input"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "bootstrap" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "snapshot": { "required": ["none"] },
+          "input": { "$ref": "#/$defs/bootstrapInput" },
+          "facts": { "$ref": "#/$defs/noFacts" },
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["bootstrapped", "invalid", "refused", "invalid-input"] }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "snapshot": {
+      "type": "object",
+      "description": "The configuration the case runs against. Exactly one of presetKey, bundle, raw or none.",
+      "properties": {
+        "presetKey": {
+          "$ref": "config-bundle.schema.json#/$defs/key",
+          "description": "A shipped full preset, loaded from its built bundle."
+        },
+        "overlays": {
+          "type": "array",
+          "items": { "$ref": "config-bundle.schema.json#/$defs/key" },
+          "description": "Overlays applied in order after the full preset."
+        },
+        "bundle": {
+          "$ref": "config-bundle.schema.json#/$defs/snapshotBundle",
+          "description": "A whole snapshot written inline, for a case that needs its own small set."
+        },
+        "raw": {
+          "type": "object",
+          "description": "Any document, not checked by this schema. For shape tests (V01) only."
+        },
+        "none": { "const": true, "description": "The operation reads no configuration (for example OP-05)." },
+        "operations": {
+          "type": "array",
+          "items": { "$ref": "config-bundle.schema.json#/$defs/draftOperation" },
+          "description": "Inline overrides: draft patch operations applied after the preset or the bundle."
+        },
+        "versionNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "The configuration version the runner stamps on the snapshot."
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["presetKey"] },
+        { "required": ["bundle"] },
+        { "required": ["raw"] },
+        { "required": ["none"] }
+      ],
+      "allOf": [
+        {
+          "if": { "anyOf": [{ "required": ["raw"] }, { "required": ["none"] }] },
+          "then": { "properties": { "overlays": false, "operations": false } }
+        },
+        { "if": { "required": ["bundle"] }, "then": { "properties": { "overlays": false } } }
+      ]
+    },
+    "context": {
+      "type": "object",
+      "description": "The EvaluationContext (document 25, section 5.1). The runner fills configurationVersion and snapshotHash from the snapshot when they are absent.",
+      "required": ["asOfUtc"],
+      "properties": {
+        "asOfUtc": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The moment the rules apply at. The core never reads a clock."
+        },
+        "configurationVersion": { "type": "integer", "minimum": 1 },
+        "snapshotHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "actor": { "$ref": "#/$defs/actor" },
+        "correlationId": { "type": "string", "minLength": 1 },
+        "clientApp": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "description": "ActorInfo (document 25, section 5.1). Use fictional IDs only.",
+      "required": ["principalId", "principalKind", "actorKind"],
+      "properties": {
+        "principalId": { "type": "string", "minLength": 1 },
+        "principalKind": { "$ref": "config-bundle.schema.json#/$defs/contract.principal-kind" },
+        "actorKind": { "$ref": "config-bundle.schema.json#/$defs/contract.actor-kind-meaning" },
+        "onBehalfOfPrincipalId": { "type": "string", "minLength": 1 },
+        "roleKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "isEngineNested": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "expected": {
+      "type": "object",
+      "description": "The expected EvaluationResult.",
+      "required": ["outcome"],
+      "properties": {
+        "outcome": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "The outcome word." },
+        "payload": { "type": "object", "description": "Expected payload fields." },
+        "payloadMatch": {
+          "enum": ["subset", "exact"],
+          "default": "subset",
+          "description": "subset: an object matches when every field given matches, and other fields are ignored; an array matches when it has the same length and each item matches in order. exact: the payload must equal this."
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedReason" },
+          "description": "Expected reasons, matched by code and any other field given."
+        },
+        "reasonsMatch": {
+          "enum": ["exact", "includes"],
+          "default": "exact",
+          "description": "exact: these reasons and no others. includes: at least these."
+        },
+        "trace": { "type": "array", "items": { "$ref": "#/$defs/expectedTrace" } },
+        "traceMatch": { "enum": ["exact", "includes"], "default": "includes" }
+      },
+      "additionalProperties": false
+    },
+    "expectedReason": {
+      "type": "object",
+      "required": ["code"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$" },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "entity": { "type": "string" },
+        "ref": { "type": "string" },
+        "ruleId": { "type": "string", "pattern": "^(V[0-9]{2}|G-[0-9]{2})$" }
+      },
+      "additionalProperties": false
+    },
+    "expectedTrace": {
+      "type": "object",
+      "required": ["entity", "key", "role"],
+      "properties": {
+        "entity": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["matched", "won", "dropped", "required", "skipped"] }
+      },
+      "additionalProperties": false
+    },
+    "utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,7})?Z$",
+      "description": "A UTC date-time in ISO 8601 with a Z. Time zones are a display concern (document 25, OP-05)."
+    },
+    "portfolioPath": {
+      "type": "array",
+      "items": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+      "uniqueItems": true,
+      "description": "The subject's portfolio and its ancestors, nearest first. Fictional IDs only."
+    },
+    "noFacts": {
+      "type": "object",
+      "maxProperties": 0,
+      "description": "The operation asks the adapter for no facts."
+    },
+    "tierInput": {
+      "type": "object",
+      "description": "OP-01 TierRequest (document 25, section 5.3).",
+      "required": ["applicationKindKey"],
+      "properties": {
+        "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["questionKey", "answerKey"],
+            "properties": {
+              "questionKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "answerKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "proposedTierKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "approvalScopeInput": {
+      "type": "object",
+      "description": "OP-02 ApprovalScopeRequest (document 25, section 5.4), without the fetched standard change result.",
+      "required": ["decisionTypeKey"],
+      "properties": {
+        "decisionTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "lifecycleStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "changeTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "portfolioPath": { "$ref": "#/$defs/portfolioPath" }
+      },
+      "additionalProperties": false
+    },
+    "approvalScopeFacts": {
+      "type": "object",
+      "description": "OP-02 facts: the OP-12 result for a change whose change type requires a standard change model, passed as OP-12 returned it. OP-02 reads qualifies, modelKey and approvedByDecisionId.",
+      "properties": {
+        "standardChange": {
+          "type": "object",
+          "required": ["qualifies"],
+          "properties": {
+            "qualifies": { "type": "boolean" },
+            "modelKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "approvedByDecisionId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+            "failedConditions": { "type": "array", "items": { "type": "object" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "requiredApproval": {
+      "type": "object",
+      "description": "RequiredApproval (document 25, section 5.4), as OP-02 returns it. minimumCount has no lower bound here, so a fixture can prove that 0 is refused at run time.",
+      "required": ["source", "approvalMode"],
+      "properties": {
+        "source": { "enum": ["approval-rule", "accountable"] },
+        "ruleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "decisionRightKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "approverRoleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "approverOwnerRoleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "isConsultation": { "type": "boolean" },
+        "approvalMode": { "$ref": "config-bundle.schema.json#/$defs/contract.approval-mode" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "minimumCount": { "type": "integer" },
+        "timeoutDays": { "type": "integer", "minimum": 0 },
+        "requiresTypedReason": { "type": "boolean" },
+        "guidelineKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "approvalFact": {
+      "type": "object",
+      "description": "ApprovalFact (document 25, section 5.5): one Approval Record. An approved or rejected answer names the responder, the actor and principal kinds, and when it was answered.",
+      "required": ["approvalRecordId", "ruleKey", "outcome"],
+      "properties": {
+        "approvalRecordId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "ruleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "outcome": { "enum": ["pending", "approved", "rejected", "expired", "cancelled", "recommendation-only"] },
+        "responderPrincipalId": { "type": "string", "minLength": 1 },
+        "responderActorKind": { "$ref": "config-bundle.schema.json#/$defs/contract.actor-kind-meaning" },
+        "responderPrincipalKind": { "$ref": "config-bundle.schema.json#/$defs/contract.principal-kind" },
+        "responderHoldsRequiredRole": { "type": "boolean" },
+        "hasTypedReason": { "type": "boolean" },
+        "respondedOnUtc": { "$ref": "#/$defs/utc" },
+        "expiresOnUtc": { "$ref": "#/$defs/utc" }
+      },
+      "additionalProperties": false
+    },
+    "approvalStatusInput": {
+      "type": "object",
+      "description": "OP-03 input the caller sends: the scope that selects C40 Separation Rule rows.",
+      "required": ["scope"],
+      "properties": {
+        "scope": {
+          "type": "object",
+          "required": ["decisionTypeKey"],
+          "properties": {
+            "decisionTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "approvalStatusFacts": {
+      "type": "object",
+      "description": "OP-03 facts the adapter fetches (document 25, section 5.5): the requirements recomputed with the decision's stamped version, the approval records, the separation parties and the accepted exception decisions.",
+      "required": ["requiredApprovals"],
+      "properties": {
+        "requiredApprovals": { "type": "array", "items": { "$ref": "#/$defs/requiredApproval" } },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/approvalFact" } },
+        "parties": {
+          "type": "object",
+          "properties": {
+            "proposerPrincipalId": { "type": "string", "minLength": 1 },
+            "instructingAdminPrincipalId": { "type": "string", "minLength": 1 },
+            "deployerPrincipalIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "ownerRoleHolders": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } } },
+            "roleHolders": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } } }
+          },
+          "additionalProperties": false
+        },
+        "acceptedExceptionDecisionTypeKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" }
+      },
+      "additionalProperties": false
+    },
+    "gateInput": {
+      "type": "object",
+      "description": "OP-04 GateRequest (document 25, section 5.6), without the fetched change facts and allowed routes.",
+      "required": ["mode", "tierKey", "targetStageKey", "routeKey", "eventUtc"],
+      "properties": {
+        "mode": { "enum": ["check", "record"] },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "changeTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "portfolioPath": { "$ref": "#/$defs/portfolioPath" },
+        "routeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "eventUtc": { "$ref": "#/$defs/utc" },
+        "codeApprovalKind": { "enum": ["person", "ai-only", "none", "unknown"] }
+      },
+      "additionalProperties": false
+    },
+    "gateFacts": {
+      "type": "object",
+      "description": "OP-04 facts the adapter fetches: the routes the target's change path allows, and the linked change request's facts.",
+      "required": ["allowedRouteKeys"],
+      "properties": {
+        "allowedRouteKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "change": {
+          "type": "object",
+          "description": "ChangeFact (document 25, section 5.6). hasExternalChangeNumber is shown, never decisive. deployerFlaggedBySeparation is a proposal: OP-03, re-run with the deployers known, flagged a deployer who was a counting approver.",
+          "required": ["changeManagementMode"],
+          "properties": {
+            "changeManagementMode": { "$ref": "config-bundle.schema.json#/$defs/contract.change-management-mode" },
+            "requiresAuthorization": { "type": "boolean" },
+            "allowsAuthorizationAfter": { "type": "boolean" },
+            "approvalOverall": { "enum": ["pending", "satisfied", "rejected", "expired"] },
+            "linkedAuthorization": {
+              "type": "object",
+              "description": "The OP-14 result, passed as OP-14 returned it. OP-04 reads authorized and basis.",
+              "required": ["authorized"],
+              "properties": {
+                "authorized": { "type": "boolean" },
+                "basis": { "enum": ["itsm-step", "attestation", "none"] },
+                "decidingFactId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+                "ignoredFacts": { "type": "array", "items": { "type": "object" } }
+              },
+              "additionalProperties": false
+            },
+            "hasExternalChangeNumber": { "type": "boolean" },
+            "windowStartUtc": { "$ref": "#/$defs/utc" },
+            "windowEndUtc": { "$ref": "#/$defs/utc" },
+            "deployerFlaggedBySeparation": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "windowInput": {
+      "type": "object",
+      "description": "OP-05 input (document 25, section 5.7). The start is inclusive, the end exclusive.",
+      "required": ["eventUtc"],
+      "properties": {
+        "windowStartUtc": { "$ref": "#/$defs/utc" },
+        "windowEndUtc": { "$ref": "#/$defs/utc" },
+        "eventUtc": { "$ref": "#/$defs/utc" }
+      },
+      "additionalProperties": false
+    },
+    "documentationInput": {
+      "type": "object",
+      "description": "OP-06 input (document 25, section 5.8): the application's kind, tier and stage. No tier means the application has none yet, so only requirements without a tier apply.",
+      "required": ["applicationKindKey", "lifecycleStageKey"],
+      "properties": {
+        "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "lifecycleStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "documentationFacts": {
+      "type": "object",
+      "description": "OP-06 facts: the application's Document Links (O19). A link row exists only once a link is recorded; missing is computed (working default, 28 issue 16).",
+      "properties": {
+        "links": { "type": "array", "items": { "$ref": "#/$defs/documentFact" } }
+      },
+      "additionalProperties": false
+    },
+    "documentFact": {
+      "type": "object",
+      "description": "DocumentFact (document 25, section 5.8). status allows missing here only so a fixture can prove the engine refuses a stored missing. lastUpdatedOnUtc is a proposal: it says which link of a type is the newest.",
+      "required": ["documentLinkId", "documentTypeKey", "status"],
+      "properties": {
+        "documentLinkId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "documentTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "requirementKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "status": { "enum": ["draft", "current", "stale", "missing"] },
+        "hasUrl": { "type": "boolean", "default": true },
+        "lastCheckedOnUtc": { "$ref": "#/$defs/utc" },
+        "lastUpdatedOnUtc": { "$ref": "#/$defs/utc" }
+      },
+      "additionalProperties": false
+    },
+    "documentationResult": {
+      "type": "object",
+      "description": "The OP-06 result as OP-06 returns it. OP-07 reads only the items.",
+      "required": ["items"],
+      "properties": {
+        "complete": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["documentTypeKey", "status"],
+            "properties": {
+              "requirementKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "documentTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "status": { "enum": ["draft", "current", "stale", "missing"] },
+              "documentLinkId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "staleOnUtc": { "$ref": "#/$defs/utc" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "missingCount": { "type": "integer", "minimum": 0 },
+        "draftCount": { "type": "integer", "minimum": 0 },
+        "staleCount": { "type": "integer", "minimum": 0 },
+        "staleOnByLink": { "type": "object", "additionalProperties": { "$ref": "#/$defs/utc" } }
+      },
+      "additionalProperties": false
+    },
+    "readinessInput": {
+      "type": "object",
+      "description": "OP-07 input (document 25, section 5.9): the gate and the scope for C14 rows. No tier means the subject has none yet, so only rows without a tier apply.",
+      "required": ["gateKey", "applicationKindKey"],
+      "properties": {
+        "gateKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "readinessFacts": {
+      "type": "object",
+      "description": "OP-07 facts the adapter fetches: accepted decision types, the OP-06 result, done review types, and two proposals: the owner roles with an active assignment (for owner-assigned, document 21) and the gate requirements the tier answers trigger (C10 Triggers Json).",
+      "properties": {
+        "acceptedDecisionTypeKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "documentation": { "$ref": "#/$defs/documentationResult" },
+        "doneReviewTypeKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "assignedOwnerRoleKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "triggeredGateRequirementKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" }
+      },
+      "additionalProperties": false
+    },
+    "impactInput": {
+      "type": "object",
+      "description": "OP-10 input (document 25, section 5.12). Exactly one of startApplicationId and startComponentId; the component start is a proposal that follows document 24, tool 7. The schema leaves both optional and maxDepth unbounded so a fixture can prove the engine refuses a bad value.",
+      "required": ["direction", "maxDepth"],
+      "properties": {
+        "startApplicationId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "startComponentId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "direction": { "enum": ["dependants", "dependencies", "both"] },
+        "maxDepth": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "impactFacts": {
+      "type": "object",
+      "description": "OP-10 facts: the Dependency rows (O04) the adapter fetched. Each points to exactly one of an application and a component.",
+      "properties": {
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["fromId", "dependencyTypeKey"],
+            "properties": {
+              "fromId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "toApplicationId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "toComponentId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "dependencyTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "dueInput": {
+      "type": "object",
+      "description": "OP-11 input (document 25, section 5.12): one due item. subjectKind is a C26 subject kind (review, document, approval or claim); the schema takes any key so a fixture can prove the engine refuses another word. reviewTypeKey and tierKey pick the C25 cadence of a review.",
+      "required": ["subjectKind"],
+      "properties": {
+        "subjectKind": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "dueOnUtc": { "$ref": "#/$defs/utc" },
+        "doneOnUtc": { "$ref": "#/$defs/utc" },
+        "reviewTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "standardChangeInput": {
+      "type": "object",
+      "description": "OP-12 StandardChangeRequest (document 25, section 5.13), without the fetched change facts and model statuses. A named model is the only one tried; otherwise every active model of the change type.",
+      "required": ["changeTypeKey"],
+      "properties": {
+        "changeTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "standardChangeModelKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "standardChangeFacts": {
+      "type": "object",
+      "description": "OP-12 facts the adapter fetches: StandardChangeFacts from the change request, its main application and its affected applications, and the status meaning of each candidate model's Approved By Decision. The schema leaves change optional and the numbers unbounded so a fixture can prove the engine refuses a missing or bad value.",
+      "properties": {
+        "change": {
+          "type": "object",
+          "properties": {
+            "tierRank": { "type": "integer" },
+            "targetStageKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+            "affectedApplicationCount": { "type": "integer" },
+            "componentKindKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+            "windowMinutes": { "type": "integer" },
+            "statedConditionKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" }
+          },
+          "additionalProperties": false
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["modelKey", "approvedByDecisionStatus"],
+            "properties": {
+              "modelKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "approvedByDecisionStatus": { "enum": ["proposed", "accepted", "rejected", "superseded", "withdrawn"] }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "inventoryItem": {
+      "type": "object",
+      "description": "InventoryItem (document 25, section 5.14): only the fields a claim stores (document 22, section 9.1). The engine keeps no copy of the inventory, so any other field is refused.",
+      "required": ["externalId", "sourceType", "estateKey", "labelAsSeen"],
+      "properties": {
+        "externalId": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "sourceType": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "componentKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "estateKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "labelAsSeen": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "targetAsSeen": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "suggestedClaimantObjectId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "gapCompareInput": {
+      "type": "object",
+      "description": "OP-13 GapCompareRequest (document 25, section 5.14), without the fetched components, claims and earlier pages. coveredComponentKindKeys is optional: absent means every active kind with Is Gap Check Covered yes. isLiveQuery is a proposal: true only when the product's own server ran the live query as the admin; absent means as reported. The schema leaves the run and the estates optional so a fixture can prove the engine refuses them missing.",
+      "properties": {
+        "gapCheckRunId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "coveredEstateKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "coveredComponentKindKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "isFinalPage": { "type": "boolean", "default": false },
+        "isLiveQuery": { "type": "boolean", "default": false },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/inventoryItem" } }
+      },
+      "additionalProperties": false
+    },
+    "gapCompareFacts": {
+      "type": "object",
+      "description": "OP-13 facts the adapter fetches: the registered components (O03) in covered estates and kinds, the existing claims (O23) for the keys in play, and the components earlier pages of this run saw. timesSeen and lastSeenRunId on a claim are proposals: the plan writes absolute values, and a run raises Times Seen once.",
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["technicalComponentId", "componentKindKey", "estateKey"],
+            "properties": {
+              "technicalComponentId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "externalId": { "type": "string", "minLength": 1, "maxLength": 400 },
+              "componentKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "estateKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "isRetired": { "type": "boolean", "default": false }
+            },
+            "additionalProperties": false
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["claimId", "claimKey", "statusMeaning", "findingKind"],
+            "properties": {
+              "claimId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "claimKey": { "type": "string", "minLength": 1, "maxLength": 1000 },
+              "statusMeaning": { "enum": ["open", "claimed", "dismissed"] },
+              "findingKind": { "enum": ["unregistered", "vanished"] },
+              "timesSeen": { "type": "integer" },
+              "lastSeenRunId": { "$ref": "config-bundle.schema.json#/$defs/rowId" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "seenThisRun": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/rowId" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "linkedAuthorizationInput": {
+      "type": "object",
+      "description": "OP-14 LinkedAuthorizationRequest (document 25, section 5.15), the change request side: the mode copied onto it and whether its external change number is recorded (shown, never decisive).",
+      "required": ["changeManagementMode"],
+      "properties": {
+        "changeManagementMode": { "$ref": "config-bundle.schema.json#/$defs/contract.change-management-mode" },
+        "hasExternalChangeNumber": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "linkedAuthorizationFacts": {
+      "type": "object",
+      "description": "OP-14 facts the adapter fetches: the authorization facts recorded on the change request (Evidence Links, O20) and the roles allowed to attest (the accountable holder for change authorization in this scope, C31). answeredOnConfirmationCard is a proposal: an attestation counts only when it came through the approval runner's confirmation card.",
+      "properties": {
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["factId", "sourceKind", "state", "reportedOnUtc", "actorKind", "principalKind"],
+            "properties": {
+              "factId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+              "sourceKind": { "enum": ["itsm-step", "attestation"] },
+              "state": { "enum": ["authorized", "not-authorized", "cancelled"] },
+              "hasEvidenceUrl": { "type": "boolean", "default": false },
+              "reportedOnUtc": { "$ref": "#/$defs/utc" },
+              "actorKind": { "$ref": "config-bundle.schema.json#/$defs/contract.actor-kind-meaning" },
+              "principalKind": { "$ref": "config-bundle.schema.json#/$defs/contract.principal-kind" },
+              "attesterHoldsRole": { "type": "boolean", "default": false },
+              "answeredOnConfirmationCard": { "type": "boolean", "default": false }
+            },
+            "additionalProperties": false
+          }
+        },
+        "attesterRoleKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" }
+      },
+      "additionalProperties": false
+    },
+    "validateInput": {
+      "type": "object",
+      "description": "OP-09 input: what is validated and against what (document 25, section 5.11).",
+      "properties": {
+        "mode": {
+          "enum": ["preset-build", "draft", "activation"],
+          "default": "preset-build",
+          "description": "preset-build checks a shipped preset (V44 on, V37 off). draft and activation check a working set."
+        },
+        "activeSnapshot": {
+          "$ref": "#/$defs/snapshot",
+          "description": "The active version, for the diff, V34 and V42."
+        },
+        "baseVersionNumber": { "type": "integer", "minimum": 1, "description": "The draft base version, for V42." }
+      },
+      "additionalProperties": false
+    },
+    "rebaseInput": {
+      "type": "object",
+      "description": "Rebase input (document 21, section 4.5). The fixture's snapshot is the active version, with its versionNumber. The facts are the OP-09 facts the revalidation reads (rowsInUse, approvalRulesVersionNumber, principals, snapshotCharacterLimit); context.asOfUtc is the validation date.",
+      "$comment": "Outcome words, a proposal of this schema: same-base (the draft starts from the active version and is valid), rebased (the base moved, no operation overlaps, and the re-applied draft is valid), invalid (no overlap, but the result fails OP-09), conflict (an operation touches a row that changed in between: refused with V42), invalid-input.",
+      "required": ["baseSnapshot", "draft"],
+      "properties": {
+        "baseSnapshot": {
+          "$ref": "#/$defs/snapshot",
+          "description": "The version the draft started from (C46 Base Version Number), with its versionNumber."
+        },
+        "draft": {
+          "$ref": "config-bundle.schema.json#/$defs/draftPatch",
+          "description": "The draft patch (C46). Its manifest names the base version."
+        }
+      },
+      "additionalProperties": false
+    },
+    "guardInput": {
+      "type": "object",
+      "description": "OP-08 WriteRequest (document 25, section 5.10), the caller side: the entity key, the operation, the row, and the changed columns as lowerCamelCase logical names (configuration references as keys). nestedEffect is a proposal: the engine effect an engine-nested write belongs to, set by the adapter next to the engine-nested marker. The schema leaves entity and operation open enough that a fixture can prove the engine refuses them wrong.",
+      "properties": {
+        "entity": { "type": "string", "minLength": 1, "description": "The entity key, such as decision, approval-record or tier." },
+        "operation": { "type": "string", "minLength": 1, "description": "create, update or delete." },
+        "rowId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "after": { "type": "object", "description": "The changed columns and their new values. Absent for a delete." },
+        "nestedEffect": {
+          "enum": ["update-subject", "supersede-decision", "accept-decision", "activate-configuration", "recompute-approvals", "write-audit-entry"]
+        },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 100 }
+      },
+      "additionalProperties": false
+    },
+    "guardFacts": {
+      "type": "object",
+      "description": "OP-08 facts the adapter fetches: the pre-image (before), the set kind of a configuration row (G-02), the principal kind a Role Group Binding names (G-12), what an accept-decision write rests on (G-17), the OP-07 payload for a gate decision (G-14), and the Request Hash stored with a reused idempotency key (G-15).",
+      "properties": {
+        "before": { "type": "object", "description": "The current values of the columns the rules need." },
+        "configurationSetKind": { "enum": ["preset", "working"] },
+        "bindingPrincipalKind": { "$ref": "config-bundle.schema.json#/$defs/contract.principal-kind" },
+        "acceptance": {
+          "type": "object",
+          "required": ["basis"],
+          "properties": {
+            "basis": { "type": "string", "minLength": 1, "description": "approvals-satisfied, engine-accept or bootstrap." },
+            "approvalStatusOutcome": { "type": "string", "minLength": 1, "description": "The OP-03 outcome word." },
+            "requiredApprovalsOutcome": { "type": "string", "minLength": 1, "description": "The OP-02 outcome word." },
+            "condition": { "enum": ["lowest-tier", "standard-model"] },
+            "noVersionExists": { "type": "boolean", "default": false }
+          },
+          "additionalProperties": false
+        },
+        "gateReadiness": { "type": "object", "description": "The OP-07 payload of the gate, passed on unchanged (gateKey, ready, requirements)." },
+        "priorRequestHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "activateInput": {
+      "type": "object",
+      "description": "Activation input (document 25, section 6.4, step 5). The fixture's snapshot is the active version, with its versionNumber. The facts are the OP-09 facts the revalidation reads (rowsInUse, approvalRulesVersionNumber, principals, snapshotCharacterLimit); context.asOfUtc is the validation date passed to OP-09 (V28) and the published-on date. The actor must be engine-nested: activation is not callable.",
+      "$comment": "Outcome words, a proposal of this schema: activated (the version was created), already-activated (a replay: nothing changes), discarded (a rebase conflict, or the draft fails OP-09 at activation: the draft is discarded and no version is created), refused (not an activation: not engine-nested, a decision that is not accepted, or a draft that is not submitted), invalid-input.",
+      "required": ["baseSnapshot", "draft", "configurationDraftId", "draftStatus", "changeDecisionId", "changeDecisionStatus"],
+      "properties": {
+        "baseSnapshot": {
+          "$ref": "#/$defs/snapshot",
+          "description": "The version the draft started from (C46 Base Version Number), with its versionNumber."
+        },
+        "draft": {
+          "$ref": "config-bundle.schema.json#/$defs/draftPatch",
+          "description": "The draft patch (C46 Change Json). Its manifest names the base version."
+        },
+        "configurationDraftId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "draftStatus": { "enum": ["draft", "submitted", "activated", "discarded"] },
+        "resultingVersionNumber": { "type": "integer", "minimum": 1, "description": "The version an activated draft created." },
+        "changeDecisionId": { "$ref": "config-bundle.schema.json#/$defs/rowId" },
+        "changeDecisionStatus": { "enum": ["proposed", "accepted", "rejected", "superseded", "withdrawn"] },
+        "instructedByPrincipalId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "bootstrapInput": {
+      "type": "object",
+      "description": "Bootstrap input (document 21, section 4.8): the full preset and overlays of the apply operation, and two platform facts. hasInstallRights is a proposal: no product role is bound before version 1, so the adapter states the caller's install rights from the platform. context.asOfUtc is the validation date (V28).",
+      "$comment": "Outcome words, a proposal of this schema: bootstrapped (version 1 was created under the bootstrap rule), invalid (the preset selection fails OP-09), refused (a version exists, or the caller is not a person with install rights), invalid-input.",
+      "required": ["presetKey", "noVersionExists", "hasInstallRights"],
+      "properties": {
+        "presetKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "overlays": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/key" } },
+        "noVersionExists": { "type": "boolean" },
+        "hasInstallRights": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

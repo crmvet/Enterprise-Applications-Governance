@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_application_draft input",
+  "description": "Registers an application that already exists, as Draft. An AI-registered application stays draft until a person confirms it on a confirmation card. The AI client's call alone never registers it. Proposed owners become owners only when their ownership decision is accepted.",
+  "$comment": "WORKING DEFAULT (open design question 9). Registering an application needs a confirmation card to the person. The card goes through the confirmation-channel setting.",
+  "x-tool": "save_application_draft",
+  "type": "object",
+  "required": [
+    "name",
+    "purpose",
+    "applicationKindKey"
+  ],
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Edit this draft. Leave out to start a new one."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The application name."
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What the application is for, in one or two plain sentences."
+    },
+    "applicationKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C15 Application Kind",
+      "description": "The application kind."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Where it sits in the business grouping."
+    },
+    "buildPathKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "From the build-path value list."
+    },
+    "usesAi": {
+      "type": "boolean",
+      "description": "The owner's statement that it uses AI."
+    },
+    "proposedOwners": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "ownerRoleKey",
+          "objectId"
+        ],
+        "properties": {
+          "ownerRoleKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C28 Owner Role",
+            "description": "The owner role."
+          },
+          "objectId": {
+            "$ref": "../common.schema.json#/$defs/guid",
+            "description": "The Entra object ID of the proposed holder."
+          },
+          "isDeputy": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for a deputy."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Owners to propose. They become owners only when the ownership decision is accepted."
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "componentKindKey",
+          "externalId",
+          "url"
+        ],
+        "properties": {
+          "componentKindKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C16 Component Kind",
+            "description": "The component kind."
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "The tool's own ID, such as an app ID."
+          },
+          "url": {
+            "$ref": "../common.schema.json#/$defs/url",
+            "description": "Opens the item in its own tool."
+          },
+          "labelAsSeen": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The item's name in its tool."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "The technical components, as links."
+    },
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "The intake request this registration comes from."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "name": "Field visit planner",
+      "purpose": "Plans site visits for field staff.",
+      "applicationKindKey": "power-platform-app",
+      "usesAi": false,
+      "proposedOwners": [
+        {
+          "ownerRoleKey": "business-owner",
+          "objectId": "20000000-0000-4000-8000-000000000002"
+        }
+      ],
+      "components": [
+        {
+          "componentKindKey": "canvas-app",
+          "externalId": "app-0001",
+          "url": "https://apps.example.org/play/app-0001",
+          "labelAsSeen": "Field Visit Planner"
+        }
+      ],
+      "clientRequestId": "req-0003",
+      "validateOnly": true
+    }
+  ]
+}

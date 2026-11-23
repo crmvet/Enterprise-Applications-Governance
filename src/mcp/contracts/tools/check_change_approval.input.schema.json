@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_change_approval input",
+  "description": "Answers the check step's question: does this change have the approvals its policy requires? Give exactly one of deploymentTargetId and targetExternalId. A read: it logs the question and the answer to a Gate Check row (L05) and changes nothing else. Release Later.",
+  "$comment": "Release Later, after the gate decision (D-03). The pipeline acts on the answer at Advise or Enforce. The product never stops anything itself.",
+  "x-tool": "check_change_approval",
+  "type": "object",
+  "required": [
+    "businessApplicationId"
+  ],
+  "properties": {
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change, if known."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "deploymentTargetId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O15 Deployment Target",
+      "description": "The target by its row ID."
+    },
+    "targetExternalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "The target's ID in its own tool."
+    },
+    "artifactName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The artifact about to be deployed."
+    },
+    "artifactVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Its version text."
+    },
+    "plannedStart": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "When the deployment is about to start. Leave out for now."
+    },
+    "codeApprovalKind": {
+      "$ref": "../common.schema.json#/$defs/codeApprovalKind",
+      "description": "Who approved the code merge, as reported. Evidence only."
+    },
+    "emergency": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the sender asks for the emergency path."
+    },
+    "idempotencyKey": {
+      "$ref": "../common.schema.json#/$defs/idempotencyKey",
+      "description": "The sender's retry key for the Gate Check row. The server makes one when it is left out."
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "deploymentTargetId"
+      ],
+      "not": {
+        "required": [
+          "targetExternalId"
+        ]
+      }
+    },
+    {
+      "required": [
+        "targetExternalId"
+      ],
+      "not": {
+        "required": [
+          "deploymentTargetId"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "changeRequestId": "d0000000-0000-4000-8000-000000000002",
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "targetExternalId": "env-prod-0001",
+      "artifactName": "FieldVisitPlanner",
+      "artifactVersion": "1.4.0.2"
+    }
+  ]
+}

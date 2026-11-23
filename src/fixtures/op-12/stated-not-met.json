@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "stated-not-met",
+  "description": "A model with one stated condition: the change goes past it, so it does not qualify, and the failed condition is listed with its index.",
+  "workingDefaults": [
+    8,
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "only-stated",
+        "values": {
+          "label": "Model only-stated",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "stated",
+              "key": "no-schema-change",
+              "label": "No table or column changes"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard"
+  },
+  "facts": {
+    "change": {
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "only-stated",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": [
+        {
+          "modelKey": "only-stated",
+          "conditionIndex": 0,
+          "conditionKind": "stated",
+          "why": "the requester did not confirm `no-schema-change` (No table or column changes)"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "standard-model.condition-not-met",
+        "severity": "info",
+        "entity": "Standard Change Model",
+        "ref": "only-stated"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Standard Change Model",
+        "key": "only-stated",
+        "role": "skipped"
+      }
+    ]
+  }
+}

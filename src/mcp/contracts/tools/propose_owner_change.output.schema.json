@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "propose_owner_change output",
+  "description": "The response envelope. On success, data is the write result for the ownership decision (O09), status Proposed, with the pending assignments and the approvals needed.",
+  "x-tool": "propose_owner_change",
+  "x-ai-write-states": [
+    "proposed"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the ownership Decision (O09).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always Proposed. Only people accept a decision, on approval cards.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/decisionStatusMeaning",
+              "const": "proposed"
+            }
+          }
+        },
+        "decisionId": {
+          "description": "Null only when validateOnly was true.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pendingAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O06 Owner Assignment"
+          },
+          "description": "Assignments that wait for the decision."
+        },
+        "approvalsNeeded": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalNeeded"
+          }
+        }
+      },
+      "required": [
+        "decisionId",
+        "pendingAssignments",
+        "approvalsNeeded"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The owner handover is proposed. Two people must approve it on their cards.",
+      "data": {
+        "recordId": "60000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Proposed",
+          "meaning": "proposed"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": true,
+        "decisionId": "60000000-0000-4000-8000-000000000002",
+        "pendingAssignments": [
+          "50000000-0000-4000-8000-000000000002"
+        ],
+        "approvalsNeeded": [
+          {
+            "approverOwnerRoleKey": "business-owner",
+            "approvalMode": "everyone-must-approve",
+            "minimumCount": 2
+          }
+        ]
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "implied-tier-retired-unavailable",
+  "description": "A snapshot in which an answer implies a retired tier is broken (V13). The engine refuses and reports it instead of guessing a tier.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "tier",
+        "key": "tier-3"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "own-identity"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "team-slowed"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "department"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "tier.question-options",
+        "severity": "error",
+        "entity": "Tier Answer Option",
+        "ref": "data-change/own-identity"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

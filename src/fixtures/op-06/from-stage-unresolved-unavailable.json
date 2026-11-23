@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "from-stage-unresolved-unavailable",
+  "description": "A requirement whose From Stage does not exist is a broken configuration. The engine refuses and reports it instead of guessing whether the document is required (document 25, rule 10).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "documentation-requirement",
+        "key": "broken-from-stage",
+        "values": {
+          "label": "Broken",
+          "documentTypeKey": "wiki-page",
+          "fromStageKey": "no-such-stage"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "ref.unresolved",
+        "severity": "error",
+        "entity": "Documentation Requirement",
+        "ref": "broken-from-stage"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

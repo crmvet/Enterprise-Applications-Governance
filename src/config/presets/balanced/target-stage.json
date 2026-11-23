@@ -1,0 +1,8 @@
+{
+  "entity": "target-stage",
+  "rows": [
+    { "key": "development", "label": "Development", "rank": 1 },
+    { "key": "test", "label": "Test", "rank": 2 },
+    { "key": "production", "label": "Production", "rank": 3 }
+  ]
+}

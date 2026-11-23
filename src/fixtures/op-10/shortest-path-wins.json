@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "shortest-path-wins",
+  "description": "D depends on A through both B and C. It is listed once, at its shortest depth, through B (ties go to the smaller ID). Two paths that meet again are no loop.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 5
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "calls-api-of"
+      },
+      {
+        "fromId": "fixture-app-c",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "reads-data-from"
+      },
+      {
+        "fromId": "fixture-app-d",
+        "toApplicationId": "fixture-app-b",
+        "dependencyTypeKey": "hosted-on"
+      },
+      {
+        "fromId": "fixture-app-d",
+        "toApplicationId": "fixture-app-c",
+        "dependencyTypeKey": "writes-data-to"
+      },
+      {
+        "fromId": "fixture-app-e",
+        "toApplicationId": "fixture-app-d",
+        "dependencyTypeKey": "calls-api-of"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 5,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "calls-api-of"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-c",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-c"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-d",
+          "direction": "dependants",
+          "depth": 2,
+          "dependencyTypeKeys": [
+            "calls-api-of",
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b",
+            "fixture-app-d"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-e",
+          "direction": "dependants",
+          "depth": 3,
+          "dependencyTypeKeys": [
+            "calls-api-of",
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b",
+            "fixture-app-d",
+            "fixture-app-e"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

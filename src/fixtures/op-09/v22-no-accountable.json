@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v22-no-accountable",
+  "description": "A draft retires the only accountable decision right for go-live. No group gives go-live an accountable holder at any tier, so V22 refuses it once per tier.",
+  "ruleIds": [
+    "V22"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "decision-right",
+        "key": "go-live-a"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "decision-right.accountable",
+        "severity": "error",
+        "ruleId": "V22",
+        "entity": "Decision Type",
+        "ref": "go-live"
+      },
+      {
+        "code": "decision-right.accountable",
+        "severity": "error",
+        "ruleId": "V22",
+        "entity": "Decision Type",
+        "ref": "go-live"
+      },
+      {
+        "code": "decision-right.accountable",
+        "severity": "error",
+        "ruleId": "V22",
+        "entity": "Decision Type",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

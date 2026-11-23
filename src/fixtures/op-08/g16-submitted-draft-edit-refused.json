@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g16-submitted-draft-edit-refused",
+  "description": "A configuration admin edits the patch of a submitted draft. A submitted draft is frozen; withdraw it and start a new one.",
+  "ruleIds": [
+    "G-16"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "update",
+    "rowId": "fixture-draft-1",
+    "after": {
+      "proposalRationale": "Changed my mind."
+    }
+  },
+  "facts": {
+    "before": {
+      "draftStatus": "submitted"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "config.draft-frozen",
+        "severity": "error",
+        "entity": "Configuration Draft"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

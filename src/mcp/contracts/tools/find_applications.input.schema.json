@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_applications input",
+  "description": "Finds business applications by text and filters. Writes nothing.",
+  "$comment": "WORKING DEFAULT (open design question 1). registrationMeanings filters by the fixed registration status meanings, not by labels.",
+  "x-tool": "find_applications",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Words to match in the name or purpose."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only applications in this portfolio."
+    },
+    "applicationKindKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C15 Application Kind"
+      },
+      "description": "Only these application kinds."
+    },
+    "tierKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C08 Tier"
+      },
+      "description": "Only these tiers."
+    },
+    "lifecycleStageKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C12 Lifecycle Stage"
+      },
+      "description": "Only these lifecycle stages."
+    },
+    "ownerObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only applications where this principal holds an owner role."
+    },
+    "registrationMeanings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/registrationStatusMeaning"
+      },
+      "default": [
+        "registered"
+      ],
+      "description": "Only applications with these registration meanings. Registered only by default."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "text": "planner",
+      "tierKeys": [
+        "tier-2",
+        "tier-3"
+      ],
+      "top": 25
+    }
+  ]
+}

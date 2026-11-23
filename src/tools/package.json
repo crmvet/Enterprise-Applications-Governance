@@ -1,0 +1,14 @@
+{
+  "name": "src-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local check tools for src/. Exact pinned versions only.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}

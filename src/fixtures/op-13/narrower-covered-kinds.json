@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-13",
+  "case": "narrower-covered-kinds",
+  "description": "A run that covers fewer kinds, such as the agent kinds an AI administrator's role can see, ignores other items and never vanishes components of the kinds it does not cover.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gapCheckRunId": "fixture-run-2",
+    "coveredEstateKeys": [
+      "power-platform-inventory"
+    ],
+    "coveredComponentKindKeys": [
+      "copilot-studio-agent"
+    ],
+    "isFinalPage": true,
+    "items": [
+      {
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "sourceType": "microsoft.powerapps/canvasapps",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Expense app"
+      },
+      {
+        "externalId": "00000000-0000-0000-0000-000000000116",
+        "sourceType": "microsoft.copilotstudio/agents",
+        "componentKindKey": "copilot-studio-agent",
+        "estateKey": "power-platform-inventory",
+        "labelAsSeen": "Help desk agent"
+      }
+    ]
+  },
+  "facts": {
+    "components": [
+      {
+        "technicalComponentId": "fixture-component-1",
+        "externalId": "00000000-0000-0000-0000-000000000101",
+        "componentKindKey": "canvas-app",
+        "estateKey": "power-platform-inventory"
+      },
+      {
+        "technicalComponentId": "fixture-component-11",
+        "externalId": "00000000-0000-0000-0000-000000000117",
+        "componentKindKey": "copilot-studio-agent",
+        "estateKey": "power-platform-inventory"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "compared",
+    "payload": {
+      "componentLastSeen": [],
+      "newClaims": [
+        {
+          "claimKey": "unregistered|microsoft.copilotstudio/agents|00000000-0000-0000-0000-000000000116",
+          "componentKindKey": "copilot-studio-agent"
+        }
+      ],
+      "vanishedClaims": [
+        {
+          "claimKey": "vanished|copilot-studio-agent|00000000-0000-0000-0000-000000000117",
+          "technicalComponentId": "fixture-component-11"
+        }
+      ],
+      "counts": {
+        "itemsSeen": 1,
+        "newClaims": 1,
+        "vanishedClaims": 1,
+        "ignored": 1
+      }
+    },
+    "reasons": [
+      {
+        "code": "gap-check.as-reported",
+        "severity": "info",
+        "entity": "Gap Check Run",
+        "ref": "fixture-run-2"
+      },
+      {
+        "code": "gap-check.item-ignored",
+        "ref": "canvas-app"
+      }
+    ],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Component Kind",
+        "key": "copilot-studio-agent",
+        "role": "matched"
+      },
+      {
+        "entity": "List Value",
+        "key": "estate/power-platform-inventory",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

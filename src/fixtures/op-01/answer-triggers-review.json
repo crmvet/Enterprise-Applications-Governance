@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-01",
+  "case": "answer-triggers-review",
+  "description": "An agent that executes on its own is tier 3, and the answer adds the security review through its Triggers Json.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "agent",
+    "answers": [
+      {
+        "questionKey": "data-change",
+        "answerKey": "reads-only"
+      },
+      {
+        "questionKey": "failure-impact",
+        "answerKey": "little"
+      },
+      {
+        "questionKey": "reach",
+        "answerKey": "small-team"
+      },
+      {
+        "questionKey": "sensitivity",
+        "answerKey": "none"
+      },
+      {
+        "questionKey": "agent-autonomy",
+        "answerKey": "executes"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "decisiveAnswers": [
+        {
+          "questionKey": "agent-autonomy",
+          "answerKey": "executes"
+        }
+      ],
+      "missingQuestionKeys": [],
+      "triggeredReviewTypeKeys": [
+        "security-review"
+      ],
+      "triggeredGateRequirementKeys": [],
+      "proposedIsLower": false,
+      "ignoredAnswers": [],
+      "computedTierKey": "tier-3",
+      "computedTierRank": 3
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

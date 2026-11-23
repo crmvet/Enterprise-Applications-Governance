@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "go-live-tier-3-all-met-ready",
+  "description": "At tier 3 the go-live gate needs the acceptance, a current runbook (from the OP-06 result) and a done security review. All three are met.",
+  "workingDefaults": [
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-3",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "documentation": {
+      "items": [
+        {
+          "requirementKey": "runbook-tier-3",
+          "documentTypeKey": "runbook",
+          "status": "current",
+          "documentLinkId": "fixture-link-r1"
+        }
+      ]
+    },
+    "doneReviewTypeKeys": [
+      "security-review"
+    ]
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": true,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": true,
+          "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-runbook-tier-3",
+          "requirementKind": "document-current",
+          "requiredDocumentTypeKey": "runbook",
+          "met": true,
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-security-tier-3",
+          "requirementKind": "review-done",
+          "requiredReviewTypeKey": "security-review",
+          "met": true,
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

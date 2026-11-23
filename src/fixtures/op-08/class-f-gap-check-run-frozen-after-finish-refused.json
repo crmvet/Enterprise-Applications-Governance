@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-f-gap-check-run-frozen-after-finish-refused",
+  "description": "Class F, O22: frozen when Finished On is set (model note of O22). A page sent again for a finished run is refused, so the run's counts stay what the run saw.",
+  "tags": [
+    "hardening-1",
+    "class-f"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "gap-check-run",
+    "operation": "update",
+    "rowId": "fixture-run-1",
+    "after": {
+      "itemsSeen": 60
+    }
+  },
+  "facts": {
+    "before": {
+      "itemsSeen": 40,
+      "finishedOn": "2026-11-22T08:30:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

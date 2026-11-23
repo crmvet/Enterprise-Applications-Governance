@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "depth-capped-by-request",
+  "description": "The walk asked for two hops and D sits at three, so the walk stops at two and says there is more to reach.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 2
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "reads-data-from"
+      },
+      {
+        "fromId": "fixture-app-c",
+        "toApplicationId": "fixture-app-b",
+        "dependencyTypeKey": "reads-data-from"
+      },
+      {
+        "fromId": "fixture-app-d",
+        "toApplicationId": "fixture-app-c",
+        "dependencyTypeKey": "reads-data-from"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 2,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-c",
+          "direction": "dependants",
+          "depth": 2,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b",
+            "fixture-app-c"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": true
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "impact.depth-capped",
+        "severity": "info"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

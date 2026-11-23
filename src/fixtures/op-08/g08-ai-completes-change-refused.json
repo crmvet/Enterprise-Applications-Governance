@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-completes-change-refused",
+  "description": "An AI client sets a change request to completed. An AI actor cannot set a completed status; a person must confirm it.",
+  "ruleIds": [
+    "G-08"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "change-request",
+    "operation": "update",
+    "rowId": "fixture-change-1",
+    "after": {
+      "status": "change-completed"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "in-progress"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "ai.status-not-allowed",
+        "severity": "error",
+        "ref": "change-completed"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

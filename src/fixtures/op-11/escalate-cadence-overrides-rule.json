@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "escalate-cadence-overrides-rule",
+  "description": "A tier 3 owner check escalates 7 days after its due date (its cadence), not 14 (the reminder rule): the cadence is the more specific row. Today is that day, so the reminder goes to the deputy and replaces the repeat that also falls today.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "dueOnUtc": "2026-11-15T12:00:00Z",
+    "reviewTypeKey": "owner-check",
+    "tierKey": "tier-3"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "review",
+      "cadenceKey": "owner-check-tier-3",
+      "dueOnUtc": "2026-11-15T12:00:00Z",
+      "isOverdue": true,
+      "actions": [
+        {
+          "action": "escalate",
+          "ruleKey": "review-reminder",
+          "reminderNumber": 4,
+          "escalated": true,
+          "channelKey": "teams"
+        }
+      ],
+      "nextActionOnUtc": "2026-11-29T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

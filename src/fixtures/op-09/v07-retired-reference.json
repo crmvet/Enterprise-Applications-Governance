@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v07-retired-reference",
+  "description": "A draft retires the runbook document type while active documentation requirements and gate requirements still point at it. V07 reports each active row.",
+  "ruleIds": ["V07"],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [{ "op": "retire", "entity": "document-type", "key": "runbook" }]
+  },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "draft", "baseVersionNumber": 1 },
+  "expected": {
+    "outcome": "invalid",
+    "payload": { "isValid": false, "changeSummary": ["Retired Document Type `runbook`."] },
+    "reasons": [
+      { "code": "ref.inactive", "severity": "error", "ruleId": "V07", "entity": "Documentation Requirement", "ref": "runbook-tier-2" },
+      { "code": "ref.inactive", "severity": "error", "ruleId": "V07", "entity": "Documentation Requirement", "ref": "runbook-tier-3" },
+      { "code": "ref.inactive", "severity": "error", "ruleId": "V07", "entity": "Gate Requirement", "ref": "go-live-runbook-tier-2" },
+      { "code": "ref.inactive", "severity": "error", "ruleId": "V07", "entity": "Gate Requirement", "ref": "go-live-runbook-tier-3" }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

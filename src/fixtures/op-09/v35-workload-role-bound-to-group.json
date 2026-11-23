@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v35-workload-role-bound-to-group",
+  "description": "A draft binds the deployment recorder, a workload role, to a directory group. Workload roles reach workload identities only through a workload grant, so V35 refuses it. The first binding also starts V37, which warns about the approver roles still unbound. The ID is fictional.",
+  "ruleIds": [
+    "V35"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "role-group-binding",
+        "key": "pipelines",
+        "values": {
+          "label": "pipelines",
+          "roleKey": "deployment-recorder",
+          "entraGroupObjectId": "00000000-0000-4000-8000-000000000041",
+          "bindingMethod": "entra-app-role-assignment",
+          "bindingDetail": "App role on the product registration"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "role.binding-not-group",
+        "severity": "error",
+        "ruleId": "V35",
+        "entity": "Role Group Binding",
+        "ref": "pipelines"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "architect"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "change-board"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "change-manager"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "configuration-admin"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "security-reviewer"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

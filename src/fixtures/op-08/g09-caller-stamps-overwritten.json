@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g09-caller-stamps-overwritten",
+  "description": "A person creates an intake request and sends stamp values: actor kind engine and Is AI Created true. The engine replaces both with its own values and says so.",
+  "ruleIds": [
+    "G-09"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "after": {
+      "status": "intake-draft",
+      "performedByActorKind": "engine",
+      "isAiCreated": true
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "setColumns": {
+        "performedByActorKind": "person",
+        "isAiCreated": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "isAiCreated"
+      },
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "performedByActorKind"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

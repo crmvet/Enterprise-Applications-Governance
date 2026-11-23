@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-created-decision-forced-proposed",
+  "description": "An AI client acting for a person creates a decision and names the accepted status. Rows an AI creates are forced to draft or proposed: the engine sets the proposed status, marks the row AI created, and says so.",
+  "ruleIds": [
+    "G-08"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "architect"
+      ]
+    },
+    "clientApp": "Fixture Client"
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "create",
+    "rowId": "fixture-decision-9",
+    "after": {
+      "decisionType": "design",
+      "status": "decision-accepted",
+      "statement": "Decided: use the shared data model."
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "status": "decision-proposed",
+        "statusMeaning": "proposed",
+        "isAiCreated": true,
+        "performedByActorKind": "ai-client-for-person",
+        "onBehalfOf": "fixture-person-1",
+        "clientApp": "Fixture Client",
+        "configurationSetVersion": 1
+      }
+    },
+    "reasons": [
+      {
+        "code": "ai.forced-draft",
+        "severity": "info",
+        "entity": "Decision",
+        "ref": "decision-proposed"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

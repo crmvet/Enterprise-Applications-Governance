@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-engine-restart-creates-pending-record-allowed",
+  "description": "An approval timed out, and the engine restarts it. A restarted approval is a new row (document 22, O10), created with the pending outcome as an engine-nested write of the recompute-approvals effect, under the identity whose write started the effect. Allowed.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "create",
+    "after": {
+      "decision": "fixture-decision-1",
+      "approvalRule": "change-auth-tier-3",
+      "requiredRole": "change-manager",
+      "outcome": "approval-pending",
+      "requestedOn": "2026-11-22T09:00:00Z",
+      "expiresOn": "2026-11-27T09:00:00Z"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "outcomeMeaning": "pending",
+        "performedByActorKind": "engine",
+        "onBehalfOf": "fixture-person-2"
+      },
+      "effects": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

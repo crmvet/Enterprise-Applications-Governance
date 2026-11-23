@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_owner_leave output",
+  "description": "The response envelope. On success, data is the write result for the Principal Reference (O05), plus the affected applications and the owner check reviews the engine opened. nextSteps point to propose_owner_change.",
+  "x-tool": "record_owner_leave",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Principal Reference (O05). Leaves On is stored as reported.",
+      "properties": {
+        "status": {
+          "type": "null",
+          "description": "A Principal Reference has no status."
+        },
+        "affected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "ownerRoleKey",
+              "hasDeputy"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "hasDeputy": {
+                "type": "boolean",
+                "description": "True when the role has a deputy."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "ownerCheckReviewIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O21 Review"
+          },
+          "description": "The owner check reviews the engine opened."
+        },
+        "pendingApprovals": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Pending approvals that move to the deputy on the leave date."
+        }
+      },
+      "required": [
+        "affected",
+        "ownerCheckReviewIds",
+        "pendingApprovals"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The leave is recorded. One application is affected and has a deputy.",
+      "data": {
+        "recordId": "f1000000-0000-4000-8000-000000000002",
+        "status": null,
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "affected": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "ownerRoleKey": "business-owner",
+            "hasDeputy": true
+          }
+        ],
+        "ownerCheckReviewIds": [
+          "b0000000-0000-4000-8000-000000000001"
+        ],
+        "pendingApprovals": 0
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "propose_owner_change",
+          "inputs": {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "columns-unknown-draft-column-invalid-input",
+  "description": "The column check covers C46 too: an AI client for a configuration admin creates a draft with changeSet, which is not a column of Configuration Draft (the patch is Change Json). Invalid input.",
+  "ruleIds": [
+    "G-16"
+  ],
+  "tags": [
+    "hardening-1",
+    "columns"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "configuration-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "configuration-draft",
+    "operation": "create",
+    "after": {
+      "changeSet": {
+        "operations": []
+      },
+      "proposalRationale": "Rename a tier."
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-column",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

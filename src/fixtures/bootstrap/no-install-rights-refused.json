@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "no-install-rights-refused",
+  "description": "A person without the platform's install rights runs the apply. Refused.",
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person"
+    }
+  },
+  "input": {
+    "presetKey": "balanced",
+    "noVersionExists": true,
+    "hasInstallRights": false
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "bootstrap.not-allowed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

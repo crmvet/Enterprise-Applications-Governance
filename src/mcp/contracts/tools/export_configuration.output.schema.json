@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "export_configuration output",
+  "description": "The response envelope. On success, data is the files, one per entity, and the content hash of the version.",
+  "x-tool": "export_configuration",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "configurationSet",
+        "files",
+        "contentHash"
+      ],
+      "properties": {
+        "configurationSet": {
+          "type": "object",
+          "required": [
+            "key",
+            "version"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C01 Configuration Set"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "content"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^config/presets/[a-z][a-z0-9-]*/[a-z][a-z0-9-]*\\.json$",
+                "description": "config/presets/<set-key>/<entity-key>.json (document 20, section 3.6)."
+              },
+              "content": {
+                "type": "string",
+                "description": "The file text: JSON in the seed format of document 21.",
+                "x-untrusted": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "contentHash": {
+          "$ref": "../common.schema.json#/$defs/contentHash"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Version 3 exported as 1 file.",
+      "data": {
+        "configurationSet": {
+          "key": "working",
+          "version": 3
+        },
+        "files": [
+          {
+            "path": "config/presets/working/tier.json",
+            "content": "{\"entity\":\"tier\",\"rows\":[{\"key\":\"tier-1\",\"label\":\"Tier 1\",\"rank\":1}]}"
+          }
+        ],
+        "contentHash": "a3f1c2d4e5b60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "files[].content"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

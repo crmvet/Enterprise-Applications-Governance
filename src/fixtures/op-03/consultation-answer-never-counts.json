@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "consultation-answer-never-counts",
+  "description": "The consulted change manager answers approved. A consultation answer is a recommendation only: it is shown and never counts. The configuration admin's approval satisfies the decision.",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "gate-policy-change"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "gate-policy-change-config-admin",
+        "approverRoleKey": "configuration-admin",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 1,
+        "requiresTypedReason": true
+      },
+      {
+        "source": "approval-rule",
+        "ruleKey": "gate-policy-change-change-manager",
+        "approverRoleKey": "change-manager",
+        "isConsultation": true,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "requiresTypedReason": false
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "c1",
+        "ruleKey": "gate-policy-change-change-manager",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-second",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      },
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "gate-policy-change-config-admin",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer",
+      "instructingAdminPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied",
+      "requirements": [
+        {
+          "requirementKey": "gate-policy-change-config-admin",
+          "state": "satisfied",
+          "countingRecordIds": [
+            "r1"
+          ]
+        }
+      ],
+      "consultations": [
+        {
+          "requirementKey": "gate-policy-change-change-manager",
+          "recordIds": [
+            "c1"
+          ]
+        }
+      ],
+      "countsByRecord": {
+        "c1": false,
+        "r1": true
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.consultation-not-counted",
+        "severity": "info",
+        "ref": "c1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

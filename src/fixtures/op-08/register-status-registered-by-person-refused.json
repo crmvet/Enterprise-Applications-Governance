@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "register-status-registered-by-person-refused",
+  "description": "An application owner writes status app-registered on a draft application. Document 26, sections 5.3 and 6.2: the registration status is engine-written, only from accepted decisions.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "update",
+    "rowId": "fixture-app-1",
+    "after": {
+      "status": "app-registered"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error",
+        "ref": "fixture-app-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

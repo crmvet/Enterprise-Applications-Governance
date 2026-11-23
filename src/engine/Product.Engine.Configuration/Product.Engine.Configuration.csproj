@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Engine configuration (document 25, section 3.1).
+    Reads and writes snapshot JSON, applies and rebases draft patches, reads seed and preset files,
+    computes the diff and the change summary.
+    The only engine assembly that may use System.Text.Json. Today it works on the core's own JSON model.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>$(EngineTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Engine.Core\Product.Engine.Core.csproj" />
+  </ItemGroup>
+
+  <!-- net10.0 has System.Text.Json in the runtime. The other targets take the pinned package. -->
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <!-- The configuration schemas, embedded so V01 checks the same shape everywhere.
+       Code finds them by the end of the name (".Schemas.<file>"), so the product rename does not break them. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\config\schema\config-bundle.schema.json" Link="Schemas\config-bundle.schema.json" LogicalName="Product.Engine.Configuration.Schemas.config-bundle.schema.json" />
+    <EmbeddedResource Include="..\..\config\schema\client-binding-patch.schema.json" Link="Schemas\client-binding-patch.schema.json" LogicalName="Product.Engine.Configuration.Schemas.client-binding-patch.schema.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Engine.Configuration.Tests" />
+  </ItemGroup>
+</Project>

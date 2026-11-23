@@ -1,0 +1,83 @@
+{
+  "case": "op-08-recorded-plan-tampered",
+  "context": {
+    "actor": {
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "roleKeys": [
+        "architect"
+      ]
+    },
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "clientApp": "Fixture Client"
+  },
+  "description": "A stored OP-08 write plan that says an AI client's new decision was set accepted. The replayed plan stores it as proposed, so the payload differs at /setColumns/status and /setColumns/statusMeaning.",
+  "operation": "OP-08",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [],
+      "isNoOp": false,
+      "isReplay": false,
+      "refusals": [],
+      "removedColumns": [],
+      "requestHash": "ee0f33aab73dce744e32f5bce9ab2272facdbacdc74d3132567e3c1ef336a595",
+      "setColumns": {
+        "clientApp": "Fixture Client",
+        "configurationSetVersion": 1,
+        "createdByPrincipal": "fixture-person-1",
+        "engineCheckedOn": "2026-11-22T09:00:00Z",
+        "engineVersion": "0.1.0",
+        "isAiCreated": true,
+        "onBehalfOf": "fixture-person-1",
+        "performedByActorKind": "ai-client-for-person",
+        "performedByPrincipal": "fixture-person-1",
+        "status": "decision-accepted",
+        "statusMeaning": "accepted"
+      }
+    },
+    "reasons": [
+      {
+        "code": "ai.forced-draft",
+        "entity": "Decision",
+        "message": "An AI actor created this Decision, so the engine set its status to `decision-proposed` (proposed) instead of `decision-accepted`. A person confirms it later.",
+        "ref": "decision-proposed",
+        "severity": "info"
+      }
+    ],
+    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "trace": [
+      {
+        "entity": "Status",
+        "key": "decision-accepted",
+        "role": "matched"
+      }
+    ]
+  },
+  "request": {
+    "after": {
+      "decisionType": "design",
+      "statement": "Decided: use the shared data model.",
+      "status": "decision-accepted"
+    },
+    "entity": "decision",
+    "operation": "create",
+    "rowId": "fixture-decision-9"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": [
+    "replay",
+    "tampered"
+  ],
+  "expectedDifferences": [
+    "payload"
+  ]
+}

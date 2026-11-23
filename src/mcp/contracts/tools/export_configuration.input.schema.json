@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "export_configuration input",
+  "description": "Returns a configuration set version as seed-format files, so the configuration can live in a repository and come back through propose_configuration_change. Writes nothing.",
+  "x-tool": "export_configuration",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "This version. Leave out for the version in force."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "version": 2
+    }
+  ]
+}

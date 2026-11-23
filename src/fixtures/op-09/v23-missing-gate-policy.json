@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v23-missing-gate-policy",
+  "description": "A draft retires the gate policy for tier 1, standard changes and development. That combination no longer resolves to a gate policy, so V23 refuses it.",
+  "ruleIds": [
+    "V23"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "gate-policy",
+        "key": "gp-development--tier-1--standard"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "gate-policy.coverage",
+        "severity": "error",
+        "ruleId": "V23",
+        "entity": "Gate Policy"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

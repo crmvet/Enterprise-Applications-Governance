@@ -1,0 +1,151 @@
+{
+  "$comment": [
+    "WORKING DEFAULT (open design question 1): engineMeaning is a fixed engine meaning. The label stays configurable."
+  ],
+  "entity": "status",
+  "rows": [
+    { "key": "decision-proposed", "label": "Proposed", "appliesToEntity": "decision", "engineMeaning": "proposed" },
+    { "key": "decision-accepted", "label": "Accepted", "appliesToEntity": "decision", "engineMeaning": "accepted" },
+    { "key": "decision-rejected", "label": "Rejected", "appliesToEntity": "decision", "engineMeaning": "rejected" },
+    {
+      "key": "decision-superseded",
+      "label": "Superseded",
+      "appliesToEntity": "decision",
+      "engineMeaning": "superseded"
+    },
+    { "key": "decision-withdrawn", "label": "Withdrawn", "appliesToEntity": "decision", "engineMeaning": "withdrawn" },
+    { "key": "intake-draft", "label": "Draft", "appliesToEntity": "intake-request", "engineMeaning": "draft" },
+    {
+      "key": "intake-submitted",
+      "label": "Submitted",
+      "appliesToEntity": "intake-request",
+      "engineMeaning": "submitted"
+    },
+    {
+      "key": "intake-in-progress",
+      "label": "In progress",
+      "appliesToEntity": "intake-request",
+      "engineMeaning": "in-progress"
+    },
+    {
+      "key": "intake-completed",
+      "label": "Completed",
+      "appliesToEntity": "intake-request",
+      "engineMeaning": "completed"
+    },
+    { "key": "intake-rejected", "label": "Declined", "appliesToEntity": "intake-request", "engineMeaning": "rejected" },
+    {
+      "key": "intake-withdrawn",
+      "label": "Withdrawn",
+      "appliesToEntity": "intake-request",
+      "engineMeaning": "withdrawn"
+    },
+    {
+      "key": "intake-cancelled",
+      "label": "Cancelled",
+      "appliesToEntity": "intake-request",
+      "engineMeaning": "cancelled"
+    },
+    { "key": "change-draft", "label": "Draft", "appliesToEntity": "change-request", "engineMeaning": "draft" },
+    {
+      "key": "change-submitted",
+      "label": "Submitted",
+      "appliesToEntity": "change-request",
+      "engineMeaning": "submitted"
+    },
+    {
+      "key": "change-in-progress",
+      "label": "Scheduled",
+      "appliesToEntity": "change-request",
+      "engineMeaning": "in-progress"
+    },
+    { "key": "change-completed", "label": "Closed", "appliesToEntity": "change-request", "engineMeaning": "completed" },
+    { "key": "change-rejected", "label": "Rejected", "appliesToEntity": "change-request", "engineMeaning": "rejected" },
+    {
+      "key": "change-withdrawn",
+      "label": "Withdrawn",
+      "appliesToEntity": "change-request",
+      "engineMeaning": "withdrawn"
+    },
+    {
+      "key": "change-cancelled",
+      "label": "Cancelled",
+      "appliesToEntity": "change-request",
+      "engineMeaning": "cancelled"
+    },
+    { "key": "app-draft", "label": "Draft", "appliesToEntity": "business-application", "engineMeaning": "draft" },
+    {
+      "key": "app-registered",
+      "label": "Registered",
+      "appliesToEntity": "business-application",
+      "engineMeaning": "registered"
+    },
+    {
+      "key": "app-archived",
+      "label": "Archived",
+      "appliesToEntity": "business-application",
+      "engineMeaning": "archived"
+    },
+    { "key": "approval-pending", "label": "Waiting", "appliesToEntity": "approval-record", "engineMeaning": "pending" },
+    {
+      "key": "approval-approved",
+      "label": "Approved",
+      "appliesToEntity": "approval-record",
+      "engineMeaning": "approved"
+    },
+    {
+      "key": "approval-rejected",
+      "label": "Rejected",
+      "appliesToEntity": "approval-record",
+      "engineMeaning": "rejected"
+    },
+    { "key": "approval-expired", "label": "Expired", "appliesToEntity": "approval-record", "engineMeaning": "expired" },
+    {
+      "key": "approval-cancelled",
+      "label": "Cancelled",
+      "appliesToEntity": "approval-record",
+      "engineMeaning": "cancelled"
+    },
+    {
+      "key": "approval-recommendation",
+      "label": "Recommendation only",
+      "appliesToEntity": "approval-record",
+      "engineMeaning": "recommendation-only"
+    },
+    {
+      "key": "document-missing",
+      "label": "Missing",
+      "appliesToEntity": "document-link",
+      "engineMeaning": "missing",
+      "description": "Shown for a required document with no link. Computed from configuration, never stored."
+    },
+    { "key": "document-draft", "label": "Draft", "appliesToEntity": "document-link", "engineMeaning": "draft" },
+    { "key": "document-current", "label": "Current", "appliesToEntity": "document-link", "engineMeaning": "current" },
+    { "key": "document-stale", "label": "Stale", "appliesToEntity": "document-link", "engineMeaning": "stale" },
+    { "key": "claim-open", "label": "Open", "appliesToEntity": "claim", "engineMeaning": "open" },
+    { "key": "claim-claimed", "label": "Claimed", "appliesToEntity": "claim", "engineMeaning": "claimed" },
+    { "key": "claim-dismissed", "label": "Dismissed", "appliesToEntity": "claim", "engineMeaning": "dismissed" },
+    {
+      "key": "deployment-succeeded",
+      "label": "Succeeded",
+      "appliesToEntity": "deployment-record",
+      "engineMeaning": "succeeded"
+    },
+    {
+      "key": "deployment-partly",
+      "label": "Partly succeeded",
+      "appliesToEntity": "deployment-record",
+      "engineMeaning": "partly-succeeded"
+    },
+    { "key": "deployment-failed", "label": "Failed", "appliesToEntity": "deployment-record", "engineMeaning": "failed" },
+    {
+      "key": "deployment-not-deployed",
+      "label": "Not deployed",
+      "appliesToEntity": "deployment-record",
+      "engineMeaning": "not-deployed"
+    },
+    { "key": "review-due", "label": "Due", "appliesToEntity": "review", "engineMeaning": "due" },
+    { "key": "review-done", "label": "Done", "appliesToEntity": "review", "engineMeaning": "done" },
+    { "key": "review-cancelled", "label": "Cancelled", "appliesToEntity": "review", "engineMeaning": "cancelled" }
+  ]
+}

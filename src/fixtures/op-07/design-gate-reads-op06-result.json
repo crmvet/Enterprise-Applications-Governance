@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "design-gate-reads-op06-result",
+  "description": "The whole OP-06 result can be passed as it came. The design gate of a tier 3 application reads the current architecture decision record from its items.",
+  "workingDefaults": [
+    9
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "design",
+    "tierKey": "tier-3",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "documentation": {
+      "complete": true,
+      "items": [
+        {
+          "requirementKey": "adr-tier-3",
+          "documentTypeKey": "architecture-decision-record",
+          "status": "current",
+          "documentLinkId": "fixture-link-a1"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {}
+    }
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "gateKey": "design",
+      "ready": true,
+      "requirements": [
+        {
+          "requirementKey": "design-adr-tier-3",
+          "requirementKind": "document-current",
+          "requiredDocumentTypeKey": "architecture-decision-record",
+          "met": true,
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

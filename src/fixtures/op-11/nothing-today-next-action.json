@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "nothing-today-next-action",
+  "description": "An approval due on 2026-11-25 has its first reminder on that day. Nothing goes out today, and the answer says when the next action is.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "approval",
+    "dueOnUtc": "2026-11-25T17:00:00Z"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "approval",
+      "dueOnUtc": "2026-11-25T17:00:00Z",
+      "isOverdue": false,
+      "actions": [],
+      "nextActionOnUtc": "2026-11-25T00:00:00Z"
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Reminder Rule",
+        "key": "approval-reminder",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

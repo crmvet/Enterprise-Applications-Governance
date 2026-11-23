@@ -1,0 +1,30 @@
+{
+  "name": "product-ui-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local harness for the four page designs. Renders from fictional fixture JSON shaped by the MCP tool output schemas. Exact pinned versions only.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4318 --strictPort",
+    "check-packages": "node scripts/check-packages.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "@fluentui/react-components": "9.75.1",
+    "@fluentui/react-icons": "2.0.345",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "typescript": "5.9.3",
+    "vite": "7.3.7"
+  }
+}

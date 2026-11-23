@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v41-snapshot-fits-valid",
+  "description": "Balanced under the Dataverse limit of 1,048,576 characters, well below 80 percent. V41 passes.",
+  "ruleIds": [
+    "V41"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft"
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

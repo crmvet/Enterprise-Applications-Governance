@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "summary": "48 applications across all portfolios. Most are Power Platform apps.",
+  "data": {
+    "buckets": [
+      {
+        "key": "power-platform-app",
+        "label": "Power Platform app",
+        "count": 22
+      },
+      {
+        "key": "agent",
+        "label": "Agent",
+        "count": 6
+      },
+      {
+        "key": "code-app",
+        "label": "Code app",
+        "count": 5
+      },
+      {
+        "key": "saas",
+        "label": "SaaS",
+        "count": 5
+      },
+      {
+        "key": "ai-built-app",
+        "label": "AI-built app",
+        "count": 3
+      },
+      {
+        "key": "api",
+        "label": "API",
+        "count": 3
+      },
+      {
+        "key": "external-system",
+        "label": "External system",
+        "count": 2
+      },
+      {
+        "key": "mcp-server",
+        "label": "MCP server",
+        "count": 1
+      },
+      {
+        "key": "practice-app",
+        "label": "Practice app",
+        "count": 1
+      }
+    ],
+    "ownerGaps": 4,
+    "reviewsOverdue": 3,
+    "documentsMissingOrStale": 7,
+    "draftsOlderThanDays": 2
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [],
+  "nextSteps": [],
+  "correlationId": "harness-0007"
+}

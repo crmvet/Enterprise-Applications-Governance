@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "withdraw_record output",
+  "description": "The response envelope. On success, data is the write result for the withdrawn record, with the approval cards the engine cancelled. An intake request, a change request or a decision becomes withdrawn. An application draft becomes archived. A configuration draft becomes discarded, with discard reason withdrawn.",
+  "x-tool": "withdraw_record",
+  "x-ai-write-states": [
+    "withdrawn"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the withdrawn record.",
+      "properties": {
+        "subjectKind": {
+          "enum": [
+            "intake-request",
+            "change-request",
+            "decision",
+            "application-draft",
+            "configuration-draft"
+          ]
+        },
+        "subjectId": {
+          "$ref": "../common.schema.json#/$defs/id"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "withdrawn, archived (application draft) or discarded (configuration draft), by meaning.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/statusMeaning",
+              "enum": [
+                "withdrawn",
+                "archived",
+                "discarded"
+              ]
+            }
+          }
+        },
+        "cancelledApprovals": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O10 Approval Record"
+          },
+          "description": "Pending approval records the engine marked cancelled. The approval runner cancels the cards."
+        },
+        "withdrawnDecisionId": {
+          "description": "For a submitted configuration draft: its Proposed decision, now withdrawn. Null otherwise.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "subjectKind",
+        "subjectId",
+        "cancelledApprovals",
+        "withdrawnDecisionId"
+      ],
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "subjectKind": {
+                "const": "application-draft"
+              }
+            },
+            "required": [
+              "subjectKind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "meaning": {
+                    "const": "archived"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "subjectKind": {
+                "const": "configuration-draft"
+              }
+            },
+            "required": [
+              "subjectKind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "meaning": {
+                    "const": "discarded"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "subjectKind": {
+                "enum": [
+                  "intake-request",
+                  "change-request",
+                  "decision"
+                ]
+              }
+            },
+            "required": [
+              "subjectKind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "meaning": {
+                    "const": "withdrawn"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change request is withdrawn. One pending card was cancelled.",
+      "data": {
+        "recordId": "d0000000-0000-4000-8000-000000000001",
+        "status": {
+          "label": "Withdrawn",
+          "meaning": "withdrawn"
+        },
+        "performedBy": {
+          "actorKind": "ai-client-for-person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000001",
+            "label": "Claude Code"
+          }
+        },
+        "isAiCreated": true,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "subjectKind": "change-request",
+        "subjectId": "d0000000-0000-4000-8000-000000000001",
+        "cancelledApprovals": [
+          "d1000000-0000-4000-8000-000000000002"
+        ],
+        "withdrawnDecisionId": null
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/d0000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

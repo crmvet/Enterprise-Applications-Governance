@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-sets-decision-accepted-refused",
+  "description": "An AI client tries to set a decision to accepted. Both rules refuse it: an AI actor never sets an accepted status, and no caller accepts a decision (document 25, section 5.10 Tests).",
+  "ruleIds": [
+    "G-08",
+    "G-17"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "status": "decision-accepted"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "ai.status-not-allowed",
+          "ruleId": "G-08"
+        },
+        {
+          "code": "decision.accept-by-engine-only",
+          "ruleId": "G-17"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "ai.status-not-allowed",
+        "severity": "error"
+      },
+      {
+        "code": "decision.accept-by-engine-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "erasure-again-is-no-op",
+  "description": "A platform admin erases a principal that is already erased. A no-op: allowed, nothing to write.",
+  "workingDefaults": [
+    1
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-4",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "principal-reference",
+    "operation": "update",
+    "rowId": "fixture-principal-7",
+    "after": {
+      "isErased": true
+    }
+  },
+  "facts": {
+    "before": {
+      "isErased": true,
+      "displayLabel": "former user"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": true,
+      "effects": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

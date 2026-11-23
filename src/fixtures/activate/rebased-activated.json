@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "activate",
+  "case": "rebased-activated",
+  "description": "The draft started from version 1, but version 2 is active now and changed another row. No operation overlaps, so activation re-applies the draft to version 2, revalidates it and creates version 3.",
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "versionNumber": 2,
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "tier",
+        "key": "tier-1",
+        "values": {
+          "label": "Tier 1: Personal"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "configurationDraftId": "fixture-draft-1",
+    "draftStatus": "submitted",
+    "changeDecisionId": "fixture-decision-7",
+    "changeDecisionStatus": "accepted",
+    "instructedByPrincipalId": "fixture-person-1",
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier",
+          "key": "tier-3",
+          "values": {
+            "label": "Tier 3: Critical"
+          }
+        }
+      ]
+    }
+  },
+  "facts": {
+    "approvalRulesVersionNumber": 2
+  },
+  "expected": {
+    "outcome": "activated",
+    "payload": {
+      "versionNumber": 3,
+      "baseVersionNumber": 1,
+      "activeVersionNumber": 2,
+      "rebaseOutcome": "rebased",
+      "isRebased": true,
+      "rowWriteCount": 1,
+      "rowWrites": [
+        {
+          "entity": "tier",
+          "key": "tier-3",
+          "change": "update"
+        }
+      ]
+    }
+  }
+}

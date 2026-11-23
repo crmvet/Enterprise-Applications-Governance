@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "self-approval-starter-with-exception",
+  "description": "With an accepted exception decision linked, Starter counts the self-approval at tier 3.",
+  "snapshot": {
+    "presetKey": "starter"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-proposer",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    },
+    "acceptedExceptionDecisionTypeKeys": [
+      "exception"
+    ]
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied",
+      "countsByRecord": {
+        "r1": true
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

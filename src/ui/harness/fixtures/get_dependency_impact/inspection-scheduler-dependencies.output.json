@@ -1,0 +1,178 @@
+{
+  "ok": true,
+  "summary": "Inspection Scheduler needs five applications within 3 hops. Three of the links are high criticality.",
+  "data": {
+    "root": {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "technicalComponentId": null,
+      "name": "Inspection Scheduler"
+    },
+    "nodes": [
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000003",
+        "name": "Asset Register",
+        "tier": {
+          "key": "tier-3",
+          "label": "Tier 3"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000004",
+          "displayLabel": "Mateo Brandt",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000009",
+          "displayLabel": "Owen Achterberg",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "reads-data-from",
+        "criticalityKey": "high",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000003"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000005",
+        "name": "Parts Catalogue API",
+        "tier": {
+          "key": "tier-2",
+          "label": "Tier 2"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000011",
+          "displayLabel": "Tomas Rendel",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000009",
+          "displayLabel": "Owen Achterberg",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "calls-api-of",
+        "criticalityKey": "medium",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000005"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000002",
+        "name": "Crew Roster",
+        "tier": {
+          "key": "tier-2",
+          "label": "Tier 2"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Ines Varga",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000002",
+          "displayLabel": "Jonah Pereira",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "reads-data-from",
+        "criticalityKey": "medium",
+        "depth": 1,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000002"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000016",
+        "name": "Field Data Lake",
+        "tier": {
+          "key": "tier-3",
+          "label": "Tier 3"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000004",
+          "displayLabel": "Mateo Brandt",
+          "principalKind": "user"
+        },
+        "technicalOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000012",
+          "displayLabel": "Priya Castell",
+          "principalKind": "user"
+        },
+        "dependencyTypeKey": "reads-data-from",
+        "criticalityKey": "high",
+        "depth": 2,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000003",
+          "10000000-0000-4000-8000-000000000016"
+        ]
+      },
+      {
+        "businessApplicationId": "10000000-0000-4000-8000-000000000015",
+        "name": "Identity Directory Sync",
+        "tier": {
+          "key": "tier-3",
+          "label": "Tier 3"
+        },
+        "lifecycleMeaning": "live",
+        "businessOwner": {
+          "objectId": "20000000-0000-4000-8000-000000000008",
+          "displayLabel": "Elif Dunmore",
+          "principalKind": "user"
+        },
+        "technicalOwner": null,
+        "dependencyTypeKey": "calls-api-of",
+        "criticalityKey": "high",
+        "depth": 2,
+        "path": [
+          "10000000-0000-4000-8000-000000000001",
+          "10000000-0000-4000-8000-000000000002",
+          "10000000-0000-4000-8000-000000000015"
+        ]
+      }
+    ],
+    "counts": {
+      "byTier": [
+        {
+          "key": "tier-3",
+          "label": "Tier 3",
+          "count": 3
+        },
+        {
+          "key": "tier-2",
+          "label": "Tier 2",
+          "count": 2
+        }
+      ],
+      "byCriticality": [
+        {
+          "key": "high",
+          "label": "High",
+          "count": 3
+        },
+        {
+          "key": "medium",
+          "label": "Medium",
+          "count": 2
+        }
+      ]
+    },
+    "truncatedAtDepth": false
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 7,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "root.name",
+    "nodes[].name"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-0015"
+}

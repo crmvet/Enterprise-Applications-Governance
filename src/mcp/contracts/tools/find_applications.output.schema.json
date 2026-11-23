@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_applications output",
+  "description": "The response envelope. On success, data lists the matching applications.",
+  "x-tool": "find_applications",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/applicationSummary"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many applications match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    },
+    "applicationSummary": {
+      "type": "object",
+      "required": [
+        "businessApplicationId",
+        "name",
+        "purpose",
+        "kind",
+        "tier",
+        "stage",
+        "businessOwner",
+        "technicalOwner",
+        "recordUrl"
+      ],
+      "properties": {
+        "businessApplicationId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O02 Business Application"
+        },
+        "name": {
+          "type": "string",
+          "description": "The application name.",
+          "x-untrusted": true
+        },
+        "purpose": {
+          "type": "string",
+          "description": "What the application is for.",
+          "x-untrusted": true
+        },
+        "kind": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The Application Kind (C15)."
+        },
+        "tier": {
+          "description": "The current tier (C08). Null before a tier decision.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage": {
+          "description": "The current lifecycle stage (C12).",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "businessOwner": {
+          "description": "The holder of the business owner role, when the configuration has that owner role.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "technicalOwner": {
+          "description": "The holder of the technical owner role, when the configuration has that owner role.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/url"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One registered application matches.",
+      "data": {
+        "items": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "name": "Field visit planner",
+            "purpose": "Plans site visits for field staff.",
+            "kind": {
+              "key": "power-platform-app",
+              "label": "Power Platform app"
+            },
+            "tier": {
+              "key": "tier-2",
+              "label": "Tier 2"
+            },
+            "stage": {
+              "key": "live",
+              "label": "Live"
+            },
+            "businessOwner": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Business owner (sample)"
+            },
+            "technicalOwner": null,
+            "recordUrl": "https://product.example.org/records/10000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "totalCount": 1
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].name",
+        "items[].purpose"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

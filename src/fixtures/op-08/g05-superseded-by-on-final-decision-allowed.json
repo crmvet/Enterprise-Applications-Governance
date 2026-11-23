@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g05-superseded-by-on-final-decision-allowed",
+  "description": "The supersede-decision effect sets Superseded By on an accepted decision, the only write a frozen decision ever receives (document 22, section 8.1). Allowed.",
+  "ruleIds": [
+    "G-05"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "supersededBy": "fixture-decision-2"
+    },
+    "nestedEffect": "supersede-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "accepted",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

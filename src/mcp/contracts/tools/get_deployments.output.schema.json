@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_deployments output",
+  "description": "The response envelope. On success, data lists deployment records, newest first. A corrected record shows its latest correction. artifactName and labels are text people or tools typed.",
+  "x-tool": "get_deployments",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "deploymentRecordId",
+              "businessApplicationId",
+              "applicationName",
+              "deploymentTargetId",
+              "targetLabel",
+              "targetStageKey",
+              "artifactName",
+              "artifactVersion",
+              "result",
+              "finishedOn",
+              "route",
+              "flags",
+              "gateLevelApplied",
+              "runUrl",
+              "correctsRecordId"
+            ],
+            "properties": {
+              "deploymentRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O14 Deployment Record"
+              },
+              "businessApplicationId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "applicationName": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The application name.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deploymentTargetId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O15 Deployment Target"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "targetLabel": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The target's name when last seen.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "targetStageKey": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C34 Target Stage"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "artifactName": {
+                "type": "string",
+                "description": "The artifact's name.",
+                "x-untrusted": true
+              },
+              "artifactVersion": {
+                "type": "string",
+                "description": "The artifact's version text."
+              },
+              "result": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The deployment result by meaning."
+              },
+              "finishedOn": {
+                "$ref": "../common.schema.json#/$defs/dateTime"
+              },
+              "route": {
+                "$ref": "../common.schema.json#/$defs/deploymentRoute"
+              },
+              "flags": {
+                "$ref": "../common.schema.json#/$defs/deploymentFlags"
+              },
+              "gateLevelApplied": {
+                "$ref": "../common.schema.json#/$defs/gateLevel"
+              },
+              "runUrl": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "correctsRecordId": {
+                "description": "Set when this record corrects an earlier one.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O14 Deployment Record"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One flagged deployment: it arrived outside its window.",
+      "data": {
+        "items": [
+          {
+            "deploymentRecordId": "d2000000-0000-4000-8000-000000000003",
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "applicationName": "Field visit planner",
+            "deploymentTargetId": "d4000000-0000-4000-8000-000000000002",
+            "targetLabel": "Production environment",
+            "targetStageKey": "production",
+            "artifactName": "FieldVisitPlanner",
+            "artifactVersion": "1.4.1.0",
+            "result": {
+              "label": "Succeeded",
+              "meaning": "succeeded"
+            },
+            "finishedOn": "2026-12-04T07:10:00Z",
+            "route": {
+              "key": "pipeline-step",
+              "meaning": "pipeline-step"
+            },
+            "flags": {
+              "outsideWindow": true,
+              "otherPath": false,
+              "missingApproval": false,
+              "aiOnlyCodeApproval": false
+            },
+            "gateLevelApplied": "advise",
+            "runUrl": "https://pipelines.example.org/runs/2001",
+            "correctsRecordId": null
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].applicationName",
+        "items[].targetLabel",
+        "items[].artifactName"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

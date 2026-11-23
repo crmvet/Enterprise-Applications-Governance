@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-10",
+  "case": "dependants-two-levels",
+  "description": "Who breaks if application A changes? B reads data from A and D is hosted on A, at one hop. C calls the API of B, so it is reached at two hops, with the types on its whole path.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "startApplicationId": "fixture-app-a",
+    "direction": "dependants",
+    "maxDepth": 3
+  },
+  "facts": {
+    "edges": [
+      {
+        "fromId": "fixture-app-b",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "reads-data-from"
+      },
+      {
+        "fromId": "fixture-app-c",
+        "toApplicationId": "fixture-app-b",
+        "dependencyTypeKey": "calls-api-of"
+      },
+      {
+        "fromId": "fixture-app-d",
+        "toApplicationId": "fixture-app-a",
+        "dependencyTypeKey": "hosted-on"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "walked",
+    "payload": {
+      "startApplicationId": "fixture-app-a",
+      "direction": "dependants",
+      "maxDepthApplied": 3,
+      "reached": [
+        {
+          "applicationId": "fixture-app-b",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-d",
+          "direction": "dependants",
+          "depth": 1,
+          "dependencyTypeKeys": [
+            "hosted-on"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-d"
+          ]
+        },
+        {
+          "applicationId": "fixture-app-c",
+          "direction": "dependants",
+          "depth": 2,
+          "dependencyTypeKeys": [
+            "calls-api-of",
+            "reads-data-from"
+          ],
+          "path": [
+            "fixture-app-a",
+            "fixture-app-b",
+            "fixture-app-c"
+          ]
+        }
+      ],
+      "cycleDetected": false,
+      "truncatedAtDepth": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "impact-max-depth",
+        "role": "matched"
+      },
+      {
+        "entity": "Dependency Type",
+        "key": "calls-api-of",
+        "role": "matched"
+      },
+      {
+        "entity": "Dependency Type",
+        "key": "hosted-on",
+        "role": "matched"
+      },
+      {
+        "entity": "Dependency Type",
+        "key": "reads-data-from",
+        "role": "matched"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "itsm-step-from-person-wrong-source",
+  "description": "An ITSM step fact typed in by a person is not from a pipeline workload, so it does not count. A person confirms on an attestation card instead.",
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": true,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "person",
+        "principalKind": "user"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": [
+        {
+          "factId": "fixture-fact-1",
+          "code": "authorization.wrong-source"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.wrong-source",
+        "severity": "warning",
+        "entity": "Evidence Link",
+        "ref": "fixture-fact-1"
+      },
+      {
+        "code": "authorization.number-only",
+        "severity": "warning",
+        "entity": "Change Request"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

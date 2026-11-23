@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "retired-named-model-no-candidate",
+  "description": "The requester names a model that a configuration change has retired: it is no longer in force, so the change does not qualify.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "label-and-view-changes",
+        "values": {
+          "label": "Labels and views only",
+          "changeTypeKey": "standard",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "target-stages-in",
+              "value": [
+                "test",
+                "production"
+              ]
+            },
+            {
+              "conditionKind": "max-affected-applications",
+              "value": 1
+            },
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app",
+                "model-driven-app"
+              ]
+            },
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 120
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      },
+      {
+        "op": "retire",
+        "entity": "standard-change-model",
+        "key": "label-and-view-changes"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "standard",
+    "standardChangeModelKey": "label-and-view-changes"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 2,
+      "targetStageKeys": [
+        "production"
+      ],
+      "affectedApplicationCount": 1,
+      "componentKindKeys": [
+        "canvas-app"
+      ],
+      "windowMinutes": 60,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "label-and-view-changes",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false
+    },
+    "reasons": [
+      {
+        "code": "standard-model.no-candidate",
+        "ref": "label-and-view-changes"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

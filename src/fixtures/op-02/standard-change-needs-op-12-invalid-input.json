@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "standard-change-needs-op-12-invalid-input",
+  "description": "A change of a type that requires a standard model needs the OP-12 result first. Without it the request is incomplete.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-2",
+    "changeTypeKey": "standard",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

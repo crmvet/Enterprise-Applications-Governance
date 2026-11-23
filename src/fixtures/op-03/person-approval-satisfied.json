@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "person-approval-satisfied",
+  "description": "The change manager, a person signed in as a user, approves with a typed reason before the request expires. The answer counts and the tier 3 change is authorized.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied",
+      "requirements": [
+        {
+          "requirementKey": "change-auth-tier-3",
+          "source": "approval-rule",
+          "approvalMode": "first-to-respond",
+          "state": "satisfied",
+          "countingRecordIds": [
+            "r1"
+          ],
+          "pendingRecordIds": [],
+          "nonCountingRecords": []
+        }
+      ],
+      "consultations": [],
+      "countsByRecord": {
+        "r1": true
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Separation Rule",
+        "key": "no-self-approval-tier-3",
+        "role": "won"
+      },
+      {
+        "entity": "Separation Rule",
+        "key": "deployer-not-sole-approver",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

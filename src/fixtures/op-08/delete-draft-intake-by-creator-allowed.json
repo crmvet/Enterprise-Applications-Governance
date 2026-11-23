@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "delete-draft-intake-by-creator-allowed",
+  "description": "The requester deletes their own draft intake request. A draft row can be deleted on its creator's instruction.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "delete",
+    "rowId": "fixture-intake-1"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "draft",
+      "createdByPrincipal": "fixture-person-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {},
+      "effects": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

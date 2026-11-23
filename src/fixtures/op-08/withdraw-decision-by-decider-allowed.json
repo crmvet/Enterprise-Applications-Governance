@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "withdraw-decision-by-decider-allowed",
+  "description": "The named decider withdraws the proposed decision in person.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-3",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-5",
+    "after": {
+      "status": "decision-withdrawn"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "createdByPrincipal": "fixture-person-2",
+      "decider": "fixture-person-3",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "withdrawn",
+        "performedByActorKind": "person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

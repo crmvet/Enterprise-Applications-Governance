@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "submit_record input",
+  "description": "Sends a draft or proposed record on: an intake request to triage, a change request to authorization, a decision to acceptance, a configuration draft to acceptance. It starts the approval cards the rules require. It never approves. For a configuration draft the engine freezes the draft and records a Proposed configuration change decision (or a gate policy change decision).",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may submit only where the Tool Policy row says AI May Submit = yes for the subject kind. Shipped yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
+  "x-tool": "submit_record",
+  "type": "object",
+  "required": [
+    "subjectKind",
+    "subjectId"
+  ],
+  "properties": {
+    "subjectKind": {
+      "enum": [
+        "intake-request",
+        "change-request",
+        "decision",
+        "configuration-draft"
+      ],
+      "description": "The kind of record to submit."
+    },
+    "subjectId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The ID of the record: an Intake Request (O07), a Change Request (O11), a Decision (O09) or a Configuration Draft (C46)."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "A note for the approvers."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "subjectKind": "intake-request",
+      "subjectId": "70000000-0000-4000-8000-000000000001",
+      "note": "Ready for triage.",
+      "clientRequestId": "req-0102"
+    },
+    {
+      "subjectKind": "configuration-draft",
+      "subjectId": "da000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

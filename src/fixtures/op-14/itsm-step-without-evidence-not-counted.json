@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-14",
+  "case": "itsm-step-without-evidence-not-counted",
+  "description": "An ITSM step fact without an evidence link does not count, so the change is not authorized, whatever the number says.",
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "linked-change-management"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeManagementMode": "linked",
+    "hasExternalChangeNumber": true
+  },
+  "facts": {
+    "facts": [
+      {
+        "factId": "fixture-fact-1",
+        "sourceKind": "itsm-step",
+        "state": "authorized",
+        "hasEvidenceUrl": false,
+        "reportedOnUtc": "2026-11-21T10:00:00Z",
+        "actorKind": "pipeline",
+        "principalKind": "service-principal"
+      }
+    ],
+    "attesterRoleKeys": [
+      "change-manager"
+    ]
+  },
+  "expected": {
+    "outcome": "not-authorized",
+    "payload": {
+      "authorized": false,
+      "basis": "none",
+      "ignoredFacts": [
+        {
+          "factId": "fixture-fact-1",
+          "code": "authorization.no-evidence"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "authorization.no-evidence",
+        "severity": "info",
+        "entity": "Evidence Link",
+        "ref": "fixture-fact-1"
+      },
+      {
+        "code": "authorization.number-only",
+        "severity": "warning",
+        "entity": "Change Request"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

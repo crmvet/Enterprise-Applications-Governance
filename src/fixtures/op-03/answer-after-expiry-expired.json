@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "answer-after-expiry-expired",
+  "description": "An answer that came after the request expired does not count. With no other record, the requirement and the decision are expired.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-3",
+      "targetStageKey": "production"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-auth-tier-3",
+        "approverRoleKey": "change-manager",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-auth-tier-3",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T12:00:00Z",
+        "expiresOnUtc": "2026-11-21T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "expired",
+    "payload": {
+      "overall": "expired",
+      "requirements": [
+        {
+          "requirementKey": "change-auth-tier-3",
+          "state": "expired",
+          "countingRecordIds": [],
+          "pendingRecordIds": [],
+          "nonCountingRecords": [
+            {
+              "approvalRecordId": "r1",
+              "reasonCodes": [
+                "approval.expired"
+              ]
+            }
+          ]
+        }
+      ],
+      "countsByRecord": {
+        "r1": false
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.expired",
+        "entity": "Approval Record",
+        "ref": "r1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

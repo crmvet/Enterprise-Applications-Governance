@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "bootstrap",
+  "case": "ai-client-for-person-bootstrapped",
+  "description": "The person runs the apply through Claude Code. The AI client is the performer and the person behind it is the decider of version 1.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "none": true
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1"
+    }
+  },
+  "input": {
+    "presetKey": "starter",
+    "overlays": [
+      "small-team"
+    ],
+    "noVersionExists": true,
+    "hasInstallRights": true
+  },
+  "expected": {
+    "outcome": "bootstrapped",
+    "payload": {
+      "versionNumber": 1,
+      "appliedPresets": [
+        {
+          "presetKey": "balanced"
+        },
+        {
+          "presetKey": "starter"
+        },
+        {
+          "presetKey": "small-team"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "whoami input",
+  "description": "Tells the AI client who the person is in the product, which product roles they hold and which tools they may use. A person with no product role also gets an answer, so they learn what to ask for. Writes nothing.",
+  "x-tool": "whoami",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false,
+  "examples": [
+    {}
+  ]
+}

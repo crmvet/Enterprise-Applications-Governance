@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "delete-approval-record-refused",
+  "description": "An Approval Record is never deleted; it is cancelled instead.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "delete",
+    "rowId": "fixture-approval-1"
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "record.delete-not-allowed",
+        "severity": "error",
+        "entity": "Approval Record"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

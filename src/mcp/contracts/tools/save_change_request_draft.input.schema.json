@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_change_request_draft input",
+  "description": "Starts or edits a change request. The row is always Draft. The change management mode is copied from the mode in force for the application's portfolio, where the most specific row wins. In linked mode the ITSM change number and URL are required and the built-in approvals are skipped. A recorded number alone never counts as authorization. Only the creator may edit, and only while it is draft. No input carries a status.",
+  "x-tool": "save_change_request_draft",
+  "type": "object",
+  "required": [
+    "title",
+    "businessApplicationId",
+    "changeTypeKey",
+    "description"
+  ],
+  "properties": {
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "Edit this existing draft. Leave out to start a new one."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "A short name for the change."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The main application the change is for."
+    },
+    "changeTypeKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C20 Change Type",
+      "description": "The proposed change type. A person sets the final type; the AI client never decides that a change is standard."
+    },
+    "standardChangeModelKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C21 Standard Change Model",
+      "description": "The standard change model the caller thinks fits. check_standard_change tells whether it does."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "description": "What changes, and why."
+    },
+    "windowStart": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "When the change window starts."
+    },
+    "windowEnd": {
+      "$ref": "../common.schema.json#/$defs/dateTime",
+      "description": "When the change window ends. A window that ends before it starts is a warning."
+    },
+    "plannedTargetId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O15 Deployment Target",
+      "description": "Where the change is planned to land."
+    },
+    "affected": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "businessApplicationId",
+          "impactRoleKey"
+        ],
+        "properties": {
+          "businessApplicationId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O02 Business Application"
+          },
+          "impactRoleKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C07 List Value",
+            "description": "From the impact role value list."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Other applications the change touches. The engine also proposes rows from the dependency walk."
+    },
+    "externalChangeNumber": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "The ITSM change number. Required in linked mode. Shown, never decisive."
+    },
+    "externalChangeUrl": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "The ITSM change record. Required in linked mode."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "title": "Add photo upload to visit form",
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "changeTypeKey": "normal",
+      "description": "Adds a photo control and stores photos in the team site library.",
+      "windowStart": "2026-12-02T18:00:00Z",
+      "windowEnd": "2026-12-02T20:00:00Z",
+      "plannedTargetId": "d4000000-0000-4000-8000-000000000002",
+      "clientRequestId": "req-0201"
+    }
+  ]
+}

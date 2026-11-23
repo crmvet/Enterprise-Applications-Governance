@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v39-emergency-rule-valid",
+  "description": "A draft replaces the same emergency rule with a complete one. V39 passes.",
+  "ruleIds": [
+    "V39"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "gate-policy",
+        "key": "gp-emergency-prod-tier-1",
+        "values": {
+          "emergencyRule": {
+            "passWithoutApproval": false,
+            "approvalDueWorkingDays": 3,
+            "reviewTypeKey": "post-change"
+          }
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

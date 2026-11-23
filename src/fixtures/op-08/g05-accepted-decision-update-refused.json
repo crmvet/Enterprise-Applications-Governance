@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g05-accepted-decision-update-refused",
+  "description": "A person edits the statement of an accepted decision. A final decision never changes; record a new decision that supersedes it.",
+  "ruleIds": [
+    "G-05"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "statement": "Decided: another statement."
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "accepted",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "decision.final",
+        "severity": "error",
+        "entity": "Decision",
+        "ref": "fixture-decision-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

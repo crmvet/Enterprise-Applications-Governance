@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g09-decided-on-from-caller-refused",
+  "description": "A person sets Decided On on a proposed decision. Only the engine sets it, when it accepts or rejects the decision.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "decidedOn": "2026-11-22T09:00:00Z"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error",
+        "ref": "decidedOn"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

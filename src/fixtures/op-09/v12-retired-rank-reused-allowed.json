@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v12-retired-rank-reused-allowed",
+  "description": "A retired tier keeps its rank. Ranks must differ among active tiers only, so a draft may add a retired tier with the rank of the active tier 3. Nothing points at the retired tier, so the draft is valid.",
+  "ruleIds": [
+    "V12"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "tier",
+        "key": "tier-0",
+        "values": {
+          "label": "Old tier",
+          "rank": 3,
+          "isActive": false
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

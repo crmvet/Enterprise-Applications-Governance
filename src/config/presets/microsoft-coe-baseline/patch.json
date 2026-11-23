@@ -1,0 +1,544 @@
+{
+  "$comment": [
+    "The Microsoft CoE baseline as changes to Balanced (document 21, section 6.4). Microsoft's words are quoted from the Learn pages checked 2026-11-22 (S2 agent risk tiers, T1 roles and responsibilities). The build applies these operations to Balanced's source rows before wildcards expand.",
+    "Rows Balanced already has and this preset keeps: a business owner named at Accept for every tier (accept-business-owner); the autonomy level agreed before go-live for every agent (go-live-autonomy-agent, which covers tier 3); AI holds only supports on intake (intake-s), so a recommendation is an initial assessment, not approval; the business owner alone authorizes a tier 1 change (change-auth-owner, change-auth-a); the security review before tier 3 go-live (go-live-security-tier-3); and the agent risk tier vocabulary mappings.",
+    "New seed rows (document 21, section 13.5): role coe-lead, owner roles domain-validator and product-owner, five document types, four review types and the vocabulary list value agent-coe-role.",
+    "Chosen here, because document 21 does not name them: coe-lead belongs to the IT party; producesDecisionTypeKey and defaultOwnerRoleKey of the four new review types (release and quality reviews record an acceptance, the maturity review a portfolio decision, the responsible AI assessment a risk acceptance, as the security review does); and reminder days for the two new cadences, following Balanced's cadences at the same tier.",
+    "The quality review has a cadence only at tier 2 and the maturity review only at tier 3, as document 21 says. V29 warns about both, and the build still passes (V29 is a warning).",
+    "The new document types are not required by a gate, so currentNeedsPerson stays unset. WORKING DEFAULT (open design question 9): only documents a gate requires need a confirmation card when an AI client marks them current.",
+    "An upsert merges fields and cannot clear one. Where a decision right moves from an owner role to a role, or the reverse, the Balanced row is retired and a new key takes its place: go-live-a, risk-acceptance-a and retirement-r.",
+    "The decision rights follow Microsoft's RACI. The approval rules stay Balanced's, except the tier 2 go-live group: document 21 does not say whether the security reviewer should also approve go-live and risk acceptance.",
+    "Gate policy: tier 1 record in test and production; tiers 2 and 3 flag in test; production tier 2 advise and tier 3 enforce with fail closed, as in Balanced; emergencies flag in production with the emergency rule, as in Balanced. In test every change follows its tier (document 21, section 7.6), so gp-emergency-test-tier-1 keeps tier 1 emergencies at record and breaks the tie between gp-test-tier-1 and gp-emergency-test (V09).",
+    "Every gate value is a preset value, not a decision: the change gate (D-03) is still open."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "microsoft-coe-baseline",
+    "presetKind": "full",
+    "extends": "balanced",
+    "conflictsWith": []
+  },
+  "operations": [
+    { "op": "upsert", "entity": "tier", "key": "tier-1", "values": { "label": "Tier 1: Low risk" } },
+    { "op": "upsert", "entity": "tier", "key": "tier-2", "values": { "label": "Tier 2: Medium risk" } },
+    { "op": "upsert", "entity": "tier", "key": "tier-3", "values": { "label": "Tier 3: High risk" } },
+    {
+      "op": "upsert",
+      "entity": "list-value",
+      "key": "vocabulary/agent-coe-role",
+      "values": { "label": "Agent CoE role" }
+    },
+    {
+      "op": "upsert",
+      "entity": "owner-role",
+      "key": "domain-validator",
+      "values": {
+        "label": "Domain validator",
+        "partyKey": "business",
+        "description": "A domain expert who checks the application's knowledge and answers before it goes live."
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "owner-role",
+      "key": "product-owner",
+      "values": {
+        "label": "Product owner",
+        "partyKey": "business",
+        "description": "Owns the application as a product: plans its releases, leads its reviews and its retirement."
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role",
+      "key": "coe-lead",
+      "values": {
+        "label": "CoE lead",
+        "partyKey": "it",
+        "duties": "Leads the center of excellence. Owns the risk tiers and their criteria, the autonomy limits for agents and the release-readiness gates. Responsible for reviewing an application for release."
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "document-type",
+      "key": "monitoring-plan",
+      "values": {
+        "label": "Monitoring plan",
+        "description": "A link to the usage and error monitoring set up in Microsoft's tools."
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "document-type",
+      "key": "release-checklist",
+      "values": { "label": "Release checklist", "description": "The standard checklist used for every release." }
+    },
+    {
+      "op": "upsert",
+      "entity": "document-type",
+      "key": "quality-monitoring-plan",
+      "values": {
+        "label": "Knowledge quality monitoring plan",
+        "description": "How stale or wrong content is found and fixed."
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "document-type",
+      "key": "sla-monitoring-plan",
+      "values": {
+        "label": "Service level monitoring plan",
+        "description": "Production-grade monitoring of the service level agreement."
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "document-type",
+      "key": "incident-response-plan",
+      "values": { "label": "Incident response plan", "description": "Who does what when the application fails or misbehaves." }
+    },
+    {
+      "op": "upsert",
+      "entity": "documentation-requirement",
+      "key": "monitoring-plan-tier-1",
+      "values": {
+        "label": "Tier 1 monitoring plan",
+        "documentTypeKey": "monitoring-plan",
+        "tierKey": "tier-1",
+        "fromStageKey": "operate"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "documentation-requirement",
+      "key": "release-checklist-tier-1",
+      "values": {
+        "label": "Tier 1 release checklist",
+        "documentTypeKey": "release-checklist",
+        "tierKey": "tier-1",
+        "fromStageKey": "change-and-release"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "documentation-requirement",
+      "key": "quality-monitoring-plan-tier-2",
+      "values": {
+        "label": "Tier 2 knowledge quality monitoring plan",
+        "documentTypeKey": "quality-monitoring-plan",
+        "tierKey": "tier-2",
+        "fromStageKey": "operate"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "documentation-requirement",
+      "key": "sla-monitoring-plan-tier-3",
+      "values": {
+        "label": "Tier 3 service level monitoring plan",
+        "documentTypeKey": "sla-monitoring-plan",
+        "tierKey": "tier-3",
+        "fromStageKey": "operate"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "documentation-requirement",
+      "key": "incident-response-plan-tier-3",
+      "values": {
+        "label": "Tier 3 incident response plan",
+        "documentTypeKey": "incident-response-plan",
+        "tierKey": "tier-3",
+        "fromStageKey": "change-and-release"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "review-type",
+      "key": "release-review",
+      "values": {
+        "label": "Release review",
+        "description": "The formal review before the application goes live.",
+        "producesDecisionTypeKey": "acceptance",
+        "defaultOwnerRoleKey": "product-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "review-type",
+      "key": "quality-review",
+      "values": {
+        "label": "Quality review",
+        "description": "Accuracy tracking and feedback loops.",
+        "producesDecisionTypeKey": "acceptance",
+        "defaultOwnerRoleKey": "domain-validator"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "review-type",
+      "key": "maturity-review",
+      "values": {
+        "label": "Maturity review",
+        "producesDecisionTypeKey": "portfolio",
+        "defaultOwnerRoleKey": "product-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "review-type",
+      "key": "responsible-ai-assessment",
+      "values": {
+        "label": "Responsible AI assessment",
+        "producesDecisionTypeKey": "risk-acceptance",
+        "defaultOwnerRoleKey": "product-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "review-cadence",
+      "key": "quality-review-tier-2",
+      "values": {
+        "label": "Quality review, tier 2",
+        "reviewTypeKey": "quality-review",
+        "tierKey": "tier-2",
+        "intervalDays": 180,
+        "leadDays": 14,
+        "escalateAfterDays": 14
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "review-cadence",
+      "key": "maturity-review-tier-3",
+      "values": {
+        "label": "Maturity review, tier 3",
+        "reviewTypeKey": "maturity-review",
+        "tierKey": "tier-3",
+        "intervalDays": 90,
+        "leadDays": 14,
+        "escalateAfterDays": 7
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-requirement",
+      "key": "accept-process-owner-tier-3",
+      "values": {
+        "label": "A process owner is named",
+        "gateKey": "accept",
+        "tierKey": "tier-3",
+        "requirementKind": "owner-assigned",
+        "requiredOwnerRoleKey": "process-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-requirement",
+      "key": "go-live-release-review-tier-2",
+      "values": {
+        "label": "Release review done",
+        "gateKey": "go-live",
+        "tierKey": "tier-2",
+        "requirementKind": "review-done",
+        "requiredReviewTypeKey": "release-review"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-requirement",
+      "key": "go-live-rai-agent-tier-3",
+      "values": {
+        "label": "Responsible AI assessment done",
+        "gateKey": "go-live",
+        "tierKey": "tier-3",
+        "applicationKindKey": "agent",
+        "requirementKind": "review-done",
+        "requiredReviewTypeKey": "responsible-ai-assessment"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-requirement",
+      "key": "go-live-rai-ai-built-app-tier-3",
+      "values": {
+        "label": "Responsible AI assessment done",
+        "gateKey": "go-live",
+        "tierKey": "tier-3",
+        "applicationKindKey": "ai-built-app",
+        "requirementKind": "review-done",
+        "requiredReviewTypeKey": "responsible-ai-assessment"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "go-live-tier-2-owner",
+      "values": {
+        "label": "Tier 2 go-live: business owner",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-2",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 5
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "go-live-tier-2-domain-validator",
+      "values": {
+        "label": "Tier 2 go-live: domain validator",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-2",
+        "approverOwnerRoleKey": "domain-validator",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 5
+      }
+    },
+    { "op": "retire", "entity": "decision-right", "key": "go-live-a" },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "go-live-a-security-reviewer",
+      "values": {
+        "label": "Go-live: accountable",
+        "decisionTypeKey": "go-live",
+        "letter": "accountable",
+        "roleKey": "security-reviewer"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "go-live-r-coe-lead",
+      "values": { "label": "Go-live: responsible", "decisionTypeKey": "go-live", "letter": "responsible", "roleKey": "coe-lead" }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "go-live-c-product-owner",
+      "values": {
+        "label": "Go-live: product owner consulted",
+        "decisionTypeKey": "go-live",
+        "letter": "consulted",
+        "ownerRoleKey": "product-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "go-live-c-platform-admin",
+      "values": {
+        "label": "Go-live: platform admin consulted",
+        "decisionTypeKey": "go-live",
+        "letter": "consulted",
+        "roleKey": "platform-admin"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "go-live-i-business-owner",
+      "values": {
+        "label": "Go-live: business owner informed",
+        "decisionTypeKey": "go-live",
+        "letter": "informed",
+        "ownerRoleKey": "business-owner"
+      }
+    },
+    { "op": "retire", "entity": "decision-right", "key": "risk-acceptance-a" },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "risk-acceptance-a-security-reviewer",
+      "values": {
+        "label": "Risk acceptance: accountable",
+        "decisionTypeKey": "risk-acceptance",
+        "letter": "accountable",
+        "roleKey": "security-reviewer"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "risk-acceptance-r-product-owner",
+      "values": {
+        "label": "Risk acceptance: responsible",
+        "decisionTypeKey": "risk-acceptance",
+        "letter": "responsible",
+        "ownerRoleKey": "product-owner"
+      }
+    },
+    { "op": "retire", "entity": "decision-right", "key": "retirement-r" },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "retirement-r-product-owner",
+      "values": {
+        "label": "Retirement: responsible",
+        "decisionTypeKey": "retirement",
+        "letter": "responsible",
+        "ownerRoleKey": "product-owner"
+      }
+    },
+    { "op": "upsert", "entity": "decision-right", "key": "autonomy-level-a", "values": { "roleKey": "coe-lead" } },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "configuration-change-c-coe-lead",
+      "values": {
+        "label": "Configuration: CoE lead consulted",
+        "decisionTypeKey": "configuration-change",
+        "letter": "consulted",
+        "roleKey": "coe-lead"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "gate-policy-change-c-coe-lead",
+      "values": {
+        "label": "Gate policy: CoE lead consulted",
+        "decisionTypeKey": "gate-policy-change",
+        "letter": "consulted",
+        "roleKey": "coe-lead"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-test-tier-1",
+      "values": {
+        "label": "Test, tier 1: record",
+        "tierKey": "tier-1",
+        "changeTypeKey": "*",
+        "targetStageKey": "test",
+        "gateLevel": "record"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-emergency-test",
+      "values": { "label": "Emergency in test: flag", "gateLevel": "flag" }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-emergency-test-tier-1",
+      "values": {
+        "label": "Emergency in test, tier 1: record",
+        "tierKey": "tier-1",
+        "changeTypeKey": "emergency",
+        "targetStageKey": "test",
+        "gateLevel": "record"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "gate-policy",
+      "key": "gp-prod-tier-1",
+      "values": { "label": "Production tier 1: record", "gateLevel": "record" }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "sponsor-coe-role",
+      "values": {
+        "label": "Sponsor CoE role",
+        "sourceEntity": "owner-role",
+        "sourceKey": "sponsor",
+        "vocabularyKey": "agent-coe-role",
+        "term": "Executive sponsor",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "business-owner-coe-role",
+      "values": {
+        "label": "Business owner CoE role",
+        "sourceEntity": "owner-role",
+        "sourceKey": "business-owner",
+        "vocabularyKey": "agent-coe-role",
+        "term": "Business owner",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "coe-lead-coe-role",
+      "values": {
+        "label": "CoE lead CoE role",
+        "sourceEntity": "role",
+        "sourceKey": "coe-lead",
+        "vocabularyKey": "agent-coe-role",
+        "term": "CoE lead",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "product-owner-coe-role",
+      "values": {
+        "label": "Product owner CoE role",
+        "sourceEntity": "owner-role",
+        "sourceKey": "product-owner",
+        "vocabularyKey": "agent-coe-role",
+        "term": "Agent product owner",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "platform-admin-coe-role",
+      "values": {
+        "label": "Platform admin CoE role",
+        "sourceEntity": "role",
+        "sourceKey": "platform-admin",
+        "vocabularyKey": "agent-coe-role",
+        "term": "Platform and operations",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "security-reviewer-coe-role",
+      "values": {
+        "label": "Security reviewer CoE role",
+        "sourceEntity": "role",
+        "sourceKey": "security-reviewer",
+        "vocabularyKey": "agent-coe-role",
+        "term": "Security and risk",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "maker-coe-role",
+      "values": {
+        "label": "Maker CoE role",
+        "sourceEntity": "role",
+        "sourceKey": "maker",
+        "vocabularyKey": "agent-coe-role",
+        "term": "Makers",
+        "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
+        "checkedOn": "2026-11-22"
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "withdraw-decision-by-other-person-refused",
+  "description": "An AI client for person 1 withdraws a decision person 2 proposed. Document 22, section 8.1: only the proposer or the decider withdraws (decision.withdraw-not-allowed, proposed).",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-5",
+    "after": {
+      "status": "decision-withdrawn"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "createdByPrincipal": "fixture-person-2",
+      "decisionType": "design"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "decision.withdraw-not-allowed",
+        "severity": "error",
+        "ref": "fixture-decision-5"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

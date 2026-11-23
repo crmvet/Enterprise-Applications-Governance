@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-m-portfolio-updated-in-place-allowed",
+  "description": "Class M (mutable with history, from the logical model): a portfolio is updated in place. A person changes its description. Allowed.",
+  "tags": [
+    "hardening-1",
+    "class-m"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "portfolio",
+    "operation": "update",
+    "rowId": "fixture-portfolio-1",
+    "after": {
+      "description": "Customer-facing applications."
+    }
+  },
+  "facts": {
+    "before": {}
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "performedByActorKind": "person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

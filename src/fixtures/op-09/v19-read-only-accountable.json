@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v19-read-only-accountable",
+  "description": "The tier decision type has no approval rules, so its one card goes to the accountable holder. A draft makes the read-only auditor role that holder, and nobody acting can answer the card, so V19 refuses it.",
+  "ruleIds": [
+    "V19"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "decision-right",
+        "key": "tier-a",
+        "values": {
+          "roleKey": "auditor"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "approval-rule.tier-coverage",
+        "severity": "error",
+        "ruleId": "V19",
+        "entity": "Decision Right",
+        "ref": "tier-a"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

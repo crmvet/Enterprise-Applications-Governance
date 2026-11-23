@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "tier-3-emergency-combined-group",
+  "description": "A tier 3 emergency change matches the combined group only. The broader tier 3, emergency and business owner groups drop out and add no approver.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-3",
+    "changeTypeKey": "emergency",
+    "targetStageKey": "production",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "change-auth-tier-3-emergency",
+          "approverRoleKey": "change-manager",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 2,
+          "requiresTypedReason": true
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-tier-3-emergency",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-tier-3",
+        "role": "dropped"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-emergency",
+        "role": "dropped"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "change-auth-owner",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

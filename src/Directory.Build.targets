@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Test runs stay offline.
+    xunit.v3 depends on the Microsoft.Testing.Platform telemetry extension, which sends usage data to Microsoft.
+    Removing its builder hook means the extension is never registered, with or without opt-out variables.
+    tools/ci.mjs checks the generated registration code for this.
+  -->
+  <ItemGroup>
+    <_OfflineRemovedHook Include="telemetry" DisplayName="Microsoft.Testing.Extensions.Telemetry" />
+    <TestingPlatformBuilderHook Remove="@(_OfflineRemovedHook)" MatchOnMetadata="DisplayName" />
+  </ItemGroup>
+</Project>

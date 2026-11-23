@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "explain_rules output",
+  "description": "The response envelope. On success, data is the engine's rule trace for each aspect asked for, with the winner, the rows that dropped out and why.",
+  "x-tool": "explain_rules",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "configurationSetVersion",
+        "engineVersion",
+        "aspects",
+        "summary"
+      ],
+      "properties": {
+        "configurationSetVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The version the trace ran against."
+        },
+        "engineVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+          "description": "The engine version that produced the trace."
+        },
+        "aspects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "aspect",
+              "operation",
+              "winner",
+              "dropped",
+              "trace"
+            ],
+            "properties": {
+              "aspect": {
+                "enum": [
+                  "approvals",
+                  "gate",
+                  "flags",
+                  "requirements",
+                  "separation"
+                ]
+              },
+              "operation": {
+                "type": "string",
+                "pattern": "^OP-[0-9]{2}$",
+                "description": "The engine operation, such as OP-02."
+              },
+              "winner": {
+                "description": "The row or rule group that won. Null when nothing matched.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "entity",
+                      "key",
+                      "scope"
+                    ],
+                    "properties": {
+                      "entity": {
+                        "$ref": "../common.schema.json#/$defs/entityKey"
+                      },
+                      "key": {
+                        "$ref": "../common.schema.json#/$defs/keyPath"
+                      },
+                      "scope": {
+                        "type": "object",
+                        "description": "The scope fields that matched, such as tierKey and changeTypeKey."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dropped": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "entity",
+                    "key",
+                    "why"
+                  ],
+                  "properties": {
+                    "entity": {
+                      "$ref": "../common.schema.json#/$defs/entityKey"
+                    },
+                    "key": {
+                      "$ref": "../common.schema.json#/$defs/keyPath"
+                    },
+                    "why": {
+                      "type": "string",
+                      "description": "Why it dropped out, in one plain sentence."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "Broader rows that matched but dropped out."
+              },
+              "trace": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "step",
+                    "entity",
+                    "key",
+                    "matched",
+                    "why"
+                  ],
+                  "properties": {
+                    "step": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "The step number, from 1."
+                    },
+                    "entity": {
+                      "$ref": "../common.schema.json#/$defs/entityKey"
+                    },
+                    "key": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/keyPath"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "matched": {
+                      "type": "boolean"
+                    },
+                    "why": {
+                      "type": "string",
+                      "description": "One plain sentence."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "Every step the engine took."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "summary": {
+          "type": "string",
+          "description": "Two or three plain sentences an AI client can quote."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The tier 2 normal change group won, so the business owner approves.",
+      "data": {
+        "configurationSetVersion": 3,
+        "engineVersion": "0.1.0",
+        "aspects": [
+          {
+            "aspect": "approvals",
+            "operation": "OP-02",
+            "winner": {
+              "entity": "approval-rule",
+              "key": "change-auth-tier-2",
+              "scope": {
+                "decisionTypeKey": "change-authorization",
+                "tierKey": "tier-2"
+              }
+            },
+            "dropped": [
+              {
+                "entity": "approval-rule",
+                "key": "change-auth-any",
+                "why": "A more specific group for tier 2 matched."
+              }
+            ],
+            "trace": [
+              {
+                "step": 1,
+                "entity": "approval-rule",
+                "key": "change-auth-any",
+                "matched": true,
+                "why": "Matches every tier."
+              },
+              {
+                "step": 2,
+                "entity": "approval-rule",
+                "key": "change-auth-tier-2",
+                "matched": true,
+                "why": "Matches tier 2 and is more specific."
+              }
+            ]
+          }
+        ],
+        "summary": "The business owner approves this change, because the tier 2 group is the most specific match."
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_role_holders input",
+  "description": "Who holds this product role, such as the change board? Reads the members of the role's bound Entra groups live, as the person. Never stored. Route A only. Writes nothing.",
+  "x-tool": "get_role_holders",
+  "type": "object",
+  "required": [
+    "roleKey"
+  ],
+  "properties": {
+    "roleKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C29 Role",
+      "description": "The role to look up."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "roleKey": "change-board"
+    }
+  ]
+}

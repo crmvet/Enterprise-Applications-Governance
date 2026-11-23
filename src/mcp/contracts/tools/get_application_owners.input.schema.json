@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_application_owners input",
+  "description": "Who owns this app? A small, fast answer: every owner role, holder and deputy, and the gaps. The Microsoft owner itself is never returned or stored. Writes nothing.",
+  "x-tool": "get_application_owners",
+  "type": "object",
+  "required": [
+    "businessApplicationId"
+  ],
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "asOf": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "The owners on this date. Today when left out."
+    },
+    "includeDeputies": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include deputy assignments."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

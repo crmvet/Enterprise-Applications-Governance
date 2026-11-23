@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v33-engine-acceptance-extended",
+  "description": "A draft adds go-live at the lowest tier to the locked engine acceptance list. Extending the list needs a product release, so V33 refuses it.",
+  "ruleIds": [
+    "V33"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "engine-acceptable-decision-types",
+        "values": {
+          "value": [
+            {
+              "decisionTypeKey": "intake",
+              "condition": "lowest-tier"
+            },
+            {
+              "decisionTypeKey": "change-authorization",
+              "condition": "standard-model"
+            },
+            {
+              "decisionTypeKey": "go-live",
+              "condition": "lowest-tier"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "setting.locked-changed",
+        "severity": "error",
+        "ruleId": "V33",
+        "entity": "Setting",
+        "ref": "engine-acceptable-decision-types"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

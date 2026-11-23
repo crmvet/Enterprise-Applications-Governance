@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v33-locked-settings-valid",
+  "description": "A draft changes only the label of the AI approval lock. The lock stays on and locked, and the acceptance list stays as shipped, so V33 passes.",
+  "ruleIds": [
+    "V33"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "ai-approval-lock",
+        "values": {
+          "label": "AI never approves anything"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Engine testing (document 25, sections 3.1 and 10).
+    Fixture runner, preset loader for tests, the design invariants of section 10, the replay tool of section 9, and the
+    in-memory store adapter with its manual clock.
+    Works without an external test framework, so the engine command line can run fixtures and replays.
+    Only test projects and the engine command line reference it; no host does (RuntimeDependencyRuleTests).
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>$(EngineTestTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Engine.Core\Product.Engine.Core.csproj" />
+    <ProjectReference Include="..\Product.Engine.Configuration\Product.Engine.Configuration.csproj" />
+    <ProjectReference Include="..\Product.Engine.Runtime\Product.Engine.Runtime.csproj" />
+  </ItemGroup>
+
+  <!-- The fixture schema and the replay record schema. Found by the end of the name, so the product rename
+       does not break them. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\config\schema\fixture.schema.json" Link="Schemas\fixture.schema.json" LogicalName="Product.Engine.Testing.Schemas.fixture.schema.json" />
+    <EmbeddedResource Include="..\..\config\schema\replay-record.schema.json" Link="Schemas\replay-record.schema.json" LogicalName="Product.Engine.Testing.Schemas.replay-record.schema.json" />
+  </ItemGroup>
+</Project>

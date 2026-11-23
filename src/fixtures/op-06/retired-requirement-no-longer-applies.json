@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "retired-requirement-no-longer-applies",
+  "description": "A retired requirement no longer applies, so the application is complete. A link still tied to the retired requirement is accepted: old links keep pointing at it.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "documentation-requirement",
+        "key": "wiki-page-all"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2026-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "complete",
+    "payload": {
+      "complete": true,
+      "items": [],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {
+        "fixture-link-w1": "2027-06-01T10:00:00Z"
+      }
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

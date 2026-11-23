@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-11",
+  "case": "done-review-wildcard-cadence",
+  "description": "The tier check cadence is written once for every tier in the seed and expanded per tier in the snapshot. Done in June, the tier 2 tier check is next due a year later.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "subjectKind": "review",
+    "doneOnUtc": "2026-06-15T00:00:00Z",
+    "reviewTypeKey": "tier-check",
+    "tierKey": "tier-2"
+  },
+  "expected": {
+    "outcome": "computed",
+    "payload": {
+      "subjectKind": "review",
+      "cadenceKey": "tier-check--tier-2",
+      "nextDueOnUtc": "2027-06-15T00:00:00Z",
+      "isOverdue": false,
+      "actions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

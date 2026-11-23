@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v38-missing-setting",
+  "description": "A draft retires the link undo setting. Every setting of document 21, section 3.6 must exist once, because the engine never falls back to a built-in value, so V38 refuses it.",
+  "ruleIds": [
+    "V38"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "setting",
+        "key": "link-undo-minutes"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "setting.required",
+        "severity": "error",
+        "ruleId": "V38",
+        "entity": "Setting",
+        "ref": "link-undo-minutes"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "retired-row-conflict",
+  "description": "The draft starts from version 1 and makes the change manager's consultation on gate policy changes need everyone. Version 2, now active, retired that consultation. Retiring is a change, so the operation overlaps and the rebase refuses with V42.",
+  "ruleIds": [
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      { "op": "retire", "entity": "approval-rule", "key": "gate-policy-change-change-manager" }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1 },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "approval-rule",
+          "key": "gate-policy-change-change-manager",
+          "values": { "approvalMode": "everyone-must-approve" }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "conflict",
+    "payload": {
+      "canActivate": false,
+      "changedRows": [
+        { "entity": "approval-rule", "key": "gate-policy-change-change-manager", "change": "retired" }
+      ],
+      "overlaps": [
+        {
+          "operation": "/operations/0",
+          "op": "upsert",
+          "entity": "approval-rule",
+          "key": "gate-policy-change-change-manager",
+          "changedRow": { "entity": "approval-rule", "key": "gate-policy-change-change-manager", "change": "retired" }
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "config.base-moved",
+        "severity": "error",
+        "ruleId": "V42",
+        "entity": "Approval Rule",
+        "ref": "gate-policy-change-change-manager"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

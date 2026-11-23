@@ -1,0 +1,81 @@
+{
+  "case": "op-08-ai-accept-refused",
+  "context": {
+    "actor": {
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "roleKeys": ["architect"]
+    },
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A recorded OP-08 write plan: an AI client that sets a decision accepted is refused. Replayed against the same version it gives the same plan and reasons.",
+  "operation": "OP-08",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "effects": [],
+      "isNoOp": false,
+      "isReplay": false,
+      "refusals": [
+        {
+          "code": "ai.status-not-allowed",
+          "ruleId": "G-08"
+        },
+        {
+          "code": "decision.accept-by-engine-only",
+          "ruleId": "G-17"
+        }
+      ],
+      "removedColumns": [],
+      "requestHash": "1db61d8417a175b6edcb418739eae42189488e50ac5f0ef8be331c32d58f36c4",
+      "setColumns": {}
+    },
+    "reasons": [
+      {
+        "code": "ai.status-not-allowed",
+        "entity": "Decision",
+        "message": "An AI actor cannot set Decision to `decision-accepted` (accepted). A person must confirm it.",
+        "ref": "decision-accepted",
+        "severity": "error"
+      },
+      {
+        "code": "decision.accept-by-engine-only",
+        "entity": "Decision",
+        "message": "No caller sets a Decision to accepted. The engine accepts it when its approvals are satisfied, or for an entry of the locked list.",
+        "ref": "fixture-decision-1",
+        "severity": "error"
+      }
+    ],
+    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "trace": [
+      {
+        "entity": "Status",
+        "key": "decision-accepted",
+        "role": "matched"
+      }
+    ]
+  },
+  "request": {
+    "after": {
+      "status": "decision-accepted"
+    },
+    "before": {
+      "decisionType": "design",
+      "statusMeaning": "proposed"
+    },
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": ["replay"],
+  "workingDefaults": [8]
+}

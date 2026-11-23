@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "manifest": { "kind": "patch", "baseVersionNumber": 12, "summary": "Tier 2 go-live also needs the data owner" },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "go-live-tier-2-owner",
+      "values": {
+        "label": "Tier 2 go-live: business owner",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-2",
+        "approverOwnerRoleKey": "business-owner",
+        "approvalMode": "everyone-must-approve"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "go-live-tier-2-data-owner",
+      "values": {
+        "label": "Tier 2 go-live: data owner",
+        "decisionTypeKey": "go-live",
+        "tierKey": "tier-2",
+        "approverOwnerRoleKey": "data-owner",
+        "approvalMode": "everyone-must-approve"
+      }
+    },
+    { "op": "retire", "entity": "tier-question", "key": "failure-impact" }
+  ]
+}

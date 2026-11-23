@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "link_component input",
+  "description": "Records that an app, flow, agent, repository or Azure resource belongs to an application. A link only. It also resolves a component the gap check no longer sees: it moved (a new component replaces it) or it is gone (retired). Linked and moved need componentKindKey, externalId and url. Moved also needs replacesComponentId. Retired needs only technicalComponentId. Nothing is ever deleted.",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may record retired as reported. It is a link fact, not a decision.",
+  "x-tool": "link_component",
+  "type": "object",
+  "required": [
+    "businessApplicationId"
+  ],
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application."
+    },
+    "outcome": {
+      "enum": [
+        "linked",
+        "moved",
+        "retired"
+      ],
+      "default": "linked",
+      "description": "linked adds a component. moved adds the new component that replaces an old one. retired marks a component gone."
+    },
+    "componentKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C16 Component Kind",
+      "description": "The component kind."
+    },
+    "externalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "The tool's own ID."
+    },
+    "url": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "Opens the item in its own tool. Checked against the link kind's Url Pattern."
+    },
+    "linkKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C37 Link Kind",
+      "description": "The link kind."
+    },
+    "labelAsSeen": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The item's name in its tool."
+    },
+    "deploymentTargetId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O15 Deployment Target",
+      "description": "Where the item lives, if it lives in a target."
+    },
+    "replacesComponentId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O03 Technical Component",
+      "description": "For moved: the component the new one replaces."
+    },
+    "technicalComponentId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O03 Technical Component",
+      "description": "For retired: the component that is gone."
+    },
+    "claimId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O23 Claim",
+      "description": "The vanished claim this call resolves."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "A plain note."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "required": [
+          "technicalComponentId"
+        ]
+      },
+      "else": {
+        "required": [
+          "componentKindKey",
+          "externalId",
+          "url"
+        ],
+        "not": {
+          "required": [
+            "technicalComponentId"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "moved"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "required": [
+          "replacesComponentId"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "componentKindKey": "cloud-flow",
+      "externalId": "flow-0001",
+      "url": "https://flows.example.org/flow-0001",
+      "labelAsSeen": "Visit reminder",
+      "clientRequestId": "req-0004"
+    },
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+      "outcome": "retired",
+      "technicalComponentId": "80000000-0000-4000-8000-000000000002",
+      "claimId": "c0000000-0000-4000-8000-000000000001",
+      "note": "The old flow was turned off in October."
+    }
+  ]
+}

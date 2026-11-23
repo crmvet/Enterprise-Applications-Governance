@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g07-version-update-refused-even-in-activation",
+  "description": "An activation write tries to change an existing Configuration Set Version. A version never changes once created.",
+  "ruleIds": [
+    "G-07"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "configuration-set-version",
+    "operation": "update",
+    "rowId": "fixture-version-1",
+    "after": {
+      "changeSummary": "Rewritten."
+    },
+    "nestedEffect": "activate-configuration"
+  },
+  "facts": {
+    "configurationSetKind": "working"
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "config.version-immutable",
+          "ruleId": "G-07"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "config.version-immutable",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

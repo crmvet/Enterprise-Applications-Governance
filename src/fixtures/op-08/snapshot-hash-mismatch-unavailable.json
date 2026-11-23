@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "snapshot-hash-mismatch-unavailable",
+  "description": "The context names another hash than the snapshot in force. The engine cannot prove which rules apply, so it refuses every governed write rather than fall back.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "snapshotHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "after": {
+      "status": "intake-draft"
+    }
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "snapshot.hash-mismatch",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

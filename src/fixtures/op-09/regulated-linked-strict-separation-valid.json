@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "regulated-linked-strict-separation-valid",
+  "description": "Regulated with the linked change management and strict separation overlays, as the build checks this selection, has no validation error.",
+  "tags": ["preset"],
+  "ruleIds": ["V01", "V02", "V03", "V04", "V05", "V06", "V07", "V09", "V10", "V11", "V12", "V43", "V44"],
+  "workingDefaults": [4, 7],
+  "snapshot": { "presetKey": "regulated", "overlays": ["linked-change-management", "strict-separation"] },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": { "outcome": "valid", "payload": { "isValid": true, "issues": [] } }
+}

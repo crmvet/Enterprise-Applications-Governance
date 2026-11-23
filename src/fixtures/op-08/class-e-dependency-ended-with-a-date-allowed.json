@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "class-e-dependency-ended-with-a-date-allowed",
+  "description": "Class E (effective-dated, from the logical model): a dependency is ended with a date, never deleted. A person sets Ended On. Allowed.",
+  "tags": [
+    "hardening-1",
+    "class-e"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "dependency",
+    "operation": "update",
+    "rowId": "fixture-dependency-1",
+    "after": {
+      "endedOn": "2026-11-22"
+    }
+  },
+  "facts": {
+    "before": {}
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "performedByActorKind": "person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

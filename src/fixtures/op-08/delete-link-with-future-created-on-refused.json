@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "delete-link-with-future-created-on-refused",
+  "description": "The creator deletes a delivery link whose stored Created On is in 2099. A Created On later than now was never written by the platform, so the undo window cannot be counted from it.",
+  "tags": [
+    "hardening-2"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "delivery-link",
+    "operation": "delete",
+    "rowId": "fixture-link-1"
+  },
+  "facts": {
+    "before": {
+      "createdByPrincipal": "fixture-person-1",
+      "createdOn": "2099-01-01T00:00:00Z"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "record.delete-not-allowed",
+        "severity": "error",
+        "ref": "fixture-link-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

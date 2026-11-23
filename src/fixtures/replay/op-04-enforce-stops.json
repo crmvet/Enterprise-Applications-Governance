@@ -1,0 +1,71 @@
+{
+  "case": "op-04-enforce-stops",
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "description": "A recorded OP-04 answer: an enforced gate stops a change that has no approval. Replayed against the same version it gives the same verdict.",
+  "operation": "OP-04",
+  "recorded": {
+    "configurationVersion": 1,
+    "engineVersion": "0.1.0",
+    "outcome": "stop",
+    "payload": {
+      "changeTypeKey": "normal",
+      "failMode": "fail-closed",
+      "gateLevel": "enforce",
+      "gatePolicyKey": "gp-prod-tier-3--normal",
+      "isAiOnlyCodeApproval": false,
+      "isMissingApproval": true,
+      "isOtherPath": false,
+      "isOutsideWindow": false,
+      "notify": false,
+      "notifyOwnerRoleKeys": [],
+      "notifyRoleKeys": [],
+      "verdict": "stop",
+      "windowState": "inside"
+    },
+    "reasons": [
+      {
+        "code": "gate.missing-approval",
+        "entity": "Change Type",
+        "message": "The change needs authorization and the product does not know that it was authorized.",
+        "ref": "normal",
+        "severity": "warning"
+      }
+    ],
+    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "trace": [
+      {
+        "entity": "Change Type",
+        "key": "normal",
+        "role": "matched"
+      },
+      {
+        "entity": "Gate Policy",
+        "key": "gp-prod-tier-3--normal",
+        "role": "won"
+      }
+    ]
+  },
+  "request": {
+    "allowedRouteKeys": ["pipeline-step"],
+    "change": {
+      "approvalOverall": "pending",
+      "changeManagementMode": "built-in",
+      "windowEndUtc": "2026-11-20T18:00:00Z",
+      "windowStartUtc": "2026-11-20T14:00:00Z"
+    },
+    "changeTypeKey": "normal",
+    "eventUtc": "2026-11-20T15:00:00Z",
+    "mode": "check",
+    "portfolioPath": [],
+    "routeKey": "pipeline-step",
+    "targetStageKey": "production",
+    "tierKey": "tier-3"
+  },
+  "schemaVersion": "1.0",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "tags": ["replay"]
+}

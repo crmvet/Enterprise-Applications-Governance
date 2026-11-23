@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g17-accept-after-approvals-satisfied-allowed",
+  "description": "The accept-decision effect accepts a data use decision after OP-03 says satisfied. Allowed.",
+  "ruleIds": [
+    "G-17"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-1",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "data-use",
+      "subjectKind": "business-application"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "decidedOn": "2026-11-22T09:00:00Z",
+        "statusMeaning": "accepted"
+      },
+      "effects": [
+        {
+          "kind": "write-audit-entry"
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_presets output",
+  "description": "The response envelope. On success, data lists the presets with a short summary of each.",
+  "x-tool": "list_presets",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "presets"
+      ],
+      "properties": {
+        "presets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "presetKey",
+              "label",
+              "presetKind",
+              "extends",
+              "conflictsWith",
+              "productRelease",
+              "summary"
+            ],
+            "properties": {
+              "presetKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C03 Preset"
+              },
+              "label": {
+                "type": "string",
+                "description": "The preset label."
+              },
+              "presetKind": {
+                "enum": [
+                  "full",
+                  "overlay"
+                ]
+              },
+              "extends": {
+                "description": "The preset this one is written over.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C03 Preset"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "conflictsWith": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C03 Preset"
+                },
+                "description": "Overlays or presets it cannot combine with."
+              },
+              "productRelease": {
+                "type": "string",
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+                "description": "The product release that ships it."
+              },
+              "summary": {
+                "type": "object",
+                "required": [
+                  "tiers",
+                  "gateLevelsByTierAndStage",
+                  "changeManagementMode",
+                  "approvalsSummary"
+                ],
+                "properties": {
+                  "tiers": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    "description": "The tiers. Empty for an overlay that keeps the tiers."
+                  },
+                  "gateLevelsByTierAndStage": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "tierKey",
+                        "targetStageKey",
+                        "gateLevel"
+                      ],
+                      "properties": {
+                        "tierKey": {
+                          "$ref": "../common.schema.json#/$defs/key",
+                          "x-entity": "C08 Tier"
+                        },
+                        "targetStageKey": {
+                          "$ref": "../common.schema.json#/$defs/key",
+                          "x-entity": "C34 Target Stage"
+                        },
+                        "gateLevel": {
+                          "$ref": "../common.schema.json#/$defs/gateLevel"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "description": "The gate level for a normal change, per tier and target stage."
+                  },
+                  "changeManagementMode": {
+                    "description": "Null for an overlay that keeps it.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/changeManagementMode"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "approvalsSummary": {
+                    "type": "string",
+                    "description": "Who approves what, in two or three plain sentences."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "One full preset and one overlay.",
+      "data": {
+        "presets": [
+          {
+            "presetKey": "balanced",
+            "label": "Balanced",
+            "presetKind": "full",
+            "extends": null,
+            "conflictsWith": [],
+            "productRelease": "0.1.0",
+            "summary": {
+              "tiers": [
+                {
+                  "key": "tier-1",
+                  "label": "Tier 1"
+                },
+                {
+                  "key": "tier-2",
+                  "label": "Tier 2"
+                },
+                {
+                  "key": "tier-3",
+                  "label": "Tier 3"
+                }
+              ],
+              "gateLevelsByTierAndStage": [
+                {
+                  "tierKey": "tier-2",
+                  "targetStageKey": "production",
+                  "gateLevel": "advise"
+                },
+                {
+                  "tierKey": "tier-3",
+                  "targetStageKey": "production",
+                  "gateLevel": "enforce"
+                }
+              ],
+              "changeManagementMode": "built-in",
+              "approvalsSummary": "The business owner authorizes tier 1 and 2 changes. The change manager authorizes tier 3 changes and emergencies."
+            }
+          },
+          {
+            "presetKey": "strict-separation",
+            "label": "Strict separation",
+            "presetKind": "overlay",
+            "extends": null,
+            "conflictsWith": [
+              "small-team"
+            ],
+            "productRelease": "0.1.0",
+            "summary": {
+              "tiers": [],
+              "gateLevelsByTierAndStage": [],
+              "changeManagementMode": null,
+              "approvalsSummary": "Nobody approves their own proposal, at any tier."
+            }
+          }
+        ]
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

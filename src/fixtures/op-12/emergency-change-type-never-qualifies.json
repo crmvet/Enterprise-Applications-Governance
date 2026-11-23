@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-12",
+  "case": "emergency-change-type-never-qualifies",
+  "description": "An emergency change type (it allows authorization after) never qualifies, even when a model of that type exists and every condition holds. The engine check standard-model.type refuses such a model before activation; this case proves the engine refuses it at run time too.",
+  "tags": [
+    "invariant"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "standard-change-model",
+        "key": "emergency-labels",
+        "values": {
+          "label": "Emergency labels",
+          "changeTypeKey": "emergency",
+          "conditions": [
+            {
+              "conditionKind": "max-tier-rank",
+              "value": 2
+            },
+            {
+              "conditionKind": "target-stages-in",
+              "value": [
+                "test",
+                "production"
+              ]
+            },
+            {
+              "conditionKind": "max-affected-applications",
+              "value": 1
+            },
+            {
+              "conditionKind": "component-kinds-within",
+              "value": [
+                "canvas-app",
+                "model-driven-app"
+              ]
+            },
+            {
+              "conditionKind": "max-window-minutes",
+              "value": 120
+            },
+            {
+              "conditionKind": "stated",
+              "key": "labels-only",
+              "label": "Labels, views and help text only"
+            }
+          ],
+          "approvedByDecisionId": "fixture-decision-model-1"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "changeTypeKey": "emergency"
+  },
+  "facts": {
+    "change": {
+      "tierRank": 2,
+      "targetStageKeys": [
+        "production"
+      ],
+      "affectedApplicationCount": 1,
+      "componentKindKeys": [
+        "canvas-app"
+      ],
+      "windowMinutes": 60,
+      "statedConditionKeys": [
+        "labels-only"
+      ]
+    },
+    "models": [
+      {
+        "modelKey": "emergency-labels",
+        "approvedByDecisionStatus": "accepted"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "does-not-qualify",
+    "payload": {
+      "qualifies": false,
+      "failedConditions": []
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "standard-model.type",
+        "entity": "Change Type",
+        "ref": "emergency"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

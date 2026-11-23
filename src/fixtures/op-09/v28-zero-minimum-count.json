@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v28-zero-minimum-count",
+  "description": "A draft sets the minimum count of the tier 3 change authorization rule to 0. There is no zero waiver: only the locked list lets the engine accept without a card, so V28 refuses it. The schema check agrees, on the patch and on the composed set.",
+  "ruleIds": [
+    "V28"
+  ],
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "raw": {
+      "schemaVersion": "1.0",
+      "manifest": {
+        "kind": "patch",
+        "baseVersionNumber": 1,
+        "summary": "Tier 3 changes need no approval"
+      },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "approval-rule",
+          "key": "change-auth-tier-3",
+          "values": {
+            "minimumCount": 0
+          }
+        }
+      ]
+    }
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "activeSnapshot": {
+      "presetKey": "balanced"
+    }
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "approval-rule.zero-count",
+        "severity": "error",
+        "ruleId": "V28",
+        "entity": "Approval Rule",
+        "ref": "change-auth-tier-3"
+      },
+      {
+        "code": "shape.schema",
+        "severity": "error",
+        "ruleId": "V01",
+        "entity": "Approval Rule",
+        "ref": "change-auth-tier-3"
+      },
+      {
+        "code": "shape.schema",
+        "severity": "error",
+        "ruleId": "V01"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

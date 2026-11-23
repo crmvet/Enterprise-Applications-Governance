@@ -1,0 +1,50 @@
+{
+  "entity": "application-kind",
+  "rows": [
+    {
+      "key": "power-platform-app",
+      "label": "Power Platform app",
+      "categoryKey": "power-platform",
+      "defaultComponentKindKeys": ["canvas-app", "model-driven-app", "cloud-flow", "solution"]
+    },
+    {
+      "key": "agent",
+      "label": "Agent",
+      "categoryKey": "ai",
+      "defaultComponentKindKeys": ["copilot-studio-agent", "entra-agent-identity"]
+    },
+    {
+      "key": "ai-built-app",
+      "label": "AI-built app",
+      "categoryKey": "ai",
+      "defaultComponentKindKeys": ["code-app", "repository"]
+    },
+    {
+      "key": "code-app",
+      "label": "Code app",
+      "categoryKey": "custom-code",
+      "defaultComponentKindKeys": ["code-app", "repository"]
+    },
+    {
+      "key": "runtime-app",
+      "label": "Copilot managed runtime app",
+      "categoryKey": "ai",
+      "defaultComponentKindKeys": ["copilot-managed-runtime-app"]
+    },
+    { "key": "saas", "label": "SaaS", "categoryKey": "external" },
+    { "key": "external-system", "label": "External system", "categoryKey": "external" },
+    { "key": "api", "label": "API", "categoryKey": "custom-code", "defaultComponentKindKeys": ["azure-resource"] },
+    {
+      "key": "mcp-server",
+      "label": "MCP server",
+      "categoryKey": "custom-code",
+      "defaultComponentKindKeys": ["azure-resource", "repository"]
+    },
+    {
+      "key": "practice-app",
+      "label": "Practice app",
+      "categoryKey": "power-platform",
+      "defaultComponentKindKeys": ["canvas-app"]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "rebase",
+  "case": "named-child-added-conflict",
+  "description": "The draft starts from version 1 and upserts the reach question with a new answer, partners. Version 2, now active, already added an answer with the key partners. The upsert names that child row, so it touches a row that was added in between, and the rebase refuses with V42.",
+  "ruleIds": [
+    "V42"
+  ],
+  "workingDefaults": [
+    4
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "tier-answer-option",
+        "key": "reach/partners",
+        "values": { "label": "Partners", "answerText": "Partner organizations", "impliedTierKey": "tier-3" }
+      }
+    ],
+    "versionNumber": 2
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "baseSnapshot": {
+      "presetKey": "balanced",
+      "versionNumber": 1
+    },
+    "draft": {
+      "schemaVersion": "1.0",
+      "manifest": { "kind": "patch", "baseVersionNumber": 1 },
+      "operations": [
+        {
+          "op": "upsert",
+          "entity": "tier-question",
+          "key": "reach",
+          "values": {
+            "answerOptions": [
+              { "key": "partners", "label": "Partners", "answerText": "Named partner organizations", "impliedTierKey": "tier-2" }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "conflict",
+    "payload": {
+      "canActivate": false,
+      "changedRows": [
+        { "entity": "tier-answer-option", "key": "reach/partners", "change": "added" }
+      ],
+      "overlaps": [
+        {
+          "operation": "/operations/0",
+          "op": "upsert",
+          "entity": "tier-question",
+          "key": "reach",
+          "changedRow": { "entity": "tier-answer-option", "key": "reach/partners", "change": "added" }
+        }
+      ]
+    },
+    "reasons": [
+      { "code": "config.base-moved", "severity": "error", "ruleId": "V42", "entity": "Tier Answer Option", "ref": "reach/partners" }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

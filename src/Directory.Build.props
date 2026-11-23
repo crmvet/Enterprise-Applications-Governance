@@ -1,0 +1,57 @@
+<Project>
+  <!--
+    Shared build settings for every project under src/.
+    One place for the language version, nullable, warnings and the target lists.
+  -->
+
+  <PropertyGroup>
+    <!-- Pinned so every SDK builds the same way. Code must still compile for net48 and netstandard2.0,
+         so avoid features that need newer runtime types (document 25, section 4.2). -->
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <IsPackable>false</IsPackable>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <!-- English resources only. Keeps third-party language folders out of bin/. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+
+    <!-- All code here is new, so warnings are errors.
+         A project with imported or generated code may set AllowWarnings to true. -->
+    <TreatWarningsAsErrors Condition="'$(AllowWarnings)' != 'true'">true</TreatWarningsAsErrors>
+    <!-- NU1900 only means the vulnerability feed was not reachable. Offline builds still pass.
+         Real vulnerability warnings (NU1901 to NU1904) stay errors. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1900</WarningsNotAsErrors>
+
+    <!-- Lock files pin every transitive package. Restore updates them when a direct reference changes. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Target lists (document 25, section 4.2).
+         net48 is the Dataverse plug-in package build. net10.0 is the Azure build.
+         netstandard2.0 is a compile check and a build other .NET hosts may consume. -->
+    <EngineTargetFrameworks>net10.0;net48;netstandard2.0</EngineTargetFrameworks>
+    <!-- Fixtures run on both shipped runtimes. -->
+    <EngineTestTargetFrameworks>net10.0;net48</EngineTestTargetFrameworks>
+    <!-- Hosts, tools and the MCP server core run on .NET 10 only. -->
+    <HostTargetFramework>net10.0</HostTargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- net48 reference assemblies come from a pinned package, not from the machine. -->
+    <AutomaticallyUseReferenceAssemblyPackages>false</AutomaticallyUseReferenceAssemblyPackages>
+  </PropertyGroup>
+
+  <!-- Item conditions run after all properties are set, so TargetFrameworkIdentifier is known here. -->
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- The SDK adds NETStandard.Library 2.0.3 to netstandard2.0 builds. It asks for Microsoft.NETCore.Platforms 1.1.0,
+       which carries the older Microsoft .NET Library license. This lifts it to an MIT version.
+       The package holds only the runtime identifier graph, no code. -->
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
+    <PackageReference Include="Microsoft.NETCore.Platforms" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "balanced-linked-small-team-valid",
+  "description": "Balanced with the linked change management and small team overlays, as the build checks this selection, has no validation error.",
+  "tags": ["preset"],
+  "ruleIds": ["V01", "V02", "V03", "V04", "V05", "V06", "V07", "V09", "V10", "V11", "V12", "V43", "V44"],
+  "snapshot": { "presetKey": "balanced", "overlays": ["linked-change-management", "small-team"] },
+  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
+  "input": { "mode": "preset-build" },
+  "expected": { "outcome": "valid", "payload": { "isValid": true, "issues": [] } }
+}

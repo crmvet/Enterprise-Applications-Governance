@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g14-gate-decision-not-ready-refused",
+  "description": "The engine accepts a priority decision, the gate decision of the commit gate, while OP-07 says the gate is not ready. Refused.",
+  "ruleIds": [
+    "G-14"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-6",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "priority",
+      "subjectKind": "intake-request"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "commit",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "commit-priority-decision",
+          "met": false
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "refusals": [
+        {
+          "code": "gate.not-ready",
+          "ruleId": "G-14"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "ref": "commit"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

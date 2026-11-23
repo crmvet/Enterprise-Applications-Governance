@@ -1,0 +1,6 @@
+{
+  "correctsDeploymentRecordId": "d2000000-0000-4000-8000-000000000001",
+  "idempotencyKey": "ado-a0000000-0000-4000-8000-000000000001-4711-production-deploy_prod-1-correction-1",
+  "reason": "The run belongs to the photo upload change.",
+  "changeRequestId": "d0000000-0000-4000-8000-000000000002"
+}
