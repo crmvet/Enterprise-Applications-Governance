@@ -1,5 +1,6 @@
 // The harness shell: a light top bar, the four page tabs, and the page area.
-// In the product the host is the model-driven app (binding A) or the web app (binding C); only the page area carries over.
+// In the product the host is the model-driven app (binding A) or the web app (binding C, src/app/); only the page area
+// carries over.
 import {
   Tab,
   TabList,
@@ -15,7 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fixtureClient } from './data/fixtureClient';
 import { ToolClientContext } from './data/toolClient';
-import { HostContext, parseRoute, routeHref, type Host, type Route } from './harness';
+import { HostContext, parseRoute, routeHref, type HandOff, type Host, type Route } from './harness';
 import { Application360 } from './pages/Application360';
 import { DependencyMap } from './pages/DependencyMap';
 import { Overview } from './pages/Overview';
@@ -118,7 +119,20 @@ export function App() {
       dispatchToast(
         <Toast>
           <ToastTitle>Opens a list: {what}</ToastTitle>
-          <ToastBody>The product opens the matching view (binding A) or grid (binding C). The harness stops here.</ToastBody>
+          <ToastBody>The product opens the matching view (binding A) or list (binding C). The harness stops here.</ToastBody>
+        </Toast>,
+        { intent: 'info', timeout: 5000 },
+      );
+    },
+    [dispatchToast],
+  );
+
+  const handOff = useCallback(
+    (request: HandOff) => {
+      dispatchToast(
+        <Toast>
+          <ToastTitle>{request.title}</ToastTitle>
+          <ToastBody>Read-only page: the web app shows this request for an AI client, which calls {request.tool}. The harness stops here.</ToastBody>
         </Toast>,
         { intent: 'info', timeout: 5000 },
       );
@@ -127,8 +141,8 @@ export function App() {
   );
 
   const host = useMemo<Host>(
-    () => ({ today: HARNESS_TODAY, defaultApplicationId: DEFAULT_APP, href: routeHref, drill }),
-    [drill],
+    () => ({ today: HARNESS_TODAY, href: routeHref, drill, handOff, showRecordLinks: true }),
+    [drill, handOff],
   );
 
   const appId = route.page === 'app' || route.page === 'map' ? route.id : DEFAULT_APP;

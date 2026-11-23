@@ -1,0 +1,34 @@
+{
+  "description": "First page of the platform admins group: a person, an agent user and a nested group, with a next page link on the Graph host. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/groups/00000000-0000-4000-8000-000000000105/members?$count=true&$top=999&$select=id,displayName"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#directoryObjects(id,displayName)",
+        "@odata.count": 5,
+        "value": [
+          {
+            "@odata.type": "#microsoft.graph.user",
+            "id": "00000000-0000-4000-8000-000000000213",
+            "displayName": "Owen Achterberg"
+          },
+          {
+            "@odata.type": "#microsoft.graph.agentUser",
+            "id": "00000000-0000-4000-8000-000000000401",
+            "displayName": "Scheduling agent"
+          },
+          {
+            "@odata.type": "#microsoft.graph.group",
+            "id": "00000000-0000-4000-8000-000000000109",
+            "displayName": "Platform admin deputies"
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/groups/00000000-0000-4000-8000-000000000105/members?$count=true&$top=999&$select=id,displayName&$skiptoken=fictional-page-2"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "description": "First page of the inventory query: the two registered apps of the walkthrough, and a skip token. Fictional.",
+  "request": {
+    "method": "POST",
+    "url": "https://api.powerplatform.com/resourcequery/resources/query?api-version=2024-10-01",
+    "bodyContains": "\"SkipToken\":\"\""
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "totalRecords": 4,
+        "count": 2,
+        "resultTruncated": 0,
+        "skipToken": "fictional-page-2-of-2",
+        "data": [
+          {
+            "name": "00000000-0000-0000-0000-000000000201",
+            "type": "microsoft.powerapps/canvasapps",
+            "displayName": "Inspection Scheduler",
+            "environmentId": "field-ops-prod",
+            "environmentName": "Field Ops Prod",
+            "ownerId": "",
+            "createdBy": "",
+            "subType": ""
+          },
+          {
+            "name": "00000000-0000-0000-0000-000000000202",
+            "type": "microsoft.powerapps/modeldrivenapps",
+            "displayName": "Route Planner",
+            "environmentId": "field-ops-prod",
+            "environmentName": "Field Ops Prod",
+            "ownerId": "",
+            "createdBy": "",
+            "subType": ""
+          }
+        ]
+      }
+    }
+  ]
+}

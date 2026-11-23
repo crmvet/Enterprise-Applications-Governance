@@ -98,6 +98,12 @@ internal static class Personas
     public const string Tenant = "00000000-0000-4000-8000-0000000000aa";
     public const string Audience = "00000000-0000-4000-8000-0000000000ab";
     public const string ClaudeCode = "00000000-0000-4000-8000-0000000000ac";
+
+    // An AI client that is not a Known Client of the demo binding.
+    public const string OtherClient = "00000000-0000-4000-8000-0000000000ad";
+
+    // The product's own web app (Product:WebApp:ClientIds of every test host).
+    public const string WebApp = "00000000-0000-4000-8000-0000000000ae";
     public const string OtherTenant = "00000000-0000-4000-8000-0000000000fe";
 
     public const string RequesterGroup = "00000000-0000-4000-8000-000000000101";
@@ -138,6 +144,17 @@ internal static class Personas
     // An agent user (Entra Agent ID) in the owners group: it signs in, but resolves to no product role.
     public static readonly Persona Agent = new("t-agent", AgentUserId, "agent-user", groups: new[] { OwnerGroup });
 
+    // The same people signed in to the product's own web app: tokens for the api.access scope that the web app asked for.
+    public static readonly Persona NadiaWeb = new("t-nadia-web", NadiaId, groups: new[] { OwnerGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
+    public static readonly Persona OwenWeb = new("t-owen-web", OwenId, groups: new[] { PlatformAdminGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
+    public static readonly Persona PriyaWeb = new("t-priya-web", PriyaId, groups: new[] { RequesterGroup, MakerGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
+
+    // The agent user with a token the web app asked for: an agent identity holds no role on any entry.
+    public static readonly Persona AgentWeb = new("t-agent-web", AgentUserId, "agent-user", groups: new[] { OwnerGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
+
+    // Priya through an AI client that is not a Known Client.
+    public static readonly Persona PriyaOtherClient = new("t-priya-other-client", PriyaId, groups: new[] { RequesterGroup, MakerGroup }, clientAppId: OtherClient);
+
     // Priya's claims from another tenant.
     public static readonly Persona OtherTenantPriya = new("t-other-tenant", PriyaId, groups: new[] { RequesterGroup, MakerGroup }, tenantId: OtherTenant);
 
@@ -150,7 +167,7 @@ internal static class Personas
     // The release pipeline's identity given the Approval.Write app role too: its Workload Grant is for deployment-recorder only.
     public static readonly Persona PipelineAsRunner = new("t-pipeline-as-runner", PipelineId, "service-principal", appOnly: true, appRoles: new[] { "Approval.Write" }, scopes: Array.Empty<string>());
 
-    public static readonly Persona[] All = { Priya, Nadia, Owen, Mateo, Pipeline, Runner, AllRoles, Agent, OtherTenantPriya, NoScope, UnknownWorkload, PipelineAsRunner };
+    public static readonly Persona[] All = { Priya, Nadia, Owen, Mateo, Pipeline, Runner, AllRoles, Agent, OtherTenantPriya, NoScope, UnknownWorkload, PipelineAsRunner, NadiaWeb, OwenWeb, PriyaWeb, AgentWeb, PriyaOtherClient };
 
     // The persona that signs a transcript token in.
     public static Persona ForMockToken(string token)

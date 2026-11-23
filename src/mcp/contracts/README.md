@@ -34,6 +34,19 @@ the three R1 resources, the Tool Policy seed rows (proposed C41) and the record 
 - The root of every tool schema has `type: object`, as MCP needs.
 - The `examples` in each schema validate against that schema. They use fictional IDs and labels only.
 
+## Entry points
+
+The same tools and the same envelope serve two entry points. The entry decides how the engine stamps a write, never a
+field the caller sends.
+
+| Entry | Who calls | Actor kind | Notes |
+|---|---|---|---|
+| MCP endpoint | An AI client acting for the signed-in person | `ai-client-for-person` | Every write is AI-created and names the person as On Behalf Of. The Known Client check, Max AI State and AI May Submit apply |
+| The product's web app, through its API | The person | `person` | Only the web app's own client IDs, which the host declares, may call. Max AI State and AI May Submit do not apply. Roles, the rate limit and the input schema apply as on MCP |
+
+`whoami` answers the actor kind of the entry: `ai-client-for-person` on the MCP endpoint, `person` through the web app.
+An agent user or agent identity holds no role on either entry. No tool approves on either entry.
+
 ## Conventions
 
 - Field names are lowerCamelCase forms of document 20 logical names (section 3.3).
@@ -102,7 +115,8 @@ default until the question is decided. The places:
 
 - Document 24 has no error code for an unexpected failure. Document 25 maps a bug to HTTP 500. Until document 24
   names one, the server core answers a bug as a JSON-RPC internal error, outside the envelope, that names only the
-  correlation ID.
+  correlation ID. The host gets the exception and the same correlation ID through a failure callback, so operators can
+  see why the request failed.
 - `draftsOlderThanDays` in `get_portfolio_summary`: document 24 does not say which setting sets the age. It is typed as a count.
 - `businessOwner` and `technicalOwner` assume the owner role keys `business-owner` and `technical-owner`. They are null when the configuration has no such role.
 - `score` in `check_duplicates` is typed 0 to 1, and URLs are capped at 2048 characters. Document 24 gives neither.

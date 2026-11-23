@@ -1,0 +1,16 @@
+{
+  "description": "Mateo Brandt is a person (no agent identity parent). Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/users/00000000-0000-4000-8000-000000000214?$select=id,identityParentId"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "id": "00000000-0000-4000-8000-000000000214",
+        "identityParentId": null
+      }
+    }
+  ]
+}

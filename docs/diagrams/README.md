@@ -61,14 +61,14 @@ Each page has its own key in the top right corner. The main chips are:
 
 | Chip | Meaning |
 |---|---|
-| READ LIVE | The product reads a fact when a person asks, as that person. It keeps no copy |
-| EVENT | A Microsoft tool tells the product that something happened |
-| LINK | The product keeps the ID and opens the tool's own page |
-| EXPOSE | MCP clients use the product's tools, as the signed-in person |
-| IN THE PRODUCT | Part of the product itself: screens, tables, roles and checks |
-| NEVER REBUILT | Left to the Microsoft tool. The product adds no copy |
+| READ LIVE | The product is designed to read a fact when a person asks, as that person, and to keep no copy |
+| EVENT | A step in a Microsoft tool is designed to write one row to the product when something happens |
+| LINK | The product is designed to store the ID and link to the tool's own page |
+| EXPOSE | AI clients are designed to reach the product's MCP tools, as the signed-in person |
+| IN THE PRODUCT | Part of the product's design: screens, tables, roles and checks |
+| NEVER REBUILT | Left to the Microsoft tool. The product is designed to add no copy |
 | POSSIBLE LATER | A possible route, not designed now |
-| IN DESIGN, with a date | The product side of the page is a design, as of that date |
+| IN DESIGN, with a date | The product side of the page is a design, as of that date. Every page also says "Designed, not released" |
 | (preview) | Microsoft's own preview label on Microsoft Learn, on the date it was checked |
 
 | Visio file | Family | PNGs, one per page |

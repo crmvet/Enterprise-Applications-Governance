@@ -17,9 +17,10 @@ internal static partial class ToolHandlers
 {
     // ---- 1. whoami ----
 
+    // actorKind is the entry's: ai-client-for-person on the MCP endpoint, person through the product's web app.
     private static JsonTreeNode WhoAmI(ToolScope s)
     {
-        if (!s.IsAiCaller)
+        if (!s.IsAiCaller && s.Session.ActorKind != "person")
         {
             throw s.Refused(McpErrorCodes.NotAuthorized, "An agent identity or agent user holds no product role and reads nothing here (document 26, RA-06).");
         }
@@ -35,7 +36,7 @@ internal static partial class ToolHandlers
                 ("roleKey", JsonTreeNode.FromString(r.RoleKey)),
                 ("label", JsonTreeNode.FromString(r.Label)),
                 ("viaGroup", Js.Obj(("objectId", JsonTreeNode.FromString(r.GroupObjectId)), ("displayLabel", JsonTreeNode.FromString(r.GroupLabel)))))))),
-            ("actorKind", JsonTreeNode.FromString("ai-client-for-person")),
+            ("actorKind", JsonTreeNode.FromString(s.IsAiCaller ? "ai-client-for-person" : "person")),
             ("clientApp", Js.Obj(("appId", JsonTreeNode.FromString(session.Caller.ClientAppId)), ("label", JsonTreeNode.FromString(session.Caller.ClientAppLabel ?? session.Caller.ClientAppId)))),
             ("configurationSet", Js.Obj(
                 ("key", JsonTreeNode.FromString(session.ConfigurationSetKey)),
@@ -208,6 +209,7 @@ internal static partial class ToolHandlers
         IDirectoryReader directory = s.Options.Directory ?? throw s.Upstream("Microsoft Graph", "no Graph client is bound to this server");
         var groups = new List<JsonTreeNode>();
         var members = new SortedDictionary<string, JsonTreeNode>(StringComparer.OrdinalIgnoreCase);
+        var notPeople = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (SnapshotRow binding in s.ActiveRows("role-group-binding").Where(b => Js.Text(b.Columns, "roleKey") == role.KeyPath))
         {
             string group = Js.Text(binding.Columns, "entraGroupObjectId")!;
@@ -222,16 +224,29 @@ internal static partial class ToolHandlers
             foreach (DirectoryObject member in answer.Value)
             {
                 members[member.ObjectId] = Js.Obj(("objectId", JsonTreeNode.FromString(member.ObjectId)), ("displayLabel", JsonTreeNode.FromString(member.DisplayLabel)));
+                if (!string.Equals(member.PrincipalKind, "user", StringComparison.Ordinal))
+                {
+                    notPeople.Add(member.ObjectId);
+                }
             }
         }
 
+        // members lists every member Graph shows, as the contract says. Only people hold a product role through a group:
+        // an agent user or agent identity holds none (RA-06), a workload holds a role only through a Workload Grant, and a
+        // nested group is a group, not a person. The summary counts people only, and the note names the others.
+        int people = members.Keys.Count(id => !notPeople.Contains(id));
+        string? note = groups.Count == 0
+            ? "No Entra group is bound to this role in the configuration in force."
+            : notPeople.Count == 0
+            ? null
+            : notPeople.Count + (notPeople.Count == 1 ? " listed member is" : " listed members are") + " not a person (an agent user, an agent identity, a service principal or a nested group) and holds no product role through this binding. A nested group's own members are not listed.";
         JsonTreeNode data = Js.Obj(
             ("role", s.LabelledKey("role", role.KeyPath)),
             ("groups", Arr(groups)),
             ("members", Arr(members.Values)),
             ("readFrom", JsonTreeNode.FromString("Entra, live")),
-            ("note", groups.Count == 0 ? JsonTreeNode.FromString("No Entra group is bound to this role in the configuration in force.") : JsonTreeNode.Null));
-        return s.Answer(data, members.Count + " people hold " + s.Label("role", role.KeyPath) + " through " + groups.Count + " group(s), read live from Entra.");
+            ("note", note == null ? JsonTreeNode.Null : JsonTreeNode.FromString(note)));
+        return s.Answer(data, people + (people == 1 ? " person holds " : " people hold ") + s.Label("role", role.KeyPath) + " through " + groups.Count + " group(s), read live from Entra." + (notPeople.Count == 0 ? string.Empty : " " + notPeople.Count + " other member(s) are not people."));
     }
 
     // ---- 4. find_applications ----
@@ -614,10 +629,12 @@ internal static partial class ToolHandlers
             .SelectMany(e => s.Rows.Query(RowQuery.For(e).Where("statusMeaning", "draft")))
             .Count(r => (Js.ParseMoment(r.Text("createdOn")) ?? Js.ParseMoment(r.Text("engineCheckedOn")) ?? s.Now) < s.Now.AddDays(-days));
 
+        // ownerGaps counts owner roles with no holder or no deputy, as the contract says: one per item of the full owner
+        // gap list, so the figure and the list a page shows next to it agree. The summary names the applications too.
         var members = new List<(string, JsonTreeNode?)>
         {
             ("buckets", Arr(buckets)),
-            ("ownerGaps", JsonTreeNode.FromInt64(appsWithGaps)),
+            ("ownerGaps", JsonTreeNode.FromInt64(gapList.Count)),
             ("reviewsOverdue", JsonTreeNode.FromInt64(overdue)),
             ("documentsMissingOrStale", JsonTreeNode.FromInt64(documents)),
             ("draftsOlderThanDays", JsonTreeNode.FromInt64(oldDrafts)),
@@ -629,7 +646,7 @@ internal static partial class ToolHandlers
             members.Add(("skipToken", Js.OptStr(next)));
         }
 
-        return s.Answer(Js.Obj(members.ToArray()), apps.Count + " applications, " + appsWithGaps + " with an owner gap.");
+        return s.Answer(Js.Obj(members.ToArray()), apps.Count + " applications, " + appsWithGaps + " with an owner gap (" + gapList.Count + " owner role(s) with no holder or no deputy).");
     }
 
     // ---- 9. get_requirements ----

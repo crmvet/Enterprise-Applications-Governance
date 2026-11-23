@@ -84,12 +84,18 @@ internal sealed class ModelEntity
 // The logical model (model/logical-model.json) compiled into this assembly as an embedded resource, so the guard's
 // column lists and history classes are the model's own and never drift from it. Reading the resource touches no file,
 // no network and no environment: it is part of the loaded assembly, like the code. Loaded once, on first use.
+// The public read-only view (Model/LogicalModelView.cs, LogicalModel.Compiled) reads the same parsed document.
 internal static class LogicalModelFacts
 {
     // Found by the end of its name, so the product rename does not break it.
     private const string ResourceSuffix = ".logical-model.json";
 
+    private static readonly Lazy<JsonTreeNode> Document = new(ReadDocument, LazyThreadSafetyMode.ExecutionAndPublication);
+
     private static readonly Lazy<Loaded> Model = new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    // The compiled-in model document, parsed once and shared by the guard's facts and the public view.
+    internal static JsonTreeNode Root => Document.Value;
 
     public static string ModelVersion => Model.Value.Version;
 
@@ -134,7 +140,7 @@ internal static class LogicalModelFacts
         return logicalName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
     }
 
-    private static Loaded Load()
+    private static JsonTreeNode ReadDocument()
     {
         Assembly assembly = typeof(LogicalModelFacts).Assembly;
         string? name = assembly.GetManifestResourceNames().SingleOrDefault(n => n.EndsWith(ResourceSuffix, StringComparison.Ordinal))
@@ -146,7 +152,12 @@ internal static class LogicalModelFacts
             text = reader.ReadToEnd();
         }
 
-        JsonTreeNode root = CanonicalJson.Parse(text);
+        return CanonicalJson.Parse(text);
+    }
+
+    private static Loaded Load()
+    {
+        JsonTreeNode root = Root;
         var sets = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         foreach (JsonTreeNode set in Items(root, "columnSets"))
         {
@@ -201,12 +212,12 @@ internal static class LogicalModelFacts
         }
     }
 
-    private static IReadOnlyList<JsonTreeNode> Items(JsonTreeNode node, string member)
+    internal static IReadOnlyList<JsonTreeNode> Items(JsonTreeNode node, string member)
     {
         return node.TryGetMember(member, out JsonTreeNode? value) && value.Kind == JsonTreeKind.Array ? value.Items : Array.Empty<JsonTreeNode>();
     }
 
-    private static string Text(JsonTreeNode node, string member)
+    internal static string Text(JsonTreeNode node, string member)
     {
         return node.TryGetMember(member, out JsonTreeNode? value) && value.Kind == JsonTreeKind.String
             ? value.GetString()

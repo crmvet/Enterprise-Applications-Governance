@@ -59,6 +59,22 @@ public static class ProductClaimTypes
     public const string ClaimNames = "_claim_names";
 
     /// <summary>
+    /// The subject facets of a Microsoft Entra Agent ID token: what the subject (<c>oid</c>) is, space separated.
+    /// <see cref="AgentIdentityFacet"/> for an agent identity, <see cref="AgentUserFacet"/> for an agent's user account.
+    /// https://learn.microsoft.com/entra/agent-id/agent-token-claims
+    /// </summary>
+    public const string SubjectFacets = "xms_sub_fct";
+
+    /// <summary>The actor facets of a Microsoft Entra Agent ID token: what the client app (<c>azp</c>) is, space separated.</summary>
+    public const string ActorFacets = "xms_act_fct";
+
+    /// <summary>The facet value of an agent identity.</summary>
+    public const string AgentIdentityFacet = "11";
+
+    /// <summary>The facet value of an agent's user account.</summary>
+    public const string AgentUserFacet = "13";
+
+    /// <summary>
     /// Marks a principal issued by the local development identity. The caller mapper refuses any principal that carries
     /// it outside the Development environment.
     /// </summary>
@@ -94,7 +110,9 @@ public sealed class CallerClaims
         bool groupsOverage = false,
         bool isDevIdentity = false,
         string? declaredPrincipalKind = null,
-        string? tokenVersion = null)
+        string? tokenVersion = null,
+        IEnumerable<string>? subjectFacets = null,
+        IEnumerable<string>? actorFacets = null)
     {
         ObjectId = objectId ?? string.Empty;
         TenantId = tenantId ?? string.Empty;
@@ -108,6 +126,14 @@ public sealed class CallerClaims
         IsDevIdentity = isDevIdentity;
         DeclaredPrincipalKind = string.IsNullOrWhiteSpace(declaredPrincipalKind) ? null : declaredPrincipalKind;
         TokenVersion = string.IsNullOrWhiteSpace(tokenVersion) ? null : tokenVersion;
+        var subject = Facets(subjectFacets);
+        var actor = Facets(actorFacets);
+
+        // An app-only token's subject is its client, so an agent identity facet on either side names the subject.
+        SubjectIsAgentUser = subject.Contains(ProductClaimTypes.AgentUserFacet);
+        SubjectIsAgentIdentity = subject.Contains(ProductClaimTypes.AgentIdentityFacet)
+            || (isAppOnly && (actor.Contains(ProductClaimTypes.AgentIdentityFacet) || actor.Contains(ProductClaimTypes.AgentUserFacet)));
+        ActorIsAgent = actor.Contains(ProductClaimTypes.AgentIdentityFacet) || actor.Contains(ProductClaimTypes.AgentUserFacet);
     }
 
     /// <summary>The <c>oid</c> claim.</summary>
@@ -146,6 +172,27 @@ public sealed class CallerClaims
     /// <summary>The <c>ver</c> claim, or null.</summary>
     public string? TokenVersion { get; }
 
+    /// <summary>
+    /// True when the validated token says its subject is an agent's user account (<c>xms_sub_fct</c> holds 13). The caller
+    /// is then an agent user whatever a Principal Reference records: it holds no role.
+    /// </summary>
+    public bool SubjectIsAgentUser { get; }
+
+    /// <summary>
+    /// True when the validated token says its subject is an agent identity (<c>xms_sub_fct</c> holds 11, or an app-only
+    /// token's <c>xms_act_fct</c> names an agent). The caller then holds no role and no Workload Grant.
+    /// </summary>
+    public bool SubjectIsAgentIdentity { get; }
+
+    /// <summary>
+    /// True when the validated token says its client app is an agent (<c>xms_act_fct</c> holds 11 or 13). Such a client
+    /// acts for the person as an AI client and is never the person entry.
+    /// </summary>
+    public bool ActorIsAgent { get; }
+
+    /// <summary>True when the validated token names an agent as its subject or its client.</summary>
+    public bool IsAgentToken => SubjectIsAgentUser || SubjectIsAgentIdentity || ActorIsAgent;
+
     /// <summary>True when the token carries the scope.</summary>
     public bool HasScope(string scope)
     {
@@ -156,6 +203,14 @@ public sealed class CallerClaims
     public bool HasAppRole(string role)
     {
         return AppRoles.Contains(role, StringComparer.Ordinal);
+    }
+
+    // The facet values of a multivalued facet claim: space separated, in any order, possibly over several claims.
+    private static HashSet<string> Facets(IEnumerable<string>? values)
+    {
+        return new HashSet<string>(
+            (values ?? Enumerable.Empty<string>()).SelectMany(v => (v ?? string.Empty).Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)).Select(v => v.Trim()),
+            StringComparer.Ordinal);
     }
 }
 
@@ -234,7 +289,9 @@ public sealed class CallerMapper : ICallerMapper
             overage,
             dev,
             dev ? First(user, ProductClaimTypes.DevPrincipalKind) : null,
-            First(user, ProductClaimTypes.Version));
+            First(user, ProductClaimTypes.Version),
+            All(user, ProductClaimTypes.SubjectFacets),
+            All(user, ProductClaimTypes.ActorFacets));
     }
 
     private static string? First(ClaimsPrincipal user, string type)

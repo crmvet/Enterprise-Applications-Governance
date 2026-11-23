@@ -2,7 +2,7 @@
 //
 // A page asks for a tool by its document 24 name with the tool's input, and gets the response envelope back.
 // Binding A (Dataverse): a generative page would call the custom API <prefix>_<ToolInPascalCase> and parse
-// resultJson. Binding C (Azure): the web app would call the API endpoint with the same contract.
+// resultJson. Binding C (Azure): the web app calls POST /api/<tool> with the same contract (apiClient.ts).
 // The harness answers from fixture JSON (fixtureClient.ts). Whether these components run inside a generative
 // page unchanged is UNVERIFIED; on binding A they carry over at least as specs.
 //

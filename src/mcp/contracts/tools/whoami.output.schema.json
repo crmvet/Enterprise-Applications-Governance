@@ -80,8 +80,11 @@
           "description": "The product roles the person holds now. Empty when they hold none."
         },
         "actorKind": {
-          "const": "ai-client-for-person",
-          "description": "Calls through the MCP endpoint are always stamped as an AI client acting for the person."
+          "enum": [
+            "ai-client-for-person",
+            "person"
+          ],
+          "description": "How the engine stamps this caller's writes, from the entry point. Calls through the MCP endpoint are always stamped as an AI client acting for the person. Only calls from the product's own web app, through its API, are stamped as the person."
         },
         "clientApp": {
           "$ref": "../common.schema.json#/$defs/clientApp"

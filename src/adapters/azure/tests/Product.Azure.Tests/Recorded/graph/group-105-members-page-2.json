@@ -1,0 +1,27 @@
+{
+  "description": "Second and last page of the platform admins group: a guest user and a device, which holds no role. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/groups/00000000-0000-4000-8000-000000000105/members?$count=true&$top=999&$select=id,displayName&$skiptoken=fictional-page-2"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#directoryObjects(id,displayName)",
+        "value": [
+          {
+            "@odata.type": "#microsoft.graph.user",
+            "id": "00000000-0000-4000-8000-000000000216",
+            "displayName": "External reviewer (guest)"
+          },
+          {
+            "@odata.type": "#microsoft.graph.device",
+            "id": "00000000-0000-4000-8000-000000000601",
+            "displayName": "Kiosk tablet"
+          }
+        ]
+      }
+    }
+  ]
+}

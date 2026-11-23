@@ -213,6 +213,9 @@ public sealed class SecurityTests
         {
             Assert.Equal("nosniff", call.Header("X-Content-Type-Options"));
             Assert.Equal("no-store", call.Header("Cache-Control"));
+
+            // A local run on http://127.0.0.1 is never pinned to https.
+            Assert.Null(call.Header("Strict-Transport-Security"));
         }
 
         HttpCall metadata = await host.Get("/.well-known/oauth-protected-resource/mcp");

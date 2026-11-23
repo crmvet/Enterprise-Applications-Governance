@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Product.Engine.Core;
 using Product.Engine.Core.Contract;
@@ -10,10 +11,16 @@ using Product.Mcp.Core.Envelope;
 
 namespace Product.Mcp.Core.Backend.InProcess;
 
-// Maps an engine answer that failed (document 25, section 7) to one of the 11 fixed codes (document 24, section 3.5).
-// Order: the engine reasons errors.json names for a code (most specific), then the reason's catalog category, then the
-// runtime outcome word. A refusal by an AI rule (G-01, G-06, G-08, G-17, RA-06) for an AI client is ai_cannot_do_this.
-internal static class EngineErrorMap
+// Maps an engine answer that failed (document 25, section 7) to one of the 11 fixed error codes (document 24, section 3.5),
+// the same way for every entry point: the MCP endpoint, the REST API, the record endpoint and the approval outcome
+// endpoint. The HTTP status of the answer is the code's status in errors.json (ContractSet.Errors).
+//
+// Order: the runtime outcome words invalid-input, not-found, conflict and unavailable first; then the engine reasons
+// errors.json names for a code (most specific, tried in a fixed order); then, for an AI caller only, a refusal by an AI
+// rule (G-01, G-06, G-08, G-17, RA-06, or an ai. reason) is ai_cannot_do_this; then the reason's catalog category; else
+// rule_violation. The first error reason (or the first reason) gives the message and the field or rule key. No exception
+// text and no token reach the answer.
+public static class EngineErrorMap
 {
     // The codes errors.json may name engine reasons for, in the order they are tried.
     private static readonly string[] ExplicitOrder =
@@ -24,13 +31,40 @@ internal static class EngineErrorMap
 
     private static readonly string[] AiRules = { "G-01", "G-06", "G-08", "G-17", "RA-06" };
 
+    // Maps a failed runtime outcome (call it only when outcome.Succeeded is false). aiCaller is true when the caller is an AI
+    // client acting for a person (actor kind ai-client-for-person): only then does a refusal by an AI rule map to
+    // ai_cannot_do_this by its rule. A reason errors.json lists under a code maps to that code for every caller. The error
+    // carries the engine's message and the field or rule key it names.
     public static McpError Map(RuntimeOutcome outcome, ContractSet contracts, bool aiCaller)
     {
-        Reason? first = outcome.Reasons.FirstOrDefault(r => r.Severity == ReasonSeverity.Error) ?? outcome.Reasons.FirstOrDefault();
-        string message = first?.Message ?? "The engine refused the call (" + outcome.Outcome + ").";
+        if (outcome == null)
+        {
+            throw new ArgumentNullException(nameof(outcome));
+        }
+
+        return Map(outcome.Outcome, outcome.Reasons, contracts, aiCaller);
+    }
+
+    // The same map over an outcome word (refused, invalid-input, not-found, conflict or unavailable) and its reasons in
+    // canonical order (errors first), for a host that holds them without a RuntimeOutcome.
+    public static McpError Map(string outcomeWord, IEnumerable<Reason> reasons, ContractSet contracts, bool aiCaller)
+    {
+        if (outcomeWord == null)
+        {
+            throw new ArgumentNullException(nameof(outcomeWord));
+        }
+
+        if (contracts == null)
+        {
+            throw new ArgumentNullException(nameof(contracts));
+        }
+
+        IReadOnlyList<Reason> all = (reasons ?? Enumerable.Empty<Reason>()).ToList();
+        Reason? first = all.FirstOrDefault(r => r.Severity == ReasonSeverity.Error) ?? all.FirstOrDefault();
+        string message = first?.Message ?? "The engine refused the call (" + outcomeWord + ").";
         string? reference = first?.Ref;
 
-        switch (outcome.Outcome)
+        switch (outcomeWord)
         {
             case OperationOutcomes.InvalidInput:
                 return new McpError(McpErrorCodes.Validation, message, reference);

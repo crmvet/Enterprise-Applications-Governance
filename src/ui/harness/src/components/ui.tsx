@@ -23,7 +23,7 @@ import {
 } from '@fluentui/react-icons';
 import { useSyncExternalStore, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import type { CouldNotReadItem, Envelope, Failure, StatusValue, Success, Warning } from '../data/contracts';
-import { humanizeKey } from '../data/format';
+import { fmtDateTime, humanizeKey } from '../data/format';
 import { toneOfMeaning, type Tone } from '../data/meanings';
 import type { ToolState } from '../data/toolClient';
 import { palette } from '../theme';
@@ -195,11 +195,14 @@ export function Panel<T>(props: PanelProps<T>) {
 }
 
 export function PanelFailure({ failure }: { failure: Failure }) {
-  const intent = failure.error.code === 'not_found' ? 'info' : failure.error.code === 'not_authorized' ? 'warning' : 'error';
+  const code = failure.error.code;
+  const intent = code === 'not_found' ? 'info' : code === 'not_authorized' || code === 'not_signed_in' || code === 'rate_limited' ? 'warning' : 'error';
   const title =
-    failure.error.code === 'not_found' ? 'Nothing to show'
-      : failure.error.code === 'not_authorized' ? 'You cannot see this section'
-        : 'This section could not load';
+    code === 'not_found' ? 'Nothing to show'
+      : code === 'not_authorized' ? 'You cannot see this section'
+        : code === 'not_signed_in' ? 'Sign in to see this section'
+          : code === 'rate_limited' ? 'Too many requests just now'
+            : 'This section could not load';
   return (
     <MessageBar intent={intent} layout="multiline">
       <MessageBarBody>
@@ -224,7 +227,7 @@ export function EnvelopeNotes({ couldNotRead, warnings }: { couldNotRead: CouldN
         </div>
       ))}
       {warnings.map((w, i) => (
-        <MessageBar key={i} intent="warning" layout="multiline">
+        <MessageBar key={i} intent="warning" layout="multiline" aria-labelledby={undefined} aria-label="Warning">
           <MessageBarBody>{w.message}</MessageBarBody>
         </MessageBar>
       ))}
@@ -281,14 +284,10 @@ export function PageHeader(props: { eyebrow?: string; title: ReactNode; subtitle
   );
 }
 
-// "Data as of 22 Nov 2026, 09:00 UTC. Configuration version 7."
+// "Data as of 22 Nov 2026, 09:00 UTC. Configuration version 7." In the display zone, which it names.
 export function DataStamp({ envelope }: { envelope: Envelope<unknown> | undefined }) {
   if (!envelope || !envelope.ok) return null;
-  const d = new Date(envelope.asOf);
-  const text = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).format(d);
-  return <>Data as of {text} UTC. Configuration version {envelope.configurationSetVersion}.</>;
+  return <>Data as of {fmtDateTime(envelope.asOf)}. Configuration version {envelope.configurationSetVersion}.</>;
 }
 
 // ---------- KPI tile ----------
@@ -347,24 +346,51 @@ const useKpiStyles = makeStyles({
     [media.narrow]: { fontSize: '28px', lineHeight: '36px' },
   },
   caption: { fontSize: tokens.fontSizeBase200, color: palette.navy3, lineHeight: tokens.lineHeightBase200 },
+  pending: { display: 'flex', alignItems: 'center', height: '40px', [media.narrow]: { height: '36px' } },
+  pendingBar: { width: '64px' },
 });
 
-export function KpiTile(props: { label: string; value: number; caption: string; attention?: boolean; onClick?: () => void; className?: string }) {
+// value is null while the figure is still being read: the tile shows a placeholder, never a number the server did not
+// send.
+export function KpiTile(props: { label: string; value: number | null; caption: string; attention?: boolean; onClick?: () => void; className?: string }) {
   const s = useKpiStyles();
+  const loading = props.value === null;
   return (
     <button
       type="button"
       className={mergeClasses(s.tile, props.attention && s.attention, props.className)}
       onClick={props.onClick}
-      aria-label={`${props.label}: ${props.value}. ${props.caption}. Opens the list.`}
+      aria-label={`${props.label}: ${loading ? 'loading' : props.value}. ${props.caption}. Opens the list.`}
+      aria-busy={loading || undefined}
     >
       <span className={s.label}>
         {props.attention && <Warning16Filled className={s.icon} aria-hidden />}
         {props.label}
       </span>
-      <span className={s.value}>{props.value.toLocaleString('en-GB')}</span>
+      {props.value === null ? (
+        <Skeleton className={s.pending} aria-hidden>
+          <SkeletonItem size={28} className={s.pendingBar} />
+        </Skeleton>
+      ) : (
+        <span className={s.value}>{props.value.toLocaleString('en-GB')}</span>
+      )}
       <span className={s.caption}>{props.caption}</span>
     </button>
+  );
+}
+
+// A list that shows one page says so when the server holds more rows than the page asked for (the answer carries a
+// skipToken), so a short list is never read as the whole list.
+export function MoreRowsNote({ skipToken, what }: { skipToken: string | undefined; what: string }) {
+  const s = usePanelStyles();
+  if (!skipToken) return null;
+  return (
+    <div className={s.notes}>
+      <div className={s.hidden}>
+        <Info12Filled aria-hidden />
+        <span>The product holds more {what} than this list shows. Narrow the range, or ask an AI client for the rest.</span>
+      </div>
+    </div>
   );
 }
 

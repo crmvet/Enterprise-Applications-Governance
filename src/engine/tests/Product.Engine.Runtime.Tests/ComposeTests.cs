@@ -89,6 +89,33 @@ public sealed class ComposeTests
         Assert.True(other.HasReason(ReasonCodes.RequestIdempotencyKeyReused), other.ToString());
     }
 
+    // A person's composed write (the product's page, caller entry person) is the person's own act: the AI defaults of G-08
+    // do not apply, so a submitted intake stays submitted, is not AI-created and names no On Behalf Of. The same write from
+    // an AI client for the same person is forced to draft and marked AI-created.
+    [Fact]
+    public void APersonsComposedWriteIsNotDowngradedByTheAiDefaults()
+    {
+        string submitted = Intake.Replace("intake-draft", "intake-submitted");
+        Harness h = Harness.Create();
+        Func<ComposedCall, JsonTreeNode?> body = call => RuntimeJsonTestHelpers.Object(("recordId", JsonTreeNode.FromString(call.Write(WriteCommand.Create("intake-request", submitted)).RowId)));
+
+        RuntimeOutcome person = Harness.Ok(h.Runtime.Compose(Harness.PersonOne, new ComposeRequest("save_intake_draft"), body));
+        StoredRow mine = h.Row("intake-request", RuntimeJsonTestHelpers.Text(person.Payload, "recordId")!);
+        Assert.Equal("submitted", Harness.Text(mine, "statusMeaning"));
+        Assert.False(mine.Flag("isAiCreated"));
+        Assert.Equal("person", Harness.Text(mine, "performedByActorKind"));
+        Assert.Null(mine.Text("onBehalfOf"));
+        Assert.False(person.HasReason(ReasonCodes.AiForcedDraft));
+
+        RuntimeOutcome ai = Harness.Ok(h.Runtime.Compose(Harness.AiClientOf1, new ComposeRequest("save_intake_draft"), body));
+        StoredRow drafted = h.Row("intake-request", RuntimeJsonTestHelpers.Text(ai.Payload, "recordId")!);
+        Assert.Equal("draft", Harness.Text(drafted, "statusMeaning"));
+        Assert.True(drafted.Flag("isAiCreated"));
+        Assert.Equal("ai-client-for-person", Harness.Text(drafted, "performedByActorKind"));
+        Assert.Equal(Harness.Person1, drafted.Text("onBehalfOf"));
+        Assert.True(ai.HasReason(ReasonCodes.AiForcedDraft));
+    }
+
     [Fact]
     public void AReadWritesNothing()
     {

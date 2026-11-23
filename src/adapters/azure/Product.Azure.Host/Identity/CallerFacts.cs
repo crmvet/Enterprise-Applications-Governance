@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Product.Azure.Stores;
 using Product.Engine.Configuration.Snapshots;
 using Product.Engine.Core;
@@ -15,9 +16,10 @@ namespace Product.Azure.Host;
 
 /// <summary>
 /// Turns a mapped caller into the engine's caller identity and the store call context. The actor kind comes from the
-/// entry point and the token type, never from a field the caller sends: a delegated token is an AI client acting for the
-/// signed-in person on every route of this release, an app-only token is a workload (a pipeline, or the approval runner
-/// when it holds the approval writer grant). Product roles come only from the configuration in force.
+/// entry point and the token type, never from a field the caller sends: a delegated token from the product's own web
+/// app (its <c>azp</c> is one of <c>Product:WebApp:ClientIds</c>) on the REST API is the person; any other delegated
+/// token is an AI client acting for the signed-in person; an app-only token is a workload (a pipeline, or the approval
+/// runner when it holds the approval writer grant). Product roles come only from the configuration in force.
 /// </summary>
 public sealed class CallerFacts
 {
@@ -35,11 +37,25 @@ public sealed class CallerFacts
 
     /// <summary>
     /// The engine principal kind of a delegated caller: <see cref="PrincipalKind.AgentUser"/> or
-    /// <see cref="PrincipalKind.AgentIdentity"/> when its Principal Reference (or, for a local development persona, the
-    /// persona) says so, else <see cref="PrincipalKind.User"/>.
+    /// <see cref="PrincipalKind.AgentIdentity"/> when the validated token's agent facets, its Principal Reference (or, for a
+    /// local development persona, the persona) say so, else <see cref="PrincipalKind.User"/>. A token that names an agent
+    /// is never upgraded to a user by a Principal Reference.
     /// </summary>
     public PrincipalKind DelegatedKindOf(CallerClaims? caller, string objectId)
     {
+        if (caller != null && string.Equals(caller.ObjectId, objectId, StringComparison.OrdinalIgnoreCase))
+        {
+            if (caller.SubjectIsAgentUser)
+            {
+                return PrincipalKind.AgentUser;
+            }
+
+            if (caller.SubjectIsAgentIdentity)
+            {
+                return PrincipalKind.AgentIdentity;
+            }
+        }
+
         if (caller != null && caller.IsDevIdentity && caller.DeclaredPrincipalKind != null
             && EngineContract.PrincipalKinds.TryParse(caller.DeclaredPrincipalKind, out PrincipalKind declared)
             && (declared == PrincipalKind.AgentUser || declared == PrincipalKind.AgentIdentity))
@@ -77,6 +93,16 @@ public sealed class CallerFacts
     /// <summary>The engine caller identity of a mapped caller on this release's entry points.</summary>
     public CallerIdentity Identity(CallerClaims caller, string? clientAppLabel = null)
     {
+        return Identity(caller, clientAppLabel, personEntry: false);
+    }
+
+    /// <summary>
+    /// The engine caller identity of a mapped caller. <paramref name="personEntry"/> is true for a delegated caller that
+    /// reached the REST API through the product's own web app (<see cref="IsPersonEntry"/>): the person, with no On Behalf
+    /// Of. An agent user or agent identity keeps its kind on every entry and holds no role (RA-06).
+    /// </summary>
+    public CallerIdentity Identity(CallerClaims caller, string? clientAppLabel, bool personEntry)
+    {
         if (caller == null)
         {
             throw new ArgumentNullException(nameof(caller));
@@ -84,14 +110,38 @@ public sealed class CallerFacts
 
         if (caller.IsAppOnly)
         {
-            return CallerIdentity.Workload(caller.ObjectId, WorkloadKindOf(caller.ObjectId), clientAppLabel ?? DisplayLabel(caller.ObjectId) ?? caller.ClientAppId);
+            // An agent identity never holds a Workload Grant (RA-06): its own token says what it is, whatever the store
+            // records, and the resolver then gives it no role.
+            PrincipalKind workloadKind = caller.SubjectIsAgentIdentity ? PrincipalKind.AgentIdentity : WorkloadKindOf(caller.ObjectId);
+            return CallerIdentity.Workload(caller.ObjectId, workloadKind, clientAppLabel ?? DisplayLabel(caller.ObjectId) ?? caller.ClientAppId);
         }
 
         PrincipalKind kind = DelegatedKindOf(caller, caller.ObjectId);
         string clientApp = clientAppLabel ?? caller.ClientAppId;
+        if (personEntry)
+        {
+            return new CallerIdentity(caller.ObjectId, kind, CallerEntry.Person, caller.GroupObjectIds, clientApp, true);
+        }
+
         return kind == PrincipalKind.User
             ? CallerIdentity.AiClient(caller.ObjectId, caller.GroupObjectIds, clientApp, clientAppVerified: true)
             : new CallerIdentity(caller.ObjectId, kind, CallerEntry.AiClient, caller.GroupObjectIds, clientApp, true);
+    }
+
+    /// <summary>
+    /// True when a request is the person acting through the product's own web app: a delegated token whose verified
+    /// <c>azp</c> is one of the web app's client IDs, on the REST API (<c>/api/...</c>). The MCP endpoint is always the AI
+    /// client entry, whatever the token's client. A token whose agent facets name an agent (as the client or as the
+    /// subject) is never the person entry.
+    /// </summary>
+    public static bool IsPersonEntry(CallerClaims? caller, PathString path, ProductWebAppOptions webApp)
+    {
+        return caller != null
+            && !caller.IsAppOnly
+            && !caller.IsAgentToken
+            && webApp != null
+            && path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
+            && webApp.IsWebAppClient(caller.ClientAppId);
     }
 
     /// <summary>
@@ -100,29 +150,39 @@ public sealed class CallerFacts
     /// </summary>
     public StoreCallContext CallContext(CallerClaims caller, string correlationId)
     {
+        return CallContext(caller, correlationId, null);
+    }
+
+    /// <summary>
+    /// The store call context for a request. <paramref name="personEntryLabel"/> is the web app's Client App label when
+    /// the request is the person entry (<see cref="IsPersonEntry"/>), else null.
+    /// </summary>
+    public StoreCallContext CallContext(CallerClaims caller, string correlationId, string? personEntryLabel)
+    {
         if (caller == null)
         {
             throw new ArgumentNullException(nameof(caller));
         }
 
+        bool person = personEntryLabel != null && !caller.IsAppOnly;
         ActorKindMeaning? actorKind = null;
         IReadOnlyList<string> roles = Array.Empty<string>();
         string? onBehalfOf = null;
-        string? clientLabel = null;
-        CallerEntry entry = caller.IsAppOnly ? CallerEntry.Workload : CallerEntry.AiClient;
+        string? clientLabel = person ? personEntryLabel : null;
+        CallerEntry entry = caller.IsAppOnly ? CallerEntry.Workload : person ? CallerEntry.Person : CallerEntry.AiClient;
         try
         {
             SnapshotLoad load = _runtime.Cache.Load(_configuration, SnapshotPurpose.Read, Utc(_runtime.Clock.UtcNow));
             CompiledSnapshot? snapshot = load.Snapshot;
             if (snapshot != null)
             {
-                if (!caller.IsAppOnly)
+                if (!caller.IsAppOnly && !person)
                 {
                     KnownClientResult known = KnownClientCheck.From(snapshot.Snapshot).Check(caller.ClientAppId);
                     clientLabel = known.IsAllowed ? known.Label : null;
                 }
 
-                CallerResolution resolution = CallerResolver.Resolve(snapshot.Snapshot, Identity(caller, clientLabel), Utc(_runtime.Clock.UtcNow));
+                CallerResolution resolution = CallerResolver.Resolve(snapshot.Snapshot, Identity(caller, clientLabel, person), Utc(_runtime.Clock.UtcNow));
                 if (resolution.Actor != null)
                 {
                     actorKind = resolution.Actor.ActorKind;

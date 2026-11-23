@@ -23,7 +23,7 @@ The code of the next version is in [`src/`](src/), under the MIT License. It is 
 | Decision records: one per design decision, with its options and reasons | [docs/decisions](docs/decisions/README.md) |
 | Diagrams: the public diagrams and their Visio source | [docs/diagrams](docs/diagrams/README.md) |
 | Build log: how the design and the first code were made | [docs/build-log](docs/build-log/README.md) |
-| The code: an offline core with its tests and checks | [src](src/README.md) |
+| The code: the engine, the MCP server core, an early Azure adapter, a web app and their tests; early work, not a release, nothing deployed | [src](src/README.md) |
 | The 2021 release: the Dataverse solution source | [Solutions](Solutions/) |
 
 ## The 2021 release

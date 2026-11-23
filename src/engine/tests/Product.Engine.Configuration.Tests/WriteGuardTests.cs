@@ -392,6 +392,65 @@ public sealed class WriteGuardTests
         }
     }
 
+    // The approver kind rule reads the responder's Principal Reference (document 22, O10: Approver Principal Kind is copied
+    // from it). A reference that is not a user stores its kind and the answer as recommendation only; a user reference
+    // never upgrades another kind from the runner; user and user counts; with no reference the runner's kind stands.
+    [Theory]
+    [InlineData("user", "agent-user", "recommendation-only", "agent-user")]
+    [InlineData("agent-user", "user", "recommendation-only", null)]
+    [InlineData("user", "user", "approved", null)]
+    [InlineData("user", null, "approved", null)]
+    public void TheApproverKindComesFromThePrincipalReference(string input, string? reference, string meaning, string? copiedKind)
+    {
+        CompiledSnapshot snapshot = OperationTestData.Snapshot();
+        PrincipalReferenceFact? fact = reference == null ? null : new PrincipalReferenceFact(EngineContract.PrincipalKinds.Parse(reference));
+        var request = new WriteRequest("approval-record", WriteOperation.Update, "fixture-row-1", CanonicalJson.Parse(Answer("person", input)), CanonicalJson.Parse(Pending), approverPrincipalReference: fact);
+        EvaluationResult<WritePlan?> result = WriteGuardOperation.Evaluate(snapshot.Snapshot, Context(snapshot, Runner()), request);
+
+        Assert.Equal("allowed", result.Outcome);
+        JsonTreeNode set = result.Payload!.SetColumns;
+        Assert.Equal(meaning, Member(set, "outcomeMeaning"));
+        Assert.Equal(copiedKind, Member(set, "approverPrincipalKind"));
+        if (meaning == "recommendation-only")
+        {
+            Assert.Equal("false", Member(set, "countsTowardRequirement"));
+            Reason warning = Assert.Single(result.Reasons);
+            Assert.Equal("approval.non-user-principal", warning.Code);
+            Assert.Equal(ReasonSeverity.Warning, warning.Severity);
+            Assert.Equal(copiedKind ?? input, warning.Ref);
+        }
+        else
+        {
+            Assert.Null(Member(set, "countsTowardRequirement"));
+            Assert.Empty(result.Reasons);
+        }
+
+        // The same request through the wire path gives the same plan.
+        string wire = "{\"entity\":\"approval-record\",\"operation\":\"update\",\"rowId\":\"fixture-row-1\",\"after\":" + Answer("person", input) + ",\"before\":" + Pending
+            + (reference == null ? string.Empty : ",\"approverPrincipalReference\":{\"principalKind\":\"" + reference + "\",\"isErased\":false}") + "}";
+        EvaluationResult<JsonTreeNode?> viaWire = OperationJson.Evaluate(EngineOperation.GuardWrite, snapshot.Snapshot, Context(snapshot, Runner()), CanonicalJson.Parse(wire));
+        Assert.Equal(OperationTestData.Canonical(result.Payload.ToJson()), OperationTestData.Canonical(viaWire.Payload));
+
+        // Without the fact the guard behaves as it did before the fact existed: it judges the runner's kind alone.
+        var without = new WriteRequest("approval-record", WriteOperation.Update, "fixture-row-1", CanonicalJson.Parse(Answer("person", input)), CanonicalJson.Parse(Pending));
+        EvaluationResult<WritePlan?> plain = WriteGuardOperation.Evaluate(snapshot.Snapshot, Context(snapshot, Runner()), without);
+        Assert.Equal(input == "user" ? "approved" : "recommendation-only", Member(plain.Payload!.SetColumns, "outcomeMeaning"));
+        Assert.Null(Member(plain.Payload.SetColumns, "approverPrincipalKind"));
+    }
+
+    // The fact's wire form is checked like every other input: an unknown principal kind or member is invalid input.
+    [Fact]
+    public void AMalformedPrincipalReferenceFactIsInvalidInput()
+    {
+        CompiledSnapshot snapshot = OperationTestData.Snapshot();
+        foreach (string fact in new[] { "{\"principalKind\":\"robot\"}", "{\"principalKind\":\"user\",\"label\":\"x\"}", "{\"isErased\":true}" })
+        {
+            string wire = "{\"entity\":\"approval-record\",\"operation\":\"update\",\"rowId\":\"fixture-row-1\",\"after\":" + Answer("person", "user") + ",\"before\":" + Pending + ",\"approverPrincipalReference\":" + fact + "}";
+            EvaluationResult<JsonTreeNode?> result = OperationJson.Evaluate(EngineOperation.GuardWrite, snapshot.Snapshot, Context(snapshot, Runner()), CanonicalJson.Parse(wire));
+            Assert.True(result.Outcome == "invalid-input", fact + ": " + result.Outcome);
+        }
+    }
+
     // Every write activation plans passes the guard as an engine-nested write of its own effect kind, and is refused
     // without the marker: configuration writes happen only inside activation.
     [Fact]

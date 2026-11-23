@@ -1,0 +1,18 @@
+{
+  "description": "The architect role group no longer exists in Entra: Graph answers 404. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/groups/00000000-0000-4000-8000-000000000108?$select=id,displayName"
+  },
+  "responses": [
+    {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "Request_ResourceNotFound",
+          "message": "Resource does not exist or one of its queried reference-property objects are not present."
+        }
+      }
+    }
+  ]
+}

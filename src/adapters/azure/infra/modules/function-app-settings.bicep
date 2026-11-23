@@ -42,6 +42,21 @@ param keyVaultName string
 @description('Name of the telemetry salt secret.')
 param telemetrySaltSecretName string
 
+@description('Application (client) ID of the web app registration. Empty leaves the web app off.')
+param webAppClientId string
+
+@description('The scope the web app asks for. Empty means api://<API client ID>/api.access.')
+param webAppApiScope string
+
+@description('Serve the approval runner\'s routes: true or false.')
+param approvalRunnerEnabled string
+
+@description('Directory reads: Off or Live.')
+param directoryReads string
+
+@description('Client ID of the directory reads\' user-assigned managed identity. Empty when the reads are off.')
+param directoryIdentityClientId string
+
 resource site 'Microsoft.Web/sites@2024-04-01' existing = {
   name: functionAppName
 }
@@ -64,6 +79,33 @@ var coreSettings = {
   Product__Auth__Audience: empty(apiAudience) ? apiClientId : apiAudience
 }
 
+// The web app is served by this app under /app. Its client ID also makes its tokens the person entry of the REST API.
+var webAppSettings = empty(webAppClientId)
+  ? {
+      Product__WebApp__Enabled: 'false'
+    }
+  : {
+      Product__WebApp__Enabled: 'true'
+      Product__WebApp__ClientIds__0: webAppClientId
+      Product__WebApp__TenantId: authTenantId
+      Product__WebApp__ApiScope: webAppApiScope
+    }
+
+// The approval runner's routes and the directory reads. The directory reads use a user-assigned managed identity as the
+// API app registration's federated credential: no client secret anywhere.
+var runnerAndDirectorySettings = union(
+  {
+    Product__ApprovalRunner__Enabled: approvalRunnerEnabled
+    Product__Directory__Mode: directoryReads
+  },
+  empty(directoryIdentityClientId)
+    ? {}
+    : {
+        Product__Directory__Credential__SourceType: 'SignedAssertionFromManagedIdentity'
+        Product__Directory__Credential__ManagedIdentityClientId: directoryIdentityClientId
+      }
+)
+
 var entraTelemetrySettings = applicationInsightsEntraOnly
   ? {
       APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'Authorization=AAD'
@@ -79,7 +121,7 @@ var saltSettings = empty(keyVaultName)
 resource appSettings 'Microsoft.Web/sites/config@2024-04-01' = {
   parent: site
   name: 'appsettings'
-  properties: union(coreSettings, entraTelemetrySettings, saltSettings)
+  properties: union(coreSettings, webAppSettings, runnerAndDirectorySettings, entraTelemetrySettings, saltSettings)
 }
 
 output publicBaseUrl string = baseUrl

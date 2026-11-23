@@ -68,6 +68,34 @@ public sealed class WriteAcceptance
     }
 }
 
+// The Principal Reference (O05) of a directory object, as a write fact: its directory object type and whether it is
+// erased. For an approval outcome the adapter fetches the reference of the Approver (document 22: Approver Principal
+// Kind is copied from the Principal Reference). A proposal of this build.
+public sealed class PrincipalReferenceFact
+{
+    public PrincipalReferenceFact(PrincipalKind principalKind, bool isErased = false)
+    {
+        if (!Enum.IsDefined(typeof(PrincipalKind), principalKind))
+        {
+            throw new ArgumentOutOfRangeException(nameof(principalKind));
+        }
+
+        PrincipalKind = principalKind;
+        IsErased = isErased;
+    }
+
+    // O05 Principal Kind.
+    public PrincipalKind PrincipalKind { get; }
+
+    // O05 Is Erased. An erased reference keeps its kind: erasure clears the label, not the object type.
+    public bool IsErased { get; }
+
+    internal static PrincipalReferenceFact? FromJson(WireObject? wire)
+    {
+        return wire == null ? null : new PrincipalReferenceFact(wire.Contract("principalKind", EngineContract.PrincipalKinds), wire.Bool("isErased", false));
+    }
+}
+
 // OP-08 input (document 25, section 5.10, WriteRequest), with the facts the adapter fetches.
 public sealed class WriteRequest
 {
@@ -83,7 +111,8 @@ public sealed class WriteRequest
         PrincipalKind? bindingPrincipalKind = null,
         WriteAcceptance? acceptance = null,
         JsonTreeNode? gateReadiness = null,
-        string? priorRequestHash = null)
+        string? priorRequestHash = null,
+        PrincipalReferenceFact? approverPrincipalReference = null)
     {
         if (string.IsNullOrEmpty(entity))
         {
@@ -112,6 +141,7 @@ public sealed class WriteRequest
         Acceptance = acceptance;
         GateReadiness = gateReadiness;
         PriorRequestHash = string.IsNullOrEmpty(priorRequestHash) ? null : priorRequestHash;
+        ApproverPrincipalReference = approverPrincipalReference;
     }
 
     // ---- What the caller sends ----
@@ -153,6 +183,10 @@ public sealed class WriteRequest
 
     // The Request Hash stored with this idempotency key, when the key was used before (G-15; document 25, section 8).
     public string? PriorRequestHash { get; }
+
+    // For an approval outcome: the Principal Reference whose Entra object ID is the Approver, when one exists (G-06, the
+    // approver kind rule). Null when the directory holds no reference for the responder. A proposal of this build.
+    public PrincipalReferenceFact? ApproverPrincipalReference { get; }
 
     // The Request Hash of this request: SHA-256 over the canonical form of what the caller sends.
     public string RequestHash()
@@ -196,12 +230,14 @@ public sealed class WriteRequest
             "bindingPrincipalKind",
             "acceptance",
             "gateReadiness",
-            "priorRequestHash");
+            "priorRequestHash",
+            "approverPrincipalReference");
 
         EffectKind? nested = wire.Has("nestedEffect") ? wire.Contract("nestedEffect", EngineContract.EffectKinds) : null;
         ConfigurationSetKind? setKind = wire.Has("configurationSetKind") ? wire.Contract("configurationSetKind", EngineContract.ConfigurationSetKinds) : null;
         PrincipalKind? bindingKind = wire.Has("bindingPrincipalKind") ? wire.Contract("bindingPrincipalKind", EngineContract.PrincipalKinds) : null;
         WriteAcceptance? acceptance = WriteAcceptance.FromJson(wire.OptionalObject("acceptance", "basis", "approvalStatusOutcome", "requiredApprovalsOutcome", "condition", "noVersionExists"));
+        PrincipalReferenceFact? approverReference = PrincipalReferenceFact.FromJson(wire.OptionalObject("approverPrincipalReference", "principalKind", "isErased"));
 
         return new WriteRequest(
             wire.RequiredKey("entity"),
@@ -215,7 +251,8 @@ public sealed class WriteRequest
             bindingKind,
             acceptance,
             wire.OptionalRawObject("gateReadiness"),
-            wire.OptionalString("priorRequestHash"));
+            wire.OptionalString("priorRequestHash"),
+            approverReference);
     }
 }
 
@@ -1397,10 +1434,24 @@ public static class WriteGuardOperation
                 throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.approver is required with an answer.");
             }
 
-            string principalText = Text(_after, "approverPrincipalKind") ?? throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.approverPrincipalKind is required with an answer.");
-            if (!EngineContract.PrincipalKinds.TryParse(principalText, out PrincipalKind principalKind))
+            string inputText = Text(_after, "approverPrincipalKind") ?? throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.approverPrincipalKind is required with an answer.");
+            if (!EngineContract.PrincipalKinds.TryParse(inputText, out PrincipalKind inputKind))
             {
-                throw OperationStop.Input(ReasonCodes.InputContractValueUnknown, "input.after.approverPrincipalKind is \"" + principalText + "\", which is not one of " + string.Join(", ", EngineContract.PrincipalKinds.WireValues) + ".");
+                throw OperationStop.Input(ReasonCodes.InputContractValueUnknown, "input.after.approverPrincipalKind is \"" + inputText + "\", which is not one of " + string.Join(", ", EngineContract.PrincipalKinds.WireValues) + ".");
+            }
+
+            // Approver Principal Kind is the responder's directory object type, copied from the Principal Reference
+            // (document 22, O10), so the runner's value alone never decides it: a runner sees an object ID and may not know
+            // it belongs to an agent user. With a reference that says anything but user, its kind is stored and the answer
+            // counts for nothing. A reference that says user never upgrades a runner's other kind: the more restrictive
+            // kind is stored, so the stored kind always explains the outcome. With no reference the runner's kind stands.
+            PrincipalReferenceFact? reference = _request.ApproverPrincipalReference;
+            bool fromReference = reference != null && !ContractFacts.CanApprove(reference.PrincipalKind);
+            PrincipalKind principalKind = fromReference ? reference!.PrincipalKind : inputKind;
+            string principalText = EngineContract.PrincipalKinds.ToWire(principalKind);
+            if (fromReference && principalKind != inputKind)
+            {
+                Set("approverPrincipalKind", JsonTreeNode.FromString(principalText));
             }
 
             SnapshotRow actorRow = SnapshotRead.RequireActive(_snapshot, "actor-kind", actorKindKey, "input.after.approverActorKind");
@@ -1423,7 +1474,10 @@ public static class WriteGuardOperation
 
                 if (!ContractFacts.CanApprove(principalKind))
                 {
-                    Warn(ReasonCodes.ApprovalNonUserPrincipal, "The responder is a " + principalText + ", and only a user principal can approve, so the answer is stored as recommendation only.", principalText);
+                    Warn(
+                        ReasonCodes.ApprovalNonUserPrincipal,
+                        (fromReference ? "The responder's Principal Reference records a " : "The responder is a ") + principalText + ", and only a user principal can approve, so the answer is stored as recommendation only.",
+                        principalText);
                 }
 
                 string forced = DefaultStatus("approval-record", "recommendation-only");

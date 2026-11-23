@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Product.Azure.Stores;
 using Product.Engine.Runtime.Callers;
 
@@ -37,12 +38,15 @@ internal sealed class CallerContextMiddleware
         }
 
         // The resolution itself reads the store (the version probe, the Principal Reference), so it runs inside a first
-        // context that names only the caller; the full context replaces it for the rest of the request.
+        // context that names only the caller; the full context replaces it for the rest of the request. The person entry
+        // (the product's own web app on the REST API) puts the person in SESSION_CONTEXT, not an AI client.
+        ProductWebAppOptions webApp = services.GetRequiredService<IOptions<ProductWebAppOptions>>().Value;
+        bool person = CallerFacts.IsPersonEntry(caller, context.Request.Path, webApp);
         StoreCallContext full;
-        CallerEntry entry = caller.IsAppOnly ? CallerEntry.Workload : CallerEntry.AiClient;
+        CallerEntry entry = caller.IsAppOnly ? CallerEntry.Workload : person ? CallerEntry.Person : CallerEntry.AiClient;
         using (StoreCallContext.Enter(new StoreCallContext(caller.ObjectId, entry, null, correlationId)))
         {
-            full = services.GetRequiredService<CallerFacts>().CallContext(caller, correlationId);
+            full = services.GetRequiredService<CallerFacts>().CallContext(caller, correlationId, person ? webApp.ClientLabel : null);
         }
 
         ProductRequest.SetCallContext(context, full);

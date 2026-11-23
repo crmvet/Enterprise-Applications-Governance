@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using Product.Engine.Runtime.Callers;
 
 namespace Product.Mcp.Core;
 
@@ -38,6 +40,31 @@ public sealed class McpServerOptions
 
     // Tests only: let an unexpected failure surface as an exception instead of a JSON-RPC internal error.
     public bool RethrowInternalErrors { get; set; }
+
+    // Called with an unexpected failure and its correlation ID before the core answers it as a JSON-RPC internal error, so
+    // the host can log why a request failed (for example an envelope that does not match its output schema). Never called
+    // for an expected refusal (every fixed error code is an answer, not a failure) or when RethrowInternalErrors is on. A
+    // callback that throws is ignored and the answer does not change. The exception's message may quote request data, so
+    // a host outside Development logs its type and stack only.
+    public Action<Exception, string>? OnInternalFailure { get; set; }
+
+    // How callers reach the engine through this server (document 22, section 2.4; document 24, section 4.5):
+    // - AiClient (the default): the MCP endpoint. Every delegated caller is an AI client acting for the signed-in person,
+    //   stamped ai-client-for-person, AI-created, with the person as On Behalf Of.
+    // - Person: the product's own web app, through the host's REST API. The caller is the person, stamped person, with no
+    //   On Behalf Of. Only the web app's own client IDs (PersonClientAppIds) may call on this entry; any other client is
+    //   refused with not_authorized. The Known Client check (proposed C45) and the AI-only gates (Max AI State, AI May
+    //   Submit) do not apply; Tool Policy roles, the rate limit and the input schema still do.
+    // Workload is never a server entry: app-only callers use the record and approval outcome endpoints. The server core
+    // refuses to start with Workload, or with Person and no web app client ID.
+    public CallerEntry Entry { get; set; } = CallerEntry.AiClient;
+
+    // The product's own web app client IDs (the azp claim of its tokens), set by the host from its configuration. Read only
+    // with Entry Person. Matched ignoring case.
+    public IReadOnlyList<string> PersonClientAppIds { get; set; } = Array.Empty<string>();
+
+    // The Client App label stamped on rows a person writes through the web app.
+    public string PersonClientLabel { get; set; } = "Web app";
 
     public Func<DateTime> UtcNow { get; set; } = () => DateTime.UtcNow;
 

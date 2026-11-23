@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Renders the four harness pages at 1280 px and 390 px with headless Chrome and writes one full-page PNG each.
+// Renders the four harness pages (dist/harness) at 1280 px and 390 px with headless Chrome and writes one full-page PNG
+// each.
 // No packages: Node 22 or later (global WebSocket and fetch) and an installed Chrome.
 //
 // It serves the built harness with "vite preview" on 127.0.0.1, starts Chrome with a temporary profile of its own,
@@ -55,8 +56,8 @@ if (pages.some(p => !PAGES[p]) || widths.some(w => !Number.isInteger(w) || w < 3
   console.error('screenshots: unknown page or bad width.');
   process.exit(2);
 }
-if (!fs.existsSync(path.join(HARNESS, 'dist', 'index.html'))) {
-  console.error('screenshots: no dist/index.html. Run "npm run build" first.');
+if (!fs.existsSync(path.join(HARNESS, 'dist', 'harness', 'index.html'))) {
+  console.error('screenshots: no dist/harness/index.html. Run "npm run build" first.');
   process.exit(2);
 }
 if (!fs.existsSync(chrome)) {

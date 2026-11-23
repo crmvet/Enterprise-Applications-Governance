@@ -39,9 +39,12 @@ public static class ProductServiceCollectionExtensions
     /// Registers the product: its options (sections <c>Product</c> and <c>Product:Auth</c>), the MCP contracts, the shipped
     /// presets, the playbook index, the engine runtime and its snapshot cache, the in-process backend, the MCP server
     /// options, telemetry, the caller mapping, Entra sign-in with app roles under the product's policy scheme, the REST
-    /// authorization policies and, when chosen, the MCP SDK transport. A store is registered separately with
-    /// <see cref="AddProductStore"/>. Optional live read ports (<see cref="IDirectoryReader"/>,
-    /// <see cref="IInventoryReader"/>) are used when registered; none is registered in production in this release.
+    /// authorization policies, the web app's settings, the approval runner's routes and outbox
+    /// (<see cref="ApprovalRunnerRegistration.AddProductApprovalRunner"/>), the live directory reads
+    /// (<see cref="DirectoryRegistration.AddProductDirectoryReads"/>, off unless <c>Product:Directory:Mode</c> says
+    /// otherwise) and, when chosen, the MCP SDK transport. A store is registered separately with
+    /// <see cref="AddProductStore"/>. A live read port (<see cref="IDirectoryReader"/>, <see cref="IInventoryReader"/>)
+    /// registered after this call wins over the directory reads' own.
     /// </summary>
     public static IServiceCollection AddProduct(this IServiceCollection services, IConfiguration configuration)
     {
@@ -114,6 +117,9 @@ public static class ProductServiceCollectionExtensions
 
         // The SDK transport's services are always registered; MapProduct maps it only when Product:Mcp:Transport is sdk.
         services.AddProductMcpSdk();
+        services.AddProductWebApp(configuration);
+        services.AddProductApprovalRunner(configuration);
+        services.AddProductDirectoryReads();
         return services;
     }
 

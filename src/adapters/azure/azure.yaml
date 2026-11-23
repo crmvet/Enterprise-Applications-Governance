@@ -17,6 +17,19 @@ services:
     language: dotnet
     host: function
 hooks:
+  # Builds the product's web app (npm ci and npm run build:app in ../../ui/harness) before the Functions project is
+  # packaged; the project copies dist/app into wwwroot/app of the package, and the app serves it under /app.
+  prepackage:
+    windows:
+      shell: pwsh
+      run: ./infra/hooks/build-web-app.ps1
+      continueOnError: false
+      interactive: false
+    posix:
+      shell: sh
+      run: ./infra/hooks/build-web-app.sh
+      continueOnError: false
+      interactive: false
   # Runs the Azure SQL migrations as the signed-in deployer, which also creates the function app's managed identity
   # as a contained database user. Runs before the code is deployed.
   postprovision:

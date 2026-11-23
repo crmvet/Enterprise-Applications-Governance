@@ -3,6 +3,7 @@
 import { Link, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
 import { Open12Regular } from '@fluentui/react-icons';
 import type { ReactNode } from 'react';
+import { externalHref } from '../data/format';
 import { palette } from '../theme';
 import { media } from './ui';
 
@@ -91,11 +92,14 @@ export function Row(props: RowProps) {
   );
 }
 
-// A link out of the product (a wiki page, a run, a repository). URLs are https only (the schemas say so).
+// A link out of the product (a wiki page, a run, a repository). URLs are https only (the schemas say so); anything else
+// is shown as text, not as a link (externalHref).
 export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   const s = useStyles();
+  const safe = externalHref(href);
+  if (!safe) return <span>{children}</span>;
   return (
-    <Link href={href} target="_blank" rel="noopener noreferrer" className={s.extLink}>
+    <Link href={safe} target="_blank" rel="noopener noreferrer" className={s.extLink}>
       {children}
       <Open12Regular aria-label="opens in a new tab" />
     </Link>

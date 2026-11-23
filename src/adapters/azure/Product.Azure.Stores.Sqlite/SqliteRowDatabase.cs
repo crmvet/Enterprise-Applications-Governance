@@ -8,12 +8,13 @@ using Product.Engine.Runtime.Ports;
 namespace Product.Azure.Stores.Sqlite;
 
 // One SQLite file: every row of every entity in one table, keyed by entity and ID, with the row's columns as canonical
-// JSON, an optimistic version and the entity's unique key value; plus the rate limit counters and the schema version.
-// A pooled connection per operation. The caller context is ignored (SQLite has no row-level security).
+// JSON, an optimistic version and the entity's unique key value; plus the rate limit counters, the approval outbox and
+// the schema version. A pooled connection per operation. The caller context is ignored (SQLite has no row-level
+// security).
 internal sealed class SqliteRowDatabase : IRowDatabase
 {
-    // The schema this build creates.
-    public const int SchemaVersion = 1;
+    // The schema this build creates. 2 adds the approval outbox; a file at 1 gets the table on first use.
+    public const int SchemaVersion = 2;
 
     // SQLite result codes for a constraint failure (19) on a unique index (2067) or on the primary key (1555).
     private const int ConstraintError = 19;
@@ -30,9 +31,19 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         "CREATE INDEX IF NOT EXISTS \"IX_Row_Key\" ON \"Row\" (\"Entity\", \"Key\")",
         "CREATE TABLE IF NOT EXISTS \"RateLimitCounter\" (\"CounterKey\" TEXT NOT NULL PRIMARY KEY, \"WindowStart\" TEXT NOT NULL, \"Count\" INTEGER NOT NULL)",
         "CREATE TABLE IF NOT EXISTS \"SchemaVersion\" (\"Version\" INTEGER NOT NULL PRIMARY KEY, \"AppliedOn\" TEXT NOT NULL)",
+
+        // The approval outbox (sql/0005-approval-outbox.sql on Azure SQL): IDs, states and times only.
+        "CREATE TABLE IF NOT EXISTS \"ApprovalOutbox\" ("
+            + "\"ApprovalRecordId\" TEXT NOT NULL PRIMARY KEY, \"DecisionId\" TEXT NOT NULL, \"EnqueuedOn\" TEXT NOT NULL, "
+            + "\"State\" TEXT NOT NULL CHECK (\"State\" IN ('pending', 'claimed', 'sent', 'answered', 'expired', 'cancelled', 'failed')), "
+            + "\"ClaimId\" TEXT NULL, \"ClaimedUntil\" TEXT NULL, \"Attempts\" INTEGER NOT NULL, \"CardRef\" TEXT NULL, \"RunnerRunUrl\" TEXT NULL, "
+            + "\"UpdatedOn\" TEXT NOT NULL, \"RowVersion\" INTEGER NOT NULL) WITHOUT ROWID",
+        "CREATE INDEX IF NOT EXISTS \"IX_ApprovalOutbox_State\" ON \"ApprovalOutbox\" (\"State\", \"EnqueuedOn\")",
     };
 
     private const string RowColumns = "\"Id\", \"Key\", \"Columns\", \"Version\"";
+
+    private const string OutboxColumns = "\"ApprovalRecordId\", \"DecisionId\", \"EnqueuedOn\", \"State\", \"ClaimId\", \"ClaimedUntil\", \"Attempts\", \"CardRef\", \"RunnerRunUrl\", \"UpdatedOn\", \"RowVersion\"";
 
     private readonly string _connectionString;
     private readonly string? _filePath;
@@ -111,11 +122,35 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         return Read(command, "configuration-set-version");
     }
 
-    public void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation)
+    public void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation, IReadOnlyList<ApprovalOutboxWrite>? outbox = null)
     {
         using SqliteConnection connection = Open();
         using SqliteTransaction transaction = connection.BeginTransaction(deferred: false);
         string now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
+
+        // The outbox writes first: a row change that fails afterwards rolls them back with the rest.
+        foreach (ApprovalOutboxWrite write in outbox ?? Array.Empty<ApprovalOutboxWrite>())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.Parameters.AddWithValue("$id", write.ApprovalRecordId);
+            command.Parameters.AddWithValue("$on", ApprovalOutboxItem.FormatUtc(write.OnUtc));
+            if (write.IsEnqueue)
+            {
+                command.CommandText = "INSERT INTO \"ApprovalOutbox\" (" + OutboxColumns + ") VALUES ($id, $decision, $on, 'pending', NULL, NULL, 0, NULL, NULL, $on, 1) "
+                    + "ON CONFLICT (\"ApprovalRecordId\") DO NOTHING";
+                command.Parameters.AddWithValue("$decision", write.DecisionId);
+            }
+            else
+            {
+                command.CommandText = "UPDATE \"ApprovalOutbox\" SET \"State\" = $state, \"UpdatedOn\" = $on, \"RowVersion\" = \"RowVersion\" + 1 "
+                    + "WHERE \"ApprovalRecordId\" = $id AND \"State\" NOT IN ('answered', 'expired', 'cancelled')";
+                command.Parameters.AddWithValue("$state", write.State);
+            }
+
+            command.ExecuteNonQuery();
+        }
+
         foreach (RowChange change in changes)
         {
             using SqliteCommand command = connection.CreateCommand();
@@ -173,6 +208,53 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         command.Parameters.AddWithValue("$key", counterKey);
         command.Parameters.AddWithValue("$start", windowStartUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
         return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    public ApprovalOutboxItem? OutboxGet(string approvalRecordId)
+    {
+        using SqliteConnection connection = Open();
+        using SqliteCommand command = Command(connection, "SELECT " + OutboxColumns + " FROM \"ApprovalOutbox\" WHERE \"ApprovalRecordId\" = $id");
+        command.Parameters.AddWithValue("$id", approvalRecordId);
+        List<ApprovalOutboxItem> items = ReadOutbox(command);
+        return items.Count == 0 ? null : items[0];
+    }
+
+    public IReadOnlyList<ApprovalOutboxItem> OutboxClaimable(DateTime nowUtc, int limit)
+    {
+        using SqliteConnection connection = Open();
+        using SqliteCommand command = Command(connection, "SELECT " + OutboxColumns + " FROM \"ApprovalOutbox\" "
+            + "WHERE \"State\" = 'pending' OR (\"State\" = 'claimed' AND \"ClaimedUntil\" <= $now) "
+            + "ORDER BY \"EnqueuedOn\", \"ApprovalRecordId\" LIMIT $limit");
+        command.Parameters.AddWithValue("$now", ApprovalOutboxItem.FormatUtc(nowUtc));
+        command.Parameters.AddWithValue("$limit", limit);
+        return ReadOutbox(command);
+    }
+
+    public IReadOnlyList<ApprovalOutboxItem> OutboxAll(int limit)
+    {
+        using SqliteConnection connection = Open();
+        using SqliteCommand command = Command(connection, "SELECT " + OutboxColumns + " FROM \"ApprovalOutbox\" ORDER BY \"EnqueuedOn\", \"ApprovalRecordId\" LIMIT $limit");
+        command.Parameters.AddWithValue("$limit", limit);
+        return ReadOutbox(command);
+    }
+
+    public bool OutboxSet(ApprovalOutboxItem next)
+    {
+        using SqliteConnection connection = Open();
+        using SqliteCommand command = Command(connection, "UPDATE \"ApprovalOutbox\" SET \"State\" = $state, \"ClaimId\" = $claim, \"ClaimedUntil\" = $until, "
+            + "\"Attempts\" = $attempts, \"CardRef\" = $card, \"RunnerRunUrl\" = $run, \"UpdatedOn\" = $updated, \"RowVersion\" = $version "
+            + "WHERE \"ApprovalRecordId\" = $id AND \"RowVersion\" = $expected AND \"State\" NOT IN ('answered', 'expired', 'cancelled')");
+        command.Parameters.AddWithValue("$id", next.ApprovalRecordId);
+        command.Parameters.AddWithValue("$state", next.State);
+        command.Parameters.AddWithValue("$claim", (object?)next.ClaimId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$until", next.ClaimedUntilUtc.HasValue ? ApprovalOutboxItem.FormatUtc(next.ClaimedUntilUtc.Value) : (object)DBNull.Value);
+        command.Parameters.AddWithValue("$attempts", next.Attempts);
+        command.Parameters.AddWithValue("$card", (object?)next.CardRef ?? DBNull.Value);
+        command.Parameters.AddWithValue("$run", (object?)next.RunnerRunUrl ?? DBNull.Value);
+        command.Parameters.AddWithValue("$updated", ApprovalOutboxItem.FormatUtc(next.UpdatedOnUtc));
+        command.Parameters.AddWithValue("$version", next.RowVersion);
+        command.Parameters.AddWithValue("$expected", next.RowVersion - 1);
+        return command.ExecuteNonQuery() == 1;
     }
 
     public void EnsureSchema(EntityCatalog catalog)
@@ -244,6 +326,29 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         }
 
         return rows;
+    }
+
+    private static List<ApprovalOutboxItem> ReadOutbox(SqliteCommand command)
+    {
+        var items = new List<ApprovalOutboxItem>();
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            items.Add(new ApprovalOutboxItem(
+                reader.GetString(0),
+                reader.GetString(1),
+                ApprovalOutboxItem.ParseUtc(reader.GetString(2)),
+                reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.IsDBNull(5) ? null : ApprovalOutboxItem.ParseUtc(reader.GetString(5)),
+                reader.GetInt32(6),
+                reader.IsDBNull(7) ? null : reader.GetString(7),
+                reader.IsDBNull(8) ? null : reader.GetString(8),
+                ApprovalOutboxItem.ParseUtc(reader.GetString(9)),
+                reader.GetInt64(10)));
+        }
+
+        return items;
     }
 
     private SqliteConnection Open()

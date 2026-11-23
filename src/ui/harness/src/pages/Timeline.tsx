@@ -6,14 +6,14 @@ import { Tab, TabList, Tooltip, makeStyles, mergeClasses, tokens } from '@fluent
 import { CalendarLtr20Regular, Rocket20Regular } from '@fluentui/react-icons';
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import type { DeploymentItem, ScheduledChange } from '../data/contracts';
-import { addDays, daysBetween, fmtDate, fmtDateTime, fmtDayMonth, fmtTime, fmtWeekday, fmtWindow, plural } from '../data/format';
+import { addDays, dayKey, dayStartMs, daysBetween, fmtDate, fmtDateTime, fmtDayMonth, fmtTime, fmtTimeRange, fmtWeekday, fmtWindow, inDays, inWindowDays, plural, utcDayRange, zoneLabel } from '../data/format';
 import { useLabels, type Labels } from '../data/labels';
 import { activeFlags, flagHelp, flagText } from '../data/meanings';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost } from '../harness';
 import { palette } from '../theme';
 import { Row, RowList } from '../components/rows';
-import { DataStamp, Empty, EnvelopeNotes, Muted, PageHeader, Panel, PanelFailure, StatusBadge, ToneBadge, media, useNarrow } from '../components/ui';
+import { DataStamp, Empty, EnvelopeNotes, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, StatusBadge, ToneBadge, media, useNarrow } from '../components/ui';
 import { ChangeTypeBadge } from './Application360';
 
 const BACK_DAYS = 14;
@@ -182,20 +182,33 @@ export function Timeline() {
   const narrow = useNarrow();
   const from = addDays(host.today, -BACK_DAYS);
   const to = addDays(host.today, AHEAD_DAYS);
-  const changes = useTool('get_change_schedule', { from, to, top: 100 });
-  const deployments = useTool('get_deployments', { latestOnly: false, from, to: host.today, top: 100 });
+  // The range is calendar days in the display zone. The tools filter by UTC date, so each call asks for the UTC dates
+  // that cover those days, and the page keeps the items of the days it shows.
+  const changes = useTool('get_change_schedule', { ...utcDayRange(from, to), top: 100 });
+  const deployments = useTool('get_deployments', { latestOnly: false, ...utcDayRange(from, host.today), top: 100 });
   const stages = useLabels('target-stage');
   const routes = useLabels('deployment-route');
   const [stage, setStage] = useState<string>('all');
   const [view, setView] = useState<'chart' | 'agenda' | null>(null);
   const shownView = view ?? (narrow ? 'agenda' : 'chart');
 
-  const changeItems = dataOf(changes)?.items ?? [];
-  const deployItems = dataOf(deployments)?.items ?? [];
+  const changeItems = (dataOf(changes)?.items ?? []).filter(c => inWindowDays(c.windowStart, c.windowEnd, from, to));
+  const deployItems = (dataOf(deployments)?.items ?? []).filter(d => inDays(d.finishedOn, from, host.today));
+  // While the deployments are still being read, the chart and the agenda say so instead of showing none.
+  const deploymentsLoading = deployments.status === 'loading' ? <Muted>Reading the deployments.</Muted> : null;
   const keep = (stageKey: string | null) => stage === 'all' || stageKey === stage;
   const shownChanges = changeItems.filter(c => keep(c.target?.targetStageKey ?? null));
   const shownDeploys = deployItems.filter(d => keep(d.targetStageKey));
-  const stageOptions = useMemo(() => ['production', 'test', 'development'], []);
+  // Stage filters from the configured target stages, highest rank (production) first. If the labels cannot be read,
+  // the stages seen in the data stand in.
+  const configuredStages = stages.keys();
+  const stageOptions = useMemo(() => {
+    if (configuredStages.length) return [...configuredStages].reverse();
+    const seen = new Set<string>();
+    for (const c of changeItems) if (c.target?.targetStageKey) seen.add(c.target.targetStageKey);
+    for (const d of deployItems) if (d.targetStageKey) seen.add(d.targetStageKey);
+    return [...seen].sort();
+  }, [configuredStages, changeItems, deployItems]);
 
   return (
     <>
@@ -229,25 +242,36 @@ export function Timeline() {
             {() => (
               <>
                 {deployments.status === 'done' && !deployments.envelope.ok && <PanelFailure failure={deployments.envelope} />}
+                {deploymentsLoading}
                 <Chart changes={shownChanges} deployments={shownDeploys} from={from} to={to} today={host.today} stages={stages} routes={routes} />
                 <Legend />
               </>
             )}
           </Panel>
           <div className={s.lists}>
-            <Panel title="Planned changes" count={shownChanges.length} state={changes} skeletonRows={6}>
-              {() => (shownChanges.length ? (
-                <RowList label="Planned changes">
-                  {shownChanges.map(c => <ChangeRow key={c.changeRequestId} change={c} stages={stages} />)}
-                </RowList>
-              ) : <Empty>No change windows in this range.</Empty>)}
+            <Panel title="Planned changes" count={dataOf(changes) ? shownChanges.length : undefined} state={changes} skeletonRows={6}>
+              {data => (
+                <>
+                  {shownChanges.length ? (
+                    <RowList label="Planned changes">
+                      {shownChanges.map(c => <ChangeRow key={c.changeRequestId} change={c} stages={stages} />)}
+                    </RowList>
+                  ) : <Empty>No change windows in this range.</Empty>}
+                  <MoreRowsNote skipToken={data.skipToken} what="change windows" />
+                </>
+              )}
             </Panel>
-            <Panel title="Deployments" count={shownDeploys.length} state={deployments} skeletonRows={6}>
-              {() => (shownDeploys.length ? (
-                <RowList label="Deployments">
-                  {shownDeploys.map(d => <DeploymentRow key={d.deploymentRecordId} deployment={d} routes={routes} />)}
-                </RowList>
-              ) : <Empty>No deployments in this range.</Empty>)}
+            <Panel title="Deployments" count={dataOf(deployments) ? shownDeploys.length : undefined} state={deployments} skeletonRows={6}>
+              {data => (
+                <>
+                  {shownDeploys.length ? (
+                    <RowList label="Deployments">
+                      {shownDeploys.map(d => <DeploymentRow key={d.deploymentRecordId} deployment={d} routes={routes} />)}
+                    </RowList>
+                  ) : <Empty>No deployments in this range.</Empty>}
+                  <MoreRowsNote skipToken={data.skipToken} what="deployments" />
+                </>
+              )}
             </Panel>
           </div>
         </>
@@ -259,6 +283,9 @@ export function Timeline() {
               {deployments.status === 'done' && deployments.envelope.ok && (
                 <EnvelopeNotes couldNotRead={deployments.envelope.couldNotRead} warnings={deployments.envelope.warnings} />
               )}
+              {deploymentsLoading}
+              <MoreRowsNote skipToken={dataOf(changes)?.skipToken} what="change windows" />
+              <MoreRowsNote skipToken={dataOf(deployments)?.skipToken} what="deployments" />
               <Agenda changes={shownChanges} deployments={shownDeploys} today={host.today} stages={stages} routes={routes} />
             </>
           )}
@@ -289,10 +316,14 @@ function lanesOf(changes: ScheduledChange[], deployments: DeploymentItem[], stag
 
 function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[]; from: string; to: string; today: string; stages: Labels; routes: Labels }) {
   const s = useStyles();
-  const start = Date.parse(`${props.from}T00:00:00Z`);
-  const end = Date.parse(`${addDays(props.to, 1)}T00:00:00Z`);
-  const pct = (iso: string) => ((Date.parse(iso) - start) / (end - start)) * 100;
-  const todayPct = pct(`${props.today}T00:00:00Z`);
+  // Day boundaries are midnights in the display zone, so a window shows on the day the viewer reads.
+  const start = dayStartMs(props.from);
+  const end = dayStartMs(addDays(props.to, 1));
+  const at = (ms: number) => ((ms - start) / (end - start)) * 100;
+  const pct = (iso: string) => at(Date.parse(iso));
+  const dayPct = (date: string) => at(dayStartMs(date));
+  const todayStart = dayStartMs(props.today);
+  const todayPct = dayPct(props.today);
   const lanes = lanesOf(props.changes, props.deployments, props.stages);
 
   // Week lines on Mondays.
@@ -324,7 +355,7 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
     rows.push(
       <div key={`r-${lane.key}`} className={s.lane}>
         <div className={s.past} style={{ width: `${todayPct}%` }} />
-        {ticks.map(t => <div key={t} className={s.grid} style={{ left: `${pct(`${t}T00:00:00Z`)}%` }} />)}
+        {ticks.map(t => <div key={t} className={s.grid} style={{ left: `${dayPct(t)}%` }} />)}
         <div className={s.today} style={{ left: `${todayPct}%` }} />
         {laneChanges.map((c, i) => {
           const x1 = pct(c.windowStart!);
@@ -346,7 +377,7 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
                   style={{ left: `${x1}%`, width: `${Math.max(0, x2 - x1)}%` }}
                 />
               </Tooltip>
-              {Date.parse(c.windowEnd!) >= Date.parse(`${props.today}T00:00:00Z`) && room > 7 && (
+              {Date.parse(c.windowEnd!) >= todayStart && room > 7 && (
                 <span className={s.windowText} style={{ left: `calc(${x2}% + 14px)`, maxWidth: `calc(${room}% - 22px)` }}>{c.title}</span>
               )}
             </span>
@@ -376,7 +407,7 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
     <div className={s.chart} role="group" aria-label="Timeline chart. The lists below hold the same items.">
       <div className={s.axisLabel} />
       <div className={s.axis}>
-        {ticks.filter(t => Math.abs(pct(`${t}T00:00:00Z`) - todayPct) > 6).map(t => <span key={t} className={s.tick} style={{ left: `${pct(`${t}T00:00:00Z`)}%` }}>{fmtDayMonth(t)}</span>)}
+        {ticks.filter(t => Math.abs(dayPct(t) - todayPct) > 6).map(t => <span key={t} className={s.tick} style={{ left: `${dayPct(t)}%` }}>{fmtDayMonth(t)}</span>)}
         <span className={s.todayPill} style={{ left: `${todayPct}%` }}>Today, {fmtDayMonth(props.today)}</span>
       </div>
       {rows}
@@ -414,7 +445,7 @@ function Legend() {
   const bar = (style: CSSProperties) => <span className={s.legendBar} style={style} aria-hidden />;
   const dot = (style: CSSProperties) => <span className={s.legendDot} style={style} aria-hidden />;
   return (
-    <div className={s.legend} aria-label="Legend">
+    <div className={s.legend} role="group" aria-label="Legend">
       <span className={s.legendItem}>{bar({ backgroundColor: palette.blue })}Authorized window</span>
       <span className={s.legendItem}>{bar({ border: `2px solid ${palette.blue}`, backgroundColor: palette.white })}Not authorized yet</span>
       <span className={s.legendItem}>{bar({ border: `2px solid ${palette.muted}`, backgroundColor: palette.white })}Draft</span>
@@ -499,7 +530,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
     group = [];
   };
   for (const item of items) {
-    const d = item.at.slice(0, 10);
+    const d = dayKey(item.at);
     if (!todayShown && d >= props.today) {
       flush();
       out.push(<div key="today" className={s.todayRule}>Today, {fmtDayMonth(props.today)}</div>);
@@ -518,7 +549,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
           lead={<span className={s.agendaIcon} aria-hidden><CalendarLtr20Regular /></span>}
           primary={c.title}
           secondary={`${c.applicationName} to ${c.target?.label ?? 'no target yet'}`}
-          tertiary={c.windowStart && c.windowEnd ? `${fmtTime(c.windowStart)} to ${c.windowStart.slice(0, 10) === c.windowEnd.slice(0, 10) ? fmtTime(c.windowEnd) : `${fmtDayMonth(c.windowEnd)}, ${fmtTime(c.windowEnd)}`} UTC. ${authorizationText(c)}.` : `${authorizationText(c)}.`}
+          tertiary={c.windowStart && c.windowEnd ? `${fmtTimeRange(c.windowStart, c.windowEnd)} ${zoneLabel()}. ${authorizationText(c)}.` : `${authorizationText(c)}.`}
           badges={<><ChangeTypeBadge type={c.changeType} /><StatusBadge status={c.status} /></>}
         />,
       );
@@ -529,7 +560,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
           key={dep.deploymentRecordId}
           lead={<span className={mergeClasses(s.agendaIcon, s.agendaIconDeploy)} aria-hidden><Rocket20Regular /></span>}
           primary={`${dep.applicationName ?? 'Unknown application'} ${dep.artifactVersion}`}
-          secondary={`Deployed to ${dep.targetLabel ?? 'an unknown target'} at ${fmtTime(dep.finishedOn)} UTC`}
+          secondary={`Deployed to ${dep.targetLabel ?? 'an unknown target'} at ${fmtTime(dep.finishedOn)} ${zoneLabel()}`}
           tertiary={`Recorded by: ${props.routes.label(dep.route.key)}`}
           badges={<><StatusBadge status={dep.result} /><FlagBadges deployment={dep} /></>}
         />,
@@ -540,7 +571,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
   if (!todayShown) out.push(<div key="today" className={s.todayRule}>Today, {fmtDayMonth(props.today)}</div>);
   return (
     <>
-      <Muted>{plural(items.length, 'item', 'items')}, oldest first. Times in UTC.</Muted>
+      <Muted>{plural(items.length, 'item', 'items')}, oldest first. Times in {zoneLabel()}.</Muted>
       {out}
     </>
   );

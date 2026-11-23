@@ -1,0 +1,16 @@
+{
+  "description": "The approval runner is an application service principal. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/servicePrincipals/00000000-0000-4000-8000-000000000301?$select=id,servicePrincipalType"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "id": "00000000-0000-4000-8000-000000000301",
+        "servicePrincipalType": "Application"
+      }
+    }
+  ]
+}

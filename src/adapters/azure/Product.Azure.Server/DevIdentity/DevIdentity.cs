@@ -69,8 +69,12 @@ public sealed class DevPersona
     /// <summary>The group object IDs (<c>groups</c>).</summary>
     public string[] Groups { get; set; } = Array.Empty<string>();
 
-    /// <summary>The delegated scopes (<c>scp</c>). Ignored for an app-only persona.</summary>
-    public string[] Scopes { get; set; } = { "mcp.access", "api.access" };
+    /// <summary>
+    /// The delegated scopes (<c>scp</c>), exactly as listed. Ignored for an app-only persona. No default: configuration
+    /// binding adds a listed array to a default one, so a default would give every persona scopes it does not list
+    /// (a web app persona with <c>api.access</c> only would also carry <c>mcp.access</c>).
+    /// </summary>
+    public string[] Scopes { get; set; } = Array.Empty<string>();
 
     /// <summary>True for an app-only persona (a pipeline or the approval runner).</summary>
     public bool AppOnly { get; set; }

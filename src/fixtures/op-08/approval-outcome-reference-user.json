@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "approval-outcome-reference-user",
+  "description": "The approval runner reports an agent user's approval, and the responder's Principal Reference records a user. A user reference never upgrades another kind from the runner: the engine keeps agent-user and stores the answer as recommendation only.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "workingDefaults": [
+    12
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverPrincipalKind": "agent-user",
+      "respondedOn": "2026-11-22T08:55:00Z",
+      "flowRunUrl": "https://example.org/runs/1"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "outcome": "approval-pending",
+      "decision": "fixture-decision-1"
+    },
+    "approverPrincipalReference": {
+      "principalKind": "user",
+      "isErased": false
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "outcome": "approval-recommendation",
+        "outcomeMeaning": "recommendation-only",
+        "countsTowardRequirement": false,
+        "approverActorMeaning": "person"
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.non-user-principal",
+        "severity": "warning",
+        "ref": "agent-user"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

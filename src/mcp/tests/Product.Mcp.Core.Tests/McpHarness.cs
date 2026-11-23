@@ -10,6 +10,7 @@ using Product.Engine.Configuration.Validation;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
 using Product.Engine.Runtime;
+using Product.Engine.Runtime.Callers;
 using Product.Engine.Testing.InMemory;
 using Product.Mcp.Core;
 using Product.Mcp.Core.Backend;
@@ -41,6 +42,10 @@ internal sealed class McpHarness
     public const string Audience = "00000000-0000-4000-8000-0000000000ab";
     public const string ClaudeCode = "00000000-0000-4000-8000-0000000000ac";
     public const string OtherClient = "00000000-0000-4000-8000-0000000000ad";
+
+    // The product's own web app, which the host declares for the person entry (McpServerOptions.PersonClientAppIds).
+    public const string WebApp = "00000000-0000-4000-8000-0000000000ae";
+    public const string WebAppLabel = "Fixture web app";
 
     public const string RequesterGroup = "00000000-0000-4000-8000-000000000101";
     public const string MakerGroup = "00000000-0000-4000-8000-000000000102";
@@ -86,6 +91,11 @@ internal sealed class McpHarness
     public const string TokenOtherTenant = "mock-other-tenant";
     public const string TokenNoScope = "mock-no-scope";
     public const string TokenAppOnly = "mock-app-only";
+
+    // The same people signed in to the product's web app (azp is the web app's client ID).
+    public const string TokenOwnerWeb = "mock-owner-web";
+    public const string TokenReaderWeb = "mock-reader-web";
+    public const string TokenAgentWeb = "mock-agent-user-web";
 
     private static readonly Lazy<string> LazyRoot = new(FindRoot);
     private static readonly Lazy<PresetCatalog> LazyCatalog = new(() => PresetCatalog.Load(new[] { Path.Combine(Root, "config", "presets") }));
@@ -160,9 +170,9 @@ internal sealed class McpHarness
     // The value is a fictional test setting, never a product default.
     public const string HostTelemetrySalt = "fixture-host-telemetry-salt-0001";
 
-    public static McpServerCore NewServer(IGovernanceBackend backend, ITelemetrySink telemetry, ManualClock clock, string? telemetrySalt = HostTelemetrySalt)
+    public static McpServerCore NewServer(IGovernanceBackend backend, ITelemetrySink telemetry, ManualClock clock, string? telemetrySalt = HostTelemetrySalt, Action<McpServerOptions>? configure = null)
     {
-        return new McpServerCore(ContractSet.Embedded, Tokens(), backend, telemetry, new McpServerOptions
+        var options = new McpServerOptions
         {
             ResourceUrl = "https://mcp.example.org/mcp",
             AuthorizationServer = "https://login.microsoftonline.com/" + Tenant + "/v2.0",
@@ -171,7 +181,23 @@ internal sealed class McpHarness
             RethrowInternalErrors = true,
             CorrelationIds = McpServerOptions.Sequential(),
             UtcNow = () => clock.UtcNow,
-        });
+        };
+        configure?.Invoke(options);
+        return new McpServerCore(ContractSet.Embedded, Tokens(), backend, telemetry, options);
+    }
+
+    // The options a host sets for its web app's API: the person entry with the web app's client ID and label.
+    public static void PersonEntry(McpServerOptions options)
+    {
+        options.Entry = CallerEntry.Person;
+        options.PersonClientAppIds = new[] { WebApp };
+        options.PersonClientLabel = WebAppLabel;
+    }
+
+    // A second server core over the same backend, as the host builds it for the web app's API (the person entry).
+    public McpServerCore PersonServer()
+    {
+        return NewServer(Backend, Telemetry, Clock, configure: PersonEntry);
     }
 
     public static MockTokenValidator Tokens()
@@ -190,7 +216,10 @@ internal sealed class McpHarness
             .Add(TokenOtherAudience, new MockToken(Owner, "00000000-0000-4000-8000-0000000000ff", Tenant, ClaudeCode, expires))
             .Add(TokenOtherTenant, new MockToken(Owner, Audience, "00000000-0000-4000-8000-0000000000fe", ClaudeCode, expires))
             .Add(TokenNoScope, new MockToken(Owner, Audience, Tenant, ClaudeCode, expires) { Scopes = new[] { "User.Read" } })
-            .Add(TokenAppOnly, new MockToken(Pipeline, Audience, Tenant, ClaudeCode, expires) { PrincipalKind = PrincipalKind.ServicePrincipal, IsAppOnly = true });
+            .Add(TokenAppOnly, new MockToken(Pipeline, Audience, Tenant, ClaudeCode, expires) { PrincipalKind = PrincipalKind.ServicePrincipal, IsAppOnly = true })
+            .Add(TokenOwnerWeb, new MockToken(Owner, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { RequesterGroup, MakerGroup, OwnerGroup, ChangeManagerGroup } })
+            .Add(TokenReaderWeb, new MockToken(Reader, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { ReaderGroup } })
+            .Add(TokenAgentWeb, new MockToken(AgentUser, Audience, Tenant, WebApp, expires) { PrincipalKind = PrincipalKind.AgentUser, GroupObjectIds = new[] { OwnerGroup } });
     }
 
     // Balanced plus the client binding patch (and any extra draft operations), validated in activation mode on the
@@ -299,26 +328,27 @@ internal sealed class McpHarness
 
     // ---- Calls ----
 
-    // A tools/call; returns the envelope (structured content). The server checks it against the output schema.
-    public JsonTreeNode Call(string token, string tool, string argumentsJson = "{}", string? toolsets = null)
+    // A tools/call; returns the envelope (structured content). The server checks it against the output schema. The
+    // harness's MCP server answers unless another server core is given, such as PersonServer().
+    public JsonTreeNode Call(string token, string tool, string argumentsJson = "{}", string? toolsets = null, McpServerCore? server = null)
     {
-        McpResponse response = Server.Handle(McpRequest.Call(1, "tools/call", Js.Obj(("name", JsonTreeNode.FromString(tool)), ("arguments", Js.Parse(argumentsJson))), "Bearer " + token, toolsets));
+        McpResponse response = (server ?? Server).Handle(McpRequest.Call(1, "tools/call", Js.Obj(("name", JsonTreeNode.FromString(tool)), ("arguments", Js.Parse(argumentsJson))), "Bearer " + token, toolsets));
         Assert.Equal(200, response.HttpStatus);
         JsonTreeNode envelope = Js.Member(response.Result, "structuredContent") ?? throw new InvalidOperationException("No structured content: " + Js.Write(response.Body!));
         Envelopes.Add((tool, envelope));
         return envelope;
     }
 
-    public JsonTreeNode Ok(string token, string tool, string argumentsJson = "{}", string? toolsets = null)
+    public JsonTreeNode Ok(string token, string tool, string argumentsJson = "{}", string? toolsets = null, McpServerCore? server = null)
     {
-        JsonTreeNode envelope = Call(token, tool, argumentsJson, toolsets);
+        JsonTreeNode envelope = Call(token, tool, argumentsJson, toolsets, server);
         Assert.True(Js.Flag(envelope, "ok") == true, tool + " failed: " + Js.Write(envelope));
         return envelope;
     }
 
-    public JsonTreeNode Fails(string token, string tool, string argumentsJson, string code, string? toolsets = null)
+    public JsonTreeNode Fails(string token, string tool, string argumentsJson, string code, string? toolsets = null, McpServerCore? server = null)
     {
-        JsonTreeNode envelope = Call(token, tool, argumentsJson, toolsets);
+        JsonTreeNode envelope = Call(token, tool, argumentsJson, toolsets, server);
         Assert.True(Js.Flag(envelope, "ok") == false, tool + " should fail with " + code + ": " + Js.Write(envelope));
         Assert.Equal(code, Js.Text(Js.Member(envelope, "error"), "code"));
         return envelope;

@@ -1,0 +1,17 @@
+{
+  "description": "An agent identity (a service principal subtype) that holds Deployment.Record. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/servicePrincipals/00000000-0000-4000-8000-000000000303?$select=id,servicePrincipalType"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "@odata.type": "#microsoft.graph.agentIdentity",
+        "id": "00000000-0000-4000-8000-000000000303",
+        "servicePrincipalType": "ServiceIdentity"
+      }
+    }
+  ]
+}

@@ -313,9 +313,30 @@ export interface ConfigurationRows {
   skipToken?: string;
 }
 
+// ---- find_applications (the web app's drill-down list) ----
+
+export interface ApplicationSummary {
+  businessApplicationId: Id;
+  name: string;
+  purpose: string;
+  kind: LabelledKey;
+  tier: LabelledKey | null;
+  stage: LabelledKey | null;
+  businessOwner: PrincipalRef | null;
+  technicalOwner: PrincipalRef | null;
+  recordUrl: string;
+}
+
+export interface FoundApplications {
+  items: ApplicationSummary[];
+  totalCount: number;
+  skipToken?: string;
+}
+
 // ---- the tool names the pages call, with their data types ----
 
 export interface ToolData {
+  find_applications: FoundApplications;
   get_portfolio_summary: PortfolioSummary;
   get_deployments: Deployments;
   get_change_schedule: ChangeSchedule;

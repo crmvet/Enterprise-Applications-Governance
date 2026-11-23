@@ -16,8 +16,9 @@ namespace Product.Azure.Stores;
 // engine runtime and the MCP server core need; the SQLite and Azure SQL stores implement it through the shared row
 // store base. Nothing here holds a rule: the engine decides, the store keeps rows (document 25, sections 3.2 and 12.3).
 
-// One store: the engine's two storage ports, the rate limit counter, and seeding for local runs and tests.
-public interface IProductStore : IRecordStore, IConfigurationStore, ICounterStore, IStoreSeeder, IDisposable
+// One store: the engine's two storage ports, the rate limit counter, the approval outbox the approval runner pulls from
+// (ApprovalOutbox.cs), and seeding for local runs and tests.
+public interface IProductStore : IRecordStore, IConfigurationStore, ICounterStore, IApprovalOutboxStore, IStoreSeeder, IDisposable
 {
     // Creates or upgrades the schema where this store may do so. The SQLite store creates its tables. The Azure SQL
     // store only checks that the migrations it needs are applied and throws when they are not: the app identity never

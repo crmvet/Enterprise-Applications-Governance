@@ -26,6 +26,18 @@
     "customBaseUrl": {
       "value": "${PRODUCT_CUSTOM_BASE_URL=}"
     },
+    "webAppClientId": {
+      "value": "${PRODUCT_WEB_APP_CLIENT_ID=}"
+    },
+    "webAppApiScope": {
+      "value": "${PRODUCT_WEB_APP_API_SCOPE=}"
+    },
+    "approvalRunnerEnabled": {
+      "value": "${PRODUCT_APPROVAL_RUNNER_ENABLED=false}"
+    },
+    "directoryReads": {
+      "value": "${PRODUCT_DIRECTORY_READS=Off}"
+    },
     "sqlAdministratorObjectId": {
       "value": "${SQL_ADMINISTRATOR_OBJECT_ID=}"
     },

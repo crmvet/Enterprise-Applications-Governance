@@ -5,6 +5,7 @@ using System.Linq;
 using Product.Engine.Configuration.Schema;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
+using Product.Engine.Runtime.Callers;
 using Product.Mcp.Core.Backend;
 using Product.Mcp.Core.Contracts;
 using Product.Mcp.Core.Envelope;
@@ -31,6 +32,11 @@ namespace Product.Mcp.Core.Protocol;
 //  7. the input against the tool's input schema (validation, naming the field);
 //  8. AI May Submit for submit_record and request_architecture_review (ai_cannot_do_this);
 //  9. the backend call, then the envelope, then telemetry without the token or any typed text.
+//
+// The same core serves the product's web app on the person entry (McpServerOptions.Entry, set by the host for its REST
+// API): right after the token check the token's azp must be one of the web app's client IDs (not_authorized otherwise),
+// the Known Client check (3) and the AI-only gates (Max AI State in 5, and 8) do not apply, and the engine stamps the
+// person. Roles, the rate limit and the input schema apply on both entries.
 public sealed class McpServerCore
 {
     public const string ProtocolVersion = "2025-06-18";
@@ -57,11 +63,40 @@ public sealed class McpServerCore
         {
             throw new ArgumentException("The telemetry salt must be at least " + McpServerOptions.MinimumTelemetrySaltLength + " characters, read from the host's configuration. Leave it unset to send no caller hash.", nameof(options));
         }
+
+        // The caller entry decides the actor kind the engine stamps, so a wrong one is a host bug that stops the server.
+        switch (_options.Entry)
+        {
+            case CallerEntry.AiClient:
+                break;
+            case CallerEntry.Person:
+                if (_options.PersonClientAppIds == null || _options.PersonClientAppIds.Count == 0 || _options.PersonClientAppIds.Any(string.IsNullOrWhiteSpace))
+                {
+                    throw new ArgumentException("The person entry needs the product's own web app client IDs (PersonClientAppIds), read from the host's configuration, so no other client can act as a person.", nameof(options));
+                }
+
+                if (string.IsNullOrWhiteSpace(_options.PersonClientLabel))
+                {
+                    throw new ArgumentException("The person entry needs a Client App label for the web app (PersonClientLabel).", nameof(options));
+                }
+
+                break;
+            default:
+                throw new ArgumentException("The server core serves the AI client entry (the MCP endpoint) or the person entry (the web app). App-only callers use the record and approval outcome endpoints.", nameof(options));
+        }
     }
 
     public ContractSet Contracts => _contracts;
 
     public McpServerOptions Options => _options;
+
+    // True on the MCP endpoint, where every caller is an AI client acting for the person.
+    private bool AiEntry => _options.Entry == CallerEntry.AiClient;
+
+    private bool IsPersonClient(string clientAppId)
+    {
+        return !string.IsNullOrEmpty(clientAppId) && _options.PersonClientAppIds.Any(id => string.Equals(id, clientAppId, StringComparison.OrdinalIgnoreCase));
+    }
 
     // The protected resource metadata document (RFC 9728) the host serves at ResourceMetadataUrl.
     public JsonTreeNode ProtectedResourceMetadata()
@@ -86,13 +121,34 @@ public sealed class McpServerCore
         {
             return HandleCore(request, correlationId, clock);
         }
-        catch (Exception) when (!_options.RethrowInternalErrors)
+        catch (Exception failure) when (!_options.RethrowInternalErrors)
         {
             // Document 24 has no error code for an unexpected failure (mcp/contracts/README.md, open points). Judgment
             // call: a server bug is a JSON-RPC internal error, outside the envelope, that names only the
-            // correlation ID. No exception text reaches the client or telemetry.
+            // correlation ID. No exception text reaches the client or telemetry; the host's callback gets the exception.
+            ReportFailure(failure, correlationId);
             JsonTreeNode? id = Js.Member(request.Message, "id");
             return Finish(RpcError(id, JsonRpcCodes.InternalError, "The server failed on this request. Quote the correlation ID to the product's operators.", Js.Obj(("correlationId", JsonTreeNode.FromString(correlationId)))), "internal-error", Js.Text(request.Message, "method"), null, null, null, correlationId, clock);
+        }
+    }
+
+    // Hands an unexpected failure to the host's callback. A callback that throws is ignored: the answer stays the same
+    // JSON-RPC internal error.
+    private void ReportFailure(Exception failure, string correlationId)
+    {
+        Action<Exception, string>? callback = _options.OnInternalFailure;
+        if (callback == null)
+        {
+            return;
+        }
+
+        try
+        {
+            callback(failure, correlationId);
+        }
+        catch (Exception)
+        {
+            // Ignored on purpose: the host's logging must never change what the client is told.
         }
     }
 
@@ -119,6 +175,18 @@ public sealed class McpServerCore
         }
 
         ValidatedCaller caller = token.Caller!;
+
+        // On the person entry only the product's own web app may call: the verified azp claim must be one of the client
+        // IDs the host declared. Any other client, an AI client with a token for the same API among them, is refused
+        // before anything is read, written or counted.
+        if (_options.Entry == CallerEntry.Person && !IsPersonClient(caller.ClientAppId))
+        {
+            var refused = new McpError(McpErrorCodes.NotAuthorized, "This entry serves only the product's own web app. An AI client calls the MCP endpoint.");
+            return method == "tools/call"
+                ? ToolFailure(id, refused, Js.Text(Js.Member(message, "params"), "name"), null, caller, correlationId, clock)
+                : Finish(RpcError(id, JsonRpcCodes.InvalidRequest, refused.Message, Failure(refused, null, null, correlationId)), refused.Code, method, null, caller.ClientAppId, caller, correlationId, clock);
+        }
+
         if (method == "ping")
         {
             return Finish(RpcResult(id, Js.EmptyObject), "ok", method, null, null, null, correlationId, clock);
@@ -134,7 +202,7 @@ public sealed class McpServerCore
             return Finish(RpcError(id, JsonRpcCodes.MethodNotFound, "The method " + method + " is not served.", null), "method-not-found", method, null, caller.ClientAppId, caller, correlationId, clock);
         }
 
-        var backendCaller = new BackendCaller(caller.ObjectId, caller.PrincipalKind, caller.ClientAppId, caller.GroupObjectIds, caller.DirectoryRoleIds);
+        var backendCaller = new BackendCaller(_options.Entry, caller.ObjectId, caller.PrincipalKind, caller.ClientAppId, caller.GroupObjectIds, caller.DirectoryRoleIds);
         SessionResult opened = _backend.OpenSession(backendCaller, correlationId);
         JsonTreeNode parameters = Js.Member(message, "params") ?? Js.EmptyObject;
         string? toolName = method == "tools/call" ? Js.Text(parameters, "name") : null;
@@ -146,7 +214,10 @@ public sealed class McpServerCore
         }
 
         BackendSession session = opened.Session;
-        KnownClientResult client = session.KnownClients.Check(caller.ClientAppId);
+
+        // The Known Client check (proposed C45) lists the AI clients that may act for people. The web app is the product
+        // itself, checked above against the host's client IDs, so the check does not apply to the person entry.
+        KnownClientResult client = AiEntry ? session.KnownClients.Check(caller.ClientAppId) : KnownClientResult.Allowed(null, _options.PersonClientLabel);
         if (!client.IsAllowed)
         {
             var refused = new McpError(McpErrorCodes.NotAuthorized, client.Refusal!);
@@ -203,7 +274,9 @@ public sealed class McpServerCore
             return ToolFailure(id, new McpError(McpErrorCodes.NotAuthorized, "The tool " + tool.Name + " needs one of these product roles: " + roles + ". Roles come only through Entra groups."), name, session, caller, correlationId, clock);
         }
 
-        if (tool.IsWrite && session.ToolPolicy.EffectiveMaxAiState(tool) == "read-only")
+        // Max AI State and AI May Submit bound what an AI client does for a person. On the person entry the person acts
+        // and the engine judges the write as the person's own act.
+        if (AiEntry && tool.IsWrite && session.ToolPolicy.EffectiveMaxAiState(tool) == "read-only")
         {
             return ToolFailure(id, new McpError(McpErrorCodes.AiCannotDoThis, "The Tool Policy lets an AI client only read through " + tool.Name + ". A person does this in the product's page."), name, session, caller, correlationId, clock);
         }
@@ -228,7 +301,7 @@ public sealed class McpServerCore
             return ToolFailure(id, new McpError(McpErrorCodes.Validation, "The input does not match the tool's schema: " + first + ".", FieldName(first.InstancePath)), name, session, caller, correlationId, clock);
         }
 
-        string? submitKind = SubmitSubjectKind(tool, arguments);
+        string? submitKind = AiEntry ? SubmitSubjectKind(tool, arguments) : null;
         if (submitKind != null && !session.ToolPolicy.AiMaySubmit(tool, submitKind))
         {
             return ToolFailure(id, new McpError(McpErrorCodes.AiCannotDoThis, "The Tool Policy does not let an AI client submit a " + submitKind + " for a person. A person submits it in the product's page.", "subjectKind"), name, session, caller, correlationId, clock);

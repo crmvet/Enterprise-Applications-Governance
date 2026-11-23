@@ -133,6 +133,84 @@ public sealed class EntraSignInTests
         Assert.Equal(403, (await host.Send(HttpMethod.Post, "/api/deployments", null, "{}", Bearer(ownerAssignedTheRole))).Status);
     }
 
+    // Microsoft Entra Agent ID marks its tokens with facet claims (https://learn.microsoft.com/entra/agent-id/agent-token-claims):
+    // xms_sub_fct names what the subject is and xms_act_fct what the client is, 11 for an agent identity and 13 for an
+    // agent's user account. The token says so even when no Principal Reference records the principal: an agent holds
+    // no role and no grant, and an agent client is never the person entry.
+    [Fact]
+    public async Task AnAgentsUserAccountHoldsNoRoleEvenWithNoPrincipalReference()
+    {
+        await using ProductTestHost host = ProductTestHost.Start(Production());
+        const string agentAccount = "00000000-0000-4000-8000-000000000402";
+        Dictionary<string, object> claims = Delegated(agentAccount, Personas.OwnerGroup, Personas.PlatformAdminGroup);
+
+        // Without the facet the same claims are a person's, with the roles of both groups: the facet alone makes the difference.
+        HttpCall asPerson = await host.Send(HttpMethod.Get, "/api/me", null, null, Bearer(Token(claims)));
+        Assert.True(asPerson.Status == 200, asPerson + "\n" + host.Logs);
+        Assert.NotEmpty(asPerson.Json!["roles"]!.AsArray());
+
+        foreach (string facets in new[] { "13", "1 13" })
+        {
+            string token = Token(With(claims, ("xms_sub_fct", facets), ("xms_act_fct", "11")));
+            HttpCall me = await host.Send(HttpMethod.Get, "/api/me", null, null, Bearer(token));
+            Assert.True(me.Status == 200, facets + ": " + me);
+            Assert.Equal("agent-identity", me.Json!["actorKind"]!.GetValue<string>());
+            Assert.Empty(me.Json["roles"]!.AsArray());
+            HttpCall read = await host.Send(HttpMethod.Post, "/api/get_portfolio_summary", null, "{}", Bearer(token));
+            Assert.True(read.Status == 403, facets + ": " + read);
+            HttpCall whoami = await host.Send(HttpMethod.Post, "/mcp", null, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"whoami\",\"arguments\":{}}}", Bearer(token));
+            Assert.True(whoami.Status == 200, facets + ": " + whoami);
+            Assert.Equal("not_authorized", whoami.Json!["result"]!["structuredContent"]!["error"]!["code"]!.GetValue<string>());
+        }
+    }
+
+    [Fact]
+    public async Task AnAgentIdentityIsNeverTheApprovalRunnerEvenWithItsGrant()
+    {
+        HostSettings settings = Production();
+        settings.Settings[ApprovalRunnerOptions.SectionName + ":Enabled"] = "true";
+        await using ProductTestHost host = ProductTestHost.Start(settings);
+        Dictionary<string, object> runner = AppOnly(Personas.RunnerId, RunnerClient, "Approval.Write");
+
+        HttpCall claim = await host.Send(HttpMethod.Post, "/engine/v1/approval-runner/claims", null, "{}", Bearer(Token(runner)));
+        Assert.True(claim.Status == 200, claim + "\n" + host.Logs);
+
+        // The identity that holds the approval writer grant turns out to be an agent identity (the grant was recorded for
+        // it by mistake, and no Principal Reference says what it is). Its own token says so.
+        foreach ((string Name, object Value)[] facets in new[]
+        {
+            new (string, object)[] { ("xms_sub_fct", "11"), ("xms_act_fct", "11") },
+            new (string, object)[] { ("xms_act_fct", "11") },
+        })
+        {
+            string agent = Token(With(runner, facets));
+            HttpCall agentClaim = await host.Send(HttpMethod.Post, "/engine/v1/approval-runner/claims", null, "{}", Bearer(agent));
+            Assert.True(agentClaim.Status == 403, agentClaim + "\n" + host.Logs);
+            Assert.Equal("not_authorized", agentClaim.Json!["error"]!["code"]!.GetValue<string>());
+        }
+    }
+
+    [Fact]
+    public async Task AnAgentIdentityActingForAPersonIsNeverThePersonEntry()
+    {
+        await using ProductTestHost host = ProductTestHost.Start(Production());
+        Dictionary<string, object> nadiaWeb = With(Delegated(Personas.NadiaId, Personas.OwnerGroup), ("azp", Personas.WebApp), ("scp", "api.access"));
+
+        HttpCall person = await host.Send(HttpMethod.Get, "/api/me", null, null, Bearer(Token(nadiaWeb)));
+        Assert.True(person.Status == 200, person + "\n" + host.Logs);
+        Assert.Equal("person", person.Json!["actorKind"]!.GetValue<string>());
+
+        // The same client ID, but the token says the client is an agent identity: never the person.
+        string agentClient = Token(With(nadiaWeb, ("xms_act_fct", "11")));
+        HttpCall agent = await host.Send(HttpMethod.Get, "/api/me", null, null, Bearer(agentClient));
+        Assert.True(agent.Status == 200, agent.ToString());
+        Assert.Equal("ai-client-for-person", agent.Json!["actorKind"]!.GetValue<string>());
+
+        // As an AI client it must be a Known Client, and the web app's client ID is not one.
+        HttpCall read = await host.Send(HttpMethod.Post, "/api/get_portfolio_summary", null, "{}", Bearer(agentClient));
+        Assert.True(read.Status == 403, read.ToString());
+    }
+
     private static HostSettings Production()
     {
         var settings = new HostSettings { Environment = "Production", DevIdentity = false };

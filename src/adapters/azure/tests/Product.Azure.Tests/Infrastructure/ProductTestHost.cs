@@ -52,6 +52,13 @@ internal sealed class HostSettings
     // Register the walkthrough's inventory page as the live inventory reader.
     public bool Inventory { get; set; } = true;
 
+    // Name the fictional web app client (Personas.WebApp) in Product:WebApp:ClientIds, so its tokens are the person entry.
+    public bool WebAppClient { get; set; } = true;
+
+    // Serve the web app (Product:WebApp:Enabled). The local server's Development settings switch it on for local runs;
+    // the tests switch it off unless a test asks for it.
+    public bool WebApp { get; set; }
+
     // More configuration, as command line settings of the run.
     public Dictionary<string, string> Settings { get; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -268,6 +275,11 @@ internal sealed class ProductTestHost : IAsyncDisposable
             yield return Pair("Product:Store:Provider", "sqlite");
             yield return Pair("Product:Store:Sqlite:ConnectionString", ConnectionString(settings.DatabaseFile ?? "unused.db"));
             yield return Pair("Product:DevIdentity:Enabled", settings.DevIdentity ? "true" : "false");
+            yield return Pair("Product:WebApp:Enabled", settings.WebApp ? "true" : "false");
+            if (settings.WebAppClient)
+            {
+                yield return Pair("Product:WebApp:ClientIds:0", Personas.WebApp);
+            }
             foreach (Persona persona in Personas.All)
             {
                 foreach (KeyValuePair<string, string> setting in persona.Settings())

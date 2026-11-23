@@ -33,6 +33,19 @@
     <None Update="host.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!--
+    The product's web app, served by the same function under /app on the same origin as the API. When the web app is
+    built (npm run build:app in src/ui/harness, which azure.yaml runs before packaging), its files go into wwwroot/app of
+    the package, where Product:WebApp:RootPath points by default. Without a build nothing is copied, and /app answers
+    404 even when the web app is switched on.
+  -->
+  <PropertyGroup>
+    <ProductWebAppDist>$(MSBuildThisFileDirectory)..\..\..\ui\harness\dist\app\</ProductWebAppDist>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(ProductWebAppDist)index.html')">
+    <None Include="$(ProductWebAppDist)**\*" Link="wwwroot\app\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Product.Azure.Tests" />
   </ItemGroup>

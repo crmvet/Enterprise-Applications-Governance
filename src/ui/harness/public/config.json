@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "apiBase": "/api",
+  "auth": {
+    "mode": "development"
+  },
+  "development": {
+    "personas": [
+      { "name": "nadia-web", "label": "Nadia Ferreira, business owner" },
+      { "name": "priya-web", "label": "Priya Castell, maker" },
+      { "name": "owen-web", "label": "Owen Achterberg, platform admin" },
+      { "name": "mateo-web", "label": "Mateo Brandt, planner" },
+      { "name": "config-admin-web", "label": "A configuration admin" }
+    ]
+  }
+}

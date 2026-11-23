@@ -41,6 +41,9 @@ param instanceMemoryMB int
 @minValue(0)
 param alwaysReadyInstances int
 
+@description('Resource ID of a user-assigned managed identity the app also carries (the directory reads\' federated credential). Empty adds none.')
+param userAssignedIdentityId string = ''
+
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: planName
   location: location
@@ -62,9 +65,16 @@ resource site 'Microsoft.Web/sites@2024-04-01' = {
     'azd-service-name': azdServiceName
   })
   kind: 'functionapp,linux'
-  identity: {
-    type: 'SystemAssigned'
-  }
+  identity: empty(userAssignedIdentityId)
+    ? {
+        type: 'SystemAssigned'
+      }
+    : {
+        type: 'SystemAssigned, UserAssigned'
+        userAssignedIdentities: {
+          '${userAssignedIdentityId}': {}
+        }
+      }
   properties: {
     serverFarmId: plan.id
     httpsOnly: true

@@ -18,9 +18,11 @@ goes with every copy of the package. So any build that is handed to others must 
 notice file, of every package inside it. Four builds would carry packages:
 
 - the Dataverse plug-in package: System.Text.Json and the System packages it needs on net48 (all MIT);
-- a built page bundle: React, Fluent UI and their runtime packages (MIT), plus @swc/helpers (Apache 2.0) and tslib (0BSD);
+- a built page bundle (the harness or the web app): React, Fluent UI and their runtime packages (MIT), in the web app also
+  MSAL for the browser (@azure/msal-browser and @azure/msal-common, MIT), plus @swc/helpers (Apache 2.0) and tslib (0BSD);
 - the Azure adapter's Functions deployment package: the packages marked "Functions app" in the column "In" of both
-  tables under ".NET: adapters/azure", including the two Microsoft packages listed there under their own terms;
+  tables under ".NET: adapters/azure", including the two Microsoft packages listed there under their own terms, and,
+  because the package carries the built web app under `wwwroot/app`, the packages of the web app's page bundle above;
 - the Azure adapter's server container image: the packages marked "Server" there, including the same two, on top of
   the .NET base image, which carries its own notices.
 
@@ -117,15 +119,17 @@ source: the repository holds no copy of them, and its MIT license does not cover
   Microsoft.Data.SqlClient depends on it on every platform, so every .NET application that talks to Azure SQL with
   Microsoft.Data.SqlClient restores it. On Linux, where the Functions app and the container run, SqlClient uses its
   managed network layer and never loads the file, but a portable build still carries the Windows folders; a build
-  published for `linux-x64` leaves them out. Its terms allow the object code to be distributed inside an
-  application (as "Distributable Code"), not on its own.
+  published for `linux-x64` leaves them out. Its terms (the `LICENSE.txt` inside the package) allow the object code to
+  be distributed inside an application (as "Distributable Code"), not on its own: "use the Distributable Code in your
+  applications and not as a standalone distribution".
 - **Microsoft.Identity.Client.NativeInterop 0.20.6, Microsoft Software License Terms.** The native runtime of the
   Windows sign-in broker (`runtimes/*/native/msalruntime*`) and its managed wrapper
   (`Microsoft.Identity.Client.NativeInterop.dll`), brought by Microsoft.Identity.Client.Broker 4.84.2,
   which Microsoft.Data.SqlClient.Extensions.Azure 7.1.1 references for interactive sign-in. The product never uses
   interactive or broker sign-in: the app connects with its managed identity and the migration with the deployer's
-  default credential. Its terms grant use and do not allow the software to be shared or distributed to others, so a
-  deployment package or image built from this source carries files that may not be handed on. Each deployment is
+  default credential. Its terms (the `LICENSE` file inside the package) grant use and say you may not "share,
+  publish, distribute, or lease the software", so a deployment package or image built from this source carries files
+  that may not be handed on. Each deployment is
   built from source into its own subscription (the azd template builds on the deployer's machine). Giving SqlClient
   its token through `SqlConnection.AccessTokenCallback` with an Azure.Identity credential, in place of
   Microsoft.Data.SqlClient.Extensions.Azure, would remove this package from every build.
@@ -350,10 +354,15 @@ server transport as an option behind that seam. Both are listed under ".NET: ada
 
 ## Node: ui/harness only
 
-The local page harness: React and Fluent UI v9 pages, built and served by Vite on 127.0.0.1.
+The four pages: React and Fluent UI v9, built by Vite. One source gives two builds: the local harness on fixture JSON,
+served by Vite on 127.0.0.1, and the web app, which the product's host serves under `/app/`.
 Installed with `npm ci --ignore-scripts` in `ui/harness/`. Every package was published on or before 2026-11-08
 (the install used `--before=2026-11-08`), so each one was at least two weeks old on 2026-11-22.
 No Babel: esbuild compiles the TSX, so the React plugin for Vite and its Babel tree are not used.
+The web app signs in with MSAL for the browser: @azure/msal-browser 5.29.0 and its exact dependency @azure/msal-common
+16.16.1, both MIT and both published on 2026-11-06, added on 2026-11-23 with the same `--before=2026-11-08` (17 days
+old that day). msal-react is not used. esbuild is also a direct devDependency, because `scripts/run-tests.mjs` bundles
+the unit tests with it.
 `node ui/harness/scripts/check-packages.mjs` checks this table against the lock file (the `ui` check of `tools/ci.mjs`).
 
 Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be confirmed by the product owner:
@@ -364,6 +373,8 @@ Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be c
 
 | Package | Version | License | Direct or transitive | Use |
 |---|---|---|---|---|
+| @azure/msal-browser | 5.29.0 | MIT | Direct | Runtime dependency, web app only. Entra ID sign-in (authorization code flow with PKCE, full-page redirect) and access tokens for the product API |
+| @azure/msal-common | 16.16.1 | MIT | Transitive (@azure/msal-browser) | Runtime dependency, web app only |
 | @babel/runtime | 7.29.13 | MIT | Transitive (rtl-css-js) | Runtime dependency |
 | @emotion/hash | 0.9.2 | MIT | Transitive (@griffel/core) | Runtime dependency |
 | @esbuild/aix-ppc64 | 0.28.2 | MIT | Transitive (esbuild) | Build only. Optional platform binary for another system; not installed here |
@@ -502,7 +513,7 @@ Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be c
 | embla-carousel | 8.6.0 | MIT | Transitive (@fluentui/react-carousel) | Runtime dependency |
 | embla-carousel-autoplay | 8.6.0 | MIT | Transitive (@fluentui/react-carousel) | Runtime dependency |
 | embla-carousel-fade | 8.6.0 | MIT | Transitive (@fluentui/react-carousel) | Runtime dependency |
-| esbuild | 0.28.2 | MIT | Transitive (vite) | Build only |
+| esbuild | 0.28.2 | MIT | Direct, and transitive (vite) | Build only. Vite's compiler, and the bundler of the unit tests (`scripts/run-tests.mjs`) |
 | fdir | 6.5.0 | MIT | Transitive (tinyglobby) | Build only |
 | fsevents | 2.3.3 | MIT | Transitive (rollup) | Build only. Optional platform binary for another system; not installed here |
 | js-tokens | 4.0.0 | MIT | Transitive (loose-envify) | Runtime dependency |

@@ -1,0 +1,18 @@
+{
+  "description": "An ID no user has (a deleted user): Graph answers 404. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/users/00000000-0000-4000-8000-000000000299?$select=id,displayName,accountEnabled,employeeLeaveDateTime"
+  },
+  "responses": [
+    {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "Request_ResourceNotFound",
+          "message": "Resource does not exist or one of its queried reference-property objects are not present."
+        }
+      }
+    }
+  ]
+}

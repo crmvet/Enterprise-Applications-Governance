@@ -38,8 +38,8 @@ public sealed class SqlScriptTests
     {
         string[] files = Directory.GetFiles(Paths.Sql, "*.sql").Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal).ToArray()!;
         Assert.Equal(files, SqlServerMigrations.All.Select(m => m.Name));
-        Assert.Equal(new[] { 1, 2, 3, 4 }, SqlServerMigrations.All.Select(m => m.Version));
-        Assert.Equal(4, SqlServerMigrations.RequiredVersion);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, SqlServerMigrations.All.Select(m => m.Version));
+        Assert.Equal(5, SqlServerMigrations.RequiredVersion);
         foreach (SqlMigration migration in SqlServerMigrations.All)
         {
             Assert.Equal(Normalize(File.ReadAllText(Path.Combine(Paths.Sql, migration.Name))), Normalize(migration.Text));
@@ -185,6 +185,29 @@ public sealed class SqlScriptTests
         Assert.Contains("ledger_view_id", user);
         Assert.DoesNotContain("DENY CONTROL", user);
         Assert.DoesNotContain("password", user, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // 0005: the approval outbox is a host table the app reads, inserts and updates but never deletes from, with the states
+    // the store writes and the columns it reads, and every statement checks before it acts.
+    [Fact]
+    public void TheApprovalOutboxScriptMatchesTheStoreAndGrantsNoDelete()
+    {
+        SqlMigration migration = SqlServerMigrations.All.Single(m => m.Version == 5);
+        string script = Normalize(migration.Text);
+        Assert.Equal("0005-approval-outbox.sql", migration.Name);
+        Assert.Contains("IF OBJECT_ID(N'[host].[ApprovalOutbox]', N'U') IS NULL", script);
+        Assert.Contains("IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_ApprovalOutbox_State'", script);
+        Assert.Contains("CHECK ([State] IN (" + string.Join(", ", ApprovalOutboxStates.All.Select(s => "'" + s + "'")) + "))", script);
+        foreach (string column in new[] { "ApprovalRecordId", "DecisionId", "EnqueuedOn", "State", "ClaimId", "ClaimedUntil", "Attempts", "CardRef", "RunnerRunUrl", "UpdatedOn", "RowVersion" })
+        {
+            Assert.Contains("[" + column + "] ", script);
+        }
+
+        Assert.Contains("GRANT SELECT, INSERT, UPDATE ON [host].[ApprovalOutbox] TO [product_app];", script);
+        Assert.Contains("DENY DELETE ON [host].[ApprovalOutbox] TO [product_app];", script);
+        Assert.DoesNotContain("GRANT DELETE", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(SqlServerMigrations.VariablesOf(script));
+        Assert.Equal(3, SqlServerMigrations.SplitBatches(script).Count);
     }
 
     [Fact]

@@ -1,0 +1,738 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_approvals": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "{{prefix}}_RunnerApprovals"
+        },
+        "api": {
+          "name": "shared_approvals"
+        }
+      },
+      "shared_office365users": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "{{prefix}}_RunnerUsers"
+        },
+        "api": {
+          "name": "shared_office365users"
+        }
+      },
+      "shared_office365groups": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "{{prefix}}_RunnerGroups"
+        },
+        "api": {
+          "name": "shared_office365groups"
+        }
+      },
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "{{prefix}}_RunnerDataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Approval API base URL ({{prefix}}_ApiBaseUrl)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_ApiBaseUrl",
+            "description": "The product's public base URL, with no trailing slash."
+          }
+        },
+        "Approval API audience ({{prefix}}_ApiAudience)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_ApiAudience",
+            "description": "The Application ID URI of the product's API app registration."
+          }
+        },
+        "Tenant ID ({{prefix}}_TenantId)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_TenantId",
+            "description": "The client's Microsoft Entra tenant ID."
+          }
+        },
+        "Runner client ID ({{prefix}}_RunnerClientId)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_RunnerClientId",
+            "description": "The client ID of the runner's app registration."
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "Approval request",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "One claimed request from the claims route, as JSON text.",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "outputs"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Item": {
+          "runAfter": {},
+          "type": "Compose",
+          "inputs": "@json(triggerBody()?['text'])",
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
+        "Run_link": {
+          "description": "A link to this run, reported with the card and with the answer.",
+          "runAfter": {
+            "Item": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])"
+        },
+        "Get_runner_certificate": {
+          "runAfter": {
+            "Run_link": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "PerformUnboundAction",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "actionName": "RetrieveEnvironmentVariableSecretValue",
+              "item/EnvironmentVariableName": "{{prefix}}_RunnerCertificate"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
+        "Get_certificate_password": {
+          "runAfter": {
+            "Get_runner_certificate": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "PerformUnboundAction",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "actionName": "RetrieveEnvironmentVariableSecretValue",
+              "item/EnvironmentVariableName": "{{prefix}}_RunnerCertificatePassword"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
+        "Select_asked_principals": {
+          "description": "The owner role's current holders, users only, as the product resolved them.",
+          "runAfter": {
+            "Get_certificate_password": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('Item')?['ask']?['principals']",
+            "select": "@toLower(item())"
+          }
+        },
+        "Initialize_asked_users": {
+          "runAfter": {
+            "Select_asked_principals": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "AskedUsers",
+                "type": "array",
+                "value": "@body('Select_asked_principals')"
+              }
+            ]
+          }
+        },
+        "For_each_role_group": {
+          "description": "The members of each group bound to the required product role, users only: a member of any other object type gets no card.",
+          "runAfter": {
+            "Initialize_asked_users": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@outputs('Item')?['ask']?['groups']",
+          "actions": {
+            "List_group_members": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_office365groups",
+                  "operationId": "ListGroupMembers",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365groups"
+                },
+                "parameters": {
+                  "groupId": "@item()",
+                  "$top": 999
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Keep_users_only": {
+              "runAfter": {
+                "List_group_members": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('List_group_members')?['value']",
+                "where": "@equals(item()?['@odata.type'], '#microsoft.graph.user')"
+              }
+            },
+            "Select_member_ids": {
+              "runAfter": {
+                "Keep_users_only": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Keep_users_only')",
+                "select": "@toLower(item()?['id'])"
+              }
+            },
+            "Join_asked_users": {
+              "runAfter": {
+                "Select_member_ids": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@union(variables('AskedUsers'), body('Select_member_ids'))"
+            },
+            "Set_asked_users": {
+              "runAfter": {
+                "Join_asked_users": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "AskedUsers",
+                "value": "@outputs('Join_asked_users')"
+              }
+            }
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          }
+        },
+        "Check_someone_to_ask": {
+          "runAfter": {
+            "For_each_role_group": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": "@equals(length(variables('AskedUsers')), 0)",
+          "actions": {
+            "Release_no_approvers": {
+              "runAfter": {},
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/release",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "claimId": "@outputs('Item')?['claimId']",
+                  "reason": "no-approvers"
+                },
+                "authentication": {
+                  "type": "ActiveDirectoryOAuth",
+                  "authority": "https://login.microsoftonline.com",
+                  "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+                  "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+                  "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+                  "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+                  "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+                }
+              },
+              "runtimeConfiguration": {
+                "secureData": {
+                  "properties": [
+                    "inputs"
+                  ]
+                }
+              }
+            },
+            "Respond_no_approvers": {
+              "runAfter": {
+                "Release_no_approvers": [
+                  "Succeeded",
+                  "Failed"
+                ]
+              },
+              "type": "Response",
+              "kind": "PowerApp",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "released"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "title": "status",
+                      "x-ms-dynamically-added": true,
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "Stop_no_approvers": {
+              "runAfter": {
+                "Respond_no_approvers": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Create_an_approval": {
+          "description": "First to respond: each Approval Record holds one answer. Reassignment is off, so only the people asked can answer.",
+          "runAfter": {
+            "Check_someone_to_ask": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_approvals",
+              "operationId": "CreateAnApproval",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+            },
+            "parameters": {
+              "approvalType": "Basic",
+              "ApprovalCreationInput/title": "@outputs('Item')?['title']",
+              "ApprovalCreationInput/assignedTo": "@join(variables('AskedUsers'), ';')",
+              "ApprovalCreationInput/details": "@outputs('Item')?['detailsMarkdown']",
+              "ApprovalCreationInput/itemLink": "@outputs('Item')?['recordUrl']",
+              "ApprovalCreationInput/itemLinkDescription": "Open the record",
+              "ApprovalCreationInput/enableNotifications": true,
+              "ApprovalCreationInput/enableReassignment": false
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Release_send_failed": {
+          "runAfter": {
+            "Create_an_approval": [
+              "Failed",
+              "TimedOut"
+            ]
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/release",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "claimId": "@outputs('Item')?['claimId']",
+              "reason": "send-failed"
+            },
+            "authentication": {
+              "type": "ActiveDirectoryOAuth",
+              "authority": "https://login.microsoftonline.com",
+              "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+              "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+              "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+              "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+              "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs"
+              ]
+            }
+          }
+        },
+        "Respond_send_failed": {
+          "runAfter": {
+            "Release_send_failed": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "status": "released"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "title": "status",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Stop_send_failed": {
+          "runAfter": {
+            "Respond_send_failed": [
+              "Succeeded"
+            ]
+          },
+          "type": "Terminate",
+          "inputs": {
+            "runStatus": "Failed",
+            "runError": {
+              "code": "SendFailed",
+              "message": "The approval card could not be created, so the request was given back."
+            }
+          }
+        },
+        "Report_sent": {
+          "runAfter": {
+            "Create_an_approval": [
+              "Succeeded"
+            ]
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/sent",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "claimId": "@outputs('Item')?['claimId']",
+              "cardRef": "@body('Create_an_approval')?['name']",
+              "runnerRunUrl": "@outputs('Run_link')"
+            },
+            "authentication": {
+              "type": "ActiveDirectoryOAuth",
+              "authority": "https://login.microsoftonline.com",
+              "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+              "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+              "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+              "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+              "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs"
+              ]
+            }
+          }
+        },
+        "Respond_to_the_parent": {
+          "description": "Frees the parent flow once the card is out. This run goes on waiting for the answer in the parallel branch.",
+          "runAfter": {
+            "Report_sent": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "status": "sent"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "title": "status",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Wait_for_an_approval": {
+          "description": "Starts waiting right after the card is created, in parallel with the sent report: Microsoft notes that an answer given before the wait starts can leave the flow stuck. Waits at most 27 days, because a cloud flow run ends at 28 days.",
+          "runAfter": {
+            "Create_an_approval": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_approvals",
+              "operationId": "WaitForAnApproval",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+            },
+            "parameters": {
+              "approvalName": "@body('Create_an_approval')?['name']"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "limit": {
+            "timeout": "P27D"
+          }
+        },
+        "Release_timeout": {
+          "runAfter": {
+            "Wait_for_an_approval": [
+              "TimedOut",
+              "Failed"
+            ]
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/release",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "claimId": "@outputs('Item')?['claimId']",
+              "reason": "timeout"
+            },
+            "authentication": {
+              "type": "ActiveDirectoryOAuth",
+              "authority": "https://login.microsoftonline.com",
+              "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+              "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+              "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+              "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+              "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs"
+              ]
+            }
+          }
+        },
+        "First_response": {
+          "runAfter": {
+            "Wait_for_an_approval": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@first(body('Wait_for_an_approval')?['responses'])"
+        },
+        "Get_responder_profile": {
+          "description": "Reads the responder as a user. When the lookup fails the answer goes in with a non-user kind, so it is stored as a recommendation and never counts.",
+          "runAfter": {
+            "First_response": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_office365users",
+              "operationId": "UserProfile_V2",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
+            },
+            "parameters": {
+              "id": "@outputs('First_response')?['responder']?['id']",
+              "$select": "id,accountEnabled,userType"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Post_answer": {
+          "description": "Posts the person's answer with an Idempotency-Key, so a retry returns the first result. The product decides whether it counts.",
+          "runAfter": {
+            "Get_responder_profile": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-records/@{outputs('Item')?['approvalRecordId']}/outcome",
+            "headers": {
+              "Content-Type": "application/json",
+              "Idempotency-Key": "@{outputs('Item')?['approvalRecordId']}:@{outputs('First_response')?['responder']?['id']}:@{outputs('First_response')?['responseDate']}"
+            },
+            "body": {
+              "outcome": "@if(equals(outputs('First_response')?['approverResponse'], 'Approve'), outputs('Item')?['answerHints']?['approvedOutcome'], outputs('Item')?['answerHints']?['rejectedOutcome'])",
+              "approver": "@outputs('First_response')?['responder']?['id']",
+              "approverPrincipalKind": "@if(equals(actions('Get_responder_profile')?['status'], 'Succeeded'), outputs('Item')?['answerHints']?['approverPrincipalKind'], 'service-principal')",
+              "approverActorKind": "@outputs('Item')?['answerHints']?['approverActorKind']",
+              "respondedOn": "@{outputs('First_response')?['responseDate']}",
+              "channel": "@outputs('Item')?['channel']",
+              "typedReason": "@if(empty(outputs('First_response')?['comments']), null, outputs('First_response')?['comments'])",
+              "approverHoldsRequiredRole": "@contains(variables('AskedUsers'), toLower(outputs('First_response')?['responder']?['id']))",
+              "flowRunUrl": "@outputs('Run_link')"
+            },
+            "authentication": {
+              "type": "ActiveDirectoryOAuth",
+              "authority": "https://login.microsoftonline.com",
+              "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+              "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+              "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+              "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+              "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs"
+              ]
+            }
+          }
+        },
+        "Check_answer_refused": {
+          "description": "A 409 means the answer is already recorded, came after the request expired, or lost to an earlier answer: nothing more to do. Any other refusal gives the request back, so a new card goes out.",
+          "runAfter": {
+            "Post_answer": [
+              "Failed"
+            ]
+          },
+          "type": "If",
+          "expression": "@not(equals(outputs('Post_answer')?['statusCode'], 409))",
+          "actions": {
+            "Release_outcome_refused": {
+              "runAfter": {},
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/release",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "claimId": "@outputs('Item')?['claimId']",
+                  "reason": "outcome-refused"
+                },
+                "authentication": {
+                  "type": "ActiveDirectoryOAuth",
+                  "authority": "https://login.microsoftonline.com",
+                  "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+                  "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+                  "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+                  "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+                  "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+                }
+              },
+              "runtimeConfiguration": {
+                "secureData": {
+                  "properties": [
+                    "inputs"
+                  ]
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        }
+      },
+      "outputs": {}
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,18 @@
+{
+  "description": "An owner who leaves the organization on 2026-12-15. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/users/00000000-0000-4000-8000-000000000215?$select=id,displayName,accountEnabled,employeeLeaveDateTime"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "id": "00000000-0000-4000-8000-000000000215",
+        "displayName": "Ines Varga",
+        "accountEnabled": true,
+        "employeeLeaveDateTime": "2026-12-15T17:00:00Z"
+      }
+    }
+  ]
+}

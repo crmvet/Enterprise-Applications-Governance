@@ -3,6 +3,7 @@
 // get_configuration (owner-role and target-stage labels). Two custom API calls, so the six-table limit of
 // generative pages does not bind this page (the card reads its tables on the server).
 // Read-only: edits happen in the form, or through an AI client, and every write goes through the engine.
+// In the web app the route is /app/records/business-application/<id>, the record link the tools return.
 import { Avatar, Badge, Button, Link, makeStyles, tokens } from '@fluentui/react-components';
 import {
   ArrowRight16Regular,
@@ -16,7 +17,7 @@ import {
 } from '@fluentui/react-icons';
 import type { ReactNode } from 'react';
 import type { ApplicationCard, ApplicationOwners, LabelledKey } from '../data/contracts';
-import { fmtDate, fmtWindow, humanizeKey } from '../data/format';
+import { externalHref, fmtDate, fmtWindow } from '../data/format';
 import { useLabels, type Labels } from '../data/labels';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost } from '../harness';
@@ -164,7 +165,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
   }
 
   const mapHref = host.href({ page: 'map', id: applicationId });
-  const recordUrl = cardEnv?.ok ? cardEnv.links?.recordUrl : undefined;
+  const recordUrl = host.showRecordLinks && cardEnv?.ok ? externalHref(cardEnv.links?.recordUrl) : null;
 
   return (
     <>
@@ -208,7 +209,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
           </dl>
           <div className={s.readOnly}>
             <Info16Regular aria-hidden />
-            Read-only page. Changes happen in the form or through an AI client, and the engine checks every write.
+            Read-only page. Changes happen {host.showRecordLinks ? 'in the form or through an AI client' : 'through an AI client'}, and the engine checks every write.
           </div>
         </section>
       )}
@@ -276,7 +277,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
 
         <div className={s.column}>
           <Panel title="Owners" state={owners} className={s.o1} skeletonRows={5}>
-            {o => <OwnersList owners={o} ownerRoles={ownerRoles} />}
+            {o => <OwnersList owners={o} ownerRoles={ownerRoles} applicationName={app?.name ?? null} />}
           </Panel>
           <Panel title="Documents" subtitle="Status per required document type" state={card} className={s.o4} notes={['document-link']}>
             {d => (d.documents?.length ? (
@@ -446,7 +447,7 @@ function DependencySummary({ card, mapHref }: { card: ApplicationCard; mapHref: 
   );
 }
 
-function OwnersList({ owners, ownerRoles }: { owners: ApplicationOwners; ownerRoles: Labels }) {
+function OwnersList({ owners, ownerRoles, applicationName }: { owners: ApplicationOwners; ownerRoles: Labels; applicationName: string | null }) {
   const s = useStyles();
   const host = useHost();
   return (
@@ -471,7 +472,19 @@ function OwnersList({ owners, ownerRoles }: { owners: ApplicationOwners; ownerRo
             lead={<span className={s.gapIcon} aria-hidden><PersonWarning20Regular /></span>}
             primary={`${ownerRoles.label(g.ownerRoleKey)}: no ${g.missing}`}
             secondary="An owner change needs a decision by a person."
-            end={<Link onClick={() => host.drill(`Propose an owner change for ${humanizeKey(g.ownerRoleKey).toLowerCase()}`)}>Propose</Link>}
+            end={
+              <Link
+                as="button"
+                aria-label={`Propose an owner change for ${ownerRoles.label(g.ownerRoleKey)}`}
+                onClick={() => host.handOff({
+                  title: 'Propose an owner change',
+                  tool: 'propose_owner_change',
+                  prompt: `Propose a ${g.missing === 'holder' ? 'holder' : 'deputy'} for the ${ownerRoles.label(g.ownerRoleKey).toLowerCase()} role of ${applicationName ?? 'this application'}.`,
+                })}
+              >
+                Propose
+              </Link>
+            }
           />
         ))}
       </RowList>

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
+using Product.Engine.Runtime.Callers;
 using Product.Mcp.Core.Contracts;
 using Product.Mcp.Core.Envelope;
 using Product.Mcp.Core.Policy;
@@ -36,19 +37,37 @@ public interface IGovernanceBackend
 // The validated caller as the backend needs it. Never a token.
 public sealed class BackendCaller
 {
+    // A caller on the MCP endpoint: an AI client acting for the signed-in person.
     public BackendCaller(string objectId, PrincipalKind principalKind, string clientAppId, IEnumerable<string>? groupObjectIds = null, IEnumerable<string>? directoryRoleIds = null)
+        : this(CallerEntry.AiClient, objectId, principalKind, clientAppId, groupObjectIds, directoryRoleIds)
     {
+    }
+
+    // A caller on the given entry: AiClient (the MCP endpoint) or Person (the product's web app). Workload is refused: an
+    // app-only caller never reaches the backend, it uses the record and approval outcome endpoints.
+    public BackendCaller(CallerEntry entry, string objectId, PrincipalKind principalKind, string clientAppId, IEnumerable<string>? groupObjectIds = null, IEnumerable<string>? directoryRoleIds = null)
+    {
+        if (entry != CallerEntry.AiClient && entry != CallerEntry.Person)
+        {
+            throw new ArgumentException("The backend serves the AI client and person entries only. An app-only caller uses the record and approval outcome endpoints.", nameof(entry));
+        }
+
         if (string.IsNullOrEmpty(objectId))
         {
             throw new ArgumentException("A caller has an object ID.", nameof(objectId));
         }
 
+        Entry = entry;
         ObjectId = objectId;
         PrincipalKind = principalKind;
         ClientAppId = clientAppId ?? throw new ArgumentNullException(nameof(clientAppId));
         GroupObjectIds = new ReadOnlyCollection<string>((groupObjectIds ?? Enumerable.Empty<string>()).ToList());
         DirectoryRoleIds = new ReadOnlyCollection<string>((directoryRoleIds ?? Enumerable.Empty<string>()).ToList());
     }
+
+    // How the call reached the product: AiClient on the MCP endpoint, Person through the web app. The actor kind comes
+    // from it, never from a field the caller sends.
+    public CallerEntry Entry { get; }
 
     public string ObjectId { get; }
 
@@ -60,7 +79,8 @@ public sealed class BackendCaller
 
     public IReadOnlyList<string> DirectoryRoleIds { get; }
 
-    // The client's label from the Known Client check, set by the core once the check passed.
+    // The client's label, set by the core: from the Known Client check once it passed on the MCP endpoint, or the host's
+    // web app label on the person entry.
     public string? ClientAppLabel { get; internal set; }
 }
 
@@ -119,7 +139,8 @@ public sealed class BackendSession
     public BackendCaller Caller { get; }
 
     // The actor kind the engine stamps for this caller on this entry point: ai-client-for-person on the MCP endpoint,
-    // agent-identity for an agent user or agent identity (which holds no role, RA-06).
+    // person on the web app's entry, agent-identity for an agent user or agent identity on either (it holds no role,
+    // RA-06).
     public string ActorKind { get; }
 
     public IReadOnlyList<RoleGrant> Roles { get; }

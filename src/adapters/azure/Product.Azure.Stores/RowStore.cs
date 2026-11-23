@@ -23,6 +23,10 @@ namespace Product.Azure.Stores;
 // - seeding (IStoreSeeder) with the same rows and columns as InMemoryStore.Seed, Tamper and SeedVersion.
 // It holds no rule: the engine decides what to write.
 //
+// Beside the engine's rows it keeps the approval outbox (ApprovalOutbox.cs), a host table outside the entity catalog:
+// an engine commit that inserts a pending Approval Record opens its outbox row, and one that writes a final outcome
+// settles it, in the same database transaction (the commit hook). Seeding never touches it, and Dump leaves it out.
+//
 // A few checks go further than the in-memory store, so a local run fails where Azure SQL would: a row of an entity the
 // logical model has no table for cannot be written (reads of it find nothing, as in memory); a row of an append-only
 // entity (document 22, section 2.3, class A and O14) cannot be changed once committed; an ID is at most 36 printable
@@ -253,6 +257,37 @@ public abstract class RowStore : IProductStore
         }
 
         Database.Apply(changes, StoreCallContext.Current, RowStoreOperations.Seed);
+    }
+
+    // ---- IApprovalOutboxStore (host bookkeeping for the approval runner; never an engine row) ----
+
+    public ApprovalOutboxItem? GetOutboxItem(string approvalRecordId)
+    {
+        ThrowIfDisposed();
+        return IsStorableId(approvalRecordId) ? Database.OutboxGet(approvalRecordId) : null;
+    }
+
+    public IReadOnlyList<ApprovalOutboxItem> ClaimableOutboxItems(DateTime nowUtc, int limit)
+    {
+        ThrowIfDisposed();
+        return Database.OutboxClaimable(nowUtc.Kind == DateTimeKind.Utc ? nowUtc : DateTime.SpecifyKind(nowUtc.ToUniversalTime(), DateTimeKind.Utc), Math.Max(1, limit));
+    }
+
+    public IReadOnlyList<ApprovalOutboxItem> OutboxItems(int limit)
+    {
+        ThrowIfDisposed();
+        return Database.OutboxAll(Math.Max(1, limit));
+    }
+
+    public bool TrySetOutboxItem(ApprovalOutboxItem next)
+    {
+        if (next == null)
+        {
+            throw new ArgumentNullException(nameof(next));
+        }
+
+        ThrowIfDisposed();
+        return IsStorableId(next.ApprovalRecordId) && Database.OutboxSet(next);
     }
 
     // ---- IProductStore ----
@@ -609,7 +644,11 @@ public abstract class RowStore : IProductStore
             if (changes.Count > 0)
             {
                 bool activation = changes.Any(c => c.Kind == RowChangeKind.Insert && string.Equals(c.Entity.Key, "configuration-set-version", StringComparison.Ordinal));
-                _store.Database.Apply(changes, StoreCallContext.Current, activation ? RowStoreOperations.Activation : RowStoreOperations.Write);
+
+                // The commit hook: a new pending Approval Record opens its outbox row and a final outcome settles it, in
+                // the same database transaction as the engine's rows.
+                IReadOnlyList<ApprovalOutboxWrite> outbox = ApprovalOutboxHook.Plan(changes, DateTime.UtcNow);
+                _store.Database.Apply(changes, StoreCallContext.Current, activation ? RowStoreOperations.Activation : RowStoreOperations.Write, outbox);
             }
 
             _done = true;

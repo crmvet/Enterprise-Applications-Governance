@@ -10,6 +10,7 @@ using Product.Engine.Configuration.Snapshots;
 using Product.Engine.Core;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Runtime;
+using Product.Engine.Runtime.Callers;
 using Product.Engine.Runtime.Ports;
 using Product.Engine.Runtime.Snapshots;
 using Product.Mcp.Core.Backend;
@@ -24,7 +25,10 @@ namespace Product.Azure.Host;
 
 /// <summary>
 /// The REST API for the product's web app (delegated tokens with the <c>api.access</c> scope): the same tools and
-/// contracts as the MCP endpoint, plus the caller's session and the service's facts.
+/// contracts as the MCP endpoint, plus the caller's session and the service's facts. A token the web app itself asked
+/// for (its <c>azp</c> is one of <c>Product:WebApp:ClientIds</c>) is the person entry: the engine runs as the person,
+/// with no On Behalf Of. Any other client is an AI client acting for the person, as on the MCP endpoint, and must pass
+/// the Known Client check.
 /// </summary>
 public static class ApiEndpoints
 {
@@ -32,8 +36,9 @@ public static class ApiEndpoints
     /// <c>POST /api/{tool}</c>: one tool call with the JSON body as its arguments, through the same MCP server core and
     /// in-process backend as the MCP endpoint (Tool Policy, roles, rate limit, input schema, envelope), with the
     /// <c>api.access</c> scope. The body of the answer is the tool's envelope; the status is 200 when it succeeded, else
-    /// the fixed error code's status. This release serves read tools here; a write tool answers not_found, because a
-    /// person's write needs the caller entry the MCP core does not take yet (ENGINE-CHANGES-NEEDED.md, item 1).
+    /// the fixed error code's status. This release serves the read tools here: the product's four pages are read-only
+    /// (Overview, Application 360, the dependency map and the timeline), so a write tool answers not_found. A person's
+    /// approval answer goes through the approval card; an AI client writes through the MCP endpoint.
     /// </summary>
     public static async Task HandleTool(HttpContext context)
     {
@@ -46,7 +51,8 @@ public static class ApiEndpoints
         ContractSet contracts = services.GetRequiredService<ContractSet>();
         ProductAuthOptions auth = services.GetRequiredService<IOptions<ProductAuthOptions>>().Value;
         string tool = context.Request.RouteValues.TryGetValue("tool", out object? value) ? value as string ?? string.Empty : string.Empty;
-        McpServerCore core = McpInvoker.CreateCore(context, auth.ApiScope);
+        bool person = PersonEntry(context);
+        McpServerCore core = McpInvoker.CreateCore(context, auth.ApiScope, person);
 
         string? text = await HttpJson.ReadBody(context, services.GetRequiredService<IOptions<ProductHostOptions>>().Value.MaxRequestBytes).ConfigureAwait(false);
         if (text == null)
@@ -70,7 +76,10 @@ public static class ApiEndpoints
         // A write tool is refused only once the caller is known to be signed in, so a missing token still answers 401.
         if (contracts.TryGetTool(tool, out ToolContract contract) && IsWrite(contract) && SignedIn(context, auth.ApiScope))
         {
-            await HttpJson.WriteFailure(context, new McpError(McpErrorCodes.NotFound, "The tool " + contract.Name + " is served on the MCP endpoint in this release. The REST API serves the read tools.", "tool"), contracts).ConfigureAwait(false);
+            string refusal = person
+                ? "The product's pages are read-only in this release, so the REST API serves the read tools and not " + contract.Name + ". An approval answer goes through the approval card; an AI client writes through the MCP endpoint."
+                : "The tool " + contract.Name + " is served on the MCP endpoint. The REST API serves the read tools.";
+            await HttpJson.WriteFailure(context, new McpError(McpErrorCodes.NotFound, refusal, "tool"), contracts).ConfigureAwait(false);
             return;
         }
 
@@ -104,8 +113,10 @@ public static class ApiEndpoints
     }
 
     /// <summary>
-    /// <c>GET /api/me</c>: the signed-in person's product roles, each with the group that grants it, and the configuration
-    /// in force. Roles come only from the configuration's Role Group Bindings and the token's groups.
+    /// <c>GET /api/me</c>: the signed-in person's name, the actor kind of this entry (<c>person</c> through the web app,
+    /// <c>ai-client-for-person</c> for any other client), the product roles, each with the group that grants it, and the
+    /// configuration in force. Roles come only from the configuration's Role Group Bindings and the token's groups. The
+    /// name is the person's Principal Reference label, else the token's <c>name</c> claim.
     /// </summary>
     public static Task HandleMe(HttpContext context)
     {
@@ -123,7 +134,8 @@ public static class ApiEndpoints
         }
 
         CallerFacts facts = services.GetRequiredService<CallerFacts>();
-        var backendCaller = new BackendCaller(caller.ObjectId, facts.DelegatedKindOf(caller, caller.ObjectId), caller.ClientAppId, caller.GroupObjectIds, caller.DirectoryRoleIds);
+        CallerEntry entry = PersonEntry(context) ? CallerEntry.Person : CallerEntry.AiClient;
+        var backendCaller = new BackendCaller(entry, caller.ObjectId, facts.DelegatedKindOf(caller, caller.ObjectId), caller.ClientAppId, caller.GroupObjectIds, caller.DirectoryRoleIds);
         SessionResult opened = services.GetRequiredService<InProcessBackend>().OpenSession(backendCaller, ProductRequest.CorrelationId(context));
         if (opened.Session == null)
         {
@@ -131,8 +143,11 @@ public static class ApiEndpoints
         }
 
         BackendSession session = opened.Session;
+        string? name = facts.DisplayLabel(caller.ObjectId) ?? context.User.FindFirst("name")?.Value;
         JsonTreeNode body = Js.Obj(
             ("objectId", JsonTreeNode.FromString(caller.ObjectId)),
+            ("name", Js.Str(string.IsNullOrWhiteSpace(name) ? null : name)),
+            ("actorKind", JsonTreeNode.FromString(session.ActorKind)),
             ("roles", Js.Arr(session.Roles.Select(r => Js.Obj(
                 ("roleKey", JsonTreeNode.FromString(r.RoleKey)),
                 ("label", JsonTreeNode.FromString(r.Label)),
@@ -174,6 +189,13 @@ public static class ApiEndpoints
             ("asOf", Js.Utc(now)),
             ("correlationId", JsonTreeNode.FromString(ProductRequest.CorrelationId(context))));
         return HttpJson.Write(context, StatusCodes.Status200OK, body);
+    }
+
+    // True when the request is the person acting through the product's own web app (CallerFacts.IsPersonEntry).
+    private static bool PersonEntry(HttpContext context)
+    {
+        ProductWebAppOptions webApp = context.RequestServices.GetRequiredService<IOptions<ProductWebAppOptions>>().Value;
+        return CallerFacts.IsPersonEntry(ProductRequest.Caller(context), context.Request.Path, webApp);
     }
 
     private static bool IsWrite(ToolContract tool)

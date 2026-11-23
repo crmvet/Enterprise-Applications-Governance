@@ -1,0 +1,89 @@
+{
+  "description": "The approval runner as a Power Platform solution: two solution-aware cloud flows that pull approval requests from the product's API, send one Power Automate approval card per request, and post each answer back. build-solution.mjs turns this manifest and the two workflow files into an unpacked solution for one publisher prefix. {{prefix}} stands for that prefix and {{childFlowId}} for the ID the script gives the child flow.",
+  "uniqueName": "{{prefix}}_ApprovalRunner",
+  "displayName": "Approval runner",
+  "solutionDescription": "Sends the product's approval cards through Power Automate approvals and posts each answer to the product's approval outcome endpoint. It never approves anything itself.",
+  "version": "1.0.0.0",
+  "publisher": {
+    "uniqueName": "{{prefix}}",
+    "displayName": "{{prefix}}",
+    "customizationPrefix": "{{prefix}}",
+    "optionValuePrefix": 10000
+  },
+  "environmentVariables": [
+    {
+      "schemaName": "{{prefix}}_ApiBaseUrl",
+      "displayName": "Approval API base URL",
+      "type": "string",
+      "description": "The product's public base URL, such as https://governance.contoso.com, with no trailing slash. Every HTTP action calls this host only."
+    },
+    {
+      "schemaName": "{{prefix}}_ApiAudience",
+      "displayName": "Approval API audience",
+      "type": "string",
+      "description": "The audience of the token the runner asks for: the Application ID URI of the product's API app registration."
+    },
+    {
+      "schemaName": "{{prefix}}_TenantId",
+      "displayName": "Tenant ID",
+      "type": "string",
+      "description": "The client's Microsoft Entra tenant ID."
+    },
+    {
+      "schemaName": "{{prefix}}_RunnerClientId",
+      "displayName": "Runner client ID",
+      "type": "string",
+      "description": "The client ID of the runner's app registration, which holds the Approval.Write app role on the product's API."
+    },
+    {
+      "schemaName": "{{prefix}}_RunnerCertificate",
+      "displayName": "Runner certificate",
+      "type": "secret",
+      "description": "The runner's certificate as base64 PFX content, kept as a secret in Azure Key Vault. The flows read it at run time with the Dataverse action RetrieveEnvironmentVariableSecretValue, with secure inputs and outputs."
+    },
+    {
+      "schemaName": "{{prefix}}_RunnerCertificatePassword",
+      "displayName": "Runner certificate password",
+      "type": "secret",
+      "description": "The password of the PFX content, kept as a secret in Azure Key Vault. The HTTP action needs it with the certificate credential type."
+    }
+  ],
+  "connectionReferences": [
+    {
+      "logicalName": "{{prefix}}_RunnerApprovals",
+      "displayName": "Approval runner: Approvals",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+    },
+    {
+      "logicalName": "{{prefix}}_RunnerUsers",
+      "displayName": "Approval runner: Office 365 Users",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
+    },
+    {
+      "logicalName": "{{prefix}}_RunnerGroups",
+      "displayName": "Approval runner: Office 365 Groups",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_office365groups"
+    },
+    {
+      "logicalName": "{{prefix}}_RunnerDataverse",
+      "displayName": "Approval runner: Microsoft Dataverse",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+    }
+  ],
+  "workflows": [
+    {
+      "key": "pull-approval-requests",
+      "file": "workflows/pull-approval-requests.json",
+      "displayName": "Approval runner: pull approval requests",
+      "description": "Every five minutes, claims waiting approval requests from the product's API and starts the child flow once for each.",
+      "kind": "automated"
+    },
+    {
+      "key": "send-card-and-wait",
+      "file": "workflows/send-card-and-wait.json",
+      "displayName": "Approval runner: send card and wait",
+      "description": "Sends one approval card for one claimed request, reports it as sent, waits for the first answer and posts it to the approval outcome endpoint.",
+      "kind": "child"
+    }
+  ]
+}

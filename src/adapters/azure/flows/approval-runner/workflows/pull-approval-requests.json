@@ -1,0 +1,193 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "{{prefix}}_RunnerDataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Approval API base URL ({{prefix}}_ApiBaseUrl)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_ApiBaseUrl",
+            "description": "The product's public base URL, with no trailing slash."
+          }
+        },
+        "Approval API audience ({{prefix}}_ApiAudience)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_ApiAudience",
+            "description": "The Application ID URI of the product's API app registration."
+          }
+        },
+        "Tenant ID ({{prefix}}_TenantId)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_TenantId",
+            "description": "The client's Microsoft Entra tenant ID."
+          }
+        },
+        "Runner client ID ({{prefix}}_RunnerClientId)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "{{prefix}}_RunnerClientId",
+            "description": "The client ID of the runner's app registration."
+          }
+        }
+      },
+      "triggers": {
+        "Every_five_minutes": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Minute",
+            "interval": 5
+          }
+        }
+      },
+      "actions": {
+        "Get_runner_certificate": {
+          "description": "Reads the certificate from the Key Vault-backed environment variable. Secure inputs and outputs keep it out of the run history.",
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "PerformUnboundAction",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "actionName": "RetrieveEnvironmentVariableSecretValue",
+              "item/EnvironmentVariableName": "{{prefix}}_RunnerCertificate"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
+        "Get_certificate_password": {
+          "runAfter": {
+            "Get_runner_certificate": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "PerformUnboundAction",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "actionName": "RetrieveEnvironmentVariableSecretValue",
+              "item/EnvironmentVariableName": "{{prefix}}_RunnerCertificatePassword"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
+        "Claim_approval_requests": {
+          "description": "Leases up to ten waiting requests for fifteen minutes. The answer lists each request with its card text, who to ask and the keys to answer with.",
+          "runAfter": {
+            "Get_certificate_password": [
+              "Succeeded"
+            ]
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/claims",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "max": 10,
+              "leaseSeconds": 900
+            },
+            "authentication": {
+              "type": "ActiveDirectoryOAuth",
+              "authority": "https://login.microsoftonline.com",
+              "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+              "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+              "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+              "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+              "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
+        "For_each_claimed_request": {
+          "runAfter": {
+            "Claim_approval_requests": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Claim_approval_requests')?['data']?['items']",
+          "actions": {
+            "Send_card_and_wait": {
+              "description": "Starts the child flow for one request. The child answers as soon as its card is out, then waits for the answer on its own.",
+              "runAfter": {},
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "{{childFlowId}}"
+                },
+                "body": {
+                  "text": "@{string(item())}"
+                }
+              }
+            }
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 5
+            }
+          }
+        }
+      },
+      "outputs": {}
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -58,35 +58,26 @@ internal static partial class ToolHandlers
         };
         ComposedWrite write = s.Call.RecordDeployment(report, out JsonTreeNode? payload);
         StoredRow record = s.Rows.Get("deployment-record", write.RowId)!;
-        JsonTreeNode data = ToolScope.Merge(
-            s.WriteResult(record, write.Created, true, "result", "resultMeaning"),
-            ("deploymentRecordId", s.Call.IsDryRun && write.Created ? JsonTreeNode.Null : JsonTreeNode.FromString(record.Id)),
-            ("artifactVersionId", s.Call.IsDryRun && write.Created ? JsonTreeNode.Null : Js.Str(Js.Text(payload, "artifactVersionId") ?? record.Text("artifactVersion"))),
-            ("deploymentTargetId", Js.Str(record.Text("deploymentTarget"))),
-            ("changeRequestId", Js.Str(record.Text("changeRequest"))),
-            ("route", Route(s, record)),
-            ("flags", RecordFlags(s, record, codeApproval)),
-            ("gateLevelApplied", JsonTreeNode.FromString(record.Text("gateLevelApplied") ?? "record")));
+        JsonTreeNode data = RecordEndpointAnswers.DeploymentData(RecordAnswers(s), record, write.Created, payload, codeApproval);
         return s.Answer(data, write.Created ? "The deployment is recorded as reported. The engine set the route and the flags." : "This idempotency key was recorded before; the first record is returned and nothing new was written.", s.Call.IsDryRun && write.Created ? null : s.RecordUrl("deployment-record", record.Id));
+    }
+
+    // What the record answers read from this call: its rows and snapshot, its time and the session's caller. The record
+    // endpoint for pipelines builds the same data through RecordEndpointAnswers with its own caller.
+    private static RecordAnswerContext RecordAnswers(ToolScope s)
+    {
+        return new RecordAnswerContext(s.Rows, s.Snapshot, s.Now, s.PersonId, s.Session.Caller.ClientAppId, s.Session.ActorKind, s.Call.IsDryRun);
     }
 
     private static JsonTreeNode Route(ToolScope s, StoredRow record)
     {
-        string key = record.Text("deploymentRoute") ?? "other";
-        string meaning = s.ConfigRow("deployment-route", key)?.EngineMeaning ?? "other";
-        return Js.Obj(("key", JsonTreeNode.FromString(key)), ("meaning", JsonTreeNode.FromString(meaning)));
+        return RecordEndpointAnswers.Route(s.Snapshot, record);
     }
 
     // The engine's flags, plus the AI-only code approval flag the shipped default sets (question 7).
     private static JsonTreeNode RecordFlags(ToolScope s, StoredRow record, string? codeApproval)
     {
-        bool aiOnly = record.Flag("isAiOnlyCodeApproval")
-            || (codeApproval == "ai-only" && s.Setting(EngineKeys.DefaultAiOnlyCodeApprovalHandling) != "ignore");
-        return Js.Obj(
-            ("outsideWindow", JsonTreeNode.FromBoolean(record.Flag("isOutsideWindow"))),
-            ("otherPath", JsonTreeNode.FromBoolean(record.Flag("isOtherPath"))),
-            ("missingApproval", JsonTreeNode.FromBoolean(record.Flag("isMissingApproval"))),
-            ("aiOnlyCodeApproval", JsonTreeNode.FromBoolean(aiOnly)));
+        return RecordEndpointAnswers.Flags(s.Snapshot, record, codeApproval);
     }
 
     // ---- 48. record_deployment_correction ----
@@ -129,12 +120,7 @@ internal static partial class ToolHandlers
         };
         ComposedWrite write = s.Call.RecordDeployment(report, out _);
         StoredRow record = s.Rows.Get("deployment-record", write.RowId)!;
-        JsonTreeNode data = ToolScope.Merge(
-            s.WriteResult(record, write.Created, true, "result", "resultMeaning"),
-            ("deploymentRecordId", s.Call.IsDryRun && write.Created ? JsonTreeNode.Null : JsonTreeNode.FromString(record.Id)),
-            ("correctsRecordId", JsonTreeNode.FromString(record.Text("correctsRecord") ?? old.Id)),
-            ("flags", RecordFlags(s, record, null)),
-            ("gateLevelApplied", JsonTreeNode.FromString(record.Text("gateLevelApplied") ?? "record")));
+        JsonTreeNode data = RecordEndpointAnswers.CorrectionData(RecordAnswers(s), record, write.Created, old.Id);
         return s.Answer(data, "The correction is recorded as a new deployment record; the old record stays.", s.Call.IsDryRun && write.Created ? null : s.RecordUrl("deployment-record", record.Id));
     }
 

@@ -297,7 +297,7 @@
                   "destructiveHint": false,
                   "readOnlyHint": true
                 },
-                "schemaCharacters": 10376
+                "schemaCharacters": 10549
               },
               {
                 "name": "get_my_queue",

@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using Product.Engine.Core;
 using Product.Engine.Core.Canonical;
+using Product.Engine.Core.Model;
 
 namespace Product.Azure.Stores;
 
@@ -181,14 +178,12 @@ public sealed class EntityInfo
     }
 }
 
-// The entities of the first release, read from the logical model compiled into the engine core (the resource whose
-// name ends ".logical-model.json"). The engine's own reader of that resource is internal, so this parses the same
-// resource (ENGINE-CHANGES-NEEDED.md, item 4). Every entity whose status is not "later" and that is not stored inside
-// another entity (C03 Preset lives in C01) gets a table.
+// The entities of the first release, read from the logical model compiled into the engine core through the engine's
+// public read-only view (Product.Engine.Core.Model.LogicalModel.Compiled), so the store and the write guard read the same
+// model. Every entity whose status is not "later" and that is not stored inside another entity (C03 Preset lives in
+// C01) gets a table.
 public sealed class EntityCatalog
 {
-    private const string ResourceSuffix = ".logical-model.json";
-
     // Class F differs per entity (document 22, section 11.2). A class F entity of the first release that is missing here
     // stops the catalog: refuse more, never less.
     private static readonly Dictionary<string, EntityStorage> ClassFStorage = new(StringComparer.Ordinal)
@@ -202,7 +197,7 @@ public sealed class EntityCatalog
         { "O22", EntityStorage.Temporal },
     };
 
-    private static readonly Lazy<EntityCatalog> LazyEmbedded = new(LoadEmbedded);
+    private static readonly Lazy<EntityCatalog> LazyEmbedded = new(() => From(LogicalModel.Compiled));
 
     private readonly Dictionary<string, EntityInfo> _byKey;
 
@@ -245,55 +240,46 @@ public sealed class EntityCatalog
         return string.Join("-", Words(logicalName).Select(w => w.ToLowerInvariant()));
     }
 
-    // Parses a logical model document (model/logical-model.json).
-    public static EntityCatalog Parse(string modelJson)
+    // The catalog of a logical model: every first-release entity that has its own table.
+    public static EntityCatalog From(LogicalModel model)
     {
-        JsonTreeNode root = CanonicalJson.Parse(modelJson);
-        var entities = new List<EntityInfo>();
-        foreach (JsonTreeNode entity in Items(root, "entities"))
+        if (model == null)
         {
-            string status = Text(entity, "status");
-            if (string.Equals(status, "later", StringComparison.Ordinal) || entity.TryGetMember("storedIn", out _))
+            throw new ArgumentNullException(nameof(model));
+        }
+
+        var entities = new List<EntityInfo>();
+        foreach (LogicalEntity entity in model.Entities)
+        {
+            if (string.Equals(entity.Status, "later", StringComparison.Ordinal) || entity.StoredIn != null)
             {
                 continue;
             }
 
-            string id = Text(entity, "id");
-            string name = Text(entity, "name");
-            string kind = Text(entity, "kind");
-            string historyClass = Text(entity, "historyClass");
+            string id = entity.Id;
+            string historyClass = entity.HistoryClass;
             if (historyClass.Length != 1)
             {
                 throw new InvalidOperationException("The logical model gives " + id + " the history class \"" + historyClass + "\".");
             }
 
-            bool isConfiguration = string.Equals(kind, "configuration", StringComparison.Ordinal);
+            bool isConfiguration = string.Equals(entity.Kind, "configuration", StringComparison.Ordinal);
             string schema = id == "O24" ? "audit" : isConfiguration ? "config" : "ops";
-            string key = EntityKey(name);
+            string key = EntityKey(entity.Name);
             entities.Add(new EntityInfo(
                 key,
                 id,
-                name,
+                entity.Name,
                 schema,
-                string.Concat(Words(name)),
+                string.Concat(Words(entity.Name)),
                 historyClass[0],
                 isConfiguration,
-                Text(entity, "deletePolicy"),
+                entity.DeletePolicy,
                 StorageOf(id, historyClass[0]),
                 PromotedFor(key)));
         }
 
-        return new EntityCatalog(Text(root, "modelVersion"), entities);
-    }
-
-    private static EntityCatalog LoadEmbedded()
-    {
-        Assembly assembly = typeof(EngineInfo).Assembly;
-        string name = assembly.GetManifestResourceNames().SingleOrDefault(n => n.EndsWith(ResourceSuffix, StringComparison.Ordinal))
-            ?? throw new InvalidOperationException("The engine core is built without the logical model (" + ResourceSuffix + ").");
-        using Stream stream = assembly.GetManifestResourceStream(name) ?? throw new InvalidOperationException("The logical model resource cannot be read.");
-        using var reader = new StreamReader(stream, new UTF8Encoding(false), detectEncodingFromByteOrderMarks: true);
-        return Parse(reader.ReadToEnd());
+        return new EntityCatalog(model.ModelVersion, entities);
     }
 
     private static EntityStorage StorageOf(string id, char historyClass)
@@ -363,17 +349,5 @@ public sealed class EntityCatalog
     private static string[] Words(string logicalName)
     {
         return logicalName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-    }
-
-    private static IReadOnlyList<JsonTreeNode> Items(JsonTreeNode node, string member)
-    {
-        return node.TryGetMember(member, out JsonTreeNode? value) && value.Kind == JsonTreeKind.Array ? value.Items : Array.Empty<JsonTreeNode>();
-    }
-
-    private static string Text(JsonTreeNode node, string member)
-    {
-        return node.TryGetMember(member, out JsonTreeNode? value) && value.Kind == JsonTreeKind.String
-            ? value.GetString()
-            : throw new InvalidOperationException("The logical model has an entry without \"" + member + "\".");
     }
 }

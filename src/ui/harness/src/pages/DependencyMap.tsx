@@ -310,7 +310,7 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
   return (
     <>
       {truncated && (
-        <MessageBar intent="info" layout="multiline">
+        <MessageBar intent="info" layout="multiline" aria-labelledby={undefined} aria-label="Note">
           <MessageBarBody>
             The walk stopped at 3 hops and there is more beyond. A deeper walk is possible up to the limit the configuration sets.
           </MessageBarBody>
@@ -405,7 +405,7 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
           })}
         </div>
       </div>
-      <div className={s.legend} aria-label="Legend">
+      <div className={s.legend} role="group" aria-label="Legend">
         <span>Criticality of the link:</span>
         {(['high', 'medium', 'low', 'none'] as const).map(k => (
           <span key={k} className={s.legendItem}>
@@ -440,7 +440,7 @@ function ImpactListPanel(props: { side: Side; title: string; state: ToolState<De
         return (
           <>
             {data.truncatedAtDepth && (
-              <MessageBar intent="info" layout="multiline">
+              <MessageBar intent="info" layout="multiline" aria-labelledby={undefined} aria-label="Note">
                 <MessageBarBody>There is more beyond 3 hops. A deeper walk is possible up to the configured limit.</MessageBarBody>
               </MessageBar>
             )}
@@ -489,7 +489,7 @@ function CountsPanel({ title, state, noun }: { title: string; state: ToolState<D
             <span className={s.totalNumber}>{data.nodes.length}</span>
             {data.nodes.length === 1 ? 'application' : 'applications'} {noun} within 3 hops{data.truncatedAtDepth ? ', and more beyond' : ''}
           </div>
-          <div className={s.countCols}>
+          {data.nodes.length > 0 && <div className={s.countCols}>
             <div>
               <h3 className={s.countHead}>By tier</h3>
               <BarList ariaLabel={`${title} by tier`} noun={['application', 'applications']} labelWidth={90} items={toItems(data.counts.byTier)} onDrill={b => host.drill(`${title}: ${b.label}`)} />
@@ -498,7 +498,7 @@ function CountsPanel({ title, state, noun }: { title: string; state: ToolState<D
               <h3 className={s.countHead}>By criticality</h3>
               <BarList ariaLabel={`${title} by criticality`} noun={['link', 'links']} labelWidth={90} items={toItems(data.counts.byCriticality)} onDrill={b => host.drill(`${title}: ${b.label} criticality`)} />
             </div>
-          </div>
+          </div>}
         </>
       )}
     </Panel>

@@ -1130,7 +1130,7 @@
     },
     "guardFacts": {
       "type": "object",
-      "description": "OP-08 facts the adapter fetches: the pre-image (before), the set kind of a configuration row (G-02), the principal kind a Role Group Binding names (G-12), what an accept-decision write rests on (G-17), the OP-07 payload for a gate decision (G-14), and the Request Hash stored with a reused idempotency key (G-15).",
+      "description": "OP-08 facts the adapter fetches: the pre-image (before), the set kind of a configuration row (G-02), the principal kind a Role Group Binding names (G-12), what an accept-decision write rests on (G-17), the OP-07 payload for a gate decision (G-14), the Request Hash stored with a reused idempotency key (G-15), and the Principal Reference of an approval outcome's Approver (G-06).",
       "properties": {
         "before": { "type": "object", "description": "The current values of the columns the rules need." },
         "configurationSetKind": { "enum": ["preset", "working"] },
@@ -1148,7 +1148,17 @@
           "additionalProperties": false
         },
         "gateReadiness": { "type": "object", "description": "The OP-07 payload of the gate, passed on unchanged (gateKey, ready, requirements)." },
-        "priorRequestHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        "priorRequestHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "approverPrincipalReference": {
+          "type": "object",
+          "description": "A proposal: for an approval outcome, the Principal Reference whose Entra object ID is the Approver. Absent when the directory holds none.",
+          "required": ["principalKind"],
+          "properties": {
+            "principalKind": { "$ref": "config-bundle.schema.json#/$defs/contract.principal-kind" },
+            "isErased": { "type": "boolean", "default": false }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },

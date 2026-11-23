@@ -1,7 +1,8 @@
 # Page designs: Overview, Application 360, dependency map, timeline
 
-The four pages of the product's interface (D-18), as React and Fluent UI v9 components in a local harness.
-Generative pages on binding A and the web app on binding C both start from them. Whether these components run
+The four pages of the product's interface (D-18), as React and Fluent UI v9 components. One source gives two builds:
+the local harness on fictional fixture JSON, and the web app of binding C on the product's REST API (section 8).
+Generative pages on binding A start from the same components. Whether these components run
 unchanged inside a generative page is UNVERIFIED; on binding A they carry over at least as this spec.
 
 Sources: document 23 (P03 change management, P05 deployment record, the value stream); document 24 (tools 6, 7, 8,
@@ -16,16 +17,16 @@ Screenshots of every page at 1280 px and 390 px: `src/ui/screenshots/`.
 |---|---|
 | Light only (D-18) | One Fluent light theme built on the Academy palette (`harness/src/theme.ts`). There is no dark theme and no theme switch. Page background light gray `F3F5F8`, panels white, text navy `0A2A4A`, brand blue `0071DC`, gold `FFC221` for attention and for "today" |
 | Read-only | No page writes. Edits open the form (binding A) or the register grid (binding C), or go through an AI client; the engine checks every write. Application 360 says so on the page |
-| Numbers come from the server | The pages count nothing. Every figure is a field of a tool output (stored rollups at scale). A list shown next to its count is the same server list |
-| Every number drills to rows | KPI tiles and bars hand a drill-down to the host (`Host.drill`). The product opens the matching view or grid; the harness shows a toast instead |
+| Numbers come from the server | The pages count nothing. Every figure is a field of a tool output (stored rollups at scale). A list shown next to its count is the same server list. Until a figure is read, its tile shows a placeholder, never a zero |
+| Every number drills to rows | KPI tiles and bars hand a drill-down to the host (`Host.drill`). Binding A opens the matching view. The web app opens the applications list for the Applications tile and the stage, tier and kind bars, and shows the request for an AI client for the others. The harness shows a toast |
 | Each panel fails on its own | Every panel holds the state of one tool call. A failure shows inside that panel with the error message and the correlation ID, and the rest of the page keeps working. `?fail=<tool>` in the harness shows it |
-| Hidden rows are said, not shown | `couldNotRead` becomes a note in the panel that owns that kind, for example "1 decision is hidden by your access" |
+| Hidden rows are said, not shown | `couldNotRead` becomes a note in the panel that owns that kind, for example "1 decision is hidden by your access". A list that shows one page says so when the answer carries a `skipToken` |
 | Text people typed is data | Fields in `untrustedFields` render as plain text only. External links are https only and open in a new tab |
 | Labels from configuration | Status labels come with each value. Keys returned without a label (dependency type, target stage, deployment route, owner role) are labeled through `get_configuration`; if that read fails, the key shows in plain words |
 | Fixed meanings drive the visuals | Badge tone and icon come from the engine meaning, never from the label. WORKING DEFAULT (open design question 1) |
 | Status never by color alone | Every status badge has an icon and a text label; chart marks have a legend and a list view with the same items |
 | Phones | Below 720 px every page is one column with 16 px gutters and no sideways scroll; tables are lists; the graph and the timeline chart switch to their list views by default |
-| Times | The harness shows UTC so every render is the same. The product shows the viewer's time zone and names it |
+| Times | The harness shows UTC so every render is the same. The web app shows the viewer's time zone and names it ("13:00 to 16:00 EST"). Calendar dates, such as a review's due date, never move between zones; "today" is the viewer's date. The tools filter by UTC date, so the web app asks for the UTC dates that cover the viewer's days and keeps the items of those days |
 
 ## 2. Overview (portfolio and "needs attention")
 
@@ -75,7 +76,9 @@ owners, documents, reviews, components. On a phone the order is owners, deployme
 dependencies, decisions, components, links.
 
 **Notes.** The card has no portfolio and no stage list, so the page shows no breadcrumb and no stage stepper (open
-points 2 and 3). An owner gap offers "Propose", which hands over to `propose_owner_change`; it never assigns.
+points 2 and 3). An owner gap offers "Propose", which hands over to `propose_owner_change`; it never assigns. In the
+web app, "Propose" opens a dialog with the request to give to an AI client, with a copy button. "Open the form" shows
+only on binding A, because the web app's record link is this page.
 
 **Fallback.** The main form alone.
 
@@ -153,3 +156,43 @@ Questions 4 and 9 do not reach these read-only pages: no page proposes configura
 4. `draftsOlderThanDays` carries no age; the page cannot say "older than 30 days". The tool contract could add it.
 5. `get_dependency_impact` nodes carry no direction, so the map makes one call per direction rather than one `both` call.
 6. The page harness needs `picocolors` (ISC, build time only) through Vite and postcss. See `src/THIRD-PARTY.md`.
+7. The impact walk on the local server labels a node two hops away with the dependency type of the first hop (for
+   example "Calls API of" where the seeded link is "Reads data from"). The map shows what the tool returns; the tool
+   should return the type of the node's own link.
+
+## 8. The web app (binding C)
+
+The same four pages, on the product's REST API, served by the product's host under `/app/` on the API's own origin.
+`npm run build:app` builds it into `harness/dist/app`; `ui/README.md` has the local run guide.
+
+**Addresses.** `/app/` is the overview and the home page. `/app/timeline`. `/app/records/business-application/<id>` is
+Application 360: it is the record link every tool returns (`links.recordUrl`), so a link an AI client shows opens the
+page. `/app/records/business-application/<id>/map` is the map. `/app/records/<entity>/<id>` of another entity shows a
+plain "not shown here" panel with the ID. `/app/applications?stage=<key>&tier=<key>&kind=<key>` is the applications
+list a drill-down opens (`find_applications`, 50 a page, "Show more" with the skip token). Any other address shows
+"This page does not exist". The Application 360 and map tabs appear once an application is open.
+
+**Sign-in.** Entra ID through MSAL for the browser: authorization code with PKCE, a full-page redirect to and from
+`https://<host>/app/`, the tab's `sessionStorage` for the cache, and one scope, the API's `api.access`. Each call asks
+for a token silently first and falls back to a redirect; a 401 from the API starts sign-in again, with a guard against
+a redirect loop. For local runs only, the development sign-in sends a fictional persona's name in
+`X-Product-Dev-Identity`; the page takes it only on a loopback host name, and the server keeps its own guards.
+`config.json`, which the host writes, says which sign-in, which tenant, which client ID and which API base. The page
+checks it before anything runs and says what is wrong.
+
+**The top bar.** The product mark, the page tabs, a button that reads every panel again, and the signed-in person: a
+card with the name, the product roles and the group that grants each (`GET /api/me`), and sign out. Below the tabs, a
+banner when the person holds no product role or the session cannot be read. The footer names the time zone, the engine
+version and the configuration in force (`GET /api/info`).
+
+**States.** Each panel shows a skeleton while it loads, its own empty text, and its own failure with the correlation
+ID. A timeout (30 seconds) or a network fault is an `upstream_unavailable` failure inside the panel. A list's count
+shows only when its read succeeded.
+
+**Accessibility.** A "Skip to content" link; after each in-app navigation the focus moves to the page area and the
+title changes; every control is reachable by keyboard; status never by color alone; text in navy on white or light
+fills, light only.
+
+**Approval answers.** Not in this release. People answer approval cards through the approval runner. A page where a
+person answers in the product needs its own spec, a guarded engine path for a person's answer, a matching database
+rule and a stronger sign-in step; it goes to the next design pass as a proposal.

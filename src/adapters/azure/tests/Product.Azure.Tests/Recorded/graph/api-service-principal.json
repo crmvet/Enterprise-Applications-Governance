@@ -1,0 +1,51 @@
+{
+  "description": "The product's API service principal, found by its appId, with the app roles it defines. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/servicePrincipals(appId='00000000-0000-4000-8000-0000000000ab')?$select=id,appId,appRoles"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#servicePrincipals(id,appId,appRoles)/$entity",
+        "id": "00000000-0000-4000-8000-0000000000b1",
+        "appId": "00000000-0000-4000-8000-0000000000ab",
+        "appRoles": [
+          {
+            "id": "00000000-0000-4000-8000-0000000000c1",
+            "value": "Deployment.Record",
+            "isEnabled": true,
+            "allowedMemberTypes": [
+              "Application"
+            ]
+          },
+          {
+            "id": "00000000-0000-4000-8000-0000000000c2",
+            "value": "Approval.Write",
+            "isEnabled": true,
+            "allowedMemberTypes": [
+              "Application"
+            ]
+          },
+          {
+            "id": "00000000-0000-4000-8000-0000000000c3",
+            "value": "maker",
+            "isEnabled": true,
+            "allowedMemberTypes": [
+              "User"
+            ]
+          },
+          {
+            "id": "00000000-0000-4000-8000-0000000000c4",
+            "value": "platform-admin",
+            "isEnabled": true,
+            "allowedMemberTypes": [
+              "User"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

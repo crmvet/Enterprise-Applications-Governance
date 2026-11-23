@@ -1,0 +1,40 @@
+{
+  "description": "Second and last page of the inventory query: two apps nobody registered, one with an owner. Fictional.",
+  "request": {
+    "method": "POST",
+    "url": "https://api.powerplatform.com/resourcequery/resources/query?api-version=2024-10-01",
+    "bodyContains": "\"SkipToken\":\"fictional-page-2-of-2\""
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "totalRecords": 4,
+        "count": 2,
+        "resultTruncated": 0,
+        "data": [
+          {
+            "name": "00000000-0000-0000-0000-000000000209",
+            "type": "microsoft.powerapps/canvasapps",
+            "displayName": "Field Inspections",
+            "environmentId": "field-ops-prod",
+            "environmentName": "Field Ops Prod",
+            "ownerId": "",
+            "createdBy": "",
+            "subType": ""
+          },
+          {
+            "name": "00000000-0000-0000-0000-000000000210",
+            "type": "microsoft.powerapps/canvasapps",
+            "displayName": "Crew Overtime Tracker",
+            "environmentId": "field-ops-prod",
+            "environmentName": "Field Ops Prod",
+            "ownerId": "00000000-0000-4000-8000-000000000211",
+            "createdBy": "",
+            "subType": ""
+          }
+        ]
+      }
+    }
+  ]
+}

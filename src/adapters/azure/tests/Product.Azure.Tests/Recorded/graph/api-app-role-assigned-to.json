@@ -1,0 +1,65 @@
+{
+  "description": "Who holds the API's app roles: the platform admins group, the approval runner, the release pipeline, an agent identity with no Workload Grant, a person assigned maker directly, and a default access assignment. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/servicePrincipals/00000000-0000-4000-8000-0000000000b1/appRoleAssignedTo"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#servicePrincipals('00000000-0000-4000-8000-0000000000b1')/appRoleAssignedTo",
+        "value": [
+          {
+            "id": "fictional-assignment-1",
+            "appRoleId": "00000000-0000-4000-8000-0000000000c4",
+            "principalId": "00000000-0000-4000-8000-000000000105",
+            "principalType": "Group",
+            "principalDisplayName": "Platform admins",
+            "resourceId": "00000000-0000-4000-8000-0000000000b1"
+          },
+          {
+            "id": "fictional-assignment-2",
+            "appRoleId": "00000000-0000-4000-8000-0000000000c2",
+            "principalId": "00000000-0000-4000-8000-000000000301",
+            "principalType": "ServicePrincipal",
+            "principalDisplayName": "Approval runner",
+            "resourceId": "00000000-0000-4000-8000-0000000000b1"
+          },
+          {
+            "id": "fictional-assignment-3",
+            "appRoleId": "00000000-0000-4000-8000-0000000000c1",
+            "principalId": "00000000-0000-4000-8000-000000000302",
+            "principalType": "ServicePrincipal",
+            "principalDisplayName": "Field ops release pipeline",
+            "resourceId": "00000000-0000-4000-8000-0000000000b1"
+          },
+          {
+            "id": "fictional-assignment-4",
+            "appRoleId": "00000000-0000-4000-8000-0000000000c1",
+            "principalId": "00000000-0000-4000-8000-000000000303",
+            "principalType": "ServicePrincipal",
+            "principalDisplayName": "Release helper agent",
+            "resourceId": "00000000-0000-4000-8000-0000000000b1"
+          },
+          {
+            "id": "fictional-assignment-5",
+            "appRoleId": "00000000-0000-4000-8000-0000000000c3",
+            "principalId": "00000000-0000-4000-8000-000000000214",
+            "principalType": "User",
+            "principalDisplayName": "Mateo Brandt",
+            "resourceId": "00000000-0000-4000-8000-0000000000b1"
+          },
+          {
+            "id": "fictional-assignment-6",
+            "appRoleId": "00000000-0000-0000-0000-000000000000",
+            "principalId": "00000000-0000-4000-8000-000000000215",
+            "principalType": "User",
+            "principalDisplayName": "Ines Varga",
+            "resourceId": "00000000-0000-4000-8000-0000000000b1"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -119,22 +119,12 @@ public static class RecordEndpoints
 
         snapshot = runtime.Cache.Load(services.GetRequiredService<IConfigurationStore>(), SnapshotPurpose.Read, now).Snapshot;
         StoredRow record = records.Get("deployment-record", outcome.RowId!) ?? throw new InvalidOperationException("The deployment record " + outcome.RowId + " was written but cannot be read back.");
-        var reader = new RowFacts(records, snapshot, caller, now);
-        List<(string, JsonTreeNode?)> result = reader.WriteResult(record, outcome.Created, "result", "resultMeaning");
+
+        // The same data the record_deployment and record_deployment_correction tools answer, from the same function.
+        var answer = new RecordAnswerContext(records, snapshot?.Snapshot, now, caller.ObjectId, caller.ClientAppId, "pipeline");
         JsonTreeNode data = correction
-            ? Merge(result,
-                ("deploymentRecordId", JsonTreeNode.FromString(record.Id)),
-                ("correctsRecordId", JsonTreeNode.FromString(record.Text("correctsRecord") ?? report.CorrectsRecordId!)),
-                ("flags", reader.Flags(record, null)),
-                ("gateLevelApplied", JsonTreeNode.FromString(record.Text("gateLevelApplied") ?? "record")))
-            : Merge(result,
-                ("deploymentRecordId", JsonTreeNode.FromString(record.Id)),
-                ("artifactVersionId", Js.Str(Js.Text(outcome.Payload, "artifactVersionId") ?? record.Text("artifactVersion"))),
-                ("deploymentTargetId", Js.Str(record.Text("deploymentTarget"))),
-                ("changeRequestId", Js.Str(record.Text("changeRequest"))),
-                ("route", reader.Route(record)),
-                ("flags", reader.Flags(record, Js.Text(body, "codeApprovalKind"))),
-                ("gateLevelApplied", JsonTreeNode.FromString(record.Text("gateLevelApplied") ?? "record")));
+            ? RecordEndpointAnswers.CorrectionData(answer, outcome, record, report.CorrectsRecordId!)
+            : RecordEndpointAnswers.DeploymentData(answer, outcome, record, Js.Text(body, "codeApprovalKind"));
 
         string summary = correction
             ? outcome.Created ? "The correction is recorded as a new deployment record; the old record stays." : "This idempotency key was recorded before; the first correction is returned and nothing new was written."
@@ -380,43 +370,22 @@ public static class RecordEndpoints
     }
 }
 
-// Reads the parts of an answer from stored rows exactly as the MCP tools build them (the write result fields of
-// document 24, section 3.4), for the routes that call the engine directly.
+// Reads the status of a stored row as the MCP tools show it ({ label, meaning }), for the approval outcome endpoint. The
+// record endpoint builds its whole answer with the MCP core's RecordEndpointAnswers.
 internal sealed class RowFacts
 {
-    private readonly IRecordReader _records;
     private readonly CompiledSnapshot? _snapshot;
-    private readonly CallerClaims _caller;
-    private readonly DateTime _now;
 
-    public RowFacts(IRecordReader records, CompiledSnapshot? snapshot, CallerClaims caller, DateTime now)
+    public RowFacts(CompiledSnapshot? snapshot)
     {
-        _records = records;
         _snapshot = snapshot;
-        _caller = caller;
-        _now = now;
-    }
-
-    public List<(string, JsonTreeNode?)> WriteResult(StoredRow row, bool created, string statusColumn = "status", string meaningColumn = "statusMeaning")
-    {
-        return new List<(string, JsonTreeNode?)>
-        {
-            ("recordId", JsonTreeNode.FromString(row.Id)),
-            ("status", StatusValue(row, statusColumn, meaningColumn)),
-            ("performedBy", PerformedBy(row)),
-            ("isAiCreated", JsonTreeNode.FromBoolean(row.Flag("isAiCreated"))),
-            ("engineStamp", Js.Obj(
-                ("engineVersion", JsonTreeNode.FromString(row.Text("engineVersion") ?? EngineInfo.Version)),
-                ("engineCheckedOn", JsonTreeNode.FromString(row.Text("engineCheckedOn") ?? CanonicalJson.FormatUtc(_now))))),
-            ("created", JsonTreeNode.FromBoolean(created)),
-        };
     }
 
     // { label, meaning } of a row's status, or JSON null.
     public JsonTreeNode StatusValue(StoredRow row, string statusColumn, string meaningColumn)
     {
         string? key = row.Text(statusColumn);
-        SnapshotRow? status = ConfigRow("status", key);
+        SnapshotRow? status = _snapshot != null && key != null && _snapshot.Snapshot.TryGetRow("status", key, out SnapshotRow? found) ? found : null;
         string? meaning = row.Text(meaningColumn) ?? status?.EngineMeaning;
         if (meaning == null)
         {
@@ -425,66 +394,6 @@ internal sealed class RowFacts
 
         string? label = status == null ? null : Js.Text(status.Columns, "label");
         return Js.Obj(("label", JsonTreeNode.FromString(label ?? Labelize(meaning))), ("meaning", JsonTreeNode.FromString(meaning)));
-    }
-
-    // { actorKind, principal, onBehalfOf, clientApp } exactly as the engine stamped the row.
-    public JsonTreeNode PerformedBy(StoredRow row)
-    {
-        string? onBehalfOf = row.Text("onBehalfOf");
-        string? clientApp = row.Text("clientApp");
-        return Js.Obj(
-            ("actorKind", JsonTreeNode.FromString(row.Text("performedByActorKind") ?? (_caller.IsAppOnly ? "pipeline" : "ai-client-for-person"))),
-            ("principal", PrincipalRef(row.Text("performedByPrincipal") ?? _caller.ObjectId)),
-            ("onBehalfOf", PrincipalRef(onBehalfOf)),
-            ("clientApp", clientApp != null && Guid.TryParse(_caller.ClientAppId, out _)
-                ? Js.Obj(("appId", JsonTreeNode.FromString(_caller.ClientAppId)), ("label", JsonTreeNode.FromString(clientApp)))
-                : JsonTreeNode.Null));
-    }
-
-    // { objectId, displayLabel, principalKind }, or JSON null.
-    public JsonTreeNode PrincipalRef(string? objectId)
-    {
-        if (objectId == null)
-        {
-            return JsonTreeNode.Null;
-        }
-
-        StoredRow? row = _records.Query(RowQuery.For("principal-reference").Where("entraObjectId", objectId)).FirstOrDefault();
-        string label = row == null ? "Unknown principal" : row.Flag("isErased") ? EngineKeys.ErasedDisplayLabel : row.Text("displayLabel") ?? "Unknown principal";
-        return Js.Obj(
-            ("objectId", JsonTreeNode.FromString(objectId)),
-            ("displayLabel", JsonTreeNode.FromString(label)),
-            ("principalKind", Js.OptStr(row?.Text("principalKind"))));
-    }
-
-    public JsonTreeNode Route(StoredRow record)
-    {
-        string key = record.Text("deploymentRoute") ?? "other";
-        string meaning = ConfigRow("deployment-route", key)?.EngineMeaning ?? "other";
-        return Js.Obj(("key", JsonTreeNode.FromString(key)), ("meaning", JsonTreeNode.FromString(meaning)));
-    }
-
-    // The engine's flags, plus the AI-only code approval flag the shipped default sets.
-    public JsonTreeNode Flags(StoredRow record, string? codeApproval)
-    {
-        bool aiOnly = record.Flag("isAiOnlyCodeApproval")
-            || (codeApproval == "ai-only" && Setting(EngineKeys.DefaultAiOnlyCodeApprovalHandling) != "ignore");
-        return Js.Obj(
-            ("outsideWindow", JsonTreeNode.FromBoolean(record.Flag("isOutsideWindow"))),
-            ("otherPath", JsonTreeNode.FromBoolean(record.Flag("isOtherPath"))),
-            ("missingApproval", JsonTreeNode.FromBoolean(record.Flag("isMissingApproval"))),
-            ("aiOnlyCodeApproval", JsonTreeNode.FromBoolean(aiOnly)));
-    }
-
-    private SnapshotRow? ConfigRow(string entity, string? key)
-    {
-        return _snapshot != null && key != null && _snapshot.Snapshot.TryGetRow(entity, key, out SnapshotRow? row) ? row : null;
-    }
-
-    private string? Setting(string key)
-    {
-        SnapshotRow? row = ConfigRow("setting", key);
-        return row != null && row.IsActive ? Js.Text(row.Columns, "value") : null;
     }
 
     private static string Labelize(string meaning)

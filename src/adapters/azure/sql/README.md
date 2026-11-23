@@ -9,6 +9,7 @@ applied in file order by `SqlServerMigrations`, which records each one in `host.
 | `0002-security.sql` | Generated | Row-level security on `SESSION_CONTEXT`: a filter predicate that hides every product row from a connection without a caller, and block predicates that back up the engine's guard (document 22, section 11.3) |
 | `0003-app-user.sql` | Generated | The `product_app` role (read and write the engine's rows, no DDL, no delete where the model never deletes, no read of history tables or ledger views), the `product_migrator` role, and the app's managed identity as a database user in `product_app` |
 | `0004-host.sql` | By hand | `host.RateLimitCounter`, the Tool Policy call counters, and the app's read of `host.SchemaVersion` |
+| `0005-approval-outbox.sql` | By hand | `host.ApprovalOutbox`, the approval runner's work list: one row per Approval Record the engine opens, written in the same transaction as the engine's rows. IDs, states and times only. The app reads, inserts and updates it and never deletes from it |
 
 ## Who runs them
 
@@ -43,6 +44,15 @@ key (`LogicalModelConformanceTests`), so a key the model adds needs a decision.
 
 The fully typed schema in `model/generated/azure-sql-0001-initial.draft.sql` stays the target of a later migration, once
 its open questions (circular required foreign keys at the bootstrap, constraints on ledger tables) are settled.
+
+## The approval outbox
+
+`host.ApprovalOutbox` is not an engine table and is not in the entity catalog. The store writes a pending row when an
+engine commit inserts a pending Approval Record, and settles the row (answered, expired or cancelled) when a commit
+writes the record's final outcome, in the same transaction as the engine's rows, so the two never disagree after a
+commit or a rollback. The approval runner's routes in the host (`/engine/v1/approval-runner/...`) claim rows with a
+lease, mark them sent and give them back, each as a compare and set on `RowVersion`. A row holds IDs, states and times
+only, never a name or text a person wrote. The SQLite store keeps the same table for local runs and tests.
 
 ## Session context
 

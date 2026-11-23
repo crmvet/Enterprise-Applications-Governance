@@ -110,7 +110,8 @@ public sealed partial class EngineRuntime
 
         // Plan and fetch the facts OP-08 needs (document 25, section 5.10: what the adapter fetches).
         string? bindingGroup = spec.Entity == "role-group-binding" ? RuntimeJson.Text(spec.After, "entraGroupObjectId") ?? before?.Text("entraGroupObjectId") : null;
-        FactSet facts = FactSet.Run(tx, f => WriteFactsPlan(f, spec, snapshot, configurationRow, bindingGroup));
+        string? approver = spec.Entity == "approval-record" && spec.Operation == WriteOperation.Update && !spec.Nested ? RuntimeJson.Text(spec.After, "approver") : null;
+        FactSet facts = FactSet.Run(tx, f => WriteFactsPlan(f, spec, snapshot, configurationRow, bindingGroup, approver));
         call.FactRounds += facts.Rounds;
 
         ConfigurationSetKind? setKind = null;
@@ -127,6 +128,7 @@ public sealed partial class EngineRuntime
 
         PrincipalKind? bindingKind = EngineContract.PrincipalKinds.TryParse(facts.One("binding-principal")?.Text("principalKind"), out PrincipalKind kind) ? kind : null;
         StoredRow? prior = facts.One("prior-request");
+        PrincipalReferenceFact? approverReference = approver == null ? null : ApproverReference(facts, approver);
 
         // A caller's create names no row ID unless the caller gave one, so the Request Hash of a retry is the same request
         // (G-15). The engine's own creates name the ID the store gave, so their audit entries can point at the row.
@@ -143,7 +145,8 @@ public sealed partial class EngineRuntime
             bindingKind,
             spec.Acceptance,
             spec.GateReadiness,
-            prior?.Text("requestHash"));
+            prior?.Text("requestHash"),
+            approverReference);
 
         EvaluationContext context = call.Context(snapshot, spec.Nested);
         EvaluationResult<WritePlan?> result = WriteGuardOperation.Evaluate(snapshot.Snapshot, context, request);
@@ -233,13 +236,51 @@ public sealed partial class EngineRuntime
         return new WriteStep(rowId, spec.Operation == WriteOperation.Create, false, false, plan);
     }
 
-    private static IEnumerable<FactPlan> WriteFactsPlan(FactSet facts, WriteSpec spec, CompiledSnapshot snapshot, bool configurationRow, string? bindingGroup)
+    private static IEnumerable<FactPlan> WriteFactsPlan(FactSet facts, WriteSpec spec, CompiledSnapshot snapshot, bool configurationRow, string? bindingGroup, string? approver)
     {
         bool needsSet = (configurationRow && spec.Entity != "configuration-set") || spec.Entity == "configuration-set-version";
         yield return FactPlan.Of(
             needsSet ? FactQuery.ByKey("set", "configuration-set", snapshot.ConfigurationSetKey) : null,
             bindingGroup == null ? null : FactQuery.Where("binding-principal", RowQuery.For("principal-reference").Where("entraObjectId", bindingGroup)),
-            spec.IdempotencyKey == null || spec.Nested ? null : FactQuery.Where("prior-request", RowQuery.For("audit-entry").Where("requestKey", spec.IdempotencyKey)));
+            spec.IdempotencyKey == null || spec.Nested ? null : FactQuery.Where("prior-request", RowQuery.For("audit-entry").Where("requestKey", spec.IdempotencyKey)),
+            approver == null ? null : FactQuery.Where(ApproverFacts[0], RowQuery.For("principal-reference").Where("entraObjectId", approver)));
+
+        // An Entra object ID is a GUID, which the runner may send in another letter case than the store holds. When the
+        // exact value finds no Principal Reference, the lower and upper case forms are read in one more round.
+        if (approver != null && facts.All(ApproverFacts[0]).Count == 0)
+        {
+            string lower = approver.ToLowerInvariant();
+            string upper = approver.ToUpperInvariant();
+            yield return FactPlan.Of(
+                string.Equals(lower, approver, StringComparison.Ordinal) ? null : FactQuery.Where(ApproverFacts[1], RowQuery.For("principal-reference").Where("entraObjectId", lower)),
+                string.Equals(upper, approver, StringComparison.Ordinal) || string.Equals(upper, lower, StringComparison.Ordinal) ? null : FactQuery.Where(ApproverFacts[2], RowQuery.For("principal-reference").Where("entraObjectId", upper)));
+        }
+    }
+
+    // The names of the approver's Principal Reference facts: the exact object ID, then its lower and upper case forms.
+    private static readonly string[] ApproverFacts = { "approver-reference", "approver-reference-lower", "approver-reference-upper" };
+
+    // The Principal Reference of an approval outcome's Approver, matched on the Entra object ID ignoring case (G-06, the
+    // approver kind rule; document 22, O10 Approver Principal Kind). Null when the directory holds none. Should two
+    // references name the same object, one that is not a user wins: refuse more, never less.
+    private static PrincipalReferenceFact? ApproverReference(FactSet facts, string approver)
+    {
+        PrincipalReferenceFact? found = null;
+        foreach (StoredRow row in ApproverFacts.SelectMany(name => facts.All(name)))
+        {
+            if (!string.Equals(row.Text("entraObjectId"), approver, StringComparison.OrdinalIgnoreCase)
+                || !EngineContract.PrincipalKinds.TryParse(row.Text("principalKind"), out PrincipalKind kind))
+            {
+                continue;
+            }
+
+            if (found == null || (ContractFacts.CanApprove(found.PrincipalKind) && !ContractFacts.CanApprove(kind)))
+            {
+                found = new PrincipalReferenceFact(kind, row.Flag("isErased"));
+            }
+        }
+
+        return found;
     }
 
     // Live configuration rows (C01, C03 to C45) are named by key. C02, C46 and the operational rows by ID.

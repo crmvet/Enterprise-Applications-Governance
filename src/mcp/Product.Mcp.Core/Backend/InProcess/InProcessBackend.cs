@@ -127,14 +127,17 @@ public sealed class InProcessBackend : IGovernanceBackend
             now));
     }
 
-    // On the MCP endpoint the caller is an AI client acting for the signed-in person (document 24, section 4.5). An
-    // agent user or agent identity keeps its kind and resolves to an actor that holds no role (RA-06).
+    // On the MCP endpoint the caller is an AI client acting for the signed-in person (document 24, section 4.5). Through
+    // the product's web app (the person entry) the caller is the person, with no On Behalf Of (document 22, section 2.4).
+    // On either entry an agent user or agent identity keeps its kind and resolves to an actor that holds no role (RA-06).
+    // The client app came from the validated azp claim, so it is verified.
     internal static CallerIdentity Identity(BackendCaller caller)
     {
         string clientApp = caller.ClientAppLabel ?? caller.ClientAppId;
-        return caller.PrincipalKind == PrincipalKind.User
+        CallerEntry entry = caller.Entry == CallerEntry.Person ? CallerEntry.Person : CallerEntry.AiClient;
+        return caller.PrincipalKind == PrincipalKind.User && entry == CallerEntry.AiClient
             ? CallerIdentity.AiClient(caller.ObjectId, caller.GroupObjectIds, clientApp, clientAppVerified: true)
-            : new CallerIdentity(caller.ObjectId, caller.PrincipalKind, CallerEntry.AiClient, caller.GroupObjectIds, clientApp, true);
+            : new CallerIdentity(caller.ObjectId, caller.PrincipalKind, entry, caller.GroupObjectIds, clientApp, true);
     }
 
     private string GroupLabel(string groupObjectId)

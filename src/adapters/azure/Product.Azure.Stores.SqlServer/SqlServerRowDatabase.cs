@@ -11,7 +11,8 @@ using Product.Engine.Runtime.Ports;
 
 namespace Product.Azure.Stores.SqlServer;
 
-// One Azure SQL database: a table per entity (sql/0001-tables.sql). A pooled connection per operation, and on each
+// One Azure SQL database: a table per entity (sql/0001-tables.sql), plus the host tables for the rate limit counters
+// (0004) and the approval outbox (0005). A pooled connection per operation, and on each
 // connection the caller in SESSION_CONTEXT, read-only for the connection's life (document 22, section 11.1; a pooled
 // connection is reset before reuse, which clears it). Reads and writes are parameterized; the only names in SQL text come
 // from the entity catalog and from column names RowStore checked to be plain identifiers.
@@ -24,6 +25,19 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
     private const int BlockPredicate = 33504;
 
     private const string RowColumns = "[Id], [Key], [Columns], [Version]";
+
+    private const string OutboxColumns = "[ApprovalRecordId], [DecisionId], [EnqueuedOn], [State], [ClaimId], [ClaimedUntil], [Attempts], [CardRef], [RunnerRunUrl], [UpdatedOn], [RowVersion]";
+
+    // A new pending row, once per Approval Record.
+    private const string OutboxEnqueue =
+        "INSERT INTO [host].[ApprovalOutbox] ([ApprovalRecordId], [DecisionId], [EnqueuedOn], [State], [Attempts], [UpdatedOn], [RowVersion])\n"
+        + "SELECT @id, @decision, @on, 'pending', 0, @on, 1\n"
+        + "WHERE NOT EXISTS (SELECT 1 FROM [host].[ApprovalOutbox] WITH (UPDLOCK, HOLDLOCK) WHERE [ApprovalRecordId] = @id);";
+
+    // A settled row never changes again.
+    private const string OutboxSettle =
+        "UPDATE [host].[ApprovalOutbox] SET [State] = @state, [UpdatedOn] = @on, [RowVersion] = [RowVersion] + 1\n"
+        + "WHERE [ApprovalRecordId] = @id AND [State] NOT IN ('answered', 'expired', 'cancelled');";
 
     private readonly string _connectionString;
     private readonly EntityCatalog _catalog;
@@ -96,7 +110,7 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         return Read(command, version.Key);
     }
 
-    public void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation)
+    public void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation, IReadOnlyList<ApprovalOutboxWrite>? outbox = null)
     {
         if (context == null && !string.Equals(engineOperation, RowStoreOperations.Seed, StringComparison.Ordinal))
         {
@@ -105,6 +119,27 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
 
         using SqlConnection connection = Open(context, engineOperation);
         using SqlTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+
+        // The outbox writes first (host.ApprovalOutbox, sql/0005-approval-outbox.sql): a row change that fails afterwards
+        // rolls them back with the rest.
+        foreach (ApprovalOutboxWrite write in outbox ?? Array.Empty<ApprovalOutboxWrite>())
+        {
+            using SqlCommand command = Command(connection, write.IsEnqueue ? OutboxEnqueue : OutboxSettle);
+            command.Transaction = transaction;
+            command.Parameters.Add(IdParameter("@id", write.ApprovalRecordId));
+            command.Parameters.Add(new SqlParameter("@on", SqlDbType.DateTime2) { Value = write.OnUtc });
+            if (write.IsEnqueue)
+            {
+                command.Parameters.Add(new SqlParameter("@decision", SqlDbType.VarChar, RowStore.MaxIdLength) { Value = write.DecisionId });
+            }
+            else
+            {
+                command.Parameters.Add(new SqlParameter("@state", SqlDbType.VarChar, 16) { Value = write.State });
+            }
+
+            command.ExecuteNonQuery();
+        }
+
         foreach (RowChange change in changes)
         {
             using SqlCommand command = Command(connection, Statement(change));
@@ -173,6 +208,52 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         command.Parameters.Add(new SqlParameter("@key", SqlDbType.NVarChar, 400) { Value = counterKey });
         command.Parameters.Add(new SqlParameter("@start", SqlDbType.DateTime2) { Value = windowStartUtc });
         return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    public ApprovalOutboxItem? OutboxGet(string approvalRecordId)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT " + OutboxColumns + " FROM [host].[ApprovalOutbox] WHERE [ApprovalRecordId] = @id;");
+        command.Parameters.Add(IdParameter("@id", approvalRecordId));
+        List<ApprovalOutboxItem> items = ReadOutbox(command);
+        return items.Count == 0 ? null : items[0];
+    }
+
+    public IReadOnlyList<ApprovalOutboxItem> OutboxClaimable(DateTime nowUtc, int limit)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT TOP (@limit) " + OutboxColumns + " FROM [host].[ApprovalOutbox] "
+            + "WHERE [State] = 'pending' OR ([State] = 'claimed' AND [ClaimedUntil] <= @now) ORDER BY [EnqueuedOn], [ApprovalRecordId];");
+        command.Parameters.Add(new SqlParameter("@limit", SqlDbType.Int) { Value = limit });
+        command.Parameters.Add(new SqlParameter("@now", SqlDbType.DateTime2) { Value = nowUtc });
+        return ReadOutbox(command);
+    }
+
+    public IReadOnlyList<ApprovalOutboxItem> OutboxAll(int limit)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT TOP (@limit) " + OutboxColumns + " FROM [host].[ApprovalOutbox] ORDER BY [EnqueuedOn], [ApprovalRecordId];");
+        command.Parameters.Add(new SqlParameter("@limit", SqlDbType.Int) { Value = limit });
+        return ReadOutbox(command);
+    }
+
+    public bool OutboxSet(ApprovalOutboxItem next)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Write);
+        using SqlCommand command = Command(connection, "UPDATE [host].[ApprovalOutbox] SET [State] = @state, [ClaimId] = @claim, [ClaimedUntil] = @until, [Attempts] = @attempts, "
+            + "[CardRef] = @card, [RunnerRunUrl] = @run, [UpdatedOn] = @updated, [RowVersion] = @version WHERE [ApprovalRecordId] = @id AND [RowVersion] = @expected "
+            + "AND [State] NOT IN ('answered', 'expired', 'cancelled');");
+        command.Parameters.Add(IdParameter("@id", next.ApprovalRecordId));
+        command.Parameters.Add(new SqlParameter("@state", SqlDbType.VarChar, 16) { Value = next.State });
+        command.Parameters.Add(new SqlParameter("@claim", SqlDbType.VarChar, 64) { Value = (object?)next.ClaimId ?? DBNull.Value });
+        command.Parameters.Add(new SqlParameter("@until", SqlDbType.DateTime2) { Value = next.ClaimedUntilUtc.HasValue ? next.ClaimedUntilUtc.Value : (object)DBNull.Value });
+        command.Parameters.Add(new SqlParameter("@attempts", SqlDbType.Int) { Value = next.Attempts });
+        command.Parameters.Add(new SqlParameter("@card", SqlDbType.NVarChar, 400) { Value = (object?)next.CardRef ?? DBNull.Value });
+        command.Parameters.Add(new SqlParameter("@run", SqlDbType.NVarChar, 2048) { Value = (object?)next.RunnerRunUrl ?? DBNull.Value });
+        command.Parameters.Add(new SqlParameter("@updated", SqlDbType.DateTime2) { Value = next.UpdatedOnUtc });
+        command.Parameters.Add(new SqlParameter("@version", SqlDbType.BigInt) { Value = next.RowVersion });
+        command.Parameters.Add(new SqlParameter("@expected", SqlDbType.BigInt) { Value = next.RowVersion - 1 });
+        return command.ExecuteNonQuery() == 1;
     }
 
     public void EnsureSchema(EntityCatalog catalog)
@@ -274,6 +355,29 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
             default:
                 return new SqlParameter(name, SqlDbType.NVarChar, column.MaxLength) { Value = value ?? DBNull.Value };
         }
+    }
+
+    private static List<ApprovalOutboxItem> ReadOutbox(SqlCommand command)
+    {
+        var items = new List<ApprovalOutboxItem>();
+        using SqlDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            items.Add(new ApprovalOutboxItem(
+                reader.GetString(0),
+                reader.GetString(1),
+                DateTime.SpecifyKind(reader.GetDateTime(2), DateTimeKind.Utc),
+                reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.IsDBNull(5) ? null : DateTime.SpecifyKind(reader.GetDateTime(5), DateTimeKind.Utc),
+                reader.GetInt32(6),
+                reader.IsDBNull(7) ? null : reader.GetString(7),
+                reader.IsDBNull(8) ? null : reader.GetString(8),
+                DateTime.SpecifyKind(reader.GetDateTime(9), DateTimeKind.Utc),
+                reader.GetInt64(10)));
+        }
+
+        return items;
     }
 
     private static List<StoredRowData> Read(SqlCommand command, string entityKey)

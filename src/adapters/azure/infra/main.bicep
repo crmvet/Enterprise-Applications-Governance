@@ -10,8 +10,9 @@
 // - the role assignments the app's identity needs, each on one resource.
 //
 // Microsoft Entra app registrations are not created here: the client's administrator creates them by hand (README.md)
-// and passes the API's client ID. The post-provision hook then runs the database migrations as the signed-in deployer,
-// which also creates the app's managed identity as a contained database user.
+// and passes the API's client ID and, for the web app, the web app's client ID. The post-provision hook then runs the
+// database migrations as the signed-in deployer, which also creates the app's managed identity as a contained database
+// user. The same function app serves the product's web app under /app, on the same origin as the API.
 
 targetScope = 'subscription'
 
@@ -60,6 +61,30 @@ param authInstance string = ''
 
 @description('Public base URL of the service, such as https://governance.contoso.com, with no trailing slash. Set it once a custom domain on a verified domain of the tenant is bound to the app. Empty uses the app\'s default host name.')
 param customBaseUrl string = ''
+
+// ---------------------------------------------------------------------------------------------------------------
+// The product's web app, the approval runner and the directory reads (all off unless set)
+// ---------------------------------------------------------------------------------------------------------------
+
+@description('Application (client) ID of the web app registration (a single-page application with the redirect URI https://<host>/app/). Empty leaves the web app off. Tokens this client asks for are the person entry of the REST API.')
+param webAppClientId string = ''
+
+@description('The scope the web app asks for. Empty means api://<API client ID>/api.access; set it to <Application ID URI>/api.access when the API uses another Application ID URI.')
+param webAppApiScope string = ''
+
+@description('Serve the approval runner\'s routes (the Power Automate runner pulls approval requests). Turn it on once the runner flows, the runner\'s app registration and its Workload Grant exist.')
+@allowed([
+  'true'
+  'false'
+])
+param approvalRunnerEnabled string = 'false'
+
+@description('Directory reads for the gap check, role holders, owner check and role bindings: Off, or Live (on-behalf-of the signed-in admin to Microsoft Graph and the Power Platform API, with the app\'s managed identity as the API app\'s federated credential; needs the delegated permissions in README.md).')
+@allowed([
+  'Off'
+  'Live'
+])
+param directoryReads string = 'Off'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Azure SQL
@@ -234,6 +259,16 @@ module keyVault 'modules/keyvault.bicep' = if (hasSalt) {
   }
 }
 
+module directoryIdentity 'modules/directory-identity.bicep' = if (directoryReads == 'Live') {
+  scope: rg
+  name: 'directory-identity'
+  params: {
+    name: 'id-directory-${resourceToken}'
+    location: location
+    tags: allTags
+  }
+}
+
 module functionApp 'modules/function-app.bicep' = {
   scope: rg
   name: 'function-app'
@@ -248,6 +283,7 @@ module functionApp 'modules/function-app.bicep' = {
     maximumInstanceCount: maximumInstanceCount
     instanceMemoryMB: instanceMemoryMB
     alwaysReadyInstances: alwaysReadyInstances
+    userAssignedIdentityId: directoryReads == 'Live' ? directoryIdentity!.outputs.id : ''
   }
 }
 
@@ -279,6 +315,11 @@ module appSettings 'modules/function-app-settings.bicep' = {
     apiAudience: apiAudience
     keyVaultName: keyVaultName
     telemetrySaltSecretName: telemetrySaltSecretName
+    webAppClientId: webAppClientId
+    webAppApiScope: webAppApiScope
+    approvalRunnerEnabled: approvalRunnerEnabled
+    directoryReads: directoryReads
+    directoryIdentityClientId: directoryReads == 'Live' ? directoryIdentity!.outputs.clientId : ''
   }
   dependsOn: [
     roles
@@ -302,6 +343,18 @@ output PRODUCT_DEFAULT_HOST_NAME string = functionApp.outputs.defaultHostName
 // The app's identity: its display name is the database user name the migration creates.
 output PRODUCT_APP_IDENTITY_NAME string = functionApp.outputs.name
 output PRODUCT_APP_IDENTITY_PRINCIPAL_ID string = functionApp.outputs.principalId
+
+// The web app: its redirect URI for the single-page application registration.
+output PRODUCT_WEB_APP_URL string = '${appSettings.outputs.publicBaseUrl}/app/'
+
+// The federated identity credential the API app registration needs for the directory reads (directoryReads Live): the
+// directory identity as the issuer's subject, so the on-behalf-of exchange needs no client secret. Empty when off.
+output PRODUCT_FEDERATED_CREDENTIAL_ISSUER string = directoryReads == 'Live' ? '${signInAuthority}${tenantIdForTokens}/v2.0' : ''
+output PRODUCT_FEDERATED_CREDENTIAL_SUBJECT string = directoryReads == 'Live' ? directoryIdentity!.outputs.principalId : ''
+output PRODUCT_FEDERATED_CREDENTIAL_AUDIENCE string = directoryReads == 'Live' ? 'api://AzureADTokenExchange' : ''
+
+// The approval runner's routes, for the runner flows' ApiBaseUrl environment variable.
+output PRODUCT_APPROVAL_RUNNER_BASE_URL string = appSettings.outputs.publicBaseUrl
 
 output AZURE_SQL_SERVER_NAME string = sql.outputs.serverName
 output AZURE_SQL_SERVER_FQDN string = sql.outputs.serverFqdn

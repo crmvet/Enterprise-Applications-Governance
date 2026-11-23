@@ -31,8 +31,24 @@ public interface IRowDatabase : IDisposable
 
     // Applies the changes in one database transaction. An update or a delete whose row no longer has the expected
     // version, and a unique key or primary key taken by another transaction, throw StoreConflictException; nothing is
-    // applied then. engineOperation is one of RowStoreOperations.
-    void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation);
+    // applied then. engineOperation is one of RowStoreOperations. The outbox writes (the commit hook, ApprovalOutboxHook)
+    // go into the same transaction, before the row changes, so they commit or roll back with them.
+    void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation, IReadOnlyList<ApprovalOutboxWrite>? outbox = null);
+
+    // ---- The approval outbox (ApprovalOutbox.cs): a host table outside the entity catalog ----
+
+    // One outbox row, or null.
+    ApprovalOutboxItem? OutboxGet(string approvalRecordId);
+
+    // Pending rows and claimed rows whose lease ended at or before nowUtc, by Enqueued On then Approval Record ID.
+    IReadOnlyList<ApprovalOutboxItem> OutboxClaimable(DateTime nowUtc, int limit);
+
+    // Every row, by Enqueued On then Approval Record ID.
+    IReadOnlyList<ApprovalOutboxItem> OutboxAll(int limit);
+
+    // Replaces the row's changeable columns when its stored version is next.RowVersion - 1 and the stored row is not
+    // settled (answered, expired or cancelled). False otherwise.
+    bool OutboxSet(ApprovalOutboxItem next);
 
     // ICounterStore.Increment, in one atomic statement.
     long Increment(string counterKey, DateTime windowStartUtc, TimeSpan windowLength);

@@ -15,6 +15,7 @@ using Product.Mcp.Core.Contracts;
 using Product.Mcp.Core.Policy;
 using Product.Mcp.Core.Protocol;
 using Product.Mcp.Core.Telemetry;
+using Product.Engine.Runtime.Callers;
 
 namespace Product.Azure.Host;
 
@@ -22,9 +23,13 @@ namespace Product.Azure.Host;
 // between requests, so each request gets its own, with a token validator over the request's signed-in caller and the
 // request's correlation ID. The caller's token never reaches the core: the validator answers from the claims ASP.NET Core
 // already validated, and the Authorization header text is not passed on.
+//
+// The entry: the MCP endpoint is always the AI client entry. The REST API is the person entry when the token's verified
+// azp is one of the web app's own client IDs (Product:WebApp:ClientIds), and the AI client entry otherwise; on the person
+// entry the core itself refuses any client that is not one of those IDs.
 internal static class McpInvoker
 {
-    public static McpServerCore CreateCore(HttpContext context, string requiredScope)
+    public static McpServerCore CreateCore(HttpContext context, string requiredScope, bool personEntry = false)
     {
         IServiceProvider services = context.RequestServices;
         ProductAuthOptions auth = services.GetRequiredService<IOptions<ProductAuthOptions>>().Value;
@@ -32,7 +37,13 @@ internal static class McpInvoker
         CallerFacts facts = services.GetRequiredService<CallerFacts>();
         bool credential = context.Request.Headers.ContainsKey(HeaderNames.Authorization);
         var validator = new ClaimsTokenValidator(caller, credential, requiredScope, oid => facts.DelegatedKindOf(caller, oid), auth.TenantId);
-        McpServerOptions options = PerRequest(services.GetRequiredService<McpServerOptions>(), ProductRequest.CorrelationId(context), ResourceUrl(context), requiredScope);
+        McpServerOptions options = PerRequest(
+            services.GetRequiredService<McpServerOptions>(),
+            ProductRequest.CorrelationId(context),
+            ResourceUrl(context),
+            requiredScope,
+            personEntry ? services.GetRequiredService<IOptions<ProductWebAppOptions>>().Value : null,
+            FailureLogger(context));
         return new McpServerCore(
             services.GetRequiredService<ContractSet>(),
             validator,
@@ -87,9 +98,9 @@ internal static class McpInvoker
             && (uri.IsLoopback || string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase));
     }
 
-    private static McpServerOptions PerRequest(McpServerOptions shared, string correlationId, string resourceUrl, string scope)
+    private static McpServerOptions PerRequest(McpServerOptions shared, string correlationId, string resourceUrl, string scope, ProductWebAppOptions? personEntry, Action<Exception, string> onFailure)
     {
-        return new McpServerOptions
+        var options = new McpServerOptions
         {
             ServerName = shared.ServerName,
             ResourceUrl = resourceUrl,
@@ -97,31 +108,31 @@ internal static class McpInvoker
             Scope = scope,
             TelemetrySalt = shared.TelemetrySalt,
             ValidateOutputs = shared.ValidateOutputs,
-
-            // The host catches the failure itself (Invoke), so it can log it with the correlation ID; the client gets the
-            // same JSON-RPC internal error the core would send.
-            RethrowInternalErrors = true,
+            RethrowInternalErrors = shared.RethrowInternalErrors,
+            OnInternalFailure = onFailure,
             UtcNow = shared.UtcNow,
             CorrelationIds = () => correlationId,
         };
+        if (personEntry != null)
+        {
+            options.Entry = CallerEntry.Person;
+            options.PersonClientAppIds = personEntry.ClientIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).ToList();
+            options.PersonClientLabel = personEntry.ClientLabel;
+        }
+
+        return options;
     }
 
-    // Runs one message through the core. With RethrowInternalErrors on the shared options (tests), a failure surfaces as
-    // the exception. Otherwise a server failure is logged with the request's correlation ID (the full
-    // exception in Development; elsewhere its type and stack, never its message, which may quote data) and answered as
-    // the core answers it: a JSON-RPC internal error that names only the correlation ID.
-    public static McpResponse Invoke(McpServerCore core, McpRequest request, HttpContext context)
+    // The core's failure callback: logs a server failure with the request's correlation ID before the core answers it as
+    // a JSON-RPC internal error that names only that ID. The full exception in Development; elsewhere its type and stack,
+    // never its message, which may quote request data.
+    private static Action<Exception, string> FailureLogger(HttpContext context)
     {
-        var clock = System.Diagnostics.Stopwatch.StartNew();
-        try
+        IServiceProvider services = context.RequestServices;
+        return (exception, correlationId) =>
         {
-            return core.Handle(request);
-        }
-        catch (Exception exception) when (exception is not OutOfMemoryException && !context.RequestServices.GetRequiredService<McpServerOptions>().RethrowInternalErrors)
-        {
-            string correlationId = ProductRequest.CorrelationId(context);
-            ILogger logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("Product.Azure.Host.Mcp");
-            if (context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+            ILogger logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Product.Azure.Host.Mcp");
+            if (services.GetRequiredService<IHostEnvironment>().IsDevelopment())
             {
                 logger.LogError(exception, "The MCP request {CorrelationId} failed.", correlationId);
             }
@@ -129,20 +140,19 @@ internal static class McpInvoker
             {
                 logger.LogError("The MCP request {CorrelationId} failed with {ExceptionType} at {StackTrace}", correlationId, exception.GetType().FullName, exception.StackTrace);
             }
-
-            string? method = Js.Text(request.Message, "method");
-            context.RequestServices.GetRequiredService<ITelemetrySink>().Track(new TelemetryEvent(
-                Array.IndexOf(KnownMethods, method) >= 0 ? method! : "(other)", null, "internal-error", clock.ElapsedMilliseconds, null, null, correlationId, null));
-            JsonTreeNode body = Js.Obj(
-                ("jsonrpc", JsonTreeNode.FromString("2.0")),
-                ("id", Js.Member(request.Message, "id") ?? JsonTreeNode.Null),
-                ("error", Js.Obj(
-                    ("code", JsonTreeNode.FromInt64(JsonRpcCodes.InternalError)),
-                    ("message", JsonTreeNode.FromString("The server failed on this request. Quote the correlation ID to the product's operators.")),
-                    ("data", Js.Obj(("correlationId", JsonTreeNode.FromString(correlationId)))))));
-            return new McpResponse(200, body);
-        }
+        };
     }
 
-    private static readonly string[] KnownMethods = { "initialize", "ping", "tools/list", "tools/call", "resources/list", "resources/templates/list", "resources/read" };
+    // Runs one message through the core. The core answers every failure itself (a server failure as a JSON-RPC internal
+    // error, after the failure callback logged it); with RethrowInternalErrors on the shared options (tests), a failure
+    // surfaces as the exception.
+    public static McpResponse Invoke(McpServerCore core, McpRequest request, HttpContext context)
+    {
+        if (core == null)
+        {
+            throw new ArgumentNullException(nameof(core));
+        }
+
+        return core.Handle(request);
+    }
 }

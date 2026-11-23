@@ -6,13 +6,13 @@ import { Badge, Link, Tooltip, makeStyles, mergeClasses, tokens } from '@fluentu
 import { ArrowRight16Regular, PersonWarning20Regular, ShieldError20Regular } from '@fluentui/react-icons';
 import type { ReactNode } from 'react';
 import type { ScheduledChange } from '../data/contracts';
-import { addDays, dayOfMonth, fmtDate, fmtMonth, fmtTime, fmtWeekdayOnly, plural } from '../data/format';
+import { addDays, dayOfMonth, fmtDate, fmtMonth, fmtTimeRange, fmtWeekday, fmtWeekdayOnly, inDays, inWindowDays, plural, utcDayRange, zoneLabel } from '../data/format';
 import { useLabels } from '../data/labels';
 import { activeFlags, flagHelp, flagText } from '../data/meanings';
 import { dataOf, useTool, type ToolState } from '../data/toolClient';
 import { useHost } from '../harness';
 import { palette } from '../theme';
-import { BarList, DataStamp, Empty, KpiTile, Muted, PageHeader, Panel, PanelFailure, ToneBadge, media } from '../components/ui';
+import { BarList, DataStamp, Empty, KpiTile, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, ToneBadge, media } from '../components/ui';
 
 const useStyles = makeStyles({
   kpis: {
@@ -86,6 +86,18 @@ const useStyles = makeStyles({
   },
   dateDay: { fontSize: '20px', fontWeight: tokens.fontWeightSemibold },
   dateWeek: { fontSize: tokens.fontSizeBase100, textTransform: 'uppercase', letterSpacing: '0.05em', color: palette.navy2 },
+  // Read by screen readers only: the date chip is drawn for the eye and hidden from them.
+  srOnly: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    margin: '-1px',
+    padding: 0,
+    border: 0,
+    overflow: 'hidden',
+    clip: 'rect(0 0 0 0)',
+    whiteSpace: 'nowrap',
+  },
   footerLink: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', fontWeight: tokens.fontWeightSemibold },
 });
 
@@ -96,8 +108,12 @@ export function Overview() {
   const byStage = useTool('get_portfolio_summary', { groupBy: 'stage', includeOwnerGaps: true, top: 50 });
   const byTier = useTool('get_portfolio_summary', { groupBy: 'tier' });
   const byKind = useTool('get_portfolio_summary', { groupBy: 'kind' });
-  const flagged = useTool('get_deployments', { latestOnly: false, flaggedOnly: true, from: addDays(today, -30), to: today });
-  const coming = useTool('get_change_schedule', { from: today, to: addDays(today, 14) });
+  // The ranges are calendar days in the display zone. The tools filter by UTC date, so each call asks for the UTC dates
+  // that cover those days, and the page keeps the items of the days it names.
+  const flaggedFrom = addDays(today, -30);
+  const comingTo = addDays(today, 14);
+  const flagged = useTool('get_deployments', { latestOnly: false, flaggedOnly: true, ...utcDayRange(flaggedFrom, today) });
+  const coming = useTool('get_change_schedule', utcDayRange(today, comingTo));
   const ownerRoles = useLabels('owner-role');
 
   const summary = dataOf(byStage);
@@ -117,11 +133,11 @@ export function Overview() {
         <div className={s.row}><PanelFailure failure={stageEnvelope} /></div>
       ) : (
         <div className={s.kpis} role="group" aria-label="Key figures">
-          <KpiTile className={s.heroTile} label="Applications" value={total ?? 0} caption="All portfolios, every stage" onClick={() => host.drill('All applications')} />
-          <KpiTile label="Owner gaps" value={summary?.ownerGaps ?? 0} caption="Owner roles with no holder or no deputy" attention={!!summary?.ownerGaps} onClick={() => host.drill('Applications with owner gaps')} />
-          <KpiTile label="Reviews overdue" value={summary?.reviewsOverdue ?? 0} caption="Past their due date" attention={!!summary?.reviewsOverdue} onClick={() => host.drill('Overdue reviews')} />
-          <KpiTile label="Documents missing or stale" value={summary?.documentsMissingOrStale ?? 0} caption="Required by each app's tier" attention={!!summary?.documentsMissingOrStale} onClick={() => host.drill('Missing or stale documents')} />
-          <KpiTile label="Old drafts" value={summary?.draftsOlderThanDays ?? 0} caption="Older than the configured draft age" onClick={() => host.drill('Drafts past the configured age')} />
+          <KpiTile className={s.heroTile} label="Applications" value={total} caption="All portfolios, every stage" onClick={() => host.drill('All applications', {})} />
+          <KpiTile label="Owner gaps" value={summary?.ownerGaps ?? null} caption="Owner roles with no holder or no deputy" attention={!!summary?.ownerGaps} onClick={() => host.drill('Applications with owner gaps')} />
+          <KpiTile label="Reviews overdue" value={summary?.reviewsOverdue ?? null} caption="Past their due date" attention={!!summary?.reviewsOverdue} onClick={() => host.drill('Overdue reviews')} />
+          <KpiTile label="Documents missing or stale" value={summary?.documentsMissingOrStale ?? null} caption="Required by each app's tier" attention={!!summary?.documentsMissingOrStale} onClick={() => host.drill('Missing or stale documents')} />
+          <KpiTile label="Old drafts" value={summary?.draftsOlderThanDays ?? null} caption="Older than the configured draft age" onClick={() => host.drill('Drafts past the configured age')} />
         </div>
       )}
 
@@ -149,15 +165,18 @@ export function Overview() {
               ) : (
                 <Empty>Every owner role has a holder and a deputy.</Empty>
               )}
+              <MoreRowsNote skipToken={summary?.skipToken} what="owner gaps" />
             </Section>
           </div>
           <div className={s.group}>
             <h3 className={s.groupTitle}>Flagged deployments</h3>
             <Section state={flagged}>
               {(() => {
-                const items = dataOf(flagged)?.items ?? [];
-                if (!items.length) return <Empty>No flagged deployments in the last 30 days.</Empty>;
-                return items.map((d, i) => (
+                const data = dataOf(flagged);
+                const items = (data?.items ?? []).filter(d => inDays(d.finishedOn, flaggedFrom, today));
+                const more = <MoreRowsNote skipToken={data?.skipToken} what="flagged deployments" />;
+                if (!items.length) return <><Empty>No flagged deployments in the last 30 days.</Empty>{more}</>;
+                return <>{items.map((d, i) => (
                   <AttentionItem
                     key={d.deploymentRecordId}
                     first={i === 0}
@@ -175,7 +194,7 @@ export function Overview() {
                       </Tooltip>
                     ))}
                   />
-                ));
+                ))}{more}</>;
               })()}
             </Section>
           </div>
@@ -188,7 +207,15 @@ export function Overview() {
           skeletonRows={5}
           actions={<Link href={host.href({ page: 'timeline' })} className={s.footerLink}>Timeline <ArrowRight16Regular /></Link>}
         >
-          {data => (data.items.length ? data.items.map((c, i) => <ComingChange key={c.changeRequestId} change={c} first={i === 0} />) : <Empty>No change windows in the next 14 days.</Empty>)}
+          {data => {
+            const items = data.items.filter(c => inWindowDays(c.windowStart, c.windowEnd, today, comingTo));
+            return (
+              <>
+                {items.length ? items.map((c, i) => <ComingChange key={c.changeRequestId} change={c} first={i === 0} />) : <Empty>No change windows in the next 14 days.</Empty>}
+                <MoreRowsNote skipToken={data.skipToken} what="change windows" />
+              </>
+            );
+          }}
         </Panel>
       </div>
       <div className={s.row}>
@@ -199,7 +226,7 @@ export function Overview() {
               noun={['application', 'applications']}
               labelWidth={210}
               items={data.buckets.map(b => ({ key: b.key, label: b.label, count: b.count }))}
-              onDrill={b => host.drill(`Applications in stage ${b.label}`)}
+              onDrill={b => host.drill(`Applications in stage ${b.label}`, b.key ? { lifecycleStageKeys: [b.key] } : undefined)}
             />
           )}
         </Panel>
@@ -211,7 +238,7 @@ export function Overview() {
                 noun={['application', 'applications']}
                 labelWidth={120}
                 items={data.buckets.map(b => ({ key: b.key, label: b.label, count: b.count, muted: b.key === null }))}
-                onDrill={b => host.drill(`Applications: ${b.label}`)}
+                onDrill={b => host.drill(`Applications: ${b.label}`, b.key ? { tierKeys: [b.key] } : undefined)}
               />
             )}
           </Panel>
@@ -222,7 +249,7 @@ export function Overview() {
                 noun={['application', 'applications']}
                 labelWidth={150}
                 items={data.buckets.map(b => ({ key: b.key, label: b.label, count: b.count }))}
-                onDrill={b => host.drill(`Applications of kind ${b.label}`)}
+                onDrill={b => host.drill(`Applications of kind ${b.label}`, b.key ? { applicationKindKeys: [b.key] } : undefined)}
               />
             )}
           </Panel>
@@ -272,10 +299,11 @@ function ComingChange({ change, first }: { change: ScheduledChange; first: boole
         <span className={s.dateWeek}>{start ? fmtMonth(start) : ''}</span>
       </div>
       <div className={s.itemBody}>
+        <span className={s.srOnly}>{start ? `${fmtWeekday(start)}.` : 'No date yet.'}</span>
         <span className={s.itemName}>{change.title}</span>
         <Muted>
           {change.applicationName} to {change.target?.label ?? 'no target yet'}
-          {start && change.windowEnd ? `, ${fmtTime(start)} to ${fmtTime(change.windowEnd)} UTC` : ''}
+          {start && change.windowEnd ? `, ${fmtTimeRange(start, change.windowEnd)} ${zoneLabel()}` : ''}
         </Muted>
         <div className={s.badges}>
           <Badge appearance="outline" color={change.changeType.key === 'emergency' ? 'danger' : 'informative'} shape="rounded">
