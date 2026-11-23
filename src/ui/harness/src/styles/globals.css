@@ -1,6 +1,7 @@
-/* The Academy palette as shadcn/ui theme tokens. Light only: there is no dark theme and no theme switch, on purpose
-   (D-18). Navy 0A2A4A for text and lines, blue 0071DC for brand, gold FFC221 as the accent. Fills: white, light blue
-   E8F1FB, light gold FFF4D6, light gray F3F5F8 for the page.
+/* The theme tokens: Microsoft's Fluent 2 shape and colors on shadcn/ui (D-35). Light only: there is no dark theme and no
+   theme switch, on purpose (D-18). Corners 2, 4, 6 and 8 px (Fluent's small to extra large), Fluent's layered shadows
+   and neutral grays, Microsoft brand blue 0F6CBD, Fluent's status colors, orange F7630C for attention. Text stays navy
+   0A2A4A (light only, no black). The product keeps its own name and mark: it is not a Microsoft product.
    The CSS is static (built by Tailwind at build time), so the page needs no inline styles from a runtime. */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -20,68 +21,75 @@
   color-scheme: light;
   --radius: 0.625rem;
 
-  --background: #f3f5f8;
+  --background: #f5f5f5;
   --foreground: #0a2a4a;
   --card: #ffffff;
   --card-foreground: #0a2a4a;
   --popover: #ffffff;
   --popover-foreground: #0a2a4a;
-  --primary: #0071dc;
+  --primary: #0f6cbd;
   --primary-foreground: #ffffff;
-  --secondary: #e8f1fb;
+  --secondary: #ebf3fc;
   --secondary-foreground: #0a2a4a;
-  --muted: #eef2f6;
+  --muted: #f0f0f0;
   --muted-foreground: #4a6582;
-  --accent: #e8f1fb;
+  --accent: #ebf3fc;
   --accent-foreground: #0a2a4a;
   --destructive: #b10e1c;
-  --border: #dfe5ec;
-  --input: #c5d0dc;
-  --ring: #0071dc;
+  --border: #e0e0e0;
+  --input: #d1d1d1;
+  --ring: #0f6cbd;
 
-  /* Academy extras */
+  /* Product extras: navy text shades, brand dark, attention (orange in Fluent 2, the 'gold' tokens), lines */
   --navy: #0a2a4a;
   --navy-2: #1f3f5f;
   --navy-3: #4a6582;
   --navy-4: #6a8199;
-  --brand-dark: #005bb3;
-  --gold: #ffc221;
-  --gold-strong: #8a6100;
-  --gold-soft: #fff4d6;
-  --line: #dfe5ec;
-  --line-strong: #c5d0dc;
-  --bar-muted: #9aabbd;
+  --brand-dark: #115ea3;
+  --gold: #f7630c;
+  --gold-strong: #bc4b09;
+  --gold-soft: #fff9f5;
+  --line: #e0e0e0;
+  --line-strong: #d1d1d1;
+  --bar-muted: #adadad;
 
   /* Status tones. Each text color on its soft fill passes WCAG AA (4.5:1). Status is never shown by color alone. */
-  --success: #0e700e;
-  --success-soft: #e7f4e4;
-  --success-line: #b7dbb0;
-  --warning: #835c00;
-  --warning-soft: #fff4d6;
-  --warning-line: #f2d68a;
+  --success: #107c10;
+  --success-soft: #f1faf1;
+  --success-line: #9fd89f;
+  --warning: #bc4b09;
+  --warning-soft: #fff9f5;
+  --warning-line: #fdcfb4;
   --danger: #b10e1c;
-  --danger-soft: #fdecec;
-  --danger-line: #f3b9be;
-  --info: #005bb3;
-  --info-soft: #e8f1fb;
-  --info-line: #b9d4f1;
-  --subtle-soft: #eef2f6;
-  --subtle-line: #dfe5ec;
+  --danger-soft: #fdf3f4;
+  --danger-line: #eeacb2;
+  --info: #115ea3;
+  --info-soft: #ebf3fc;
+  --info-line: #b4d6fa;
+  --subtle-soft: #f5f5f5;
+  --subtle-line: #e0e0e0;
 
-  --chart-1: #0071dc;
-  --chart-2: #ffc221;
+  --chart-1: #0f6cbd;
+  --chart-2: #f7630c;
   --chart-3: #0a2a4a;
-  --chart-4: #6aa8ec;
-  --chart-5: #9aabbd;
+  --chart-4: #62abf5;
+  --chart-5: #adadad;
 }
 
 @theme inline {
   --font-sans: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Fluent 2 corner scale: small 2 px, medium 4 px (controls, badges), large 6 px, extra large 8 px (cards). */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+
+  /* Fluent 2 layered shadows (shadow2, shadow4, shadow8, shadow16). */
+  --shadow-xs: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
+  --shadow-sm: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14);
+  --shadow-md: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
+  --shadow-lg: 0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

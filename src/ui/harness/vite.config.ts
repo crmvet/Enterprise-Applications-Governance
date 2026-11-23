@@ -30,7 +30,7 @@ function entryFor(app: boolean): Plugin {
         // a same-origin file (Vite copies it into assets/ with a content hash).
         return html
           .replace('./src/main.tsx', './src/app/main.tsx')
-          .replace('<title>Product page harness</title>', '<title>Product</title>')
+          .replace('<title>Enterprise Applications Governance: page harness</title>', '<title>Enterprise Applications Governance</title>')
           .replace('<link rel="icon" href="data:," />', '<link rel="icon" type="image/svg+xml" href="./src/app/favicon.svg" />');
       },
     },

@@ -30,7 +30,7 @@ function Problem({ text }: { text: string | null }) {
 
 export function EntraSignIn({ auth }: { auth: MsalAuth }) {
   const [busy, setBusy] = useState(false);
-  useEffect(() => { document.title = 'Sign in | Product'; }, []);
+  useEffect(() => { document.title = 'Sign in | Enterprise Applications Governance'; }, []);
   return (
     <main className={wrap} id="main">
       <Problem text={auth.problem()} />
@@ -56,7 +56,7 @@ export function DevSignIn({ auth }: { auth: DevAuth }) {
   const legendId = useId();
   const groupName = useId();
   const [choice, setChoice] = useState<string>(auth.personas[0]?.name ?? '');
-  useEffect(() => { document.title = 'Development sign-in | Product'; }, []);
+  useEffect(() => { document.title = 'Development sign-in | Enterprise Applications Governance'; }, []);
   return (
     <main className={wrap} id="main">
       <Problem text={auth.problem()} />

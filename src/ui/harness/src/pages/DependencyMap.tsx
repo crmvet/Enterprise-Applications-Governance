@@ -301,7 +301,7 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
                 href={href}
                 className={cn(
                   'absolute flex flex-col justify-center gap-y-px rounded-md border border-line-strong bg-card px-2.5 py-1.5 text-navy no-underline shadow-[0_1px_2px_rgba(10,42,74,0.06)] transition-[opacity,border-color,box-shadow] duration-120',
-                  'hover:border-primary hover:shadow-[0_2px_6px_rgba(10,42,74,0.12)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+                  'hover:border-primary hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
                   // The application itself: light blue with a gold bar along the top.
                   isRoot && 'border-2 border-primary bg-secondary before:absolute before:-inset-x-0.5 before:-top-0.5 before:h-[5px] before:rounded-t-md before:bg-gold',
                   focus !== null && !lit.has(p.key) && 'opacity-38',

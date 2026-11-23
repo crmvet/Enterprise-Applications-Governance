@@ -1,6 +1,6 @@
 # D-32 The web app is built on shadcn/ui
 
-- **Status:** Accepted. Amends D-26.
+- **Status:** Accepted. Amends D-26. Amended by D-35.
 - **Date:** 2026-11-23
 - **Decided by:** the product owner
 
@@ -31,6 +31,10 @@ The web app is built on **shadcn/ui**: React 19, Radix primitives, Tailwind CSS 
 - The four pages keep their designs, their tests, the accessibility check and the screenshots at 1280 px and 390 px.
 - The native Microsoft 365 look is lost. That would matter only inside Teams or a model-driven app, and neither is planned. Approval cards are Adaptive Cards and do not use the web app's library.
 - The page's Content-Security-Policy still allows inline styles: the Radix primitives write a style tag when a dialog or popover locks page scrolling. A per-request nonce would remove that, as a later step.
+
+## Amendment, 2026-11-23
+
+[D-35](D-35-the-web-app-looks-like-fluent-2.md) changes the theme from the Academy palette to Fluent 2's shape and colors (Microsoft's corners, shadows, neutral grays, brand blue and status colors), with navy text. The library stays shadcn/ui.
 
 ## Related
 

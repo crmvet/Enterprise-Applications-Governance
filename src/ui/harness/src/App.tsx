@@ -90,18 +90,21 @@ export function App() {
   return (
     <ToolClientContext.Provider value={fixtureClient}>
       <HostContext.Provider value={host}>
-        <div className="sticky top-0 z-10 border-b border-line bg-card shadow-[0_1px_2px_rgba(10,42,74,0.04)]">
+        <div className="sticky top-0 z-10 border-b border-line bg-card shadow-xs">
           <div className="h-[3px] bg-primary" />
           <div className="mx-auto flex min-h-[52px] max-w-[1280px] items-center gap-x-6 px-6 narrow:min-h-0 narrow:flex-wrap narrow:gap-x-3 narrow:gap-y-1 narrow:px-4 narrow:pt-2">
-            <div className="flex shrink-0 items-center gap-x-2.5">
+            <div className="flex min-w-0 items-center gap-x-2.5">
               <span
                 className="relative grid size-7 shrink-0 place-items-center overflow-hidden rounded-[7px] bg-navy text-[15px] font-bold text-white after:absolute after:right-0 after:bottom-0 after:size-[9px] after:bg-gold"
                 aria-hidden
               >
-                P
+                E
               </span>
-              <span className="text-base font-semibold text-navy">Product</span>
-              <Badge variant="warning" className="rounded-full px-2 font-medium">Local harness, fictional data</Badge>
+              <span className="truncate text-base font-semibold text-navy narrow:text-sm">Enterprise Applications Governance</span>
+              <Badge variant="warning" className="shrink-0 rounded-full px-2 font-medium">
+                <span className="narrow:hidden">Local harness, fictional data</span>
+                <span className="hidden narrow:inline">Fictional data</span>
+              </Badge>
             </div>
             <nav className="ml-auto narrow:-ml-2.5 narrow:w-[calc(100%+20px)]" aria-label="Pages">
               <ul className="m-0 flex list-none gap-1 p-0 narrow:gap-0">

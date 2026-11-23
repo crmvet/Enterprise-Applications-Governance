@@ -328,7 +328,7 @@ function DependencySummary({ card, mapHref }: { card: ApplicationCard; mapHref: 
     />
   );
   const statClass =
-    'flex cursor-pointer flex-col rounded-lg bg-secondary px-3 py-2.5 text-left text-inherit no-underline transition-colors hover:bg-[#dcebfa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
+    'flex cursor-pointer flex-col rounded-lg bg-secondary px-3 py-2.5 text-left text-inherit no-underline transition-colors hover:bg-[#cfe4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
   return (
     <>
       <div className="grid grid-cols-2 gap-2.5">
@@ -366,7 +366,7 @@ function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-// A stable tint per name, so the same person keeps the same color on every render. Academy tints only; the color
+// A stable tint per name, so the same person keeps the same color on every render. Theme tints only; the color
 // carries no meaning.
 const avatarTints = [
   'bg-info-soft text-info',

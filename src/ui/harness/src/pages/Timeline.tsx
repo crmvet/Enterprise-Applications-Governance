@@ -26,13 +26,13 @@ const windowTone = {
   authorized: 'bg-primary',
   pending: 'border-2 border-primary bg-card',
   draft: 'border-2 border-bar-muted bg-card',
-  closed: 'bg-[#a9c1dc]',
+  closed: 'bg-[#b4d6fa]',
 };
-const emergencyRing = 'ring-2 ring-[#c4314b]';
+const emergencyRing = 'ring-2 ring-[#c50f1f]';
 const markerTone = {
   succeeded: 'bg-navy',
-  partly: 'bg-[#c98a00]',
-  failed: 'bg-[#c4314b]',
+  partly: 'bg-[#f7630c]',
+  failed: 'bg-[#c50f1f]',
   other: 'bg-bar-muted',
 };
 const flaggedRing = 'ring-3 ring-gold';
@@ -212,7 +212,7 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
     const group = lane.key === 'none' ? 'No target yet' : props.stages.label(lane.stageKey);
     if (group !== lastGroup) {
       rows.push(
-        <div key={`g-${group}`} className="col-span-full border-b border-line bg-[#fafbfd] pt-1.5 pb-1 pl-0.5 text-[10px] font-semibold tracking-[0.06em] text-navy-3 uppercase">
+        <div key={`g-${group}`} className="col-span-full border-b border-line bg-[#fafafa] pt-1.5 pb-1 pl-0.5 text-[10px] font-semibold tracking-[0.06em] text-navy-3 uppercase">
           {group}
         </div>,
       );
@@ -229,8 +229,8 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
     );
     rows.push(
       <div key={`r-${lane.key}`} className="relative h-[50px] border-b border-line">
-        <div className="absolute inset-y-0 left-0 bg-[#f5f7fa]" style={{ width: `${todayPct}%` }} />
-        {ticks.map(t => <div key={t} className="absolute inset-y-0 w-px bg-[#e7ecf2]" style={{ left: `${dayPct(t)}%` }} />)}
+        <div className="absolute inset-y-0 left-0 bg-[#f5f5f5]" style={{ width: `${todayPct}%` }} />
+        {ticks.map(t => <div key={t} className="absolute inset-y-0 w-px bg-[#ebebeb]" style={{ left: `${dayPct(t)}%` }} />)}
         <div className="absolute inset-y-0 z-[1] -ml-px w-0.5 bg-gold" style={{ left: `${todayPct}%` }} />
         {laneChanges.map((c, i) => {
           const x1 = pct(c.windowStart!);

@@ -148,7 +148,7 @@ function SignedIn({ auth, api, base, demo }: { auth: AppAuth; api: ApiClient; ba
 
   // The page title, and focus on the new page for keyboard and screen reader users (not on the first load).
   useEffect(() => {
-    document.title = `${routeTitle(route)} | Product`;
+    document.title = `${routeTitle(route)} | Enterprise Applications Governance`;
     const previous = shownLocation.current;
     shownLocation.current = locationKey;
     if (previous !== null && previous !== locationKey) mainRef.current?.focus({ preventScroll: true });
@@ -194,29 +194,29 @@ function SignedIn({ auth, api, base, demo }: { auth: AppAuth; api: ApiClient; ba
         >
           Skip to content
         </a>
-        <header className="sticky top-0 z-10 border-b border-line bg-card shadow-[0_1px_2px_rgba(10,42,74,0.04)]" ref={headerRef}>
+        <header className="sticky top-0 z-10 border-b border-line bg-card shadow-xs" ref={headerRef}>
           <div className="h-[3px] bg-primary" />
           <div className={cn(frame, 'flex min-h-[52px] items-center gap-x-5 narrow:min-h-0 narrow:flex-wrap narrow:gap-x-3 narrow:gap-y-1 narrow:pt-2')}>
             <a
-              className="flex shrink-0 items-center gap-x-2.5 rounded-md text-navy no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="flex min-w-0 items-center gap-x-2.5 rounded-md text-navy no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               href={appHref({ page: 'overview' }, base)}
-              aria-label="Product, portfolio overview"
+              aria-label="Enterprise Applications Governance, portfolio overview"
             >
               <span
                 className="relative grid size-7 shrink-0 place-items-center overflow-hidden rounded-[7px] bg-navy text-[15px] font-bold text-white after:absolute after:right-0 after:bottom-0 after:size-[9px] after:bg-gold"
                 aria-hidden
               >
-                P
+                E
               </span>
-              <span className="text-base font-semibold text-navy">Product</span>
+              <span className="truncate text-base font-semibold text-navy narrow:text-sm">Enterprise Applications Governance</span>
             </a>
             {demo && (
-              <Badge variant="warning" className="rounded-full px-2 font-medium">
+              <Badge variant="warning" className="shrink-0 rounded-full px-2 font-medium">
                 {narrow ? 'Demo data' : 'Demo, fictional data'}
               </Badge>
             )}
             {auth.mode === 'development' && (
-              <Badge variant="warning" className="rounded-full px-2 font-medium">
+              <Badge variant="warning" className="shrink-0 rounded-full px-2 font-medium">
                 {narrow ? 'Development sign-in' : 'Development sign-in, fictional persona'}
               </Badge>
             )}

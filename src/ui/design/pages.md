@@ -16,7 +16,7 @@ Screenshots of every page at 1280 px and 390 px: `src/ui/screenshots/`.
 
 | Rule | How the pages follow it |
 |---|---|
-| Light only (D-18) | One light theme: the Academy palette as shadcn/ui tokens (`harness/src/styles/globals.css`). There is no dark theme and no theme switch. Page background light gray `F3F5F8`, panels white, text navy `0A2A4A`, brand blue `0071DC`, gold `FFC221` for attention and for "today" |
+| Light only (D-18) | One light theme in Microsoft's Fluent 2 shape and colors, as shadcn/ui tokens (`harness/src/styles/globals.css`, D-35). There is no dark theme and no theme switch. Page background neutral gray `F5F5F5`, panels white with Fluent's layered shadows, corners 4 px on controls and 8 px on cards, text navy `0A2A4A`, brand blue `0F6CBD`, orange `F7630C` for attention and for "today" |
 | Read-only | No page writes. Changes go through an AI client on the product's MCP server or a pipeline's record step, and decisions are made on approval cards. The engine checks every write. Application 360 says so on the page |
 | Numbers come from the server | The pages count nothing. Every figure is a field of a tool output (stored rollups at scale). A list shown next to its count is the same server list. Until a figure is read, its tile shows a placeholder, never a zero |
 | Every number drills to rows | KPI tiles and bars hand a drill-down to the host (`Host.drill`). In a possible later Dataverse edition, not planned, binding A would open the matching view. The web app opens the applications list for the Applications tile and the stage, tier and kind bars, and shows the request for an AI client for the others. The harness shows a toast |

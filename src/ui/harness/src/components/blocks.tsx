@@ -1,5 +1,5 @@
 // Shared building blocks for the four pages: panel, status badge, KPI tile, bar list, page header, links and text
-// helpers. Built from the shadcn/ui primitives in ./ui and Tailwind classes on the Academy tokens (styles/globals.css).
+// helpers. Built from the shadcn/ui primitives in ./ui and Tailwind classes on the theme tokens (styles/globals.css).
 import { CircleAlert, CircleCheck, Clock, EyeOff, Info, TriangleAlert } from 'lucide-react';
 import { useSyncExternalStore, type ComponentProps, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import type { CouldNotReadItem, Envelope, Failure, StatusValue, Success, Warning } from '../data/contracts';
@@ -225,7 +225,7 @@ export function KpiTile(props: { label: string; value: number | null; caption: s
       type="button"
       className={cn(
         'relative flex min-w-0 cursor-pointer flex-col gap-0.5 overflow-hidden rounded-xl border bg-card py-3.5 pr-4 pl-[18px] text-left text-card-foreground shadow-xs transition-colors',
-        'hover:border-line-strong hover:bg-[#fbfcfe] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+        'hover:border-line-strong hover:bg-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         props.attention && 'before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-gold',
         props.className,
       )}
