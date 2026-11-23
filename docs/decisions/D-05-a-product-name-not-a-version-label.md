@@ -1,6 +1,6 @@
 # D-05 A product name, not a version label
 
-- **Status:** Accepted. The name itself is still open.
+- **Status:** Accepted. Answered by D-31 on 2026-11-23: the name is Enterprise Applications Governance.
 - **Date:** 2026-11-21
 - **Decided by:** the product owner
 
@@ -29,7 +29,11 @@ A name should tell a reader what the product is before they read further. The pr
 - The public docs say "the next version" for the new design and "the 2021 release" for the old one.
 - The code uses placeholder names, such as `Product` in project names and a table prefix parameter, until the name is picked (D-27). Choices that are still open are marked in the code as open design questions.
 
+## Amendment, 2026-11-23
+
+[D-31](D-31-the-name-is-enterprise-applications-governance.md) answers this decision: the final public name is Enterprise Applications Governance. "EAGov" is used only for technical keys. The code placeholders can now be replaced, as a change of their own.
+
 ## Related
 
-- [D-23](D-23-2021-release-and-name-are-the-authors-own.md), [D-27](D-27-technical-work-is-public-under-mit.md), [D-28](D-28-govern-ai-development-of-the-apps.md)
+- [D-23](D-23-2021-release-and-name-are-the-authors-own.md), [D-27](D-27-technical-work-is-public-under-mit.md), [D-28](D-28-govern-ai-development-of-the-apps.md), [D-31](D-31-the-name-is-enterprise-applications-governance.md)
 - [Overview](../overview.md)

@@ -1,6 +1,6 @@
 # D-23 The 2021 release and its name are the author's own work
 
-- **Status:** Accepted
+- **Status:** Accepted. Amended 2026-11-23 by D-31: the interim name became the final name.
 - **Date:** 2026-11-22
 - **Decided by:** the product owner
 
@@ -26,6 +26,10 @@ The 2021 release has been public under the MIT License since 2021. With its orig
 - "Enterprise Applications Governance" is the interim name of the next version.
 - The final product name is still open (D-05).
 - The 2021 release stays in this repository under the MIT License.
+
+## Amendment, 2026-11-23
+
+[D-31](D-31-the-name-is-enterprise-applications-governance.md) made "Enterprise Applications Governance" the final public name of the next version, not only the interim one.
 
 ## Related
 

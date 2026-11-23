@@ -43,7 +43,7 @@ The product is open source by intent. Publishing the technical work now establis
 
 - D-24 is superseded. D-25 and D-26 stand.
 - The code sits in this repository next to its design. The product is still in design, so every capability is something it is designed to do.
-- The working documents stay private. Public versions are written from them, for readers.
+- Internal notes stay private. The step 2 design documents are public in [docs/design/step2](../design/step2/README.md), and the architecture pages are written from them, for readers.
 
 ## Related
 

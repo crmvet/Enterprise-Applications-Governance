@@ -36,7 +36,7 @@ The depth belongs next to the source, where people who adopt the product will lo
 
 - While the data store was open (D-22), the architecture pages were to show both bindings: Dataverse and the organization's own Azure. D-26 settled the question, so they describe the Azure binding.
 - When this decision was made, the code stayed private under D-24. D-27 replaced D-24, so the code is public too.
-- The working documents stay private. Public pages are written from them, for readers (D-27).
+- Public pages are written from the working documents, for readers (D-27). The step 2 design documents are published as well, in [docs/design/step2](../design/step2/README.md), as the full logical design behind the architecture pages. Internal notes stay private.
 
 ## Related
 
