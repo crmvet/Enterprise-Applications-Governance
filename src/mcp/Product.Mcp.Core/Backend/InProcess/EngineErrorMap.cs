@@ -16,9 +16,10 @@ namespace Product.Mcp.Core.Backend.InProcess;
 // endpoint. The HTTP status of the answer is the code's status in errors.json (ContractSet.Errors).
 //
 // Order: the runtime outcome words invalid-input, not-found, conflict and unavailable first; then the engine reasons
-// errors.json names for a code (most specific, tried in a fixed order); then, for an AI caller only, a refusal by an AI
-// rule (G-01, G-06, G-08, G-17, RA-06, or an ai. reason) is ai_cannot_do_this; then the reason's catalog category; else
-// rule_violation. The first error reason (or the first reason) gives the message and the field or rule key. No exception
+// errors.json names for a code (most specific, tried in a fixed order; the reasons it names under ai_cannot_do_this only
+// for an AI caller); then, for an AI caller only, a refusal by an AI rule (G-01, G-06, G-08, G-17, RA-06, or an ai.
+// reason) is ai_cannot_do_this; then the reason's catalog category; else rule_violation. So ai_cannot_do_this always
+// answers an AI client, never the approval runner, a pipeline or a person. The first error reason (or the first reason) gives the message and the field or rule key. No exception
 // text and no token reach the answer.
 public static class EngineErrorMap
 {
@@ -33,8 +34,9 @@ public static class EngineErrorMap
 
     // Maps a failed runtime outcome (call it only when outcome.Succeeded is false). aiCaller is true when the caller is an AI
     // client acting for a person (actor kind ai-client-for-person): only then does a refusal by an AI rule map to
-    // ai_cannot_do_this by its rule. A reason errors.json lists under a code maps to that code for every caller. The error
-    // carries the engine's message and the field or rule key it names.
+    // ai_cannot_do_this by its rule. A reason errors.json lists under a code maps to that code for every caller, but for
+    // ai_cannot_do_this, which only an AI caller gets. The error carries the engine's message and the field or rule key it
+    // names.
     public static McpError Map(RuntimeOutcome outcome, ContractSet contracts, bool aiCaller)
     {
         if (outcome == null)
@@ -83,6 +85,13 @@ public static class EngineErrorMap
 
         foreach (string code in ExplicitOrder)
         {
+            // ai_cannot_do_this says "AI never approves", so it answers only an AI caller. Any other caller (a person, the
+            // approval runner, a pipeline) refused for the same reason gets the code of its reason's category below.
+            if (code == McpErrorCodes.AiCannotDoThis && !aiCaller)
+            {
+                continue;
+            }
+
             if (contracts.Errors.TryGetValue(code, out ErrorCodeInfo? info) && info.Maps(first.Code))
             {
                 return Build(code, first, message);

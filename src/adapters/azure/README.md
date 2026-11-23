@@ -23,15 +23,16 @@ The design is in documents 22 (logical data model, section 11 for Azure SQL), 24
 
 | Project | What it is |
 |---|---|
-| `Product.Azure.Stores` | The storage ports implemented once over a small database gateway: overlay transactions (reads see their own writes, nothing reaches the database before Commit), optimistic row versions, the two unique keys, `StoreConflictException`, row IDs, the entity catalog read from the logical model compiled into the engine core, the rate limit counter, the caller context the SQL store writes to `SESSION_CONTEXT`, and seeding for local runs and tests. `StoreContracts.cs` is the contract the hosts bind (`IProductStore`, `ICounterStore`, `IStoreSeeder`, `RowStoreOptions`, `RowIds`, `StoreCallContext`) |
+| `Product.Azure.Stores` | The storage ports implemented once over a small database gateway: overlay transactions (reads see their own writes, nothing reaches the database before Commit), optimistic row versions, the two unique keys and the other keys the logical model asks the store to enforce (`StoreKeys.cs`), `StoreConflictException`, row IDs, the entity catalog read from the logical model compiled into the engine core, the rate limit counter, the caller context the SQL store writes to `SESSION_CONTEXT`, and seeding for local runs and tests. `StoreContracts.cs` is the contract the hosts bind (`IProductStore`, `ICounterStore`, `IStoreSeeder`, `RowStoreOptions`, `RowIds`, `StoreCallContext`) |
 | `Product.Azure.Stores.Sqlite` | The ports over one SQLite file, for local runs, demos and tests |
-| `Product.Azure.Stores.SqlServer` | The ports over Azure SQL Database (Microsoft.Data.SqlClient) with the app's managed identity, the caller in `SESSION_CONTEXT`, and the scripts in `sql/` with their migration runner |
-| `Product.Azure.Host` | What both hosts share: `AddProduct`, `AddProductStore`, Entra sign-in with app roles, the claims-to-caller mapping, `UseProductPipeline` and `MapProduct` (MCP endpoint, REST API, record endpoint, approval outcome endpoint, health, protected resource metadata), the web app under `/app` (`WebApp/`), the approval runner's routes over the approval outbox (`ApprovalRunner/`), the directory reads on behalf of the signed-in admin (`Directory/`), and endpoint modules (`ProductModules.cs`) |
+| `Product.Azure.Stores.SqlServer` | The ports over Azure SQL Database (Microsoft.Data.SqlClient) with the app's managed identity, the caller in `SESSION_CONTEXT`, retries of transient failures (`SqlTransientRetry.cs`), and the scripts in `sql/` with their migration runner |
+| `Product.Azure.Host` | What both hosts share: `AddProduct`, `AddProductStore`, Entra sign-in with app roles, the claims-to-caller mapping, `UseProductPipeline` and `MapProduct` (MCP endpoint, REST API, record endpoint, approval outcome endpoint, health, protected resource metadata), the web app under `/app` (`WebApp/`), the approval runner's routes over the approval outbox (`ApprovalRunner/`), the directory reads on behalf of the signed-in admin (`Directory/`), the request limits per caller and the response headers (`Pipeline/CallerRequestLimits.cs`, `ProductPipeline.cs`), the health probes (`Endpoints/HealthEndpoints.cs`), and endpoint modules (`ProductModules.cs`) |
 | `Product.Azure.Server` | The Kestrel host for local runs and containers, with the commands `seed`, `migrate` and `schema-script`, and the development identity (local runs only) |
 | `Product.Azure.Functions` | The Azure Functions wrapper (isolated worker, ASP.NET Core integration): one catch-all HTTP function that hands each request to the same pipeline as the local server |
 | `tests/Product.Azure.Stores.Tests` | Store semantics and parity with the in-memory store, SQLite across restarts, the same engine calls giving the same rows in memory and in SQLite, the entity catalog, the SQL scripts against their generator and against the logical model on disk (every table, history class and store key), and the Azure SQL cases when a test database is configured |
 | `tests/Product.Azure.Tests` | The local server over the in-memory HTTP test server: the web app's files, configuration and person entry, the approval loop with a fake runner, the directory reads over recorded fictional responses and the on-behalf-of exchange with a fake token endpoint, the flow template, the sign-in refusals, the Microsoft Entra JWT path in Production with an in-memory test signing key (expired, foreign, unsigned and mis-addressed tokens, caller kinds per route), the security probes (path spellings of the MCP endpoint on both transports, browser preflights, proxy headers, response headers), the development identity guards, the MCP endpoint, the REST API, the record and approval endpoints, the engine's refusals, persistence across a restart, the tool list against the contracts on disk (names, schemas, annotations) through both MCP transports, the same routes and answers from the Functions wrapper's request delegate as from the local server, and the walkthrough transcript replayed over HTTP and through the official MCP SDK client, compared with an in-process run |
-| `sql/` | Azure SQL scripts: tables from the logical model, ledger tables for the frozen and append-only history classes, row-level security on `SESSION_CONTEXT`, the app's database user, and the approval outbox (`0005`) |
+| `sql/` | Azure SQL scripts: tables from the logical model, ledger tables for the frozen and append-only history classes, row-level security on `SESSION_CONTEXT`, the app's database user, the approval outbox (`0005`) and the store keys (`0006`) |
+| `load/` | `run-load.mjs`: a load run against the local server with the fictional personas, loopback only, no packages |
 | `flows/` | The approval runner as a Power Automate template: two solution-aware cloud flows and the script that writes the unpacked solution for a publisher prefix. See `flows/README.md` |
 | `seed/` | The fictional demo seed for local runs: a client binding patch and the walkthrough estate |
 | `infra/`, `azure.yaml` | The Azure Developer CLI template: Functions Flex Consumption with a system-assigned managed identity (and a user-assigned one for the directory reads, when they are on), Azure SQL with Entra-only authentication, Application Insights, and a pre-package hook that builds the web app |
@@ -59,7 +60,7 @@ section 12.1).
 | `POST /api/deployments`, `POST /api/deployments/corrections` | Pipeline record steps | App-only, app role `Deployment.Record` | `EngineRuntime.RecordDeployment` as the pipeline's workload identity (document 24, section 4.6) |
 | `POST /engine/v1/approval-records/{id}/outcome` | The approval runner | App-only, app role `Approval.Write` | The engine's guarded write as the approval runner (document 25, section 12.2), with the runner's `Idempotency-Key` |
 | `POST /engine/v1/approval-runner/claims`, `.../items/{id}/sent`, `.../items/{id}/release` | The approval runner | App-only, app role `Approval.Write` | Lease waiting approval requests from the outbox, report a card as sent, give a request back. Only when `Product:ApprovalRunner:Enabled` |
-| `GET /health/live`, `GET /health/ready` | Platform probes | None | Process up; store reachable. No data in the answer |
+| `GET /health/live`, `GET /health/ready` | Platform probes | None | Process up; store reachable within `Product:Health:ReadyTimeoutSeconds` (default 5), else 503. The answer is a status word only |
 
 ### Identity and the actor kind
 
@@ -140,16 +141,25 @@ sign-in authority, the web app's client ID and the API scope. It holds no secret
 An approval answer reaches the engine only from the approval runner (document 23, S1; working default Q19): Power
 Automate approval cards from a flow group in the client's tenant (`flows/README.md`). The runner pulls work:
 
-1. When the engine opens an Approval Record, the same database transaction adds a row to the approval outbox
+1. The engine opens one Approval Record per required answer: a rule with Minimum Count 2 gets two records, so two
+   cards. When it opens a record, the same database transaction adds a row to the approval outbox
    (`host.ApprovalOutbox` on Azure SQL, `sql/0005-approval-outbox.sql`; the same table in SQLite). It holds IDs only. When
-   the engine writes the record's final outcome, the same transaction settles the row.
-2. The runner claims waiting requests with a lease (`/engine/v1/approval-runner/claims`). Each item carries a title and
-   details the product builds (text people wrote is escaped), the record link, who to ask (the owner role's current
-   holders, or the role groups bound to the role) and the configuration keys to answer with.
-3. It sends one card per request, reports it as sent, and posts the first answer to the approval outcome endpoint with
-   `Idempotency-Key: <recordId>:<responderId>:<respondedOn>`. The engine stores the key as the Audit Entry's request key,
-   so the same answer sent again returns the first result. A different answer for a record that already holds a final
-   outcome, or an answer given after Expires On, is a 409 before the engine runs.
+   the engine writes the record's final outcome (an answer, expired or cancelled), the same transaction settles the row.
+2. The runner claims waiting requests with a lease (`/engine/v1/approval-runner/claims`). Each claim first has the
+   engine bring the due approvals up to date, as the approval runner: the engine writes expired on records past their
+   Expires On and opens a new record for each restart, and cancels the records a settled decision still holds, at most
+   `Product:ApprovalRunner:MaxRefresh` decisions a claim (default 50). The claim's answer counts what it did
+   (`refresh`). Each item carries a title and details the product builds (text people wrote is escaped), the record
+   link, who to ask (the owner role's current holders, leaving out those whose approval already counts for the same
+   requirement, or the role groups bound to the role) and the configuration keys to answer with.
+3. It sends one first-to-respond card per request, reports it as sent, and posts the first answer to the approval
+   outcome endpoint with `Idempotency-Key: <recordId>:<responderId>:<respondedOn>`. The engine stores the key as the
+   Audit Entry's request key, so the same answer sent again returns the first result. The engine then counts the answer
+   (one person once per requirement, only a person signed in as a user who holds the role, only an answer given before
+   Expires On), accepts or rejects the decision, cancels the records it no longer needs, and opens a new record for a
+   requirement the answer did not meet. The endpoint's answer names the records opened and cancelled. A different answer
+   for a record that already holds a final outcome is a 409: the engine's conflict for a different outcome, and the
+   endpoint's own for the same outcome from another responder (`ENGINE-CHANGES-NEEDED.md`, item 17).
 4. A request the runner cannot send or wait for is given back (`release`), and becomes failed after
    `Product:ApprovalRunner:MaxAttempts`.
 
@@ -157,7 +167,22 @@ Every runner route takes only an app-only token with `Approval.Write`, and then 
 configuration in force resolves as the approval runner: a workload with a current `approval-writer` Workload Grant. The
 routes are off until `Product:ApprovalRunner:Enabled` is true; the outbox fills either way. Document 23 has the API push
 each request to an HTTP-triggered flow; the runner pulls instead, so the API stays inbound only with no outgoing
-credential. That is a proposal for the design.
+credential. That is a proposal for the design. Because the refresh runs in the runner's claims, nothing is written as
+expired while the runner does not poll (document 23, S2 has a daily timer; this binding has none yet), although every
+read already judges a pending record past its Expires On as expired.
+
+### Request limits and response headers
+
+Every signed-in caller's requests are counted per route group in a fixed UTC minute, in the store
+(`ICounterStore`, the same counter as the Tool Policy limit), never in a server's memory, so every instance sees the
+same count (document 26). Over a limit the answer is 429 with `Retry-After`. The defaults (`Product:Limits`): 120
+requests a minute on the MCP endpoint, 300 on the REST API, 60 on the record endpoint and 600 on the approval runner's
+routes; 0 sets no limit for a group, and `Product:Limits:Enabled` false turns the counting off. The Tool Policy limit per
+person and tool still applies to every tool call.
+
+Every answer carries `X-Content-Type-Options: nosniff`, `Cross-Origin-Resource-Policy: same-origin`,
+`X-Frame-Options: DENY` and `Referrer-Policy: no-referrer`, and every answer outside the web app a
+Content-Security-Policy that lets nothing load, run or frame it; the web app's page keeps its own policy.
 
 ### Directory reads on behalf of the signed-in admin
 
@@ -200,8 +225,14 @@ schema of its kind (`config`, `ops`, `audit`), named as in the column map, with 
 ledger tables for Configuration Set Version, Deployment Record, Evidence Link and Audit Entry; updatable ledger tables
 for Configuration Draft, Tier Assessment, Decision and Approval Record; temporal tables for the rest (document 22,
 sections 2.3 and 11.2). The two unique keys and the columns the block predicates and the version probe read are kept in
-real columns beside the JSON. The fully typed schema the model generator drafts stays the target for a later migration,
-once its open questions are settled.
+real columns beside the JSON. The other keys the logical model asks the store to enforce (business keys such as
+Record Number, the configuration keys within the set in force, alternate keys) are rows of a store key table
+(`host.StoreKey`, `sql/0006-store-keys.sql`; the same table in SQLite) that holds the SHA-256 of each value, written in
+the same transaction as the row, so the database refuses a second row with the same value and the engine's retry sees
+the first result. `sql/README.md` lists the three keys held back and why. Transient Azure SQL failures are retried
+as Microsoft's guidance describes: a new connection, at least 5 seconds before the first retry, twice as long each
+time, at most 60 seconds, and never a commit that may have reached the server. The fully typed schema the model
+generator drafts stays the target for a later migration, once its open questions are settled.
 
 Row-level security reads `SESSION_CONTEXT`, which the SQL store sets on every connection, read-only for the
 connection's life: the caller's object ID, the entry, the actor kind, the client app, the role keys, the correlation ID
@@ -373,6 +404,16 @@ record has one, before its Expires On. The answer records Owen Achterberg (a pla
 call again returns the first result. The intake's decision is not accepted yet (`decisionAccepted` is false): the new
 intake has no business owner, and the answer's warnings name the gate that is not ready.
 
+To try a rule that needs two answers, seed another file with a copy of `seed/demo-binding.patch.json` that adds one
+operation to `bindingOperations`,
+`{"op":"upsert","entity":"approval-rule","key":"change-auth-owner","values":{"minimumCount":2}}`, and a copy of
+`seed/walkthrough-world.json` with a second business owner for Inspection Scheduler (an `owner-assignment` row for
+Ines Varga, `00000000-0000-4000-8000-000000000215`): `seed --environment Development --binding <file> --rows <file>
+--Product:Store:Sqlite:ConnectionString="Data Source=<file>"`, and start the server with the same store setting. A
+change to Inspection Scheduler then opens two requests, each asking both owners. The second answer from the same person
+does not count, and the engine opens a new request that asks only the other owner; the decision is accepted when two
+different people have approved.
+
 ### Directory reads without a tenant
 
 Add `--Product:Directory:Mode=Recorded --Product:Directory:RecordedPath=../tests/Product.Azure.Tests/Recorded` to the
@@ -418,14 +459,16 @@ with an in-process run of the core on the in-memory store: outcomes, answers and
 `tests/Product.Azure.Stores.Tests` runs its Azure SQL cases only when `PRODUCT_TEST_SQLSERVER` holds a connection string
 to an empty test database, and skips them otherwise.
 
-From `src/`, `node tools/ci.mjs` runs this build in Release and this folder's two test projects as its `azure` check,
+From `src/`, `node tools/ci.mjs --no-scrub` (the scrub check is a content scan the maintainers run outside this
+repository) runs this build in Release and this folder's two test projects as its `azure` check,
 on a developer machine and in the repository's CI workflow alike, with no secret and no database.
 
 This folder's test projects find `src/` from their project folder, so they also run from an output folder elsewhere.
 `dotnet test` takes no `--artifacts-path`, so after `dotnet build Product.Azure.sln --artifacts-path <folder>` run each
 test app directly, for example `dotnet <folder>/bin/Product.Azure.Tests/debug/Product.Azure.Tests.dll`. The engine and
-MCP suites find `src/` by walking up from their output folder, so they need an output folder inside the repository,
-which is the default.
+MCP suites find `src/` from the folder they start in, then by walking up from their output folder, so when they are
+built elsewhere, start them from `src/`, for example
+`dotnet <folder>/bin/Product.Engine.Runtime.Tests/debug_net10.0/Product.Engine.Runtime.Tests.dll` run in `src/`.
 
 ### What this does not do yet
 
@@ -433,6 +476,8 @@ which is the default.
   tenant (`flows/README.md`), and the tests and the steps above play it.
 - No live directory reads without a tenant: `Live` needs the client's app registrations and consent; locally, use
   `Recorded`.
+- No expiry on the local clock by hand: an Approval Record expires when a claim finds it past its Expires On, and the
+  demo's rules wait five or ten days or have no timeout. The tests move a manual clock instead.
 - No deployment by the client's admin yet. The template in `infra/` has not been provisioned; the app registrations,
   the bootstrap of version 1 through the API and the client binding patch are steps for a later release. The rest is under
   "Not in this release" below.
@@ -441,8 +486,8 @@ which is the default.
 
 - Writes from the web app. The four pages are read-only by design; a page where a person answers their own approval is
   a proposal for the next design pass (`ENGINE-CHANGES-NEEDED.md`, item 15).
-- Approval expiry writes and restarts in the engine, and rules that need more than one answer per requirement
-  (`ENGINE-CHANGES-NEEDED.md`, items 13 and 14).
+- A timer for the due-state refresh of document 23, S2 (reminders, escalation, and expiry while the approval runner
+  does not poll). Expiry and restarts run in the runner's claims today.
 - The bootstrap of version 1 through the API in a real subscription, the engine endpoints of document 25, section 12.2
   other than the approval outcome and the runner's routes, the separate approval writer database principal, ledger
   digest storage and the private data tier option.

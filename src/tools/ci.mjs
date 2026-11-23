@@ -191,7 +191,8 @@ check('samples', 'Pipeline record step samples',
   () => ({ code: run(process.execPath, [path.join(SRC, 'samples', 'pipeline-steps', 'test', 'record-steps.test.mjs')], SRC) }),
   ['packages']);
 // The model generators: two runs give the same bytes, and model/generated/ matches a fresh run. The outputs are
-// drafts (platform under review, D-22). Nothing is applied to any database or environment. No packages.
+// drafts (not applied; D-26 chose Azure SQL for the first release). Nothing is applied to any database or environment.
+// No packages.
 check('generated', 'Model generators (deterministic)',
   () => ({ code: run(process.execPath, [path.join(SRC, 'model', 'check-generated.mjs')], SRC) }));
 

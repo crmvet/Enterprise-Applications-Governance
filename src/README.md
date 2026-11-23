@@ -28,7 +28,7 @@ For what the product is designed to do, start with `docs/overview.md` at the rep
 | `mcp/Product.Mcp.Testing/` | The stand-ins for tests and the local harness: the mock identity (`MockTokenValidator`), the in-memory rate limit counter and the repeatable GUID wrapper over the in-memory store. No host references it, and a dependency test proves the core holds no test double. net10.0 |
 | `mcp/tests/` | MCP contract tests through the whole core on the in-memory store: every R1 tool and resource, every fixed error code, policy, identity, telemetry. net10.0 |
 | `adapters/` | The platform adapters around the portable engine. `azure/` is the first; a `dataverse/` adapter stays possible later. See `adapters/README.md` |
-| `adapters/azure/` | The Azure adapter: early work, not a release, and nothing from it is deployed. Hosts and stores around the engine and the MCP server core, through their public surface only: a host library with the MCP endpoint, a REST API (the web app's tokens act as the person), the product's web app under `/app`, the record and approval outcome endpoints, the approval runner's routes over an approval outbox, the directory reads on behalf of the signed-in admin and Microsoft Entra ID sign-in (`Product.Azure.Host`); the approval runner as a Power Automate template (`flows/`); a local Kestrel server with a development identity for local runs only (`Product.Azure.Server`); an Azure Functions wrapper (`Product.Azure.Functions`); a SQLite store for local runs and tests and an Azure SQL store (`Product.Azure.Stores*`, with the scripts in `sql/`); an Azure Developer CLI template with Bicep (`infra/`, never provisioned); and two test projects. Its own solution, `Product.Azure.sln`. It runs on one machine over SQLite with no Azure subscription and no sign-in (see "The Azure adapter" below). Read [`adapters/azure/README.md`](adapters/azure/README.md) and [`adapters/azure/STATUS.md`](adapters/azure/STATUS.md) |
+| `adapters/azure/` | The Azure adapter: early work, not a release, and nothing from it is deployed. Hosts and stores around the engine and the MCP server core, through their public surface only: a host library with the MCP endpoint, a REST API (the web app's tokens act as the person), the product's web app under `/app`, the record and approval outcome endpoints, the approval runner's routes over an approval outbox, the directory reads on behalf of the signed-in admin, request limits per caller counted in the store, and Microsoft Entra ID sign-in (`Product.Azure.Host`); the approval runner as a Power Automate template (`flows/`); a local Kestrel server with a development identity for local runs only (`Product.Azure.Server`); an Azure Functions wrapper (`Product.Azure.Functions`); a SQLite store for local runs and tests and an Azure SQL store, with 70 of the logical model's 75 store keys enforced in the database (`Product.Azure.Stores*`, with the scripts in `sql/`); an Azure Developer CLI template with Bicep (`infra/`, never provisioned); and two test projects. Its own solution, `Product.Azure.sln`. It runs on one machine over SQLite with no Azure subscription and no sign-in (see "The Azure adapter" below). Read [`adapters/azure/README.md`](adapters/azure/README.md) and [`adapters/azure/STATUS.md`](adapters/azure/STATUS.md) |
 | `ui/` | The four page designs (Overview, Application 360, dependency map, timeline): `design/pages.md`, the React and Fluent UI v9 pages in `harness/`, built two ways from one source (the harness on fictional fixtures, and the web app on the product's REST API with Microsoft Entra sign-in, which the Azure adapter serves under `/app`), and `screenshots/`. See `ui/README.md` |
 | `content/` | The playbook (23 chapters, 0 to 22, the processes P01 to P11 and the diagrams) and the guidelines G1 to G24 as Markdown |
 | `docs/` | Setup and admin guide drafts. See `docs/README.md` |
@@ -131,11 +131,12 @@ Notes:
 
 ## Placeholders
 
-The product has no final name yet (D-05).
+The product's name is Enterprise Applications Governance (D-31). The code still carries two placeholders, and
+swapping them is its own later step:
 - `Product.` is the placeholder in names, namespaces, folders and files, for example `Product.Engine.Core`.
 - `<prefix>` is the placeholder for the Dataverse publisher prefix.
 
-Use only these two forms. Then one run of `tools/rename-product.mjs` swaps them:
+Use only these two forms. One run of `tools/rename-product.mjs` swaps them in that later step:
 
 ```
 node tools/rename-product.mjs --name <PascalName> --prefix <prefix>           (dry run, prints the changes)

@@ -42,7 +42,8 @@ public sealed class SqliteProductStore : RowStore
                 NewId = options.NewId ?? RowIds.RandomGuid,
                 NewSeedId = options.NewSeedId ?? RowIds.RandomGuid,
             },
-            new SqliteRowDatabase(builder, options.BusyTimeoutMilliseconds))
+            new SqliteRowDatabase(builder, options.BusyTimeoutMilliseconds, EntityCatalog.Embedded),
+            EntityCatalog.Embedded)
     {
     }
 

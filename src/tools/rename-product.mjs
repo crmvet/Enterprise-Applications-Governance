@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Swaps the name placeholders once the product name is picked.
+// Swaps the name placeholders for code names of the product, Enterprise Applications Governance (D-31). The rename is
+// its own later step; until it runs, the code keeps the placeholders.
 //   Product.   the dotted prefix in names, namespaces, folders and files (for example Product.Engine.Core, Product.sln).
 //   <prefix>   the Dataverse publisher prefix, written literally.
 // A bare word "Product" or "product" in prose is left alone. Only the dotted form is a placeholder.

@@ -17,8 +17,9 @@ namespace Product.Engine.Runtime;
 public sealed partial class EngineRuntime
 {
     // <prefix>_RequestApprovals (document 25, section 11.4): OP-02 for the decision, then the writes. For an entry of the
-    // locked list the engine accepts the decision with no card (an accept-decision effect); otherwise it creates one
-    // Approval Record with the pending outcome per requirement and consultation, for the approval runner to send.
+    // locked list the engine accepts the decision with no card (an accept-decision effect); otherwise it creates the
+    // pending Approval Records for the approval runner to send: one per required response, so Minimum Count records per
+    // counting requirement, the first step only of a sequential group, and one per consultation (document 23, S1 step 3).
     //
     // WORKING DEFAULT (open design question 8): the engine accepts with no card only what OP-02 returns as engine-accept
     // for an entry of the locked list.
@@ -135,35 +136,19 @@ public sealed partial class EngineRuntime
                 ("accepted", JsonTreeNode.FromBoolean(accepted)));
         }
 
-        string pending = DefaultStatus(call.Snapshot, "approval-record", "pending");
-        var ids = new List<string>();
-        foreach (JsonTreeNode requirement in Items(op02, "requirements").Concat(Items(op02, "consultations")))
-        {
-            long? timeout = RuntimeJson.Number(requirement, "timeoutDays");
-            JsonTreeNode after = RuntimeJson.Object(
-                ("decision", JsonTreeNode.FromString(decisionId)),
-                ("approvalRule", RuntimeJson.OptionalText(RuntimeJson.Text(requirement, "ruleKey"))),
-                ("decisionRight", RuntimeJson.OptionalText(RuntimeJson.Text(requirement, "decisionRightKey"))),
-                ("requiredRole", RuntimeJson.OptionalText(RuntimeJson.Text(requirement, "approverRoleKey"))),
-                ("requiredOwnerRole", RuntimeJson.OptionalText(RuntimeJson.Text(requirement, "approverOwnerRoleKey"))),
-                ("isConsultation", JsonTreeNode.FromBoolean(RuntimeJson.Flag(requirement, "isConsultation"))),
-                ("outcome", JsonTreeNode.FromString(pending)),
-                ("requestedOn", JsonTreeNode.FromUtcDateTime(call.AsOfUtc)),
-                ("expiresOn", timeout.HasValue ? JsonTreeNode.FromUtcDateTime(call.AsOfUtc.AddDays(timeout.Value)) : null),
-                ("countsTowardRequirement", JsonTreeNode.False));
-            WriteStep step = GuardedWrite(call, new WriteSpec("approval-record", WriteOperation.Create) { After = after, Nested = true })!;
-            ids.Add(step.RowId);
-        }
-
+        IReadOnlyList<string> ids = OpenApprovalRecords(call, decisionId, op02, null, null);
         return RuntimeJson.Object(
             ("outcome", JsonTreeNode.FromString(required.Outcome)),
             ("requestedCount", JsonTreeNode.FromInt64(ids.Count)),
             ("approvalRecordIds", RuntimeJson.Strings(ids)));
     }
 
-    // The recompute-approvals effect (document 23, S1 step 8; document 26, section 5, step 7): OP-03 for the decision,
-    // Counts Toward Requirement written per record, then the decision accepted when satisfied (G-17) or rejected when
-    // the approvals are rejected. Pending and expired change nothing here (a restart after a timeout is not built yet).
+    // The recompute-approvals effect (document 23, S1 steps 8 and 9; document 26, section 5, step 7), also run by the
+    // approval refresh: pending records past Expires On get the expired outcome first; then OP-03 for the decision and
+    // Counts Toward Requirement written per record. When satisfied the decision is accepted (G-17), and when the approvals
+    // are rejected it is rejected; either way the records still pending are cancelled, so no card stays open for a settled
+    // decision. While the approvals are pending or expired, the engine opens what the requirements still need: a restart
+    // after an expired record or an answer that does not count, and the next step of a sequential group.
     private void RecomputeApprovals(RuntimeCall call, string decisionId)
     {
         DecisionScope scope = Scope(call, decisionId);
@@ -179,6 +164,7 @@ public sealed partial class EngineRuntime
             return;
         }
 
+        ExpireDueRecords(call, Records(call, decisionId));
         EvaluationResult<JsonTreeNode?> status = ApprovalStatus(call, scope, stamped, required.Payload!, out IReadOnlyList<StoredRow> records);
         JsonTreeNode counts = status.Payload != null && status.Payload.TryGetMember("countsByRecord", out JsonTreeNode? c) ? c : RuntimeJson.Empty;
         foreach (StoredRow record in records)
@@ -199,16 +185,28 @@ public sealed partial class EngineRuntime
         switch (status.Outcome)
         {
             case "satisfied":
-                AcceptDecision(call, scope, new WriteAcceptance(WriteAcceptance.ApprovalsSatisfied, approvalStatusOutcome: "satisfied"));
+                if (AcceptDecision(call, scope, new WriteAcceptance(WriteAcceptance.ApprovalsSatisfied, approvalStatusOutcome: "satisfied")))
+                {
+                    CancelPendingRecords(call, decisionId, EffectKind.RecomputeApprovals);
+                }
+
                 break;
             case "rejected":
+                // Decided On is when the decision was accepted or rejected (document 22, O09), so the rejection stamps it
+                // as the acceptance does.
                 GuardedWrite(call, new WriteSpec("decision", WriteOperation.Update)
                 {
                     RowId = decisionId,
-                    After = RuntimeJson.Object(("status", JsonTreeNode.FromString(DefaultStatus(call.Snapshot, "decision", "rejected")))),
+                    After = RuntimeJson.Object(
+                        ("status", JsonTreeNode.FromString(DefaultStatus(call.Snapshot, "decision", "rejected"))),
+                        ("decidedOn", JsonTreeNode.FromUtcDateTime(call.AsOfUtc))),
                     Nested = true,
                     Effect = EffectKind.RecomputeApprovals,
                 });
+                CancelPendingRecords(call, decisionId, EffectKind.RecomputeApprovals);
+                break;
+            default:
+                OpenApprovalRecords(call, decisionId, required.Payload!, status.Payload, EffectKind.RecomputeApprovals);
                 break;
         }
     }

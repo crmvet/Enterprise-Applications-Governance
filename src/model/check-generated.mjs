@@ -6,8 +6,8 @@
 //    the column map's.
 // 3. Compares the fresh files with model/generated/, so the drafts kept there match the model. Line endings aside:
 //    git may check text files out with CRLF.
-// 4. Each generated file says "draft, platform under review (D-22)" and is ASCII, and every working default marker is
-//    well formed and names one of the six open questions (document 28, section 3).
+// 4. Each generated file says "draft, not applied; D-26 chose Azure SQL for the first release" and is ASCII, and every
+//    working default marker is well formed and names one of the six open questions (document 28, section 3).
 // Nothing is applied to any database or environment. No packages.
 //
 // Usage: node model/check-generated.mjs [--generated <dir>]

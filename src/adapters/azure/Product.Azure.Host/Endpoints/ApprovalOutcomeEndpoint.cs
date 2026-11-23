@@ -26,14 +26,22 @@ namespace Product.Azure.Host;
 /// or a Workload Grant holder) is refused, and for an owner role the product checks the responder against the
 /// application's Owner Assignments itself. The engine then refuses every writer but the approval runner (the workload
 /// holding a current approval writer grant) and any AI actor, stores an answer that did not come from a person signed in
-/// as a user as recommendation only, and on a counted approval recomputes the decision and accepts it itself in the same
-/// transaction. No tool approves.
+/// as a user as recommendation only, and recomputes the decision in the same transaction: it counts the answer (one
+/// person once per requirement, and only an answer given before Expires On), accepts or rejects the decision, cancels
+/// the records a settled decision still holds open, and opens a new record for a requirement the answer did not meet.
+/// No tool approves.
 /// <para>
 /// The runner sends each answer with an <c>Idempotency-Key</c> header, <c>&lt;recordId&gt;:&lt;responderId&gt;:&lt;respondedOn&gt;</c>.
 /// The engine stores it as the Audit Entry Request Key, so the same answer sent again returns the first result and
-/// writes nothing, and the same key with another body is a conflict. Before the engine runs, the route answers 409 to an
-/// answer given after the record's Expires On (and settles its outbox row as expired) and, when the key is sent, to a
-/// different answer for a record that already holds a final outcome.
+/// writes nothing, and the same key with another body is a conflict. A different outcome for a record that already holds
+/// a final outcome (an answer, expired or cancelled) is the engine's conflict. The route itself answers 409 only to the
+/// same outcome from another responder or at another time, which the engine would take as the same answer again: before
+/// the engine runs, and again after an engine no-op, in case the first answer committed in between.
+/// </para>
+/// <para>
+/// The approver is an Entra object ID in its 36-character form, stored in lower case, so no other spelling of one ID
+/// passes the checks that tell people apart. An answer whose <c>respondedOn</c> is before the record's Requested On is
+/// not an answer to that request and is refused before anything is written.
 /// </para>
 /// </summary>
 public static class ApprovalOutcomeEndpoint
@@ -45,6 +53,9 @@ public static class ApprovalOutcomeEndpoint
 
     // Flow Run Url is nvarchar(2000) in the column map.
     private const int MaxRunUrlLength = 2000;
+
+    // How far the clock of the service that recorded an answer may be behind the product's.
+    private static readonly TimeSpan AnswerClockSkew = TimeSpan.FromMinutes(5);
 
     private static readonly string[] Allowed =
     {
@@ -86,6 +97,10 @@ public static class ApprovalOutcomeEndpoint
             return;
         }
 
+        // The approver is stored in lower case, as Microsoft Entra ID issues object IDs and as the caller's token names the
+        // proposer, so every later comparison of the stored answer sees one spelling of the person.
+        body = WithMember(body, "approver", JsonTreeNode.FromString(Js.Text(body, "approver")!.ToLowerInvariant()));
+
         string? key = null;
         if (context.Request.Headers.TryGetValue(IdempotencyHeader, out var header) && header.Count > 0)
         {
@@ -115,14 +130,21 @@ public static class ApprovalOutcomeEndpoint
         StoredRow? stored = records.Get("approval-record", id);
         if (stored != null)
         {
+            McpError? early = BeforeRequest(stored, body);
+            if (early != null)
+            {
+                await HttpJson.WriteFailure(context, early, contracts, now).ConfigureAwait(false);
+                return;
+            }
+
             body = WithOwnerRoleChecked(body, stored, records);
         }
 
-        // The pre-checks change the outbox (a late answer settles its row), so they run only for the approval runner
-        // itself. Any other caller goes straight to the engine, which refuses it as before.
+        // The pre-check runs only for the approval runner itself. Any other caller goes straight to the engine, which
+        // refuses it.
         if (stored != null && ApprovalRunnerEndpoints.IsApprovalRunner(services, caller, now))
         {
-            McpError? conflict = Conflict(stored, body, key, records, services, now);
+            McpError? conflict = Conflict(stored, body, key, records);
             if (conflict != null)
             {
                 await HttpJson.WriteFailure(context, conflict, contracts, now).ConfigureAwait(false);
@@ -140,19 +162,55 @@ public static class ApprovalOutcomeEndpoint
 
         CompiledSnapshot? snapshot = runtime.Cache.Load(services.GetRequiredService<IConfigurationStore>(), SnapshotPurpose.Read, now).Snapshot;
         StoredRow row = records.Get("approval-record", id) ?? throw new InvalidOperationException("Approval Record " + id + " was written but cannot be read back.");
+
+        // The check before the engine read the record while it was pending, and another answer with the same outcome
+        // committed before the engine's own read (two cards of one record answered at the same moment, say). The engine
+        // compares outcomes only, so it took this answer as the same one again and wrote nothing. It is another
+        // responder's answer, or one given at another time, and it is not the one that stands: the same conflict as above.
+        if (outcome.IsNoOp && !outcome.IsReplay && ApprovalRunnerEndpoints.IsApprovalRunner(services, caller, now))
+        {
+            McpError? raced = Conflict(row, body, key, records);
+            if (raced != null)
+            {
+                await HttpJson.WriteFailure(context, raced, contracts, now).ConfigureAwait(false);
+                return;
+            }
+        }
         var reader = new RowFacts(snapshot);
         bool accepted = outcome.Writes.Any(w => w.Entity == "decision" && w.Effect == EffectKind.AcceptDecision);
+        bool counts = row.Flag("countsTowardRequirement");
+        StoredRow? decision = row.Text("decision") is string decisionId ? records.Get("decision", decisionId) : null;
+
+        // What the engine's recompute did to the decision's other records in the same transaction: the records it opened
+        // (a restart for a requirement this answer did not meet, or the next step of a sequential group) and the records it
+        // cancelled because the decision settled. A replay or a no-op writes nothing, so both lists are empty then.
+        string[] opened = outcome.Writes.Where(w => w.Entity == "approval-record" && w.Operation == WriteOperation.Create).Select(w => w.RowId).Distinct(StringComparer.Ordinal).ToArray();
+        string[] cancelled = outcome.Writes
+            .Where(w => w.Entity == "approval-record" && w.Operation == WriteOperation.Update && w.RowId != id && string.Equals(Js.Text(w.Columns, "outcomeMeaning"), "cancelled", StringComparison.Ordinal))
+            .Select(w => w.RowId)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
         JsonTreeNode data = Js.Obj(
             ("approvalRecordId", JsonTreeNode.FromString(row.Id)),
             ("outcome", reader.StatusValue(row, "outcome", "outcomeMeaning")),
-            ("countsTowardRequirement", JsonTreeNode.FromBoolean(row.Flag("countsTowardRequirement"))),
+            ("countsTowardRequirement", JsonTreeNode.FromBoolean(counts)),
             ("decisionAccepted", JsonTreeNode.FromBoolean(accepted)),
-            ("decisionId", Js.Str(row.Text("decision"))));
+            ("decisionId", Js.Str(row.Text("decision"))),
+            ("decisionStatus", Js.Str(decision?.Text("statusMeaning"))),
+            ("openedApprovalRecordIds", Js.Strs(opened)),
+            ("cancelledApprovalRecordIds", Js.Strs(cancelled)));
         string summary = outcome.IsReplay
             ? "This answer was recorded before with the same Idempotency-Key, so the first result stands and nothing changed."
             : outcome.IsNoOp
             ? "The Approval Record already holds this outcome, so nothing changed."
-            : accepted ? "The answer is recorded, and the engine accepted the decision." : "The answer is recorded.";
+            : accepted ? "The answer is recorded, and the engine accepted the decision."
+            : string.Equals(decision?.Text("statusMeaning"), "rejected", StringComparison.Ordinal) ? "The answer is recorded, and the engine rejected the decision."
+            : !counts && opened.Length > 0 ? "The answer is recorded but does not count, so the engine asks again with a new approval request."
+            : counts && decision != null && string.Equals(decision.Text("statusMeaning"), "proposed", StringComparison.Ordinal)
+                ? (records.Query(RowQuery.For("approval-record").Where("decision", decision.Id).Where("outcomeMeaning", "pending")).Count > 0
+                    ? "The answer is recorded and counts. The decision still waits for other answers."
+                    : "The answer is recorded and counts. The decision is not accepted yet; the warnings say why.")
+            : "The answer is recorded.";
         JsonTreeNode envelope = Envelope.Success(data, summary, now, outcome.ConfigurationVersion ?? snapshot?.VersionNumber ?? 1, ProductRequest.CorrelationId(context), reasons: outcome.Reasons);
         await HttpJson.Write(context, StatusCodes.Status200OK, envelope).ConfigureAwait(false);
     }
@@ -225,6 +283,25 @@ public static class ApprovalOutcomeEndpoint
             : WithMember(body, "approverHoldsRequiredRole", JsonTreeNode.False);
     }
 
+    // An answer is given after its request was made. The engine counts an answer only when its Responded On is before
+    // Expires On, and the runner reports that time, so a Responded On before the record's Requested On (by more than a
+    // few minutes of clock difference) is not an answer to this request: it is the shape of an old or late answer posted
+    // again on the request that restarted it, which would otherwise count as given in time. Nothing is written.
+    internal static McpError? BeforeRequest(StoredRow stored, JsonTreeNode body)
+    {
+        DateTime? requested = RecordEndpoints.Moment(stored.Text("requestedOn"));
+        DateTime? responded = RecordEndpoints.Moment(Js.Text(body, "respondedOn"));
+        if (!requested.HasValue || !responded.HasValue || responded.Value >= requested.Value - AnswerClockSkew)
+        {
+            return null;
+        }
+
+        return new McpError(
+            McpErrorCodes.Validation,
+            "respondedOn is before this approval request was made (" + stored.Text("requestedOn") + "), so it is not an answer to this request, and nothing is recorded.",
+            "respondedOn");
+    }
+
     private static JsonTreeNode WithMember(JsonTreeNode body, string name, JsonTreeNode value)
     {
         return Js.Obj(body.Members.Select(m => new KeyValuePair<string, JsonTreeNode>(
@@ -232,48 +309,28 @@ public static class ApprovalOutcomeEndpoint
             string.Equals(m.Key, name, StringComparison.Ordinal) ? value : m.Value)));
     }
 
-    // The two answers the route turns down before the engine runs (409 conflict). An answer given at or after the
-    // record's Expires On is late: the record keeps waiting for a restart, and its outbox row is settled as expired so no
-    // new card goes out for it. With an Idempotency-Key, an answer for a record that holds a final outcome passes on only
-    // when it replays a recorded request (the engine returns the first result, or refuses a reused key) or is the very
-    // same answer (approver, time and outcome); any other answer is a conflict, never a second outcome. Without the key
-    // the engine's own refusal comes back, as before.
-    private static McpError? Conflict(StoredRow stored, JsonTreeNode body, string? key, IRecordStore records, IServiceProvider services, DateTime now)
+    // The one answer the route turns down before the engine runs (409 conflict): for a record that holds a final outcome,
+    // the same outcome from another responder or at another time. The engine compares outcomes only, so it would take
+    // that answer as the same one again and answer that nothing changed; it is a second person's answer to a request
+    // that already has its answer, and it is never recorded. Everything else goes to the engine, which decides: a pending
+    // record takes the answer (an answer given at or after Expires On is kept but does not count, and the engine opens
+    // a new request), a recorded Idempotency-Key returns the first result or refuses a reused key, the very same answer
+    // is a no-op, and a different outcome is a conflict with the stored one (approval.outcome-final).
+    private static McpError? Conflict(StoredRow stored, JsonTreeNode body, string? key, IRecordStore records)
     {
-        DateTime responded = RecordEndpoints.Moment(Js.Text(body, "respondedOn"))!.Value;
         string? meaning = stored.Text("outcomeMeaning");
-        if (string.Equals(meaning, "pending", StringComparison.Ordinal))
-        {
-            DateTime? expires = RecordEndpoints.Moment(stored.Text("expiresOn"));
-            if (expires.HasValue && responded >= expires.Value)
-            {
-                if (services.GetService<IProductStore>() is IApprovalOutboxStore store)
-                {
-                    new ApprovalOutbox(store).Settle(stored.Id, ApprovalOutboxStates.Expired, now);
-                }
-
-                return new McpError(
-                    McpErrorCodes.Conflict,
-                    "The answer was given at " + CanonicalJson.FormatUtc(responded) + ", after the Approval Record expired at " + CanonicalJson.FormatUtc(expires.Value)
-                    + ", so it is not recorded. The record waits for a restart, and no new card goes out for this request.");
-            }
-
-            return null;
-        }
-
-        if (key == null || meaning == null)
+        if (meaning == null || string.Equals(meaning, "pending", StringComparison.Ordinal) || !string.Equals(stored.Text("outcome"), Js.Text(body, "outcome"), StringComparison.Ordinal))
         {
             return null;
         }
 
-        if (records.Query(RowQuery.For("audit-entry").Where("requestKey", key)).Count > 0)
+        if (key != null && records.Query(RowQuery.For("audit-entry").Where("requestKey", key)).Count > 0)
         {
             return null;
         }
 
         bool same = string.Equals(stored.Text("approver"), Js.Text(body, "approver"), StringComparison.OrdinalIgnoreCase)
-            && RecordEndpoints.Moment(stored.Text("respondedOn")) == responded
-            && string.Equals(stored.Text("outcome"), Js.Text(body, "outcome"), StringComparison.Ordinal);
+            && RecordEndpoints.Moment(stored.Text("respondedOn")) == RecordEndpoints.Moment(Js.Text(body, "respondedOn"));
         return same
             ? null
             : new McpError(
@@ -320,9 +377,14 @@ public static class ApprovalOutcomeEndpoint
             }
         }
 
-        if (!Guid.TryParse(Js.Text(body, "approver"), out _))
+        // Only the 36-character form with hyphens, the one Microsoft Entra ID and Microsoft Graph use. Every check that
+        // tells people apart compares this ID (the Principal Reference that says an object is an agent, the Workload
+        // Grants, the posting identity, the Owner Assignments, the count of one person once and the separation rules), so
+        // another spelling of a GUID (no hyphens, braces, parentheses) would pass them all.
+        string approverText = Js.Text(body, "approver")!;
+        if (approverText.Length != 36 || !Guid.TryParseExact(approverText, "D", out _))
         {
-            return new McpError(McpErrorCodes.Validation, "approver is the responder's Entra object ID (a GUID).", "approver");
+            return new McpError(McpErrorCodes.Validation, "approver is the responder's Microsoft Entra object ID: a GUID of 36 characters with hyphens, as Microsoft Graph gives it.", "approver");
         }
 
         if (RecordEndpoints.Moment(Js.Text(body, "respondedOn")) == null)

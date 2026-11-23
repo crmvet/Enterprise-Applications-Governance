@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Nodes;
 using Product.Azure.Host.Seeding;
 using Product.Azure.Stores;
 using Product.Engine.Configuration.Presets;
@@ -38,10 +39,29 @@ internal static class DemoSeed
     // Version 1, compiled once.
     public static CompiledSnapshot Version => LazyVersion.Value;
 
-    // Seeds the demo into a row store (the HTTP host's SQLite file) through the seeding the local server's seed command uses.
-    public static SeedResult Into(IProductStore store)
+    // Seeds the demo into a row store (the HTTP host's SQLite file) through the seeding the local server's seed command
+    // uses. moreOperations, a JSON array of client binding operations, goes after the demo binding's own.
+    public static SeedResult Into(IProductStore store, string? moreOperations = null)
     {
-        return ProductSeeding.SeedDemo(store, Catalog, Preset, null, Binding, Rows, ValidatedOn);
+        return ProductSeeding.SeedDemo(store, Catalog, Preset, null, BindingWith(moreOperations), Rows, ValidatedOn);
+    }
+
+    // The demo binding with more operations after its own.
+    public static JsonTreeNode BindingWith(string? moreOperations)
+    {
+        if (string.IsNullOrEmpty(moreOperations))
+        {
+            return Binding;
+        }
+
+        JsonNode binding = JsonNode.Parse(CanonicalJson.Write(Binding, CanonicalProfile.Request))!;
+        JsonArray operations = binding["bindingOperations"]!.AsArray();
+        foreach (JsonNode? operation in JsonNode.Parse(moreOperations)!.AsArray())
+        {
+            operations.Add(operation!.DeepClone());
+        }
+
+        return CanonicalJson.Parse(binding.ToJsonString());
     }
 
     // Seeds the same demo into an in-memory store (the in-process world).

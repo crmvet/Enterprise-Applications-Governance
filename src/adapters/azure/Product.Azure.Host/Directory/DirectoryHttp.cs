@@ -92,6 +92,19 @@ public sealed class DirectoryHttp
 
     internal const string BudgetKey = "Product.Directory.Budget";
 
+    /// <summary>
+    /// The marker every directory request carries. Its URL names people (<c>GET /users/{object ID}</c>), so a host that
+    /// traces HTTP client calls leaves marked requests out (<see cref="IsDirectoryRequest"/>), as the named client already
+    /// leaves them out of its request logs.
+    /// </summary>
+    public static readonly HttpRequestOptionsKey<bool> RequestMarker = new("Product.Directory.Request");
+
+    /// <summary>True for a request the directory reads sent: a host's HTTP client tracing filter leaves it out.</summary>
+    public static bool IsDirectoryRequest(HttpRequestMessage request)
+    {
+        return request != null && request.Options.TryGetValue(RequestMarker, out bool marked) && marked;
+    }
+
     // A Retry-After longer than this is not waited out inside a request: the tool answers that the service is throttling.
     private static readonly TimeSpan LongestRetryAfter = TimeSpan.FromSeconds(10);
 
@@ -234,6 +247,7 @@ public sealed class DirectoryHttp
             }
 
             using var request = new HttpRequestMessage(method, uri);
+            request.Options.Set(RequestMarker, true);
             token.Authorize(request);
             request.Headers.Accept.ParseAdd("application/json");
             if (headers != null)

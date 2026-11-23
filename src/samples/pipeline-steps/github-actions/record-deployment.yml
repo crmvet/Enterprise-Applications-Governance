@@ -18,7 +18,8 @@
 #
 # Transport: one variable, RECORD_ENDPOINT_URL (a configuration variable, not a secret).
 #   Azure binding:     https://<your product host>/api/deployments
-#   Dataverse binding: https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment
+#   Dataverse binding (a possible later edition, not planned; D-26):
+#                      https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment
 # The token scope follows from the URL (its origin plus /.default). Set RECORD_ENDPOINT_SCOPE only when the
 # record endpoint's app ID URI differs from its origin, for example api://<application id>/.default.
 #

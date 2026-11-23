@@ -120,7 +120,7 @@ public sealed class PromotedColumn
 // One entity of the logical model as the stores keep it: its key, its table and its history class.
 public sealed class EntityInfo
 {
-    internal EntityInfo(string key, string modelId, string logicalName, string schema, string table, char historyClass, bool isConfiguration, string deletePolicy, EntityStorage storage, IEnumerable<PromotedColumn> promoted)
+    internal EntityInfo(string key, string modelId, string logicalName, string schema, string table, char historyClass, bool isConfiguration, string deletePolicy, EntityStorage storage, IEnumerable<PromotedColumn> promoted, IEnumerable<StoreKey>? storeKeys = null)
     {
         Key = key;
         ModelId = modelId;
@@ -132,6 +132,7 @@ public sealed class EntityInfo
         DeletePolicy = deletePolicy;
         Storage = storage;
         Promoted = new ReadOnlyCollection<PromotedColumn>(promoted.ToList());
+        StoreKeys = new ReadOnlyCollection<StoreKey>((storeKeys ?? Enumerable.Empty<StoreKey>()).ToList());
     }
 
     // The entity key, kebab-case of the logical name, such as "approval-record".
@@ -171,6 +172,10 @@ public sealed class EntityInfo
     public string? QualifiedHistoryTable => HistoryTable == null ? null : "[" + Schema + "].[" + HistoryTable + "]";
 
     public IEnumerable<PromotedColumn> UniqueColumns => Promoted.Where(p => p.IsUnique);
+
+    // The other keys of the model the store enforces for this entity, held in the store key table (StoreKeys.cs). The
+    // keys the promoted unique columns hold are not repeated here.
+    public IReadOnlyList<StoreKey> StoreKeys { get; }
 
     public override string ToString()
     {
@@ -266,6 +271,7 @@ public sealed class EntityCatalog
             bool isConfiguration = string.Equals(entity.Kind, "configuration", StringComparison.Ordinal);
             string schema = id == "O24" ? "audit" : isConfiguration ? "config" : "ops";
             string key = EntityKey(entity.Name);
+            PromotedColumn[] promoted = PromotedFor(key).ToArray();
             entities.Add(new EntityInfo(
                 key,
                 id,
@@ -276,7 +282,8 @@ public sealed class EntityCatalog
                 isConfiguration,
                 entity.DeletePolicy,
                 StorageOf(id, historyClass[0]),
-                PromotedFor(key)));
+                promoted,
+                StoreKeyCatalog.For(entity, key, promoted)));
         }
 
         return new EntityCatalog(model.ModelVersion, entities);

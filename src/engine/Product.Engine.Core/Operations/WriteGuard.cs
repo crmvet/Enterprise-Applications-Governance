@@ -1402,7 +1402,9 @@ public static class WriteGuardOperation
             }
 
             // G-06 "only once" and class F: the same outcome again is a no-op; anything else after a final outcome, with an
-            // outcome or without one, is refused.
+            // outcome or without one, is refused. A different outcome from the approval runner is a conflict with the
+            // stored answer (approval.outcome-final), never a refusal of who wrote it; responder columns sent without an
+            // outcome are a write the runner never makes (approval.outcome-writer).
             if (beforeMeaning != "pending")
             {
                 string? beforeKey = Text(_before, "outcome");
@@ -1415,7 +1417,10 @@ public static class WriteGuardOperation
 
                 if (!same)
                 {
-                    Refuse(ReasonCodes.ApprovalOutcomeWriter, "The Approval Record already has the final outcome " + beforeMeaning + ". The answer is written only once, together with its outcome, and never changes.", _request.RowId);
+                    Refuse(
+                        statusKey != null ? ReasonCodes.ApprovalOutcomeFinal : ReasonCodes.ApprovalOutcomeWriter,
+                        "The Approval Record already has the final outcome " + beforeMeaning + ". The answer is written only once, together with its outcome, and never changes.",
+                        _request.RowId);
                 }
 
                 return;

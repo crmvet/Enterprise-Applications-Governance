@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
@@ -374,8 +375,9 @@ public sealed class ApprovalStatusResult : IOperationPayload
 // OP-03 Evaluate approval status, with the approver kind rule (document 25, section 5.5; sweep proposal).
 // An answer counts only when it comes from a person, signed in as a user, who held the required role, typed a
 // reason when the rule asks for one, answered before the request expired, is not a consultation, and passes every
-// matching C40 Separation Rule (working default, 28 issue 5). AI never approves (D-02, D-10): the AI approval lock
-// is a locked setting, and this rule never reads it, so no snapshot can switch the rule off.
+// matching C40 Separation Rule (working default, 28 issue 5). Within one requirement a person counts once, so a Minimum
+// Count above 1 needs that many different people. AI never approves (D-02, D-10): the AI approval lock is a locked
+// setting, and this rule never reads it, so no snapshot can switch the rule off.
 public static class ApprovalStatusOperation
 {
     private const string SeparationEntity = "separation-rule";
@@ -439,6 +441,11 @@ public static class ApprovalStatusOperation
             requirementsByKey.TryGetValue(record.RuleKey, out RequiredApproval? requirement);
             Judgement judgement = Judge(record, requirement, separation, request, asOf);
             judged.Add(record.ApprovalRecordId, judgement);
+        }
+
+        foreach (RequiredApproval requirement in counting)
+        {
+            CountEachResponderOnce(request.Records.Where(r => string.Equals(r.RuleKey, requirement.RequirementKey, StringComparison.Ordinal)), judged);
         }
 
         // Mode rules, requirement by requirement. A sequential requirement starts counting only when every earlier
@@ -559,9 +566,10 @@ public static class ApprovalStatusOperation
         }
 
         bool flagged = false;
+        string responder = PrincipalKey(record.ResponderPrincipalId!);
         foreach (SeparationCheck check in separation)
         {
-            if (!check.People(request.Parties).Contains(record.ResponderPrincipalId!, StringComparer.Ordinal))
+            if (!check.People(request.Parties).Any(p => !string.IsNullOrEmpty(p) && string.Equals(PrincipalKey(p), responder, StringComparison.Ordinal)))
             {
                 continue;
             }
@@ -590,6 +598,37 @@ public static class ApprovalStatusOperation
         }
 
         return new Judgement(true, false, new List<string>(), flagged, false, record.Outcome);
+    }
+
+    // One person counts once within a requirement, so a Minimum Count of 2 always means two different people. In time
+    // order, a responder's first counting approval counts; a later approval from the same responder (object IDs compared
+    // as PrincipalKey gives them) does not. A rejection is never set aside by this rule, so it refuses more, never less.
+    private static void CountEachResponderOnce(IEnumerable<ApprovalFact> records, Dictionary<string, Judgement> judged)
+    {
+        var counted = new HashSet<string>(StringComparer.Ordinal);
+        IEnumerable<ApprovalFact> approvals = records
+            .Where(r => r.Outcome == ApprovalOutcomeMeaning.Approved && judged[r.ApprovalRecordId].Counts)
+            .OrderBy(r => r.RespondedOnUtc!.Value)
+            .ThenBy(r => r.ApprovalRecordId, StringComparer.Ordinal);
+        foreach (ApprovalFact approval in approvals)
+        {
+            if (!counted.Add(PrincipalKey(approval.ResponderPrincipalId!)))
+            {
+                judged[approval.ApprovalRecordId] = Judgement.NotCounted(ReasonCodes.ApprovalResponderAlreadyCounted);
+            }
+        }
+    }
+
+    // The form in which two principal IDs are compared. A Microsoft Entra object ID is a GUID, and the approval runner, a
+    // token or a pipeline may spell one person's ID in another letter case or GUID form (with or without hyphens or
+    // braces). Two IDs that parse as the same GUID name one principal; any other text compares ignoring case. The count of
+    // one person once and every separation rule compare through it, so spelling one ID two ways never passes either:
+    // refuse more, never less.
+    internal static string PrincipalKey(string principalId)
+    {
+        return Guid.TryParse(principalId, out Guid guid)
+            ? guid.ToString("D", CultureInfo.InvariantCulture)
+            : principalId.ToLowerInvariant();
     }
 
     private static void AddOnce(List<string> codes, string code)

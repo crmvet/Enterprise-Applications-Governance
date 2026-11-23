@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "same-responder-rejection-still-rejects",
+  "description": "A member approves one request and rejects another of the same requirement. Counting a person once never sets a rejection aside, so the requirement is rejected.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "strict-separation"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "exception",
+      "tierKey": "tier-2"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-exception-normal",
+        "approverRoleKey": "change-board",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 2,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-exception-normal",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      },
+      {
+        "approvalRecordId": "r2",
+        "ruleKey": "change-exception-normal",
+        "outcome": "rejected",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T11:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "rejected",
+    "payload": {
+      "overall": "rejected",
+      "requirements": [
+        {
+          "state": "rejected",
+          "countingRecordIds": [
+            "r1",
+            "r2"
+          ]
+        }
+      ],
+      "countsByRecord": {
+        "r1": true,
+        "r2": true
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -23,6 +23,13 @@ public sealed class SqlServerStoreOptions
 
     public int CommandTimeoutSeconds { get; set; } = 30;
 
+    // Retries of transient Azure SQL failures (SqlTransientRetry): how many, and the wait before the first. Microsoft's
+    // guidance for Azure SQL Database: at least 5 seconds, then twice as long each time, up to 60 seconds. 0 retries
+    // turns them off.
+    public int TransientRetries { get; set; } = SqlTransientRetry.DefaultRetries;
+
+    public TimeSpan TransientRetryFirstDelay { get; set; } = SqlTransientRetry.DefaultFirstDelay;
+
     // Writes the caller to SESSION_CONTEXT on every connection (document 22, section 11.1). Row-level security reads it,
     // so a store without it sees no product row. Off only for diagnostics.
     public bool SetSessionContext { get; set; } = true;
@@ -47,7 +54,7 @@ public sealed class SqlServerProductStore : RowStore
                 NewId = options.NewId ?? RowIds.RandomGuid,
                 NewSeedId = options.NewSeedId ?? RowIds.RandomGuid,
             },
-            new SqlServerRowDatabase(options.ConnectionString, catalog, options.CommandTimeoutSeconds, options.SetSessionContext),
+            new SqlServerRowDatabase(options.ConnectionString, catalog, options.CommandTimeoutSeconds, options.SetSessionContext, new SqlTransientRetry(options.TransientRetries, options.TransientRetryFirstDelay)),
             catalog)
     {
     }
@@ -62,6 +69,16 @@ public sealed class SqlServerProductStore : RowStore
         if (options.CommandTimeoutSeconds < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(options), "The command timeout is at least one second.");
+        }
+
+        if (options.TransientRetries < 0 || options.TransientRetries > SqlTransientRetry.MaxRetries)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "Transient retries are 0 to " + SqlTransientRetry.MaxRetries + ".");
+        }
+
+        if (options.TransientRetryFirstDelay < TimeSpan.Zero || options.TransientRetryFirstDelay > SqlTransientRetry.MaxDelay)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "The first transient retry delay is 0 to 60 seconds.");
         }
 
         var builder = new SqlConnectionStringBuilder(options.ConnectionString);

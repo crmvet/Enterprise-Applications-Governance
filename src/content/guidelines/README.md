@@ -78,6 +78,6 @@ None of these appear in the guidelines.
 10. **Defaults for AI-built Power Pages sites (G19).** Whether they differ from other sites was not checked. G19 applies to every site.
 11. **"Paved road" as a Microsoft term (G21).** Not found on the pages read. Microsoft's word is "golden path", and G21 says so.
 12. **A Microsoft page that joins the builder paths to the Copilot Studio zones (G23).** None was found. The mapping is the playbook's own default, written as "maps to".
-13. **Every product capability.** Nothing is built yet. Each product line is design intent, and no release date is stated.
+13. **Every product capability.** Nothing is released or deployed. Each product line is design intent, and no release date is stated.
 
 Microsoft, Azure, Azure DevOps, Copilot, Copilot Studio, Dataverse, Entra, Microsoft 365, Microsoft Agent 365, Microsoft Entra Agent ID, Power Apps, Power Automate, Power Pages, Power Platform, Purview and Visual Studio are trademarks of the Microsoft group of companies. GitHub and GitHub Copilot are trademarks of GitHub, Inc. Claude and Claude Code are trademarks of Anthropic. Framework names belong to their publishers.

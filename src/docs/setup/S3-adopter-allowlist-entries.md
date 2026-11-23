@@ -1,7 +1,7 @@
 # Guide S3. Allow the product's MCP server: adopter allowlist entries
 
-- **Status:** skeleton, 0.1 draft, 2026-11-22. Nothing here was run against a tenant or a device.
-- **Guide set:** setup guides S1 to S3 and admin guides A1 and A2. Index: [README](../README.md).
+- **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant or a device.
+- **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
 - **Design sources:** document 24, sections 4.3, 11 and 12; document 26, sections 10.3 and 11.
 - **Open design questions that touch this guide:** 12 (marker below).
 
@@ -27,9 +27,9 @@ The values the product publishes for each install (document 24, section 12):
 | Value | Example form |
 |---|---|
 | Server URL | `https://<host>/mcp` |
-| Protected resource metadata URL | `https://<host>/.well-known/oauth-protected-resource` |
+| Protected resource metadata URL | `https://<host>/.well-known/oauth-protected-resource/mcp` (the root form answers the same) |
 | Application ID URI | `https://<host>/mcp` |
-| Delegated scope | `mcp.access` |
+| Delegated scopes | `mcp.access` for MCP clients; `api.access` for the product's web app only (guide [S4](S4-prepare-entra-and-deploy.md)) |
 | App roles (app-only callers only) | `Deployment.Record` for pipeline record steps and `Approval.Write` for the approval runner, each assigned directly to one workload identity and recorded as a Workload Grant. WORKING DEFAULT (open design question 12) |
 | Tool names | The 51 names in document 24, section 6.1 (for tool-level network rules) |
 | Claude Code CIMD URL | `https://claude.ai/oauth/claude-code-client-metadata` (pilots only, guide [S2](S2-connect-claude-code.md)) |
@@ -102,10 +102,12 @@ Limits from Learn: only remote servers over streamable HTTP and Server-Sent Even
 
 ### 4. Defender for Endpoint AI agent runtime protection (the device, preview)
 
+Prerequisites from Learn, in Microsoft's words: "Your organization has a Microsoft Defender for Endpoint Plan 2, Microsoft 365 E5, Microsoft Agent 365, or Microsoft 365 E7 license."; the devices are onboarded to Defender for Endpoint, with Microsoft Defender Antivirus in active mode and real-time protection on.
+
 1. Start in Audit mode, as Microsoft recommends, before Block. On one device: `Set-MpPreference -AiAgentProtection Audit` (needs `AntivirusSignatureVersion` 1.451.224.0 or later). Across the fleet: an Intune endpoint security Antivirus policy, profile "Microsoft Defender AI agent runtime protection", setting Ai Agent Protection set to Audit. The numeric values are 0 disabled, 1 block, 2 audit.
 2. Claude Code is covered through its hooks (agent-native event inspection).
 3. Review the "Suspicious AI prompt injection" alerts with the security team. In Audit mode they are informational.
-4. Decide on Prompt Evidence Collection before turning protection on (see the caution below).
+4. Decide on Prompt Evidence Collection before turning protection on (see the caution below), and set it explicitly: on one device `Set-MpPreference -PromptEvidenceCollection $false` (or `$true`), across the fleet the Prompt Evidence Collection setting in the same Intune profile. Microsoft: "Explicitly configured settings take precedence over this default." The setting needs the October 2026 Defender Antivirus platform and engine updates or later.
 5. Move to Block only after the audit review, and only knowing the Claude Code known issue below.
 
 Known issues from Learn (preview): in Audit mode an alert can wrongly say "blocked"; in Block mode "Claude Code might continue processing a tool response" after a reported post-tool-response block.
@@ -115,9 +117,9 @@ Caution: with Prompt Evidence Collection on, Defender sends prompt data and tool
 ### 5. The other places (pointers only)
 
 - **Entra consent** for the server's app registration and scope, and the CIMD pre-add for pilots: guide [S2](S2-connect-claude-code.md).
-- **Agent 365 bring-your-own MCP server** (optional, preview) and an **Azure API Center** entry (optional): document 24, section 12. Not covered in this skeleton.
+- **Agent 365 bring-your-own MCP server** (optional, preview) and an **Azure API Center** entry (optional): document 24, section 12. Not covered in this guide.
 - [branch: Dataverse] **Dataverse MCP allowed clients**, for route C only: turn on the Dataverse MCP server for the environment and enable the client. The allow list applies only to the `/api/mcp` entry point and never restricts the product's custom APIs (document 24, section 12). Not needed for route A, the product's own server.
-- [branch: Azure] No extra place: the only route is the product's own server.
+- [branch: Azure] No extra place: the only route is the product's own server. Inside the product, the Known Client list of the configuration in force decides which client apps may call it at all (guide S2, path 1, step 4); unlike the places above, that list is enforced by the product on every call.
 
 ## Checks
 
@@ -137,9 +139,9 @@ Caution: with Prompt Evidence Collection on, Defender sends prompt data and tool
 | Fact | Source | Checked |
 |---|---|---|
 | Global Secure Access MCP firewall: preview; prerequisites (Entra Internet Access license, Global Secure Access Administrator, Conditional Access Administrator, client on Entra joined or hybrid joined devices, TLS inspection); MCP policies, default action, Server URL rules, tool rules, security profile link, Conditional Access session control; streamable HTTP and SSE only, remote only, no JSON-RPC batches | https://learn.microsoft.com/entra/global-secure-access/how-to-configure-mcp-firewall | 2026-11-22 |
-| Defender AI agent runtime protection: preview; Audit and Block; start in Audit; Claude Code through hooks; known issues for Audit alerts and Claude Code in Block mode; prompt evidence collection unredacted and to be on by default in an upcoming release | https://learn.microsoft.com/defender-endpoint/ai-agent-runtime-protection-overview | 2026-11-22 |
-| `Set-MpPreference -AiAgentProtection`, signature version 1.451.224.0 or later, values 0, 1, 2; Intune profile "Microsoft Defender AI agent runtime protection" | https://learn.microsoft.com/defender-endpoint/configure-ai-agent-runtime-protection | 2026-11-22 |
-| `AiAgentProtection` CSP: 0 disabled, 1 block, 2 audit | https://learn.microsoft.com/windows/client-management/mdm/defender-csp | 2026-11-22 |
-| Claude Code managed MCP: patterns, `allowedMcpServers` with `allowManagedMcpServersOnly`, `managedMcpServers` (v2.1.259 or later, `oauth` member allowed, `https` only, no `${VAR}`), `strictPluginOnlyCustomization`, "A `serverName` entry ... is not a security control", the user-facing errors | https://code.claude.com/docs/en/managed-mcp (vendor) | 2026-11-22 |
+| "Microsoft recommends starting in audit mode to observe detections and validate accuracy before switching to block mode for active enforcement."; prompt evidence: "This content is sent in its original form, without redaction." and "An upcoming Microsoft Defender Antivirus platform release will enable prompt evidence collection by default."; known issue: "During preview, Claude Code might continue processing a tool response even when AI agent runtime protection is configured in **Block** mode and Defender reports a post-tool-response block." | https://learn.microsoft.com/defender-endpoint/ai-agent-runtime-protection-overview | 2026-11-23 |
+| "Verify that `AntivirusSignatureVersion` is `1.451.224.0` or later"; `Set-MpPreference -AiAgentProtection <mode>`; "For both settings, the numerical values are `0` (`Disabled`), `1` (`Block`), and `2` (`Audit`)."; Intune profile "Microsoft Defender AI agent runtime protection"; the license prerequisite quoted in part 4; `Set-MpPreference -PromptEvidenceCollection $true` or `$false`, which "requires the October 2026 Microsoft Defender Antivirus platform and engine updates or later" | https://learn.microsoft.com/defender-endpoint/configure-ai-agent-runtime-protection | 2026-11-23 |
+| `AiAgentProtection` CSP: 0 "AI Agent protection is disabled (default).", 1 "AI Agent protection is enabled in block mode", 2 "AI Agent protection is enabled in audit mode" | https://learn.microsoft.com/windows/client-management/mdm/defender-csp | 2026-11-23 |
+| Claude Code managed MCP: for `managedMcpServers`, "Requires Claude Code v2.1.259 or later. Earlier clients ignore the key.", "`url` is an `https://` URL.", "No value contains a `${VAR}` reference.", and "Anyone who can read the managed settings on a machine, including the user, can read a header value you set here."; "A `serverName` entry, in either list, is not a security control."; "Without `allowManagedMcpServersOnly`, allowlists from every settings scope merge, including a user's own `~/.claude/settings.json`, so a user can broaden what your allowlist permits."; the errors "not allowed by enterprise policy" and "is provided by your organization (managed settings) and cannot be removed locally"; provided servers listed under **Managed MCPs** | https://code.claude.com/docs/en/managed-mcp (vendor) | 2026-11-23 |
 | GitHub Copilot `managed-settings.json` allowlist: `allowedMcpServers` and `deniedMcpServers`, deny wins, built-in servers always allowed, `.github-private` repository or MDM | https://docs.github.com/en/copilot/how-tos/administer-copilot/manage-mcp-usage/configure-enterprise-allowlist (vendor) | 2026-11-22 |
 | GitHub: managed settings are "the more secure, generally available method"; the registry allowlist is public preview; Azure API Center supported as a registry | https://docs.github.com/en/copilot/how-tos/administer-copilot/manage-mcp-usage/configure-mcp-server-access (vendor) | 2026-11-22 |

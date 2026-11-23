@@ -31,8 +31,9 @@ public static class ProductPipeline
 
     /// <summary>
     /// Adds the product's pipeline: the response defaults and the failure guard, routing, authentication, the caller context
-    /// (correlation ID, caller facts, store call context), the SDK gate when the SDK transport is chosen, authorization and
-    /// the product's endpoints.
+    /// (correlation ID, caller facts, store call context), the request limits per signed-in caller
+    /// (<see cref="CallerRequestLimitMiddleware"/>), the SDK gate when the SDK transport is chosen, authorization and the
+    /// product's endpoints.
     /// </summary>
     public static IApplicationBuilder UseProductPipeline(this IApplicationBuilder app)
     {
@@ -48,6 +49,7 @@ public static class ProductPipeline
         app.UseRouting();
         app.UseAuthentication();
         app.UseMiddleware<CallerContextMiddleware>();
+        app.UseMiddleware<CallerRequestLimitMiddleware>();
         if (host.Mcp.Transport == ProductMcpTransport.Sdk)
         {
             // By the endpoint routing chose, not by the path text: routing also sends /mcp/ and /MCP to the SDK.
@@ -163,15 +165,30 @@ public static class ProductPipeline
         }
     }
 
+    /// <summary>
+    /// The Content-Security-Policy of every answer outside the web app that sets none of its own: nothing may load, run
+    /// or frame it. The web app's page sets its own (ProductWebApp), and its script, style and image files need none.
+    /// </summary>
+    public const string DefaultContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+
     // Browsers must not sniff another type than the one sent, and no cache may keep an answer that carries a caller's
     // data. A route that may be cached (the protected resource metadata, the web app's hashed files) sets its own
-    // Cache-Control, which is kept. The web app's page sets its own Content-Security-Policy (ProductWebApp).
+    // Cache-Control, which is kept. No answer may be framed, send a referrer, or be read by another origin's page as a
+    // script or an image; an answer that sets its own X-Frame-Options or Referrer-Policy (the web app's page) keeps it.
     private static Task ResponseDefaults(HttpContext context, RequestDelegate next, bool strictTransport)
     {
         context.Response.OnStarting(() =>
         {
             IHeaderDictionary headers = context.Response.Headers;
             headers["X-Content-Type-Options"] = "nosniff";
+            headers["Cross-Origin-Resource-Policy"] = "same-origin";
+            if (!context.Request.Path.StartsWithSegments(ProductWebAppOptions.BasePath, StringComparison.OrdinalIgnoreCase))
+            {
+                SetIfMissing(headers, "Content-Security-Policy", DefaultContentSecurityPolicy);
+            }
+
+            SetIfMissing(headers, "X-Frame-Options", "DENY");
+            SetIfMissing(headers, "Referrer-Policy", "no-referrer");
             if (strictTransport)
             {
                 headers["Strict-Transport-Security"] = StrictTransportSecurity;
@@ -185,5 +202,13 @@ public static class ProductPipeline
             return Task.CompletedTask;
         });
         return next(context);
+    }
+
+    private static void SetIfMissing(IHeaderDictionary headers, string name, string value)
+    {
+        if (!headers.ContainsKey(name))
+        {
+            headers[name] = value;
+        }
     }
 }

@@ -36,7 +36,8 @@ Exit code: 0 clean, 1 problems, 2 setup error (ajv missing, a file does not pars
 ## What is in the model
 
 - 75 entities. 65 come from document 22 for the first release: 41 configuration and 24 operational.
-- C40 Separation Rule is adopted as a working default. Its columns come from documents 20 and 21.
+- C40 Separation Rule is adopted as a working default. Its columns come from documents 20 and 21. With C40, the first
+  release has 66: 42 configuration and 24 operational.
 - C41 Tool Policy (document 24) and C43 Column Protection Rule, C44 Portfolio Access and C45 Known Client (document 26) are proposals, marked `"status": "proposal"`.
 - L01 to L05 are later entities, marked `"status": "later"`.
 - C03 Preset has no table. It is stored as a C01 row (`"storedIn": "C01"`).
@@ -58,8 +59,9 @@ Places built on one of the six open questions (document 28, section 3) carry a `
 
 ## Generators
 
-Status of every output: **draft, platform under review (D-22)**. The generators write text files only. Nothing is
-applied to any database or environment, and nothing here opens a connection. No packages, Node 20 or later.
+Status of every output: **draft, not applied; D-26 chose Azure SQL for the first release**. The generators write text
+files only. Nothing is applied to any database or environment, and nothing here opens a connection. No packages, Node
+20 or later.
 
 ```
 cd src

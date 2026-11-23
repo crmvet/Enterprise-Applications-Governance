@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "same-responder-then-second-person-satisfied",
+  "description": "The first member answers twice and only the earlier approval counts. A second member approves the restarted request, so two different people reach the minimum count of 2.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "strict-separation"
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "exception",
+      "tierKey": "tier-2"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "change-exception-normal",
+        "approverRoleKey": "change-board",
+        "isConsultation": false,
+        "approvalMode": "first-to-respond",
+        "minimumCount": 2,
+        "timeoutDays": 5,
+        "requiresTypedReason": true
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "change-exception-normal",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T10:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      },
+      {
+        "approvalRecordId": "r2",
+        "ruleKey": "change-exception-normal",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-approver",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T11:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      },
+      {
+        "approvalRecordId": "r3",
+        "ruleKey": "change-exception-normal",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-second",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": true,
+        "respondedOnUtc": "2026-11-21T12:00:00Z",
+        "expiresOnUtc": "2026-11-26T10:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-proposer"
+    }
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied",
+      "requirements": [
+        {
+          "state": "satisfied",
+          "countingRecordIds": [
+            "r1",
+            "r3"
+          ]
+        }
+      ],
+      "countsByRecord": {
+        "r1": true,
+        "r2": false,
+        "r3": true
+      }
+    },
+    "reasons": [
+      {
+        "code": "approval.responder-already-counted",
+        "entity": "Approval Record",
+        "ref": "r2"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

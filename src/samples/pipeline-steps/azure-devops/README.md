@@ -21,13 +21,13 @@ Read the shared rules first: [../README.md](../README.md).
 3. **The role.** WORKING DEFAULT (open design question 12).
    - Azure binding: assign the record endpoint's `Deployment.Record` app role directly to the pipeline's service
      principal. A group's app roles do not reach a service principal's token.
-   - Dataverse binding: add the app registration as an application user in the product's environment, with the
+   - Dataverse binding (a possible later edition, not planned; D-26): add the app registration as an application user in the product's environment, with the
      deployment recorder security role.
    - Either way, the platform admin records a workload grant for the identity: a reason, the deciding decision
      and an expiry. Without a current grant the endpoint answers 403, and the step warns.
 4. **Variables** (a pipeline variable or a variable group; none of them is a secret):
    - `RECORD_ENDPOINT_URL`: `https://<your product host>/api/deployments` (Azure binding) or
-     `https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment` (Dataverse binding).
+     `https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment` (Dataverse binding, a possible later edition, not planned; D-26).
    - `RECORD_ENDPOINT_SCOPE`, only when the record endpoint's app ID URI is not its origin.
 5. **The product side:** the deployment target's external ID (`targetExternalId`) and the pipeline reference's
    external ID (`ado-<collection ID>-<definition ID>`) should exist in the product. Unknown ones still record;

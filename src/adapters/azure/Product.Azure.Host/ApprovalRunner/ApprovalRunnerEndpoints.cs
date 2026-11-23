@@ -88,6 +88,12 @@ public static class ApprovalRunnerEndpoints
             version => runtime.Cache.LoadVersion(configuration, snapshot.ConfigurationSetKey, version).Snapshot,
             services.GetRequiredService<InProcessBackend>().Options.RecordUrlBase);
 
+        // First the engine brings the due approvals up to date, as the approval runner: it expires what passed its
+        // Expires On, cancels what a settled decision still holds open, and opens the restarts. Its own commits settle
+        // and add the outbox rows, so the claim below sees the result.
+        var refresh = new ApprovalRefresh(runtime, call.Identity, call.Logger);
+        refresh.Due(call.Options.MaxRefresh);
+
         var items = new List<JsonTreeNode>();
         int settled = 0;
         foreach (ApprovalOutboxItem candidate in call.Outbox.Candidates(call.Now, max + CandidateSlack))
@@ -102,6 +108,14 @@ public static class ApprovalRunnerEndpoints
             string? state = ApprovalRequestCards.SettledState(record, decision, call.Now);
             if (state != null)
             {
+                // A record the engine still holds pending (the refresh above stopped at its batch, say) is brought up to
+                // date by the engine now; its commit settles the row. The settle below changes nothing then, and stops
+                // the card in any case.
+                if (decision != null && string.Equals(record?.Text("outcomeMeaning"), "pending", StringComparison.Ordinal))
+                {
+                    refresh.Decision(decision.Id);
+                }
+
                 call.Outbox.Settle(candidate.ApprovalRecordId, state, call.Now);
                 settled++;
                 continue;
@@ -114,10 +128,19 @@ public static class ApprovalRunnerEndpoints
             }
         }
 
-        call.Logger.LogInformation("Approval runner claimed {Claimed} item(s) for {LeaseSeconds} seconds; {Settled} item(s) needed no card.", items.Count, lease, settled);
+        call.Logger.LogInformation(
+            "Approval runner claimed {Claimed} item(s) for {LeaseSeconds} seconds; {Settled} item(s) needed no card. The refresh brought {Decisions} decision(s) up to date: {Expired} record(s) expired, {Cancelled} cancelled, {Opened} opened.",
+            items.Count,
+            lease,
+            settled,
+            refresh.Decisions,
+            refresh.Expired,
+            refresh.Cancelled,
+            refresh.Opened);
         JsonTreeNode data = Js.Obj(
             ("items", Js.Arr(items)),
-            ("leaseSeconds", JsonTreeNode.FromInt64(lease)));
+            ("leaseSeconds", JsonTreeNode.FromInt64(lease)),
+            ("refresh", refresh.Summary()));
         string summary = items.Count == 0
             ? "No approval request is waiting for a card."
             : items.Count.ToString(CultureInfo.InvariantCulture) + (items.Count == 1 ? " approval request is" : " approval requests are") + " claimed for " + lease.ToString(CultureInfo.InvariantCulture) + " seconds. Send one card for each, then report it as sent.";
@@ -230,7 +253,7 @@ public static class ApprovalRunnerEndpoints
         private readonly HttpContext _context;
         private readonly ContractSet _contracts;
 
-        public RunnerCall(HttpContext context, ContractSet contracts, JsonTreeNode body, CompiledSnapshot snapshot, DateTime now, ApprovalRunnerOptions options, ApprovalOutbox outbox, ILogger logger)
+        public RunnerCall(HttpContext context, ContractSet contracts, JsonTreeNode body, CompiledSnapshot snapshot, DateTime now, ApprovalRunnerOptions options, ApprovalOutbox outbox, ILogger logger, CallerIdentity identity)
         {
             _context = context;
             _contracts = contracts;
@@ -240,9 +263,13 @@ public static class ApprovalRunnerEndpoints
             Options = options;
             Outbox = outbox;
             Logger = logger;
+            Identity = identity;
         }
 
         public JsonTreeNode Body { get; }
+
+        // The caller as the engine sees it: the approval runner, resolved against the configuration in force.
+        public CallerIdentity Identity { get; }
 
         public CompiledSnapshot Snapshot { get; }
 
@@ -335,7 +362,98 @@ public static class ApprovalRunnerEndpoints
 
         ApprovalOutbox outbox = services.GetService<ApprovalOutbox>() ?? new ApprovalOutbox(services.GetRequiredService<IProductStore>());
         ILogger logger = services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ApprovalRunnerEndpoints).FullName!);
-        return new RunnerCall(context, contracts, body, snapshot, now, options, outbox, logger);
+        return new RunnerCall(context, contracts, body, snapshot, now, options, outbox, logger, identity);
+    }
+
+    // The engine's approval refresh, run as the approval runner (the caller of the claim): the engine finds the decisions
+    // with approval work due and, decision by decision, writes expired or cancelled and opens the restarts (document 23,
+    // S1 step 9 and S2 step 1). Every write is the engine's own; the host only asks and counts. A refused or failed
+    // refresh is logged with its reason code and left for the next claim: it never stops the claim.
+    private sealed class ApprovalRefresh
+    {
+        private readonly EngineRuntime _runtime;
+        private readonly CallerIdentity _runner;
+        private readonly ILogger _logger;
+        private readonly HashSet<string> _done = new(StringComparer.Ordinal);
+
+        public ApprovalRefresh(EngineRuntime runtime, CallerIdentity runner, ILogger logger)
+        {
+            _runtime = runtime;
+            _runner = runner;
+            _logger = logger;
+        }
+
+        public int Decisions { get; private set; }
+
+        public int Expired { get; private set; }
+
+        public int Cancelled { get; private set; }
+
+        public int Opened { get; private set; }
+
+        // Refreshes up to max decisions the engine lists as due, in its order.
+        public void Due(int max)
+        {
+            RuntimeOutcome found = _runtime.FindDueApprovals(_runner, max);
+            if (!found.Succeeded)
+            {
+                _logger.LogWarning("The engine did not list the approvals due ({Outcome}, {Reason}).", found.Outcome, Code(found));
+                return;
+            }
+
+            foreach (string decisionId in Strings(found.Payload, "decisionIds"))
+            {
+                Decision(decisionId);
+            }
+
+            if (Js.Member(found.Payload!, "more")?.Kind == JsonTreeKind.True)
+            {
+                _logger.LogInformation("More decisions have approval work due than one claim refreshes ({Max}); the next claim goes on.", max);
+            }
+        }
+
+        // Refreshes one decision, once per claim.
+        public void Decision(string decisionId)
+        {
+            if (!_done.Add(decisionId))
+            {
+                return;
+            }
+
+            RuntimeOutcome outcome = _runtime.RefreshApprovals(_runner, decisionId);
+            if (!outcome.Succeeded)
+            {
+                _logger.LogWarning("The approval refresh of decision {DecisionId} did not run ({Outcome}, {Reason}).", decisionId, outcome.Outcome, Code(outcome));
+                return;
+            }
+
+            Decisions++;
+            Expired += Strings(outcome.Payload, "expiredRecordIds").Count;
+            Cancelled += Strings(outcome.Payload, "cancelledRecordIds").Count;
+            Opened += Strings(outcome.Payload, "openedRecordIds").Count;
+        }
+
+        public JsonTreeNode Summary()
+        {
+            return Js.Obj(
+                ("decisions", JsonTreeNode.FromInt64(Decisions)),
+                ("expiredRecords", JsonTreeNode.FromInt64(Expired)),
+                ("cancelledRecords", JsonTreeNode.FromInt64(Cancelled)),
+                ("openedRecords", JsonTreeNode.FromInt64(Opened)));
+        }
+
+        private static IReadOnlyList<string> Strings(JsonTreeNode? payload, string name)
+        {
+            JsonTreeNode? list = payload == null ? null : Js.Member(payload, name);
+            return list == null || list.Kind != JsonTreeKind.Array
+                ? Array.Empty<string>()
+                : list.Items.Where(i => i.Kind == JsonTreeKind.String).Select(i => i.GetString()).ToList();
+        }
+
+        private static string Code(RuntimeOutcome outcome)
+        {
+            return outcome.Reasons.Count == 0 ? "no reason" : outcome.Reasons[0].Code;
+        }
     }
 
     private const string NotRunner = "Only the approval runner uses this route: an app-only token with the Approval.Write app role, for a workload that holds a current approval writer Workload Grant. AI clients never approve.";

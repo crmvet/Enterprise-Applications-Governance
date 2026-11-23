@@ -226,12 +226,23 @@ public sealed class ApprovalRunnerTests
         HttpCall flipped = await runner.Answer(item, Personas.OwenId, approve: false, respondedOn);
         Assert.Equal(409, flipped.Status);
 
-        // Another person's answer to the same request (a card sent again after a release, say): a conflict before the
-        // engine runs, never a second outcome and never an AI refusal.
+        // Another person's different answer to the same request (a card sent again after a release, say): the engine's
+        // conflict with the stored answer (approval.outcome-final), never a second outcome and never an AI refusal.
         HttpCall other = await runner.Answer(item, Personas.AllRolesId, approve: false, respondedOn.AddMinutes(5));
         Assert.Equal(409, other.Status);
         Assert.Equal("conflict", other.Json!["error"]!["code"]!.GetValue<string>());
-        Assert.Contains("already holds the final outcome approved", other.Json["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("already has the final outcome approved", other.Json["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+
+        // Another person's answer with the same outcome: the engine compares outcomes only and would answer that nothing
+        // changed, so the route answers the conflict itself before the engine runs, with or without the key.
+        foreach (bool withKey in new[] { true, false })
+        {
+            HttpCall same = await runner.Answer(item, Personas.AllRolesId, approve: true, respondedOn.AddMinutes(6), withKey: withKey);
+            Assert.Equal(409, same.Status);
+            Assert.Equal("conflict", same.Json!["error"]!["code"]!.GetValue<string>());
+            Assert.Contains("already holds the final outcome approved", same.Json["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        }
+
         Assert.Equal(before, Dump(host));
         Assert.Equal(Personas.OwenId, Records(host).Get("approval-record", approvalId)!.Text("approver"));
     }
@@ -264,31 +275,97 @@ public sealed class ApprovalRunnerTests
     }
 
     [Fact]
-    public async Task ExpiredRequestsAreSkippedAndLateAnswersAreConflicts()
+    public async Task TheEngineExpiresRequestsAndJudgesLateAnswers()
     {
         await using ProductTestHost host = RunnerHost.Start();
-        (string approvalId, _) = await SubmitIntake(host);
+        (string approvalId, string decisionId) = await SubmitIntake(host);
         DateTime expires = host.Clock.UtcNow.AddDays(5);
         SetExpiresOn(host, approvalId, expires);
         var runner = new FakeApprovalRunner(host);
         RunnerItem item = Assert.Single(await runner.Claim(leaseSeconds: 60));
         Assert.Equal(expires, RecordEndpoints.Moment(item.Json["expiresOn"]!.GetValue<string>()));
 
-        // A late answer: refused before the engine runs, the record stays pending, the outbox row is expired.
-        string before = Dump(host);
+        // An answer given after Expires On that reaches the product before the engine expired the record: the engine
+        // keeps it but does not count it (approval.expired, an information reason, so not a warning), and opens a new
+        // request for the same requirement in the same transaction. The decision stays proposed, and the new request gets
+        // its own outbox row.
         HttpCall late = await runner.Answer(item, Personas.OwenId, approve: true, expires.AddMinutes(1));
-        Assert.Equal(409, late.Status);
-        Assert.Equal("conflict", late.Json!["error"]!["code"]!.GetValue<string>());
-        Assert.Equal(before, Dump(host));
-        Assert.Equal("pending", Records(host).Get("approval-record", approvalId)!.Text("outcomeMeaning"));
-        Assert.Equal(ApprovalOutboxStates.Expired, Outbox(host).Get(approvalId)!.State);
+        Assert.True(late.Status == 200, late + "\n" + host.Logs);
+        Assert.Equal("approved", late.Json!["data"]!["outcome"]!["meaning"]!.GetValue<string>());
+        Assert.False(late.Json["data"]!["countsTowardRequirement"]!.GetValue<bool>());
+        Assert.Equal("proposed", late.Json["data"]!["decisionStatus"]!.GetValue<string>());
+        Assert.Contains("asks again", late.Json["summary"]!.GetValue<string>(), StringComparison.Ordinal);
+        string restart = Assert.Single(late.Json["data"]!["openedApprovalRecordIds"]!.AsArray())!.GetValue<string>();
+        Assert.Equal(ApprovalOutboxStates.Answered, Outbox(host).Get(approvalId)!.State);
+        Assert.Equal("pending", Records(host).Get("approval-record", restart)!.Text("outcomeMeaning"));
+        Assert.Equal(decisionId, Records(host).Get("approval-record", restart)!.Text("decision"));
+        Assert.Equal(ApprovalOutboxStates.Pending, Outbox(host).Get(restart)!.State);
+        RunnerItem restartItem = Assert.Single(await runner.Claim());
+        Assert.Equal(restart, restartItem.ApprovalRecordId);
+        Assert.Equal(200, (await runner.Sent(restartItem)).Status);
 
-        // A request whose record passed Expires On is never offered: the claim settles it as expired.
-        (string second, _) = await SubmitIntake(host, "Van mileage claims");
+        // A request whose record passed Expires On: the claim has the engine expire it first, and the engine opens the
+        // restart. The expired request gets no card; an answer to it now is refused by the engine and changes nothing.
+        (string second, string secondDecision) = await SubmitIntake(host, "Van mileage claims");
         SetExpiresOn(host, second, host.Clock.UtcNow.AddDays(2));
         host.Clock.UtcNow = host.Clock.UtcNow.AddDays(2);
-        Assert.Empty(await runner.Claim());
+        HttpCall claim = await runner.ClaimCall();
+        Assert.True(claim.Status == 200, claim.ToString());
+        Assert.Equal(1, claim.Json!["data"]!["refresh"]!["expiredRecords"]!.GetValue<int>());
+        Assert.Equal(1, claim.Json["data"]!["refresh"]!["openedRecords"]!.GetValue<int>());
+        Assert.Equal("expired", Records(host).Get("approval-record", second)!.Text("outcomeMeaning"));
         Assert.Equal(ApprovalOutboxStates.Expired, Outbox(host).Get(second)!.State);
+        StoredRow restarted = Records(host).Query(RowQuery.For("approval-record").Where("decision", secondDecision).Where("outcomeMeaning", "pending")).Single();
+        Assert.Equal(restarted.Id, new RunnerItem(Assert.Single(claim.Json["data"]!["items"]!.AsArray())!).ApprovalRecordId);
+
+        string before = Dump(host);
+        var expiredItem = new RunnerItem(JsonNode.Parse("{\"approvalRecordId\":\"" + second + "\",\"claimId\":\"gone\",\"decisionId\":\"" + secondDecision + "\",\"ask\":{\"kind\":\"role\",\"principals\":[],\"groups\":[\"" + Personas.PlatformAdminGroup + "\"]},"
+            + "\"answerHints\":" + item.Json["answerHints"]!.ToJsonString() + "}")!);
+        HttpCall afterExpiry = await runner.Answer(expiredItem, Personas.OwenId, approve: true, host.Clock.UtcNow.AddDays(-1));
+        Assert.Equal(409, afterExpiry.Status);
+        Assert.Equal("conflict", afterExpiry.Json!["error"]!["code"]!.GetValue<string>());
+        Assert.Contains("final outcome expired", afterExpiry.Json["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Equal(before, Dump(host));
+
+        // Nothing is due any more: the next claim refreshes nothing and offers nothing new.
+        HttpCall quiet = await runner.ClaimCall();
+        Assert.Equal(0, quiet.Json!["data"]!["refresh"]!["decisions"]!.GetValue<int>());
+        Assert.Empty(quiet.Json["data"]!["items"]!.AsArray());
+    }
+
+    [Fact]
+    public async Task AClaimRefreshesAtMostMaxRefreshDecisionsAndTheNextClaimGoesOn()
+    {
+        var settings = new HostSettings();
+        settings.Settings[ApprovalRunnerOptions.SectionName + ":MaxRefresh"] = "1";
+        await using ProductTestHost host = RunnerHost.Start(settings);
+        var runner = new FakeApprovalRunner(host);
+        var expired = new List<string>();
+        foreach (string title in new[] { "Tool hire bookings", "Site photo archive" })
+        {
+            (string approvalId, _) = await SubmitIntake(host, title);
+            SetExpiresOn(host, approvalId, host.Clock.UtcNow.AddDays(1));
+            expired.Add(approvalId);
+        }
+
+        // Both cards went out and wait for answers, so only the refresh reaches them.
+        foreach (RunnerItem item in await runner.Claim())
+        {
+            Assert.Equal(200, (await runner.Sent(item)).Status);
+        }
+
+        host.Clock.UtcNow = host.Clock.UtcNow.AddDays(1);
+        for (int claim = 1; claim <= 3; claim++)
+        {
+            HttpCall call = await runner.ClaimCall();
+            Assert.True(call.Status == 200, call.ToString());
+            int expected = claim <= 2 ? 1 : 0;
+            Assert.Equal(expected, call.Json!["data"]!["refresh"]!["decisions"]!.GetValue<int>());
+            Assert.Equal(expected, call.Json["data"]!["refresh"]!["expiredRecords"]!.GetValue<int>());
+            Assert.Equal(expected, call.Json["data"]!["items"]!.AsArray().Count);
+        }
+
+        Assert.All(expired, id => Assert.Equal("expired", Records(host).Get("approval-record", id)!.Text("outcomeMeaning")));
     }
 
     [Fact]

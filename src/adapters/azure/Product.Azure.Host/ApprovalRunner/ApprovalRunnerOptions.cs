@@ -36,6 +36,14 @@ public sealed class ApprovalRunnerOptions
     /// Default 3.
     /// </summary>
     public int MaxAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// The most decisions one claim brings up to date before it leases items: 1 to 500. Default 50. A claim first asks
+    /// the engine, as the approval runner, for the decisions with approval work due (a pending Approval Record past its
+    /// Expires On, or a pending record of a decision that is no longer proposed) and runs the engine's approval refresh
+    /// for each: the engine writes expired or cancelled and opens the restarts. What is left waits for the next claim.
+    /// </summary>
+    public int MaxRefresh { get; set; } = 50;
 }
 
 /// <summary>Startup checks of <see cref="ApprovalRunnerOptions"/>.</summary>
@@ -58,6 +66,11 @@ public sealed class ApprovalRunnerOptionsValidator : IValidateOptions<ApprovalRu
         if (options.MaxAttempts < 1 || options.MaxAttempts > 20)
         {
             failures.Add("Product:ApprovalRunner:MaxAttempts must be from 1 to 20.");
+        }
+
+        if (options.MaxRefresh < 1 || options.MaxRefresh > 500)
+        {
+            failures.Add("Product:ApprovalRunner:MaxRefresh must be from 1 to 500.");
         }
 
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);

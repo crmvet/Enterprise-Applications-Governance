@@ -41,7 +41,8 @@ internal sealed class ApprovalRequestCards
     /// <summary>
     /// The outbox state for a claim candidate that should get no card, or null when it gets one: the record holds an
     /// outcome (answered, expired, cancelled), it passed its Expires On (expired), or its decision is no longer proposed
-    /// (cancelled: the engine does not cancel open records yet, so the outbox stops here).
+    /// (cancelled). The engine writes expired and cancelled itself in its approval refresh, which the claim runs first;
+    /// this check only keeps a card from going out for a record the refresh has not reached yet.
     /// </summary>
     public static string? SettledState(StoredRow? record, StoredRow? decision, DateTime nowUtc)
     {
@@ -97,8 +98,10 @@ internal sealed class ApprovalRequestCards
     // ---- Who to ask (document 26, AN-04) ----
 
     // An owner role: the current holders in Owner Assignment for the decision's application, users only (a Principal
-    // Reference that records another kind, or an erased one, is left out). A product role: the Entra groups bound to it
-    // in the configuration in force; the runner lists their members and keeps users only.
+    // Reference that records another kind, or an erased one, is left out), and not those whose approval already counts
+    // for the same requirement of this decision: the engine counts one person once per requirement, so a rule that needs
+    // two answers asks the others for the second. A product role: the Entra groups bound to it in the configuration in
+    // force; the runner lists their members and keeps users only.
     private JsonTreeNode Ask(StoredRow record, StoredRow decision, DateTime nowUtc)
     {
         string? ownerRole = record.Text("requiredOwnerRole");
@@ -110,7 +113,10 @@ internal sealed class ApprovalRequestCards
             string? application = ApplicationOf(_records, decision);
             if (application != null)
             {
-                List<StoredRow> current = CurrentAssignments(_records, application, ownerRole, nowUtc);
+                HashSet<string> counted = CountedResponders(record, decision);
+                List<StoredRow> current = CurrentAssignments(_records, application, ownerRole, nowUtc)
+                    .Where(a => a.Text("principal") is not string principal || !counted.Contains(principal))
+                    .ToList();
                 List<StoredRow> holders = current.Where(a => !a.Flag("isDeputy")).ToList();
                 foreach (StoredRow assignment in holders.Count > 0 ? holders : current)
                 {
@@ -139,6 +145,27 @@ internal sealed class ApprovalRequestCards
             ("roleKey", Js.Str(ownerRole ?? role)),
             ("principals", Js.Strs(principals)),
             ("groups", Js.Strs(groups)));
+    }
+
+    // The responders whose approval already counts for the record's requirement (the same Approval Rule, or the same
+    // Decision Right when the record names no rule) on the same decision.
+    private HashSet<string> CountedResponders(StoredRow record, StoredRow decision)
+    {
+        string? rule = record.Text("approvalRule");
+        string? right = record.Text("decisionRight");
+        var counted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (StoredRow other in _records.Query(RowQuery.For("approval-record").Where("decision", decision.Id)))
+        {
+            bool sameRequirement = rule != null
+                ? string.Equals(other.Text("approvalRule"), rule, StringComparison.Ordinal)
+                : other.Text("approvalRule") == null && string.Equals(other.Text("decisionRight"), right, StringComparison.Ordinal);
+            if (sameRequirement && other.Flag("countsTowardRequirement") && other.Text("approver") is string approver)
+            {
+                counted.Add(approver);
+            }
+        }
+
+        return counted;
     }
 
     private bool IsAskableUser(string objectId)

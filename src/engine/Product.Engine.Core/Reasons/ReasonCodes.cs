@@ -21,6 +21,7 @@ public static class ReasonCodes
     public const string ApprovalOutcomeWriter = "approval.outcome-writer";
     public const string ApprovalNoRequirement = "approval.no-requirement";
     public const string ApprovalSequenceWaiting = "approval.sequence-waiting";
+    public const string ApprovalResponderAlreadyCounted = "approval.responder-already-counted";
 
     // ---- OP-02 required approvals ----
     public const string RuleGroupAmbiguous = "rule-group.ambiguous";
@@ -98,6 +99,10 @@ public static class ReasonCodes
     public const string PrincipalErasureNotAllowed = "principal.erasure-not-allowed";
     public const string PrincipalErasureFinal = "principal.erasure-final";
 
+    // G-06 "only once": the approval runner's different second answer for a record that already holds a final outcome.
+    // A conflict, not a refusal of who wrote it.
+    public const string ApprovalOutcomeFinal = "approval.outcome-final";
+
     // Document 22, section 8.1: a proposed decision is withdrawn only by its proposer or its decider.
     public const string DecisionWithdrawNotAllowed = "decision.withdraw-not-allowed";
 
@@ -105,6 +110,9 @@ public static class ReasonCodes
     // WORKING DEFAULT (open design question 12): document 26, RA-07. An app-only caller counts only with a current
     // Workload Grant, and only for that grant's workload role.
     public const string ActorWorkloadGrantMissing = "actor.workload-grant-missing";
+
+    // The approval refresh (expiry, restarts and cancellations) is the approval runner's call only.
+    public const string ApprovalRefreshNotAllowed = "approval.refresh-not-allowed";
 
     // ---- Activation and the bootstrap of version 1: proposed codes ----
     public const string ActivationDiscarded = "activation.discarded";

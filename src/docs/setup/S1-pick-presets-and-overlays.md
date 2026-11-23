@@ -1,7 +1,7 @@
 # Guide S1. Pick a preset and overlays
 
-- **Status:** skeleton, 0.1 draft, 2026-11-22. Nothing here was run against a tenant.
-- **Guide set:** setup guides S1 to S3 and admin guides A1 and A2. Index: [README](../README.md).
+- **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant. Steps 1 to 6 and the offline dry runs work today; steps 7 and 8 are designed but not built (see each step).
+- **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
 - **Design sources:** document 21, sections 4.8, 4.9, 6.1 to 6.8 and 7.6; document 26, sections 3.5 and 7.7; document 28, Q2, Q3, Q5, Q6 and Q10; `config/presets/README.md`.
 - **Open design questions that touch this guide:** 1, 4, 7, 8 and 12 (markers below).
 
@@ -16,12 +16,13 @@ Choose the configuration an adopter starts from: one full preset, plus any overl
 | The adopter's platform owner | Decides. Accountable for the choice |
 | The adopter's configuration admin | Will own the working set after install. Runs the workshop and the dry run, or asks an external admin to (guide [A1](../admin/A1-external-admin-access-runbook.md)) |
 | The change manager and a security reviewer | Consulted on gate levels and separation of duties |
-| A person with platform admin rights in the adopter's tenant | Runs the apply at install (step 7). See open point 2 |
+| A person with platform admin rights in the adopter's tenant | Runs the apply at install (step 7), as themselves, never through a pipeline. See open point 2 |
 
 ## Prerequisites
 
-- The shipped presets of the release, as built bundles (`config/build/<preset-key>.bundle.json`) or, once installed, through the `list_presets` tool.
-- For the dry run: the engine command line from the release (no sign-in, no tenant). It reads files only.
+- The shipped presets of the release, as built bundles (`config/build/<preset-key>.bundle.json`) or, once a version is in force, through the `list_presets` tool.
+- For steps 7 and 8: the product deployed with its role groups and app registrations (guide [S4](S4-prepare-entra-and-deploy.md)).
+- For the dry run: the engine command line from the release (no sign-in, no tenant), and the .NET 10 SDK to run it (`src/global.json` pins the version). It reads files only. Until a release ships it built, build it once from `src/` with `dotnet build engine/Product.Engine.Cli/Product.Engine.Cli.csproj -c Release` (or run `node tools/ci.mjs --no-scrub`, which also needs Node 20 or later), which puts it where steps 3 and 8 look.
 - The adopter knows roughly: how many people can approve, whether an auditor or regulator reviews change records, whether it follows Microsoft's agent CoE guidance, and whether an ITSM tool is the system of record for changes.
 - Which full preset installs first by default is still open under D-03 (the change gate page suggests Starter). Until D-03 is decided, pick it every time.
 
@@ -65,7 +66,7 @@ That leaves 22 selections the build checks: each of the 4 full presets alone, 5 
    | Does the CoE already follow Microsoft's agent CoE guidance and want its words? | Start from `microsoft-coe-baseline` | Leave it out |
    | Is an ITSM tool the system of record for change requests? | Add `linked-change-management` | Leave it out (built-in change management) |
 
-2. **Read the candidates.** Read each candidate's `preset.json` (description, `extends`, `conflictsWith`, `setupNotes`) and its patch `$comment`. Once the product is installed, `list_presets` returns the same facts with a summary of tiers, gate levels and approvals.
+2. **Read the candidates.** Read each candidate's `preset.json` (description, `extends`, `conflictsWith`, `setupNotes`) and its patch `$comment`. Once a version is in force, `list_presets` returns the same facts with a summary of tiers, gate levels and approvals.
 
 3. **Dry run the selection, offline.** From the release's `src/` folder:
 
@@ -86,29 +87,44 @@ That leaves 22 selections the build checks: each of the 4 full presets alone, 5 
 
 6. **Record the decision.** Write down the full preset key, the overlay keys in order, and the content versions. At install they go into the version 1 row (`appliedPresetsJson`), so the record shows what the adopter started from.
 
-7. **Apply at install (bootstrap of version 1).** A person with platform admin rights runs the apply operation with the chosen preset and overlays, as themselves, usually through Claude Code and the product's MCP server (document 21, section 4.8). No rules exist yet, so version 1 is accepted directly by that person and recorded as a configuration change decision with that person as decider. This is engine contract, not a setting, and it is the only no-card case outside the locked list.
-   - [branch: Dataverse] The installer holds the environment's system administrator role. Each preset bundle arrives as one read-only JSON web resource in the managed solution. Package Deployer custom code, or the setup service through the MCP server, calls the engine's apply operation after import (document 21, section 11.1). See open point 1.
-   - [branch: Azure] The deployment identity installs the stack. A post-deployment script stores each preset bundle in `config.SeedPackage`. The deployment pipeline then runs the engine's apply command, or the first admin runs it through the MCP server (document 21, section 11.2). See open points 1 and 2.
+7. **Apply at install (bootstrap of version 1). Not built yet as a route.** A person with platform admin rights runs the apply operation with the chosen preset and overlays, as themselves, usually through Claude Code and the product's MCP server (document 21, section 4.8). No rules exist yet, so version 1 is accepted directly by that person and recorded as a configuration change decision with that person as decider. This is engine contract, not a setting, and it is the only no-card case outside the locked list.
+   - What is built: the engine's bootstrap operation. It accepts a person, or an AI client acting for a person (the AI client is the performer and the person the decider), who holds the platform's install rights while no version exists; it refuses a pipeline, an agent user and a person without install rights (fixtures under `fixtures/bootstrap/`).
+   - What is not built: a route or MCP tool that calls it, and the platform fact that says who holds install rights. So a deployed install cannot reach version 1 yet (open points 1 and 2).
+   - The local server's `seed` command is not a bootstrap. It runs only in the Development environment, and it writes version 1 and demo rows past the engine for local runs and tests.
+   - [branch: Azure] The deployment identity installs the stack (guide S4). The design has a post-deployment step store each preset bundle in `config.SeedPackage`, and the first admin then runs the apply through the MCP server (document 21, section 11.2). Neither the seed package table nor the apply entry point exists in the template yet.
+   - [branch: Dataverse] The installer holds the environment's system administrator role. Each preset bundle arrives as one read-only JSON web resource in the managed solution. Package Deployer custom code, or the setup service through the MCP server, calls the engine's apply operation after import (document 21, section 11.1).
 
-8. **Apply the client binding patch next.** Version 2 binds each human product role to the adopter's Entra group (one Role Group Binding per role) and adds the Workload Grants for pipelines and the approval runner. WORKING DEFAULT (open design question 12). The binding patch holds the adopter's facts, so it lives in the adopter's own private repository or nowhere, never in a public preset (V44). Guide [A1](../admin/A1-external-admin-access-runbook.md) covers how an external admin gets the access to do it.
+8. **Apply the client binding patch next. Not built yet as a route.** The binding patch binds each human product role to the adopter's Entra group (one Role Group Binding per role, guide S4, part A), adds a Workload Grant for each pipeline and for the approval runner (guides [S5](S5-connect-the-approval-runner.md), [S6](S6-connect-pipeline-record-steps.md) and [A3](../admin/A3-workload-grants.md)), and puts the registered Claude Code client on the Known Client list (guide [S2](S2-connect-claude-code.md)). WORKING DEFAULT (open design question 12). The binding patch holds the adopter's facts, so it lives in the adopter's own private repository or nowhere, never in a public preset (V44). Guide [A1](../admin/A1-external-admin-access-runbook.md) covers how an external admin gets the access to do it.
+   - Its format is `config/schema/client-binding-patch.schema.json`: upsert and retire by stable key, for `role-group-binding`, `workload-grant`, `known-client` and the portfolio-scoped rows.
+   - Dry run it offline before anything else, from the release's `src/` folder, with the same preset and overlays as step 3:
+
+     ```
+     dotnet engine/Product.Engine.Cli/bin/Release/net10.0/Product.Engine.Cli.dll validate <preset-key> --overlay <overlay-key> --patch <binding-patch-file>
+     ```
+
+     With a patch the mode is draft, so the result is the working set as it would be after the patch. Exit code 0 means no errors. The output lists each row the patch adds, and V37 warns for every role that approves under a rule but has no Role Group Binding ("nobody can answer its cards"); a complete patch shows no such warning. The file stays outside the product's repository.
+   - After version 1 no product role is bound yet, so nobody holds Can Change Configuration through a group, and the engine cannot take the binding patch as an ordinary change (document 21, B21-5). One way is to let the bootstrap take the binding patch with the presets, so version 1 already binds the roles. That is open (open point 5).
 
 9. **Changing preset later.** A later switch is a large configuration change: `propose_configuration_change` with the `preset` input builds a draft whose diff shows every row that would change; rows with origin local stay unless the patch replaces them. A person accepts the engine's diff on one card. The instructing admin may accept their own AI's draft; under Regulated or `strict-separation` a second configuration admin must accept. WORKING DEFAULT (open design question 4)
 
 ## Checks
 
 - The dry run of step 3 exits 0 for the chosen selection, with only the expected warnings.
+- The offline dry run of the binding patch (step 8) exits 0, and the file is not in the product's repository.
 - After step 7: `get_configuration_health` shows version 1 active, with its content hash and the decision behind it.
 - `get_configuration` for `gate-policy` matches the matrix above for the chosen preset.
 - `explain_rules` on one sample record names the expected winning rule group.
-- After step 8: `check_role_bindings` shows every human role bound to an existing group, every workload grant with an Expires On no more than `workload-grant-max-days` (default 365) ahead, and no direct assignment without a grant.
+- After step 8: `check_role_bindings` reports every bound group as existing, every Workload Grant with its app role assignment found and not expired, and no direct assignment without a grant (guide A3, part B). Validation already refused any grant whose Expires On is more than `workload-grant-max-days` (default 365) ahead (V28).
+- After step 8: `whoami` through Claude Code answers the person's roles from their groups, and the Client App reads "Claude Code" from the Known Client list.
 - After any product upgrade: the upgrade arrives as one upgrade draft, and rows the adopter changed are listed as conflicts, never overwritten (document 21, section 4.9; 28, Q5).
 
 ## Open points
 
-1. The MCP route for the bootstrap apply has no tool in document 24. `propose_configuration_change` takes a `preset` input, but it creates a draft that needs a card, and at bootstrap no approval rule exists yet. Document 21 names the other routes (Package Deployer custom code on Dataverse, the engine's apply command on Azure). Document 24 should either add the MCP entry point or say the bootstrap never goes through MCP.
-2. Who the decider of version 1 is. Document 21, section 4.8 says a person with platform admin rights accepts version 1 directly. Section 11.2 lets the Azure deployment pipeline run the apply with its workload identity, which is not a person, and before any role is bound nobody holds "platform admin rights" in the product. The documents should say which person is recorded as the decider on each branch, and that a pipeline only stages the seed.
+1. **The entry point for the bootstrap apply.** Document 24 has no MCP tool for it, and the Azure binding has no route. `propose_configuration_change` takes a `preset` input, but it creates a draft that needs a card, and at bootstrap no approval rule exists yet. The engine operation is built; the entry point is not. Proposal: a bootstrap tool (or route) that answers only while no version exists, takes the preset, the overlays and the binding patch, and runs as the signed-in person.
+2. **Who the decider of version 1 is, and what "install rights" are on Azure.** Document 21, section 4.8 says a person with platform admin rights accepts version 1 directly. Section 11.2 lets the Azure deployment pipeline run the apply with its workload identity. As built, the engine refuses a pipeline and accepts only a person (directly, or through an AI client acting for them) with the platform's install rights, so section 11.2 should say that a pipeline only stages the seed. What proves install rights on Azure is not designed: before version 1 nobody holds a product role. Proposal: with open point 5, the caller must be a member of the group the binding patch binds to `platform-admin`, read from the token's groups claim, for the bootstrap call only.
 3. RR-06 (document 26, section 3.5) says Regulated sets Requires Just In Time = Yes for the configuration admin and platform admin roles. The schema has the column (`requiresJustInTime`, a proposal), but no shipped preset sets it, so CHK-08 has nothing to flag on Regulated.
 4. Which full preset installs first by default is part of D-03.
+5. **The binding patch after version 1** (document 21, B21-5): with no role bound, nobody can instruct or accept the patch as an ordinary change. Taking the patch with the bootstrap would close the gap.
 
 ## Microsoft facts used
 

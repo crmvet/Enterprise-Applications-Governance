@@ -127,7 +127,10 @@ Document as the client ID, in public preview, and Microsoft writes
 1. **App registrations > New registration.** Any name, for example "Governance MCP client". Accounts in this
    organizational directory only.
 2. **Authentication > Add a platform > Mobile and desktop applications.** Add the redirect URI
-   `http://localhost:<port>/callback` with a fixed free port, for example `33418`.
+   `http://localhost:<port>/callback` with a fixed free port, for example `33418`. Microsoft Entra ID ignores the port
+   when it matches a localhost redirect URI, so this one entry also covers `http://localhost/callback` and any other
+   port; do not add a second localhost entry that differs only by port
+   ([Redirect URI best practices](https://learn.microsoft.com/entra/identity-platform/reply-url)).
 3. On the **API app registration > Expose an API > Add a client application**, add this client's ID and select the
    `mcp.access` scope. People then see no consent prompt. (Alternatively, add the `mcp.access` permission on this
    client under API permissions and grant admin consent.)
@@ -298,7 +301,9 @@ project and uploads the package, all with your own sign-in. Run the hook again a
 
 Then check, with the URL azd prints (`azd env get-values` lists `PRODUCT_PUBLIC_BASE_URL` and `PRODUCT_MCP_URL`):
 
-- `GET <base URL>/health/live` and `GET <base URL>/health/ready` answer 200 with no data.
+- `GET <base URL>/health/live` and `GET <base URL>/health/ready` answer 200 with a status word only
+  (`{"status":"live"}`, `{"status":"ready"}`); `ready` answers 503 with `{"status":"unavailable"}` while the database
+  does not answer in time.
 - `GET <base URL>/.well-known/oauth-protected-resource/mcp` answers the protected resource metadata.
 - `POST <base URL>/mcp` with no token answers 401 with a `WWW-Authenticate` header that links the metadata.
 - With the web app on, `GET <base URL>/app/config.json` names your tenant's sign-in, the web app's client ID and the
@@ -341,14 +346,13 @@ Application ID URI only on a verified domain of the tenant. So a production inst
 
 ## After deployment
 
-- The database starts empty: no configuration version is in force, so tools that need the configuration refuse.
-  Loading the first version (a preset, plus your client binding: Role Group Bindings with your group IDs, Workload
-  Grants, Known Clients) through the API comes in a later release. For a pilot, the local server's `seed` command
-  (`../README.md`) can write version 1 into an empty database, run by the SQL administrator from a machine the
-  firewall allows, with a binding file that holds your own group and client IDs. The command runs only in the
-  Development environment, so pass `--environment Development` and `--Product:Store:Provider=sqlserver` with the
-  connection string. The fictional demo binding in
-  `../seed` is for local runs only.
+- The database starts empty: no configuration version is in force, so tools that need the configuration refuse with
+  `configuration_unavailable`. Loading the first version (a preset, plus your client binding: Role Group Bindings with
+  your group IDs, Workload Grants, Known Clients) is the engine's bootstrap of version 1, which no route or MCP tool
+  calls yet (guide S1, step 7, and guide S4, part F, in `../../../docs/setup/`). The local server's `seed` command
+  (`../README.md`) is not a way around this: it writes version 1 and its rows past the engine, so no person is
+  recorded as the decider, and it runs only in the Development environment, for local runs and tests. Do not point it
+  at a deployed database. The fictional demo binding in `../seed` is for local runs only.
 - `azd deploy` publishes a new build. `azd provision` reapplies the infrastructure and the migrations.
 - `azd down` deletes the resource group. Add `--purge` to purge the Key Vault too (not possible with purge protection
   on).

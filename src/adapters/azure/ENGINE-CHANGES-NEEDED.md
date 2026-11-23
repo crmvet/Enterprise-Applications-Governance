@@ -60,45 +60,10 @@ Requirement, the two writes the engine still makes on those rows (G-05, G-06).
 - **Change.** None needed in the engine for correctness: its guard is the control. A later store could keep the
   allowed transitions in a stored procedure the app identity calls instead of a table update.
 - **Workaround here.** `fn_DecisionOpen` lets a final Decision change while its Superseded By is empty, and
-  `fn_ApprovalPending` lets a final Approval Record change in the approval runner's request (the only request that
-  recomputes approvals). Both still refuse everything the engine never writes from any other request.
-
-### 11. A refused write by the approval runner reads as an AI refusal (optional)
-
-`errors.json` lists `approval.outcome-writer` under `ai_cannot_do_this`, and the error map tries the codes `errors.json`
-names before it looks at who the caller is. So when the approval runner sends a second, different answer to an Approval
-Record that already holds a final outcome, the engine refuses it with `approval.outcome-writer`, which maps to 403
-`ai_cannot_do_this`, although the caller is a workload and no AI is involved.
-
-- **Change.** Map an AI-only reason to `ai_cannot_do_this` only for an AI caller, and give the runner's refusal its own
-  reason (for example a final-outcome reason mapped to `conflict`).
-- **Workaround here.** The approval outcome endpoint answers a different answer for a record that already holds a
-  final outcome with 409 `conflict` before the engine runs, when the runner sends its `Idempotency-Key` (it always
-  does). Without the key, the engine's refusal comes back as before. Either way nothing changes.
-
-### 13. One Approval Record per requirement (needed for some rules)
-
-The engine opens one Approval Record for each required approval of the winning rule group, and each record holds one
-answer. A rule whose Minimum Count is above 1 (the strict separation overlay asks two change board members) therefore
-gets one record and can never be met, and "everyone must approve" and sequential rules collapse to one answer.
-Document 23 (S1, step 3) asks for one record per required response.
-
-- **Change.** Open as many Approval Records as the rule's Minimum Count (or one per named approver for "everyone"
-  rules), and count them in OP-03 as document 23 describes.
-- **Workaround here.** None. The approval runner sends one first-to-respond card per record (`flows/README.md`), and a
-  decision under such a rule stays proposed. The configuration health check should flag such rules once the change is
-  designed.
-
-### 14. Approval expiry and restarts (needed)
-
-Document 23 (S2) has the engine write an expired outcome when an Approval Record passes its Expires On, and restart the
-approval with a new pending record. Neither is built. An answer stored as recommendation only (from an agent, or from
-a responder who does not hold the role) also leaves its requirement unmet until a restart sends a new card.
-
-- **Change.** The due-state refresh writes the expired outcome, and a restart opens a new pending record for the same
-  requirement.
-- **Workaround here.** The approval outcome endpoint refuses an answer given at or after Expires On with 409 and settles
-  the outbox row as expired, so no new card goes out for it. The record itself stays pending in the engine.
+  `fn_ApprovalPending` lets a final Approval Record change in the approval runner's request (the only requests that
+  recompute approvals: an answer on the approval outcome endpoint, and the approval refresh a claim runs). Both still
+  refuse everything the engine never writes from any other request. The engine's own expired and cancelled outcomes,
+  and the restarts it opens, change pending rows or add new ones, which the predicate allows from any request.
 
 ### 15. A person answering their own approval on the product's page (design needed)
 
@@ -128,6 +93,45 @@ Workload Grant: an answer whose approver is the writing workload itself, or any 
   Required Role with false for an owner role's answer from someone who holds no current assignment of that role. A
   product role's holders are the members of its Entra groups, which only the runner reads, so its value still stands as
   the runner sends it.
+
+### 17. The same outcome from another responder reads as the same answer again (optional)
+
+G-06 ("only once") compares the outcome only: when an Approval Record already holds approved and the approval runner
+sends approved again, the engine answers that nothing changed, whoever the responder and whenever the answer was given.
+A second person's answer to a request that already has its answer (a card sent again after a release, say) then reads
+as a success.
+
+- **Change.** Compare the responder and Responded On as well, and answer a different responder with
+  `approval.outcome-final`, as a different outcome already is.
+- **Workaround here.** The approval outcome endpoint answers 409 `conflict` before the engine runs when the record holds
+  a final outcome and the answer has the same outcome but another responder or another time, unless the
+  `Idempotency-Key` names a request the engine already recorded. With or without the key, nothing is written.
+
+### 18. A late answer carries no warning (optional)
+
+OP-03 does not count an answer given at or after Expires On, with the reason `approval.expired`. The reason's catalog
+severity is information, and the envelope lists warnings only, so the runner's answer says that the answer does not
+count and that the engine asked again, but not why.
+
+- **Change.** Give `approval.expired` the warning severity when it judges an answer (not a pending record), or list the
+  reasons that kept an answer from counting in the outcome's payload.
+- **Workaround here.** None. `get_approval_status` shows the record's outcome, its Responded On and that it does not
+  count; the claim that carried its card showed its Expires On.
+
+### 19. A timely answer that arrives after the refresh expired its record (design needed)
+
+OP-03 counts an answer given before Expires On. The approval refresh writes expired on a pending record as soon as a
+claim runs at or after Expires On, and expired is final (G-06). An answer the person gave before Expires On that reaches
+the product after that claim (the child flow posts it a few minutes later, or retries after a failure) is then refused
+with 409 and recorded nowhere, although OP-03 would have counted it; the person must answer the restart's card. Before
+the refresh existed, such an answer was recorded and counted.
+
+- **Change.** One of: a grace period after Expires On before the refresh writes expired (a setting, at least the
+  runner's poll interval plus its lease), so answers in transit land first; or let the approval runner's answer replace
+  an engine-written expired outcome when its Responded On is before Expires On, cancelling the restart if the answer
+  meets the requirement. Either changes document 25 (G-06, OP-03) and document 23 (S1 step 9).
+- **Workaround here.** None. Guide A4 says that an answer reaching the product after its record expired is refused and
+  that the person answers the new card.
 
 ## Done, and how this folder uses it
 
@@ -179,3 +183,53 @@ non-user reference makes the answer recommendation only, and a user reference ne
 runner.
 
 - **Used here.** The approval outcome endpoint still replaces a non-user kind before the engine runs, as a second layer.
+
+### 11. A refused write by the approval runner no longer reads as an AI refusal (done)
+
+The engine answers the approval runner's different second answer for a record that already holds a final outcome with
+its own reason, `approval.outcome-final`, a conflict with the stored answer. `EngineErrorMap` gives
+`ai_cannot_do_this` only to an AI caller: any other caller refused for a reason that `errors.json` lists under it gets
+the code of the reason's catalog category.
+
+- **Used here.** The approval outcome endpoint passes a different outcome for a settled record (an answer, expired or
+  cancelled) to the engine and answers its refusal through the map: 409 `conflict`. The endpoint no longer answers that
+  case itself. It keeps one check of its own (item 17).
+
+### 13. One Approval Record per required answer (done)
+
+The engine opens as many pending Approval Records as each counting requirement still needs to reach its Minimum Count
+(document 23, S1 step 3; document 25: "everyone must approve" is met at Minimum Count too), the first step only of a
+sequential group, and one record per consultation. OP-03 counts one person once within a requirement, in time order,
+so a Minimum Count of 2 means two different people. When a decision settles, the engine cancels the records still
+pending in the same transaction. When an answer does not count (from an AI client or an agent, from someone who does
+not hold the role, given after Expires On, or a second answer from someone who already counts), the recompute opens a
+new record for the requirement in the same transaction, and so does the next step of a sequential group.
+
+- **Used here.** Nothing changed in the outbox: each new pending record gets its outbox row and each cancelled one is
+  settled in the engine's own commit, through the commit hook. The runner sends one first-to-respond card per record. A
+  claim item for an owner role leaves out the holders whose approval already counts for the same requirement, so the
+  second card of a two-answer rule asks the others. The approval outcome endpoint's answer lists the records the
+  engine opened (`openedApprovalRecordIds`) and cancelled (`cancelledApprovalRecordIds`) in the same transaction, and
+  the decision's status (`decisionStatus`). For a product role the runner lists the group's members and cannot leave
+  out who already answered, so such a person may get the next card too; their second answer does not count, and the
+  engine asks again.
+
+### 14. Approval expiry and restarts (done)
+
+`EngineRuntime.FindDueApprovals` lists the decisions with approval work due (a pending record at or past its Expires
+On, or a pending record of a decision that is no longer proposed), and `EngineRuntime.RefreshApprovals` brings one
+decision up to date: it writes expired on the records past Expires On, recomputes, and opens the restarts, or cancels
+the pending records of a settled decision. Only the approval runner, holding a current approval writer grant, may call
+either (`approval.refresh-not-allowed` otherwise). An answer whose Responded On is at or after Expires On is kept but
+does not count (`approval.expired`), and the recompute restarts the requirement.
+
+- **Used here.** Every claim (`POST /engine/v1/approval-runner/claims`) first runs the refresh as the caller, the
+  approval runner: up to `Product:ApprovalRunner:MaxRefresh` decisions (default 50) that `FindDueApprovals` lists, in
+  its order, and any other decision whose claim candidate it finds past Expires On or settled. The engine's own
+  commits settle the outbox rows of expired and cancelled records and add the rows of the restarts, so the same claim
+  offers the restarts it opened first. The claim's answer counts what the refresh did (`refresh`), and the log says the
+  same. The approval outcome endpoint no longer refuses a late answer itself: it passes it to the engine, which keeps it
+  without counting it and asks again. An answer to a record the engine already expired is the engine's conflict (409).
+  The refresh runs only when the runner polls: with the runner's routes off, or its flows stopped, no record is
+  written as expired, although OP-03 already reads a pending record past Expires On as expired. Document 23, S2 has a
+  daily timer for the due-state refresh; the Azure binding has none yet.

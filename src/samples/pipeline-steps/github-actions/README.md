@@ -18,13 +18,13 @@ Read the shared rules first: [../README.md](../README.md).
 3. **The role.** WORKING DEFAULT (open design question 12).
    - Azure binding: assign the record endpoint's `Deployment.Record` app role directly to the workflow's service
      principal. A group's app roles do not reach a service principal's token.
-   - Dataverse binding: add the app registration as an application user in the product's environment, with the
+   - Dataverse binding (a possible later edition, not planned; D-26): add the app registration as an application user in the product's environment, with the
      deployment recorder security role.
    - Either way, the platform admin records a workload grant for the identity: a reason, the deciding decision
      and an expiry. Without a current grant the endpoint answers 403, and the step warns.
 4. **Configuration variables** (repository or environment variables; none of them is a secret):
    - `RECORD_ENDPOINT_URL`: `https://<your product host>/api/deployments` (Azure binding) or
-     `https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment` (Dataverse binding).
+     `https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment` (Dataverse binding, a possible later edition, not planned; D-26).
    - `RECORD_TENANT_ID` and `RECORD_CLIENT_ID`: the tenant ID and the app registration's application ID.
    - `RECORD_TARGET_EXTERNAL_ID`, and `RECORD_BUSINESS_APPLICATION_ID` if you know it.
    - `RECORD_ENDPOINT_SCOPE`, only when the record endpoint's app ID URI is not its origin.

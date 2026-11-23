@@ -2,8 +2,9 @@
 
 The four pages of the product's interface (D-18), as React and Fluent UI v9 components. One source gives two builds:
 the local harness on fictional fixture JSON, and the web app of binding C on the product's REST API (section 8).
-Generative pages on binding A start from the same components. Whether these components run
-unchanged inside a generative page is UNVERIFIED; on binding A they carry over at least as this spec.
+The web app is the first release design. Binding A (generative pages in a model-driven app) belongs to a possible later
+Dataverse edition, not planned (D-26). The binding A notes below and each section's fallback apply only to that
+edition. Whether these components run unchanged inside a generative page is UNVERIFIED.
 
 Sources: document 23 (P03 change management, P05 deployment record, the value stream); document 24 (tools 6, 7, 8,
 25 and 28); document 25 (generative pages and their sources); the MCP tool contracts in `src/mcp/contracts/`;
@@ -16,9 +17,9 @@ Screenshots of every page at 1280 px and 390 px: `src/ui/screenshots/`.
 | Rule | How the pages follow it |
 |---|---|
 | Light only (D-18) | One Fluent light theme built on the Academy palette (`harness/src/theme.ts`). There is no dark theme and no theme switch. Page background light gray `F3F5F8`, panels white, text navy `0A2A4A`, brand blue `0071DC`, gold `FFC221` for attention and for "today" |
-| Read-only | No page writes. Edits open the form (binding A) or the register grid (binding C), or go through an AI client; the engine checks every write. Application 360 says so on the page |
+| Read-only | No page writes. Changes go through an AI client on the product's MCP server or a pipeline's record step, and decisions are made on approval cards. The engine checks every write. Application 360 says so on the page |
 | Numbers come from the server | The pages count nothing. Every figure is a field of a tool output (stored rollups at scale). A list shown next to its count is the same server list. Until a figure is read, its tile shows a placeholder, never a zero |
-| Every number drills to rows | KPI tiles and bars hand a drill-down to the host (`Host.drill`). Binding A opens the matching view. The web app opens the applications list for the Applications tile and the stage, tier and kind bars, and shows the request for an AI client for the others. The harness shows a toast |
+| Every number drills to rows | KPI tiles and bars hand a drill-down to the host (`Host.drill`). In a possible later Dataverse edition, not planned, binding A would open the matching view. The web app opens the applications list for the Applications tile and the stage, tier and kind bars, and shows the request for an AI client for the others. The harness shows a toast |
 | Each panel fails on its own | Every panel holds the state of one tool call. A failure shows inside that panel with the error message and the correlation ID, and the rest of the page keeps working. `?fail=<tool>` in the harness shows it |
 | Hidden rows are said, not shown | `couldNotRead` becomes a note in the panel that owns that kind, for example "1 decision is hidden by your access". A list that shows one page says so when the answer carries a `skipToken` |
 | Text people typed is data | Fields in `untrustedFields` render as plain text only. External links are https only and open in a new tab |
@@ -56,7 +57,8 @@ WORKING DEFAULT (open design question 7).
 
 ## 3. Application 360
 
-On binding A it sits in a tab of the Application main form and receives the record ID
+In a possible later Dataverse edition, not planned, binding A would put it in a tab of the Application main form,
+where it receives the record ID
 (https://learn.microsoft.com/power-apps/maker/model-driven-apps/generative-pages).
 
 **Calls.** Two engine calls, so the generative page six-table limit does not bind it (the card reads its tables on the server).
@@ -67,7 +69,7 @@ On binding A it sits in a tab of the Application main form and receives the reco
 | Owners, owner gaps, "Microsoft's listed owner differs", last owner check | `get_application_owners` | `{ businessApplicationId }` |
 | Labels | `get_configuration` | `{ entity: "owner-role" }`, `{ entity: "target-stage" }` |
 
-**Layout.** Header: name, registration status, data stamp, actions (dependency map, timeline, open the form).
+**Layout.** Header: name, registration status, data stamp, actions (dependency map, timeline; "open the form" only in a possible later Dataverse edition).
 Summary: purpose, a "Needs attention" strip that repeats facts from the panels (owner gaps, stale or missing documents,
 a failed last deployment, the Microsoft owner flag), and six facts (kind, tier, stage and since, build path, uses AI or
 the agreed autonomy level, next review). Two columns below: deployments (latest per target, production first),
@@ -77,8 +79,9 @@ dependencies, decisions, components, links.
 
 **Notes.** The card has no portfolio and no stage list, so the page shows no breadcrumb and no stage stepper (open
 points 2 and 3). An owner gap offers "Propose", which hands over to `propose_owner_change`; it never assigns. In the
-web app, "Propose" opens a dialog with the request to give to an AI client, with a copy button. "Open the form" shows
-only on binding A, because the web app's record link is this page.
+web app, "Propose" opens a dialog with the request to give to an AI client, with a copy button. "Open the form" would
+show only on binding A, in a possible later Dataverse edition, not planned, because the web app's record link is
+this page.
 
 **Fallback.** The main form alone.
 

@@ -15,8 +15,9 @@ using Xunit;
 namespace Product.Mcp.Core.Tests;
 
 // The public engine-to-error map (EngineErrorMap), which the MCP backend uses and the record and approval outcome
-// endpoints share. Every engine reason errors.json names maps to its code and HTTP status for AI and other callers alike;
-// an AI rule's refusal is ai_cannot_do_this only for an AI caller; the runtime outcome words map first.
+// endpoints share. Every engine reason errors.json names maps to its code and HTTP status for AI and other callers alike,
+// but ai_cannot_do_this, which answers only an AI caller; an AI rule's refusal is ai_cannot_do_this only for an AI caller;
+// the runtime outcome words map first.
 public sealed class ErrorMapTests
 {
     private static readonly ContractSet Contracts = ContractSet.Embedded;
@@ -30,10 +31,14 @@ public sealed class ErrorMapTests
 
     private static readonly string[] AiRules = { "G-01", "G-06", "G-08", "G-17", "RA-06" };
 
+    // A reason errors.json names maps to its code, for an AI client and for any other caller alike, with one exception:
+    // ai_cannot_do_this answers only an AI caller. Another caller refused for one of its reasons gets the next code
+    // errors.json names for that reason, or the code of the reason's catalog category, never ai_cannot_do_this.
     [Fact]
-    public void EveryReasonErrorsJsonNamesMapsToItsCodeForEveryCaller()
+    public void EveryReasonErrorsJsonNamesMapsToItsCodeAndAiCannotDoThisOnlyForAnAiCaller()
     {
         int checkedReasons = 0;
+        int otherCallers = 0;
         foreach (ErrorCodeInfo info in Contracts.Errors.Values.Where(e => e.EngineReasons.Count > 0))
         {
             foreach (string pattern in info.EngineReasons)
@@ -48,6 +53,13 @@ public sealed class ErrorMapTests
                     foreach (bool ai in new[] { true, false })
                     {
                         McpError mapped = EngineErrorMap.Map(OperationOutcomes.Refused, new[] { Error(code, "fixture-ref") }, Contracts, ai);
+                        if (!ai && expected == McpErrorCodes.AiCannotDoThis)
+                        {
+                            Assert.True(mapped.Code != McpErrorCodes.AiCannotDoThis, code + " for another caller maps to ai_cannot_do_this.");
+                            otherCallers++;
+                            continue;
+                        }
+
                         Assert.True(mapped.Code == expected, code + " for " + (ai ? "an AI client" : "another caller") + " maps to " + mapped.Code + ", not " + expected + ".");
                         Assert.Equal(Contracts.Errors[expected].HttpStatus, Contracts.Errors[mapped.Code].HttpStatus);
                         checkedReasons++;
@@ -57,7 +69,27 @@ public sealed class ErrorMapTests
         }
 
         Assert.True(checkedReasons > 20, "only " + checkedReasons + " mappings checked");
-        Assert.Equal(403, Contracts.Errors[EngineErrorMap.Map(OperationOutcomes.Refused, new[] { Error(ReasonCodes.ApprovalOutcomeWriter) }, Contracts, false).Code].HttpStatus);
+        Assert.True(otherCallers >= 4, "only " + otherCallers + " ai_cannot_do_this reasons checked for another caller");
+
+        // The approval runner refused by G-06 (only the runner writes an outcome, and only an answer) is not authorized,
+        // with the same HTTP status; an AI client is still told that AI cannot do this.
+        McpError runner = EngineErrorMap.Map(OperationOutcomes.Refused, new[] { Error(ReasonCodes.ApprovalOutcomeWriter) }, Contracts, false);
+        Assert.Equal(McpErrorCodes.NotAuthorized, runner.Code);
+        Assert.Equal(403, Contracts.Errors[runner.Code].HttpStatus);
+        Assert.Equal(McpErrorCodes.AiCannotDoThis, EngineErrorMap.Map(OperationOutcomes.Refused, new[] { Error(ReasonCodes.ApprovalOutcomeWriter) }, Contracts, true).Code);
+    }
+
+    // The approval runner's different second answer for a record that already holds a final outcome is a conflict with
+    // the stored answer (409), for every caller, and never an AI refusal.
+    [Fact]
+    public void ASecondDifferentAnswerIsAConflict()
+    {
+        foreach (bool ai in new[] { true, false })
+        {
+            McpError mapped = EngineErrorMap.Map(OperationOutcomes.Refused, new[] { Error(ReasonCodes.ApprovalOutcomeFinal, "fixture-ref") }, Contracts, ai);
+            Assert.Equal(McpErrorCodes.Conflict, mapped.Code);
+            Assert.Equal(409, Contracts.Errors[mapped.Code].HttpStatus);
+        }
     }
 
     [Fact]

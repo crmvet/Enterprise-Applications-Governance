@@ -152,23 +152,36 @@ public sealed class DirectoryOptionsTests
         return settings;
     }
 
+    // A start that fails with only the in-memory test server's report that its service provider was already disposed says
+    // nothing about the startup checks (StartupFailures gives the reason), so it is tried again, up to three times.
     private static Exception StartFails(HostSettings settings)
     {
-        string folder = TestPaths.NewScratchFolder();
-        settings.DatabaseFile = Path.Combine(folder, "product.db");
-        try
+        Exception failed = null!;
+        for (int attempt = 0; attempt < 3; attempt++)
         {
-            return Assert.ThrowsAny<Exception>(() =>
+            string folder = TestPaths.NewScratchFolder();
+            settings.DatabaseFile = Path.Combine(folder, "product.db");
+            try
             {
-                ProductTestHost host = ProductTestHost.Start(settings);
-                host.DisposeAsync().AsTask().GetAwaiter().GetResult();
-            });
+                failed = Assert.ThrowsAny<Exception>(() =>
+                {
+                    ProductTestHost host = ProductTestHost.Start(settings);
+                    host.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                });
+            }
+            finally
+            {
+                Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+                TestPaths.TryDelete(folder);
+            }
+
+            if (!StartupFailures.OnlyDisposed(failed))
+            {
+                return failed;
+            }
         }
-        finally
-        {
-            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-            TestPaths.TryDelete(folder);
-        }
+
+        return failed;
     }
 
     // Every message in the exception chain, so a test can find the options failure inside the host's start error.

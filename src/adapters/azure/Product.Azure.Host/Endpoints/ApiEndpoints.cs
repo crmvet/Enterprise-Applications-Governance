@@ -212,32 +212,3 @@ public static class ApiEndpoints
             .Validate(null, DateTime.UtcNow).Status == TokenValidationStatus.Valid;
     }
 }
-
-/// <summary>Health probes. Anonymous, status only, no data.</summary>
-public static class HealthEndpoints
-{
-    /// <summary><c>GET /health/live</c>: the process answers.</summary>
-    public static Task HandleLive(HttpContext context)
-    {
-        if (context == null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
-
-        context.Response.Headers["Cache-Control"] = "no-store";
-        return HttpJson.Write(context, StatusCodes.Status200OK, Js.Obj(("status", JsonTreeNode.FromString("live"))));
-    }
-
-    /// <summary><c>GET /health/ready</c>: the store answers. 503 when it does not.</summary>
-    public static Task HandleReady(HttpContext context)
-    {
-        if (context == null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
-
-        bool ready = context.RequestServices.GetRequiredService<IProductStore>().CanConnect();
-        context.Response.Headers["Cache-Control"] = "no-store";
-        return HttpJson.Write(context, ready ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable, Js.Obj(("status", JsonTreeNode.FromString(ready ? "ready" : "unavailable"))));
-    }
-}

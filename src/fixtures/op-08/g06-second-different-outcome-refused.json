@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-08",
   "case": "g06-second-different-outcome-refused",
-  "description": "The approval runner writes rejected on a record that is already approved. An outcome is written only once, so a different second outcome is refused (document 25, section 5.10 Tests).",
+  "description": "The approval runner writes rejected on a record that is already approved. An outcome is written only once, so a different second outcome is refused (document 25, section 5.10 Tests), as a conflict with the stored answer (approval.outcome-final) rather than a refusal of the writer.",
   "ruleIds": [
     "G-06"
   ],
@@ -48,7 +48,7 @@
     "outcome": "refused",
     "reasons": [
       {
-        "code": "approval.outcome-writer",
+        "code": "approval.outcome-final",
         "severity": "error"
       }
     ],

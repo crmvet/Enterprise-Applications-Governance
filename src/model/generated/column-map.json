@@ -1,6 +1,6 @@
 {
   "title": "Product column map: logical names to physical names",
-  "status": "draft, platform under review (D-22)",
+  "status": "draft, not applied; D-26 chose Azure SQL for the first release",
   "notApplied": "Not applied to any database or environment.",
   "generatedBy": "model/generate.mjs. Do not edit by hand: change the model and run \"node model/generate.mjs write\"",
   "source": {
@@ -12,8 +12,8 @@
   },
   "purpose": "Maps every logical entity and column name of the model to its Dataverse schema name and its Azure SQL name. The engine core uses logical names only; adapters use this map (document 25, sections 3.2 and 11.1)",
   "placeholders": {
-    "<prefix>": "The Dataverse publisher prefix, picked with the product name (D-05). tools/rename-product.mjs swaps it",
-    "Product": "The product name placeholder. Stays until the product owner picks the name"
+    "<prefix>": "The Dataverse publisher prefix placeholder. tools/rename-product.mjs swaps it in a later, separate step",
+    "Product": "The code prefix placeholder. The product name is Enterprise Applications Governance (D-31); tools/rename-product.mjs swaps the placeholder in a later, separate step"
   },
   "naming": [
     "Dataverse (document 20, section 3.4): tables and columns are <prefix>_ plus the logical name in PascalCase; a lookup ends with Id; the logical name is the lowercase schema name. The primary key is <prefix>_<Table>Id and the primary name is <prefix>_Name. Created On, Created By, Modified On and Modified By are the built-in columns. Is Active on a configuration table is the platform state (document 22, section 10.1)",

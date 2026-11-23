@@ -1,6 +1,6 @@
 // Draft Dataverse metadata description: tables, columns, choices and lookups, alternate keys, ownership and
-// relationships, bound as document 22, section 10 says. JSON only. Nothing here talks to an environment; the
-// solution is built from it later, after D-22 and the name pick.
+// relationships, bound as document 22, section 10 says. JSON only. Nothing here talks to an environment. A Dataverse
+// solution would be built from it only in a possible later Dataverse edition, which is not planned (D-26).
 import { DRAFT, GENERATOR, NOT_APPLIED, PLACEHOLDERS, DATAVERSE_AUDIT_OFF, DATAVERSE_NAME_GUIDE, sourceBlock, jsonText } from './physical.mjs';
 
 const DEFAULT_OWNER = 'A records owner team with no members (the lockbox pattern), or in portfolio read mode the group team that Portfolio Access (C44) links to the portfolio (document 22, section 10.1)';

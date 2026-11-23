@@ -120,6 +120,7 @@ public static class ProductServiceCollectionExtensions
         services.AddProductWebApp(configuration);
         services.AddProductApprovalRunner(configuration);
         services.AddProductDirectoryReads();
+        services.AddProductHardening(configuration);
         return services;
     }
 

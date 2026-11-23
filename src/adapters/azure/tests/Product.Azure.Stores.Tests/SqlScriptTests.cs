@@ -38,8 +38,8 @@ public sealed class SqlScriptTests
     {
         string[] files = Directory.GetFiles(Paths.Sql, "*.sql").Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal).ToArray()!;
         Assert.Equal(files, SqlServerMigrations.All.Select(m => m.Name));
-        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, SqlServerMigrations.All.Select(m => m.Version));
-        Assert.Equal(5, SqlServerMigrations.RequiredVersion);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, SqlServerMigrations.All.Select(m => m.Version));
+        Assert.Equal(6, SqlServerMigrations.RequiredVersion);
         foreach (SqlMigration migration in SqlServerMigrations.All)
         {
             Assert.Equal(Normalize(File.ReadAllText(Path.Combine(Paths.Sql, migration.Name))), Normalize(migration.Text));
@@ -208,6 +208,43 @@ public sealed class SqlScriptTests
         Assert.DoesNotContain("GRANT DELETE", script, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(SqlServerMigrations.VariablesOf(script));
         Assert.Equal(3, SqlServerMigrations.SplitBatches(script).Count);
+    }
+
+    // 0006: the store keys are a host table the app reads, inserts and deletes from but never updates, keyed by entity, key
+    // name and value hash as the store writes them, and the script stops before it changes a database that already holds
+    // engine rows, whose keys it could not build.
+    [Fact]
+    public void TheStoreKeyScriptMatchesTheStoreAndRefusesAPopulatedDatabase()
+    {
+        SqlMigration migration = SqlServerMigrations.All.Single(m => m.Version == 6);
+        string script = Normalize(migration.Text);
+        Assert.Equal("0006-store-keys.sql", migration.Name);
+        IReadOnlyList<string> batches = SqlServerMigrations.SplitBatches(script);
+        Assert.Equal(4, batches.Count);
+
+        // The guard comes first, checks before it acts, and reads the row counts of the engine's schemas only.
+        Assert.StartsWith("IF OBJECT_ID(N'[host].[StoreKey]', N'U') IS NULL\n    AND EXISTS (", batches[0].Substring(batches[0].IndexOf("IF OBJECT_ID", StringComparison.Ordinal)));
+        Assert.Contains("SCHEMA_NAME(t.[schema_id]) IN (N'config', N'ops', N'audit') AND p.[index_id] IN (0, 1) AND p.[rows] > 0", batches[0]);
+        Assert.Contains("THROW 50006, N'Migration 0006 adds the store keys and needs empty engine tables", batches[0]);
+
+        Assert.Contains("IF OBJECT_ID(N'[host].[StoreKey]', N'U') IS NULL\n    CREATE TABLE [host].[StoreKey]", batches[1]);
+        Assert.Contains("[Entity] varchar(" + SqlServerRowDatabase.MaxEntityKeyLength + ") COLLATE Latin1_General_BIN2 NOT NULL", batches[1]);
+        Assert.Contains("[KeyName] varchar(" + StoreKey.MaxNameLength + ") COLLATE Latin1_General_BIN2 NOT NULL", batches[1]);
+        Assert.Contains("[ValueHash] binary(32) NOT NULL", batches[1]);
+        Assert.Contains("[RowId] varchar(" + RowStore.MaxIdLength + ") COLLATE Latin1_General_BIN2 NOT NULL", batches[1]);
+        Assert.Contains("CONSTRAINT [PK_StoreKey] PRIMARY KEY ([Entity], [KeyName], [ValueHash])", batches[1]);
+        Assert.Contains("IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_StoreKey_Row'", batches[2]);
+        Assert.Contains("CREATE INDEX [IX_StoreKey_Row] ON [host].[StoreKey] ([Entity], [RowId]) INCLUDE ([KeyName]);", batches[2]);
+        Assert.Contains("GRANT SELECT, INSERT, DELETE ON [host].[StoreKey] TO [product_app];", batches[3]);
+        Assert.Contains("DENY UPDATE ON [host].[StoreKey] TO [product_app];", batches[3]);
+        Assert.Empty(SqlServerMigrations.VariablesOf(script));
+
+        // Every entity key and key name fits the table.
+        foreach (EntityInfo entity in EntityCatalog.Embedded.Entities)
+        {
+            Assert.True(entity.Key.Length <= SqlServerRowDatabase.MaxEntityKeyLength, entity.Key);
+            Assert.All(entity.StoreKeys, k => Assert.True(k.Name.Length <= StoreKey.MaxNameLength, k.ToString()));
+        }
     }
 
     [Fact]

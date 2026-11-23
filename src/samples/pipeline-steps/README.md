@@ -77,8 +77,8 @@ default until the question is decided.
 
 WORKING DEFAULT (open design question 12). Each pipeline's workload identity holds the deployment recorder role
 directly: the `Deployment.Record` app role assigned to its service principal (Azure binding), or the deployment
-recorder role on a Dataverse application user (Dataverse binding). The platform admin records each one as a
-workload grant (C42) with a reason, the deciding decision and an expiry. People still get roles only through
+recorder role on a Dataverse application user (Dataverse binding, a possible later edition, not planned; D-26). The platform admin records each
+one as a workload grant (C42) with a reason, the deciding decision and an expiry. People still get roles only through
 groups, and agent identities never get a grant.
 
 WORKING DEFAULT (open design question 7). `codeApprovalKind` and `reportedApprovals` are evidence only. An
@@ -89,7 +89,7 @@ AI-only code approval never counts as authorization, and the shipped gate defaul
 `RECORD_ENDPOINT_URL` is the only setting that differs between the two platform branches. The token scope
 follows from it (the URL's origin plus `/.default`) unless `RECORD_ENDPOINT_SCOPE` says otherwise.
 
-| | Azure binding | Dataverse binding |
+| | Azure binding (the first release) | Dataverse binding (a possible later edition, not planned; D-26) |
 |---|---|---|
 | `RECORD_ENDPOINT_URL` | `https://<product host>/api/deployments` | `https://<org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment` |
 | Token scope | `https://<product host>/.default` (the API's app ID URI; set `RECORD_ENDPOINT_SCOPE` if it differs, for example `api://<application ID>/.default`) | `https://<org>.crm.dynamics.com/.default` |
@@ -173,8 +173,8 @@ parameter binding (open point 1), and the whole Power Platform Pipelines flow (s
    request schema as `/api/deployments`, so the samples send the same body on both branches. Document 25,
    section 11 lists the custom API's parameters with other names (`startedOnUtc`, `finishedOnUtc`, `resultKey`,
    `routeKey`) and without `stageOrderRun` or `reportedApprovals`; document 24, section 9.1 says nested inputs
-   travel as one `payloadJson` string. Until the Dataverse binding settles this, the Dataverse branch of these
-   samples is UNVERIFIED. If it lands on `payloadJson`, only the script's body wrapping changes, not the variable.
+   travel as one `payloadJson` string. The Dataverse binding is a possible later edition, not planned (D-26). Until it settles this,
+   the Dataverse branch of these samples is UNVERIFIED. If it lands on `payloadJson`, only the script's body wrapping changes, not the variable.
 2. **`validateOnly` on the record endpoint.** `record-endpoint.json` says a 200 answer can mean "validateOnly was
    true", but neither request schema allows `validateOnly`. Either add it to both request schemas or drop the
    words. The samples never send it.

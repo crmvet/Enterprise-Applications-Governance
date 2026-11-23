@@ -20,7 +20,7 @@ This flow cannot run on a developer machine, so the local test only posts its fi
 1. **Create** a solution-aware cloud flow in the custom host environment. Add an environment variable of type
    Text whose display name is `RECORD_ENDPOINT_URL`, and set it per host:
    - Azure binding: `https://<your product host>/api/deployments`
-   - Dataverse binding: `https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment`
+   - Dataverse binding (a possible later edition, not planned; D-26): `https://<your org>.crm.dynamics.com/api/data/v9.2/<prefix>_RecordDeployment`
 
 2. **Trigger.** Microsoft Dataverse, "When an action is performed". Catalog: Microsoft Dataverse Common.
    Category: Power Platform Pipelines. Table name: (none). Action name: `OnDeploymentCompleted`.
@@ -48,8 +48,8 @@ This flow cannot run on a developer machine, so the local test only posts its fi
 5. **HTTP, inside a Scope named `Record`.**
    - Method `POST`. URI: the `RECORD_ENDPOINT_URL` environment variable.
    - Headers: `Content-Type: application/json`, `Accept: application/json`, and
-     `Idempotency-Key: @{outputs('Record_body')?['idempotencyKey']}`. On the Dataverse binding also
-     `OData-MaxVersion: 4.0` and `OData-Version: 4.0`.
+     `Idempotency-Key: @{outputs('Record_body')?['idempotencyKey']}`. On the Dataverse binding (a possible later edition, not planned; D-26)
+     also `OData-MaxVersion: 4.0` and `OData-Version: 4.0`.
    - Body: `@outputs('Record_body')` (the whole object, not text).
    - Authentication: an app-only token for the record endpoint's audience (the URL's origin, or the app ID URI
      of the record endpoint), from an identity with no stored secret. See "Authentication" below.
@@ -65,7 +65,7 @@ This flow cannot run on a developer machine, so the local test only posts its fi
 
 WORKING DEFAULT (open design question 12). The flow's identity holds the deployment recorder role directly:
 the `Deployment.Record` app role on its service principal (Azure binding), or the deployment recorder role on a
-Dataverse application user (Dataverse binding). Each such identity is recorded as a workload grant with a
+Dataverse application user (Dataverse binding, a possible later edition, not planned; D-26). Each such identity is recorded as a workload grant with a
 reason, the deciding decision and an expiry.
 
 What the record endpoint accepts: an app-only token from that identity, obtained without a stored secret

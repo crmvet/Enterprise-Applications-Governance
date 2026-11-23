@@ -87,6 +87,12 @@ public static class ReasonCatalog
         return new ReasonCodeInfo(code, severity, categories, source, null, true, message, workingDefaultQuestion);
     }
 
+    // A proposed code (not named in document 25) that a documented rule reports, so fixtures and the error map see its rule.
+    private static ReasonCodeInfo ProposedForRule(string code, ReasonSeverity severity, ReasonCategories categories, string source, string ruleIds, string message)
+    {
+        return new ReasonCodeInfo(code, severity, categories, source, SplitRuleIds(ruleIds), true, message, null);
+    }
+
     private static string[] SplitRuleIds(string ruleIds)
     {
         return ruleIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -128,6 +134,8 @@ public static class ReasonCatalog
                 "The answer belongs to no current requirement of the decision, so it does not count."),
             Proposed(ReasonCodes.ApprovalSequenceWaiting, Info, Outcome, "OP-03",
                 "A sequential requirement counts only after the earlier requirements are satisfied."),
+            Proposed(ReasonCodes.ApprovalResponderAlreadyCounted, Warning, Outcome, "OP-03",
+                "The responder's earlier approval already counts for this requirement, and one person counts once."),
 
             // ---- OP-02 required approvals (section 5.4) ----
             Named(ReasonCodes.RuleGroupAmbiguous, Error, Validation | Unavailable, "OP-02, OP-09", "V26",
@@ -267,6 +275,9 @@ public static class ReasonCatalog
             // Document 22, section 8.1, and document 26, section 5.3: withdrawn by the proposer or the decider.
             Proposed(ReasonCodes.DecisionWithdrawNotAllowed, Error, RefusedRole, "OP-08",
                 "Only the person who proposed the decision, or its decider, can withdraw it."),
+            // G-06 "only once", for the approval runner itself: a conflict with the stored answer, not a refusal of the writer.
+            ProposedForRule(ReasonCodes.ApprovalOutcomeFinal, Error, Conflict, "OP-08", "G-06",
+                "The Approval Record already holds a final outcome, and an answer is written once and never changes."),
 
             // ---- Engine runtime ----
             // Document 26, RA-07: app-only tokens are accepted only from principals in a current Workload Grant (C42).
@@ -274,6 +285,8 @@ public static class ReasonCatalog
             Proposed(ReasonCodes.ActorWorkloadGrantMissing, Error, RefusedRole, "Runtime",
                 "An app-only caller is accepted only with a current workload grant, and only for that grant's workload role.",
                 workingDefaultQuestion: 12),
+            Proposed(ReasonCodes.ApprovalRefreshNotAllowed, Error, RefusedRole, "Runtime",
+                "Only the approval runner, holding a current approval writer grant, runs the approval refresh."),
 
             // ---- Activation and the bootstrap of version 1 (document 25, section 6.4; document 21, section 4.8) ----
             Proposed(ReasonCodes.ActivationDiscarded, Warning, Outcome, "Activation",

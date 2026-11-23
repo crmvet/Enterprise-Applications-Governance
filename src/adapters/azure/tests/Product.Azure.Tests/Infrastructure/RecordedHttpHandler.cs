@@ -19,14 +19,19 @@ namespace Product.Azure.Tests;
 // One request the directory reads sent, as the fake service saw it.
 internal sealed class SeenRequest
 {
-    public SeenRequest(string method, string url, string? authorization, string? body, bool recorded)
+    public SeenRequest(string method, string url, string? authorization, string? body, bool recorded, bool directoryMarked = false)
     {
         Method = method;
         Url = url;
         Authorization = authorization;
         Body = body;
         Recorded = recorded;
+        DirectoryMarked = directoryMarked;
     }
+
+    // True when the request carried the directory reads' marker (DirectoryHttp.IsDirectoryRequest), which keeps it out of
+    // HTTP client traces.
+    public bool DirectoryMarked { get; }
 
     public string Method { get; }
 
@@ -112,7 +117,7 @@ internal sealed class RecordedHttpHandler : HttpMessageHandler
 
         string url = request.RequestUri?.AbsoluteUri ?? string.Empty;
         bool recorded = _recordings.Find(request.Method.Method, url, body) != null;
-        _seen.Enqueue(new SeenRequest(request.Method.Method, url, request.Headers.Authorization?.ToString(), body, recorded));
+        _seen.Enqueue(new SeenRequest(request.Method.Method, url, request.Headers.Authorization?.ToString(), body, recorded, DirectoryHttp.IsDirectoryRequest(request)));
         return _invoker.Send(request, cancellationToken);
     }
 

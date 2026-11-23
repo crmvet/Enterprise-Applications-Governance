@@ -1,7 +1,7 @@
 # Guide A1. External configuration admin runbook: time-bound access to the adopter's tenant
 
-- **Status:** skeleton, 0.1 draft, 2026-11-22. Nothing here was run against a tenant.
-- **Guide set:** setup guides S1 to S3 and admin guides A1 and A2. Index: [README](../README.md).
+- **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant.
+- **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
 - **Design sources:** document 28, Q17 (working default, settled); document 21, sections 4.4, 5 and 6.8; document 26, sections 1.2, 3.5 (RR-05, RR-06), 4.2 and 4.5 (CHK-08, CHK-11).
 - **Open design questions that touch this guide:** 1, 4 and 12 (markers below).
 
@@ -59,19 +59,19 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 2. **Approve.** An adopter approver approves in PIM. The activation starts the clock.
 3. **Pick up the new membership.**
    - [branch: Dataverse] Dataverse caches a user's group memberships at sign-in. The external admin signs out of every session against the environment and signs in again after activation, so the group team role applies.
-   - [branch: Azure] The product reads roles from the token. The external admin re-authenticates the server in Claude Code (`/mcp`, Re-authenticate), so the new token carries the role.
+   - [branch: Azure] The product reads the person's group IDs from the token and resolves the role from the bound groups. The external admin re-authenticates the server in Claude Code (`/mcp`, Re-authenticate), so the new token carries the activated group. The API's groups claim includes only groups assigned to the application in which the person is a direct member, so the PIM-managed group must be the bound role group itself, not a group nested inside it.
 4. **Connect and work.** Claude Code, signed in with the guest account in the adopter's tenant (guide [S2](../setup/S2-connect-claude-code.md)). The external admin instructs configuration drafts: `get_configuration` and `explain_rules` to read, `propose_configuration_change` with `validateOnly` to see the diff and the impact on live applications, then without it to store the draft, then `submit_record` (subject kind configuration draft). The record shows "AI client for a person", on behalf of the guest.
 5. **Acceptance.** The engine's diff goes to the configuration admin role on one card. The engine allows the instructing admin to accept their own AI's draft in Balanced, Starter and the CoE baseline; Regulated and `strict-separation` require a second configuration admin. WORKING DEFAULT (open design question 4). Runbook rule: the adopter's configuration admin accepts every draft the external admin instructed, so the decider on record is the adopter's own person. The external admin does not answer those cards.
 6. **End the session.** The external admin deactivates the membership in PIM before it expires, and clears the server's authentication in Claude Code (`/mcp`, Clear authentication, or `claude mcp logout <server-name>`).
    - [branch: Dataverse] A removed membership reaches Dataverse only at the external admin's next sign-in or after 8 hours of continuous sign-in. Signing out of every session is part of ending the session.
-   - [branch: Azure] A token already issued keeps its roles until it expires (60 to 90 minutes by default), unless the server honors continuous access evaluation (UNVERIFIED; guide [A2](A2-urgent-revoke-and-break-glass.md), open point 1).
+   - [branch: Azure] A token already issued keeps its groups until it expires (60 to 90 minutes by default). The server does not honor continuous access evaluation in this release (guide [A2](A2-urgent-revoke-and-break-glass.md), open point 1).
 
 ### C. When the work ends (the adopter)
 
 1. **Remove the eligible assignment** (or confirm it expired on the end date).
 2. **Turn Allows Guests back to No** on the configuration admin role, through a configuration change decision.
 3. **Disable the guest account and revoke its sessions** in Entra, or delete it if no further work is planned. On Dataverse, continuous access evaluation acts on disable and session revocation in near real time.
-4. **Run `check_role_bindings`** as the platform admin: no guest holds a role (CHK-11), no direct assignment exists (CHK-01).
+4. **Run `check_role_bindings`** as the platform admin: no direct assignment exists (CHK-01). The guest check (CHK-11) is designed but not in `check_role_bindings` yet, so also look at the role group's members in Entra for any guest (guide [S7](../setup/S7-turn-on-directory-reads.md), open point 3).
 5. **Keep the evidence.** Export the PIM audit history for the work period and link it as evidence (`save_link`, evidence category) to the configuration change decisions of that period.
 6. **Hand over.** The client binding patch and any configuration files stay in the adopter's private repository. The external admin keeps no copy of adopter facts.
 
@@ -95,8 +95,8 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 
 - Outside a session, PIM shows the guest as Eligible, never Active, on the role group.
 - A test activation without approval does not complete.
-- CHK-08 (role marked Requires Just In Time whose group has permanent members): none, where the adopter marked the role (RR-06; see guide S1, open point 3).
-- CHK-11: no guest holds a role whose row says Allows Guests = No.
+- CHK-08 (role marked Requires Just In Time whose group has permanent members): none, where the adopter marked the role (RR-06; see guide S1, open point 3). Designed, not built: check the group's PIM assignments by hand.
+- CHK-11: no guest holds a role whose row says Allows Guests = No. Designed, not built: check the role groups' members by hand.
 - Every configuration change decision of the work period shows the guest as instructing admin (performed by "AI client for a person") and an adopter's person as decider.
 - After part C: the guest is disabled or deleted, no eligible assignment remains, Allows Guests is No again, and `check_role_bindings` is clean.
 
@@ -115,9 +115,9 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 | PIM for Groups: just-in-time membership or ownership; approval, MFA, justification and maximum activation time per group policy | https://learn.microsoft.com/entra/id-governance/privileged-identity-management/concept-pim-for-groups | 2026-11-22 |
 | Member role settings: activation maximum 1 to 24 hours; MFA or Conditional Access authentication context; justification; ticket information; approval with no default approvers, at least two advised; eligible and active assignment durations; roles that can manage the policy | https://learn.microsoft.com/entra/id-governance/privileged-identity-management/groups-role-settings | 2026-11-22 |
 | PIM for Groups APIs: "The activation is always time-bound for a maximum of eight hours" | https://learn.microsoft.com/graph/api/resources/privilegedidentitymanagement-for-groups-api-overview?view=graph-rest-1.0 | 2026-11-22 |
-| PIM needs Entra ID P2 or ID Governance licenses for users with eligible or time-bound membership of PIM for Groups and for users who approve activations | https://learn.microsoft.com/entra/id-governance/licensing-fundamentals | 2026-11-22 |
-| "Every user who is eligible for membership in or ownership of a PIM for Groups must have a Microsoft Entra ID P2 or Microsoft Entra ID Governance license"; an assignment can't be shorter than five minutes; the roles that manage membership of role-assignable and other groups | https://learn.microsoft.com/entra/id-governance/privileged-identity-management/groups-assign-member-owner | 2026-11-22 |
-| Activation of group membership in the My Access portal, Roles, Groups (preview), or in the Entra admin center | https://learn.microsoft.com/entra/id-governance/privileged-identity-management/groups-activate-roles | 2026-11-22 |
+| "Ensure that your directory has Microsoft Entra ID P2 or Microsoft Entra ID Governance licenses for the following categories of users:", among them "Users with eligible and/or time-bound assignments as members or owners of PIM for Groups" and "Users able to approve or reject activation requests in PIM" | https://learn.microsoft.com/entra/id-governance/licensing-fundamentals | 2026-11-23 |
+| "Every user who is eligible for membership in or ownership of a PIM for Groups must have a Microsoft Entra ID P2 or Microsoft Entra ID Governance license."; an assignment "Can't be assigned for a duration of less than five minutes"; membership of a role-assignable group needs a role "such as Privileged Role Administrator or Global Administrator, or be an active owner of the group", and of other groups a role "such as Groups Administrator or Identity Governance Administrator, or be an active owner of the group" | https://learn.microsoft.com/entra/id-governance/privileged-identity-management/groups-assign-member-owner | 2026-11-23 |
+| "Group membership and ownership activation through the My Access portal is in preview."; in the Entra admin center, "**ID Governance** > **Privileged Identity Management** > **My roles** > **Groups**"; "In some situations, application access might not immediately reflect the fact that user was added to the group or removed from it." | https://learn.microsoft.com/entra/id-governance/privileged-identity-management/groups-activate-roles | 2026-11-23 |
 | Guest and member user types; the inviter becomes the guest's sponsor | https://learn.microsoft.com/entra/external-id/user-properties | 2026-11-22 |
 | Require MFA for guests and external users as the starting point | https://learn.microsoft.com/security/zero-trust/zero-trust-identity-device-access-policies-guest-access | 2026-11-22 |
 | Dataverse group teams: membership types Members and guests, Members, Owners, Guests; the type cannot change after creation; memberships cached at sign-in and refreshed at next sign-in or after 8 hours of continuous sign-in; a group team needs the environment's security group membership | https://learn.microsoft.com/power-platform/admin/manage-group-teams | 2026-11-22 |
@@ -125,4 +125,4 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 | "Guest users should also have a license from the environment's tenant" | https://learn.microsoft.com/power-platform/admin/create-users | 2026-11-22 |
 | Custom model-driven apps: the license may be in the user's home tenant or the hosting tenant | https://learn.microsoft.com/power-apps/maker/model-driven-apps/share-model-driven-app | 2026-11-22 |
 | Continuous access evaluation for Dataverse: generally available in public cloud; acts on account disable, password reset and session revocation | https://learn.microsoft.com/power-platform/admin/continuous-access-evaluation | 2026-11-22 |
-| Access token default lifetime is variable, 60 to 90 minutes | https://learn.microsoft.com/entra/identity-platform/access-tokens | 2026-11-22 |
+| "The default lifetime of an access token is variable. When issued, the Microsoft identity platform assigns a random value ranging between 60-90 minutes (75 minutes on average) as the default lifetime of an access token." | https://learn.microsoft.com/entra/identity-platform/access-tokens | 2026-11-23 |

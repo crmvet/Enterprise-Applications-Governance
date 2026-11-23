@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Instrumentation.Http;
 using Product.Azure.Host;
 using Product.Azure.Server.DevIdentity;
 using Product.Azure.Stores;
@@ -38,6 +40,15 @@ public static class ProductServer
         if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
         {
             builder.Services.AddOpenTelemetry().UseAzureMonitor();
+
+            // HTTP client tracing records each request's whole URL path, and the directory reads name people there
+            // (GET /users/{object ID}). Those requests stay out of the traces, as they stay out of the request logs; the
+            // directory reads log their own failures without the URL. The distro's own filter still applies to the rest.
+            builder.Services.PostConfigure<HttpClientTraceInstrumentationOptions>(options =>
+            {
+                Func<HttpRequestMessage, bool>? earlier = options.FilterHttpRequestMessage;
+                options.FilterHttpRequestMessage = request => !DirectoryHttp.IsDirectoryRequest(request) && (earlier == null || earlier(request));
+            });
         }
 
         WebApplication app = builder.Build();

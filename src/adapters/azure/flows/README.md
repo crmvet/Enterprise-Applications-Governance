@@ -29,7 +29,7 @@ Workload Grant for the `approval-writer` role in the configuration in force.
 
 | Step | Flow | Call |
 |---|---|---|
-| 1. Claim | Parent, every five minutes | `POST /engine/v1/approval-runner/claims` with `{"max": 10, "leaseSeconds": 900}`. The answer lists each leased request: the Approval Record and Decision IDs, a claim ID, the card's title and Markdown details (text a person or an AI client wrote is escaped), an https record link, Requested On and Expires On, whether a typed reason is required, whether it is a consultation, the channel, who to ask, and the configuration keys to answer with |
+| 1. Claim | Parent, every five minutes | `POST /engine/v1/approval-runner/claims` with `{"max": 10, "leaseSeconds": 900}`. Before it leases anything, the product has the engine expire the requests past their Expires On, open their restarts and cancel what settled decisions still hold open, as the runner. The answer lists each leased request: the Approval Record and Decision IDs, a claim ID, the card's title and Markdown details (text a person or an AI client wrote is escaped), an https record link, Requested On and Expires On, whether a typed reason is required, whether it is a consultation, the channel, who to ask, and the configuration keys to answer with |
 | 2. Start the child | Parent | One child run per request, up to five at a time |
 | 3. Resolve who to ask | Child | For an owner role, the current holders the product lists (users only). For a product role, the members of each Entra group bound to it, through the Office 365 Groups connector, keeping only members whose type is `#microsoft.graph.user`. No one to ask: the child gives the request back (`release`, reason `no-approvers`) |
 | 4. Send the card | Child | Approvals, **Create an approval**, type Basic (first to respond), assigned to the resolved users by object ID, reassignment off, with the product's title, details and record link |
@@ -45,22 +45,30 @@ What the product does with the answer:
   is stored as recommendation only. When the responder's Principal Reference records a non-user kind, that kind
   replaces the one the runner sent. When the Office 365 Users lookup of the responder fails, the child sends
   `service-principal`, so the answer is stored but never counts.
+- The engine counts one person once per requirement: a second answer from someone whose answer already counts does
+  not count again.
 - The same answer sent again with the same Idempotency-Key returns the first result and writes nothing. The same key
-  with another body is a conflict. Another answer for a record that already holds a final outcome is a conflict (409),
-  never a second outcome.
-- An answer given at or after the record's Expires On is refused with 409, and the outbox row is settled as expired.
-  A request whose record has expired, or whose decision is no longer proposed, is never offered again.
+  with another body is a conflict. Another answer for a record that already holds a final outcome (an answer, expired or
+  cancelled) is a conflict (409), never a second outcome.
+- An answer given at or after the record's Expires On is kept but does not count. When an answer does not count, the
+  engine opens a new request for the same requirement in the same transaction, and the next poll sends its card. A
+  request the engine expired or cancelled is never offered again, and an answer to it is a 409.
 
 ### One card per Approval Record
 
-The engine opens one Approval Record for each required approval of the winning rule group, and each record holds one
+The engine opens one Approval Record for each required answer (document 23, S1, step 3), and each record holds one
 answer. So every card is **first to respond**, whatever the rule's Approval Mode says: the first answer is the record's
-answer, and a later answer to the same record is refused. Two consequences of how the engine works today:
+answer, and a later answer to the same record is refused.
 
 - A rule with **Minimum Count above 1** (the strict separation overlay asks two change board members to decide an
-  exception) gets one record and one card, so it cannot be met: the decision stays proposed. Document 23, S1, step 3
-  asks for one record per required response; the engine needs that change before such a rule can be satisfied.
-- **Everyone must approve** and **sequential** rules collapse to one answer per record in the same way.
+  exception) gets that many records, so that many cards, and is met when that many different people have approved.
+  **Everyone must approve** is met at Minimum Count too.
+- A **sequential** group opens one step at a time: the next step's record opens when the earlier step is satisfied.
+- For an owner role, the product leaves out of the next card the holders whose approval already counts. For a product
+  role the child lists the group's members and cannot tell who already answered, so a person may get a second card for
+  the same requirement; that answer does not count, and the engine asks again.
+- When the decision is accepted or rejected, the engine cancels the records still pending, and their cards reach
+  nothing (below).
 
 ### Pull, not push
 
@@ -78,9 +86,10 @@ minutes by default) and the Power Platform requests of the polls. This is a prop
    registration the app role `Approval.Write` assigned to the runner's service principal. Then record a Workload
    Grant for the `approval-writer` role for that service principal, with a reason and an expiry, through a configuration
    change, and a Principal Reference that records it as a service principal. The grant records whether the identity
-   uses a federated credential: this one does not (it uses a certificate), so the configuration health check reports
-   it as a credential-bearing grant. No secretless way for a cloud flow's HTTP action to sign in to an Entra-protected
-   API was confirmed for this template.
+   uses a federated credential: this one does not (it uses a certificate), so its grant has `usesFederatedCredential`
+   false. The schema says a false value is flagged, but no check in this release reads the column yet (guide S5, open
+   point 1). No secretless way for a cloud flow's HTTP action to sign in to an Entra-protected API was confirmed for
+   this template.
 3. **Key Vault.** Two secrets: the certificate as base64 PFX content, and its password. The HTTP action's Active
    Directory OAuth authentication with the certificate credential type takes both (`pfx` and `password`; for the
    password, Microsoft's table for the same HTTP action in Azure Logic Apps reads "Yes, but only for the "Certificate"
@@ -92,8 +101,10 @@ minutes by default) and the Power Platform requests of the polls. This is a prop
    owned by the account that owns the flows. Microsoft notes for the Approvals connector
    ([Standard approvals connector](https://learn.microsoft.com/connectors/approvals/)): "The creator of the flow will
    always be shown in the Approval details (email content and all clients)."
-5. **The product.** Set `Product:ApprovalRunner:Enabled` to `true` on the API. The other settings have defaults:
-   `DefaultLeaseSeconds` 900, `MaxClaim` 10, `MaxAttempts` 3.
+5. **The product.** Set `Product:ApprovalRunner:Enabled` to `true` on the API (on Azure,
+   `azd env set PRODUCT_APPROVAL_RUNNER_ENABLED true`, then `azd provision`). The other settings have defaults:
+   `DefaultLeaseSeconds` 900, `MaxClaim` 10, `MaxAttempts` 3, and `MaxRefresh` 50 (the most decisions one claim brings
+   up to date; the next claim goes on with the rest).
 
 ## Build, pack and import
 
@@ -181,15 +192,18 @@ So: create one flow group in the approvals environment, assign it one Process li
   "An approval flow can wait for 28 days. If the wait time exceeds 28 days, that flow fails.
   This only impacts the flow itself, meaning that the approval continues to exist in the action center." The child
   waits at most 27 days and then gives the request back; the old card stays in the action center until someone
-  cancels it there, and a new card goes out on the next poll if the record has not expired.
+  cancels it there. A new card goes out on the next poll if the record has not expired; if it has, the engine expires
+  it on that poll and opens a restart, whose card goes out instead.
 - **Create and wait together.** Microsoft warns that an answer given before the flow reaches **Wait for an approval**
   can leave the flow stuck
   ([Split create and wait actions](https://learn.microsoft.com/power-automate/approvals-known-issues#split-create-and-wait-actions)),
   so the child starts waiting right after it creates the card, in parallel with its sent report.
-- **No cancel from the product.** The engine does not cancel or expire records yet, and the Approvals connector lists
-  no action that cancels an open approval ([its actions](https://learn.microsoft.com/connectors/approvals/#actions)).
-  A card for an expired record can still be answered; the product then answers 409 and records
-  nothing.
+- **No cancel from the product.** The engine expires and cancels records itself, but the Approvals connector lists no
+  action that cancels an open approval ([its actions](https://learn.microsoft.com/connectors/approvals/#actions)). A
+  card for an expired or cancelled record can still be answered; the product then answers 409 and records nothing.
+- **Expiry needs the poll.** The engine writes expired during a claim, so while the parent flow is off no record is
+  written as expired (every read still judges a pending record past its Expires On as expired), and no restart goes
+  out until the polls resume.
 - **Reassignment is off**, so only the people asked can answer. A person who answers without holding the role is
   recorded as not holding it, and the answer does not count. For an owner role the product checks the application's
   Owner Assignments itself, whatever the flow reports, and it refuses an answer whose responder is the runner's own

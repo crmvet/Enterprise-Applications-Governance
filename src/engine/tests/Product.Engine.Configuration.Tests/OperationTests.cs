@@ -387,6 +387,48 @@ public sealed class OperationTests
         Assert.Equal(new[] { "approval.separation-flagged" }, OperationTestData.Codes(result.Reasons));
     }
 
+    // An Entra object ID is a GUID, and an approval runner, a token or a pipeline may spell one person's ID in another
+    // letter case or GUID form. A separation rule still refuses the proposer's own approval however the ID is spelled.
+    [Theory]
+    [InlineData("4F6B2C1E-9A7D-4E2B-8C3F-1D2E3F4A5B6C")]
+    [InlineData("4f6b2c1e9a7d4e2b8c3f1d2e3f4a5b6c")]
+    [InlineData("{4f6b2c1e-9a7d-4e2b-8c3f-1d2e3f4a5b6c}")]
+    public void ASelfApprovalSpelledAnotherWayIsStillRefused(string responder)
+    {
+        const string Proposer = "4f6b2c1e-9a7d-4e2b-8c3f-1d2e3f4a5b6c";
+        CompiledSnapshot compiled = OperationTestData.Snapshot();
+        var record = new ApprovalFact("r1", "change-auth-tier-3", ApprovalOutcomeMeaning.Approved, responder, ActorKindMeaning.Person, PrincipalKind.User, true, true, Utc("2026-11-21T10:00:00Z"));
+        var request = new ApprovalStatusRequest(new[] { TierThreeChangeManager() }, new[] { record }, "change-authorization", "tier-3", "production", new SeparationFacts(Proposer));
+
+        EvaluationResult<ApprovalStatusResult?> result = ApprovalStatusOperation.Evaluate(compiled.Snapshot, OperationTestData.Context(compiled), request);
+
+        Assert.Equal("pending", result.Outcome);
+        Assert.False(result.Payload!.CountsByRecord["r1"]);
+        Assert.Equal(new[] { "approval.separation-refused" }, OperationTestData.Codes(result.Reasons));
+    }
+
+    // One person counts once within a requirement, however their object ID is spelled: a Minimum Count of 2 is never
+    // met by one person's two answers, one in the hyphenated form and one without hyphens or in another letter case.
+    [Fact]
+    public void OnePersonSpelledTwoWaysCountsOnce()
+    {
+        CompiledSnapshot compiled = OperationTestData.Snapshot();
+        var requirement = new RequiredApproval(ApprovalRequirementSource.ApprovalRule, "change-auth-tier-3", null, "change-manager", null, false, ApprovalMode.EveryoneMustApprove, null, 2, 5, true, null);
+        var records = new[]
+        {
+            new ApprovalFact("r1", "change-auth-tier-3", ApprovalOutcomeMeaning.Approved, "4f6b2c1e-9a7d-4e2b-8c3f-1d2e3f4a5b6c", ActorKindMeaning.Person, PrincipalKind.User, true, true, Utc("2026-11-21T10:00:00Z")),
+            new ApprovalFact("r2", "change-auth-tier-3", ApprovalOutcomeMeaning.Approved, "4F6B2C1E9A7D4E2B8C3F1D2E3F4A5B6C", ActorKindMeaning.Person, PrincipalKind.User, true, true, Utc("2026-11-21T11:00:00Z")),
+        };
+        var request = new ApprovalStatusRequest(new[] { requirement }, records, "change-authorization", "tier-3", "production", new SeparationFacts("fixture-proposer"));
+
+        EvaluationResult<ApprovalStatusResult?> result = ApprovalStatusOperation.Evaluate(compiled.Snapshot, OperationTestData.Context(compiled), request);
+
+        Assert.Equal("pending", result.Outcome);
+        Assert.True(result.Payload!.CountsByRecord["r1"]);
+        Assert.False(result.Payload.CountsByRecord["r2"]);
+        Assert.Equal(new[] { "approval.responder-already-counted" }, OperationTestData.Codes(result.Reasons));
+    }
+
     [Fact]
     public void AnAnsweredRecordMustSayWhoAnswered()
     {

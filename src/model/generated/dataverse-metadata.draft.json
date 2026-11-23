@@ -1,6 +1,6 @@
 {
   "title": "Product Dataverse metadata description",
-  "status": "draft, platform under review (D-22)",
+  "status": "draft, not applied; D-26 chose Azure SQL for the first release",
   "notApplied": "Not applied to any database or environment.",
   "generatedBy": "model/generate.mjs. Do not edit by hand: change the model and run \"node model/generate.mjs write\"",
   "source": {
@@ -12,8 +12,8 @@
   },
   "binding": "Document 22, section 10 (Dataverse). Names: document 20, section 3.4",
   "placeholders": {
-    "<prefix>": "The Dataverse publisher prefix, picked with the product name (D-05). tools/rename-product.mjs swaps it",
-    "Product": "The product name placeholder. Stays until the product owner picks the name"
+    "<prefix>": "The Dataverse publisher prefix placeholder. tools/rename-product.mjs swaps it in a later, separate step",
+    "Product": "The code prefix placeholder. The product name is Enterprise Applications Governance (D-31); tools/rename-product.mjs swaps the placeholder in a later, separate step"
   },
   "rules": [
     "Every table is a standard table with auditing on (document 22, section 10.1)",

@@ -165,8 +165,8 @@ public sealed class FullWriteTests
         Assert.Equal("rejected", Harness.Text(other.Row("decision", second), "statusMeaning"));
     }
 
-    // Only the approval runner writes an outcome (G-06), and only once: a second, different answer is refused, and the
-    // refused call writes nothing.
+    // Only the approval runner writes an outcome (G-06), and only once: a second, different answer is refused as a
+    // conflict with the stored answer, and the refused call writes nothing.
     [Fact]
     public void OnlyTheApprovalRunnerAnswersAndOnlyOnce()
     {
@@ -183,7 +183,7 @@ public sealed class FullWriteTests
         Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));
         string after = h.Store.Dump();
         RuntimeOutcome again = h.Answer(record, "approval-rejected", Harness.Person2, typedReason: "Changed my mind");
-        Assert.Equal("refused", again.Outcome);
+        Assert.Equal("conflict", again.Outcome);
         Assert.Equal(after, h.Store.Dump());
 
         RuntimeOutcome same = Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));

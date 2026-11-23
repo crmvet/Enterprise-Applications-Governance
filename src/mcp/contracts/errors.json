@@ -73,7 +73,8 @@
       "engineReasons": [
         "request.*",
         "audit.append-only",
-        "config.base-moved"
+        "config.base-moved",
+        "approval.outcome-final"
       ]
     },
     {

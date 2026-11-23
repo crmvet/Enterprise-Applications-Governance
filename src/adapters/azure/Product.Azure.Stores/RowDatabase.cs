@@ -30,9 +30,11 @@ public interface IRowDatabase : IDisposable
     IReadOnlyList<StoredRowData> GetVersionRows(string configurationSetKey, int versionNumber);
 
     // Applies the changes in one database transaction. An update or a delete whose row no longer has the expected
-    // version, and a unique key or primary key taken by another transaction, throw StoreConflictException; nothing is
+    // version, and a unique key, store key or primary key taken by another row, throw StoreConflictException; nothing is
     // applied then. engineOperation is one of RowStoreOperations. The outbox writes (the commit hook, ApprovalOutboxHook)
-    // go into the same transaction, before the row changes, so they commit or roll back with them.
+    // go into the same transaction, before the row changes, so they commit or roll back with them. After the row changes
+    // come the store keys (RowChange.StoreKeys): first every removal of the commit, then every addition, so a value that
+    // moves between rows in one transaction never collides with itself.
     void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation, IReadOnlyList<ApprovalOutboxWrite>? outbox = null);
 
     // ---- The approval outbox (ApprovalOutbox.cs): a host table outside the entity catalog ----
@@ -102,7 +104,9 @@ public enum RowChangeKind
 // One row change of a commit. A row created and changed in the same transaction is one Insert.
 public sealed class RowChange
 {
-    private RowChange(RowChangeKind kind, EntityInfo entity, string id, string? key, JsonTreeNode? columns, long expectedVersion)
+    private StoreKeyChanges? _storeKeys;
+
+    private RowChange(RowChangeKind kind, EntityInfo entity, string id, string? key, JsonTreeNode? columns, long expectedVersion, StoredRow? before = null)
     {
         Kind = kind;
         Entity = entity;
@@ -110,6 +114,7 @@ public sealed class RowChange
         Key = key;
         Columns = columns;
         ExpectedVersion = expectedVersion;
+        Before = before;
     }
 
     public RowChangeKind Kind { get; }
@@ -126,14 +131,21 @@ public sealed class RowChange
     // The version the transaction read (Update, Delete); 0 for Insert.
     public long ExpectedVersion { get; }
 
+    // The committed row the transaction read at ExpectedVersion (Update), when the caller has it; null otherwise. It
+    // lets the store change only the store keys whose value changed.
+    public StoredRow? Before { get; }
+
+    // The store keys this change removes and adds (StoreKeys.cs).
+    public StoreKeyChanges StoreKeys => _storeKeys ??= StoreKeyChanges.For(this);
+
     public static RowChange Insert(EntityInfo entity, string id, string? key, JsonTreeNode columns)
     {
         return new RowChange(RowChangeKind.Insert, entity, id, key, columns ?? throw new ArgumentNullException(nameof(columns)), 0);
     }
 
-    public static RowChange Update(EntityInfo entity, string id, string? key, JsonTreeNode columns, long expectedVersion)
+    public static RowChange Update(EntityInfo entity, string id, string? key, JsonTreeNode columns, long expectedVersion, StoredRow? before = null)
     {
-        return new RowChange(RowChangeKind.Update, entity, id, key, columns ?? throw new ArgumentNullException(nameof(columns)), expectedVersion);
+        return new RowChange(RowChangeKind.Update, entity, id, key, columns ?? throw new ArgumentNullException(nameof(columns)), expectedVersion, before);
     }
 
     public static RowChange Delete(EntityInfo entity, string id, long expectedVersion)

@@ -683,7 +683,260 @@ public abstract class StoreConformanceTests
         Assert.Throws<InvalidOperationException>(() => tx.Commit());
     }
 
+    // ---- Store keys (StoreKeys.cs): the other keys the logical model asks the store to enforce ----
+
+    // A value taken by a row another transaction committed first is a conflict for the second, which writes nothing. The
+    // same value in a different row is free once it differs, and a row with an empty value holds no key.
+    [Theory]
+    [InlineData("principal-reference", "entraObjectId")]
+    [InlineData("business-application", "recordNumber")]
+    [InlineData("claim", "claimKey")]
+    [InlineData("configuration-draft", "recordNumber")]
+    public void RowStoresRefuseAStoreKeyValueAnotherRowHolds(string entity, string column)
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key; the model gives them to the database.");
+        using IDisposable caller = TestCaller.Enter();
+        string value = "fixture-" + Marker();
+        IStoreTransaction first = store.Records.Begin();
+        IStoreTransaction second = store.Records.Begin();
+        string firstId = Id();
+        string secondId = Id();
+        first.Create(entity, firstId, null, J("{\"" + column + "\":\"" + value + "\"}"));
+        second.Create(entity, secondId, null, J("{\"" + column + "\":\"" + value + "\",\"other\":1}"));
+        first.Commit();
+
+        StoreConflictException conflict = Assert.Throws<StoreConflictException>(() => second.Commit());
+        Assert.Equal(entity + " " + column + " \"" + value + "\" is taken by another row.", conflict.Message);
+        second.Dispose();
+        first.Dispose();
+        Assert.NotNull(store.Records.Get(entity, firstId));
+        Assert.Null(store.Records.Get(entity, secondId));
+
+        using IStoreTransaction third = store.Records.Begin();
+        third.Create(entity, Id(), null, J("{\"" + column + "\":\"" + value + "-2\"}"));
+        third.Create(entity, Id(), null, J("{\"" + column + "\":\"\"}"));
+        third.Create(entity, Id(), null, J("{\"" + column + "\":\"\"}"));
+        third.Create(entity, Id(), null, J("{}"));
+        third.Commit();
+    }
+
+    [Fact]
+    public void RowStoresRefuseAStoreKeyValueTwiceInOneTransactionAndCompareGuidsWithoutCase()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string objectId = Guid.NewGuid().ToString("D");
+        string firstId = Id();
+        using (IStoreTransaction tx = store.Records.Begin())
+        {
+            tx.Create("principal-reference", firstId, null, J("{\"entraObjectId\":\"" + objectId + "\"}"));
+            tx.Create("principal-reference", Id(), null, J("{\"entraObjectId\":\"" + objectId.ToUpperInvariant() + "\"}"));
+            Assert.Contains("is taken by another row", Assert.Throws<StoreConflictException>(() => tx.Commit()).Message);
+        }
+
+        Assert.Null(store.Records.Get("principal-reference", firstId));
+        store.Seed("principal-reference", "{\"entraObjectId\":\"" + objectId.ToUpperInvariant() + "\"}", Id());
+        Assert.Throws<StoreConflictException>(() => store.Seed("principal-reference", "{\"entraObjectId\":\"" + objectId + "\"}", Id()));
+    }
+
+    // A deleted row, or a row whose value changed, frees the value for another row.
+    [Fact]
+    public void RowStoresFreeAStoreKeyValueWhenItsRowIsDeletedOrChanged()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string number = "IR-" + Marker();
+        string first = Id();
+        string second = Id();
+        Commit(store, tx => tx.Create("intake-request", first, null, J("{\"recordNumber\":\"" + number + "\",\"title\":\"Fixture\"}")));
+        Commit(store, tx => tx.Delete("intake-request", first));
+        Commit(store, tx => tx.Create("intake-request", second, null, J("{\"recordNumber\":\"" + number + "\"}")));
+
+        // A change that leaves the value alone keeps it; one that changes it frees the old value.
+        Commit(store, tx => tx.Update("intake-request", second, J("{\"title\":\"Renamed\"}")));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("intake-request", Id(), null, J("{\"recordNumber\":\"" + number + "\"}"))));
+        Commit(store, tx => tx.Update("intake-request", second, J("{\"recordNumber\":\"" + number + "-b\"}")));
+        Commit(store, tx => tx.Create("intake-request", Id(), null, J("{\"recordNumber\":\"" + number + "\"}")));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("intake-request", Id(), null, J("{\"recordNumber\":\"" + number + "-b\"}"))));
+
+        // Clearing the value frees it too.
+        Commit(store, tx => tx.Update("intake-request", second, J("{\"recordNumber\":null}")));
+        Commit(store, tx => tx.Create("intake-request", Id(), null, J("{\"recordNumber\":\"" + number + "-b\"}")));
+    }
+
+    // The database removes every value a commit gives up before it adds any, so values that move between rows in one
+    // transaction never collide with themselves: two rows that swap values, and a value moving from a deleted row.
+    [Fact]
+    public void RowStoresLetStoreKeyValuesMoveBetweenRowsInOneTransaction()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string a = "APP-" + Marker();
+        string b = "APP-" + Marker();
+        string tail = Guid.NewGuid().ToString("D").Substring(1);
+        string low = "a" + tail;
+        string high = "b" + tail;
+        string lowest = "0" + tail;
+        Commit(store, tx =>
+        {
+            tx.Create("business-application", low, null, J("{\"recordNumber\":\"" + a + "\"}"));
+            tx.Create("business-application", high, null, J("{\"recordNumber\":\"" + b + "\"}"));
+        });
+
+        // The update of the lower ID comes first in the commit and takes the value the other row still holds.
+        Commit(store, tx =>
+        {
+            tx.Update("business-application", low, J("{\"recordNumber\":\"" + b + "\"}"));
+            tx.Update("business-application", high, J("{\"recordNumber\":\"" + a + "\"}"));
+        });
+        Assert.Equal(b, store.Records.Get("business-application", low)!.Text("recordNumber"));
+        Assert.Equal(a, store.Records.Get("business-application", high)!.Text("recordNumber"));
+
+        // The new row comes first in the commit and takes the value of the row deleted in it.
+        Commit(store, tx =>
+        {
+            tx.Delete("business-application", high);
+            tx.Create("business-application", lowest, null, J("{\"recordNumber\":\"" + a + "\"}"));
+        });
+        Assert.Equal(a, store.Records.Get("business-application", lowest)!.Text("recordNumber"));
+        Assert.Null(store.Records.Get("business-application", high));
+    }
+
+    // A live configuration row's key path is unique in its table, retired rows included: a retired row keeps its path and
+    // comes back by reactivation, never as a new row (V08).
+    [Fact]
+    public void RowStoresHoldOneLiveConfigurationRowPerKeyPath()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string path = "fixture-" + Marker();
+        string first = store.Seed("change-type", "{\"key\":\"" + path + "\",\"isActive\":true}", Id(), path);
+        StoreConflictException conflict = Assert.Throws<StoreConflictException>(() => store.Seed("change-type", "{\"key\":\"" + path + "\",\"isActive\":true}", Id(), path));
+        Assert.Equal("change-type key \"" + path + "\" is taken by another row.", conflict.Message);
+
+        store.Replace("change-type", first, "{\"key\":\"" + path + "\",\"isActive\":false}");
+        Assert.Throws<StoreConflictException>(() => store.Seed("change-type", "{\"key\":\"" + path + "\",\"isActive\":true}", Id(), path));
+        store.Seed("change-type", "{\"key\":\"" + path + "\",\"isActive\":true}", Id(), path + "-2");
+
+        // The key path of a list value holds its list's key: the same value key in another list is a different path.
+        store.Seed("list-value", "{\"key\":\"other\"}", Id(), path + "/other");
+        store.Seed("list-value", "{\"key\":\"other\"}", Id(), path + "-2/other");
+        Assert.Throws<StoreConflictException>(() => store.Seed("list-value", "{\"key\":\"other\"}", Id(), path + "/other"));
+    }
+
+    // An alternate key of a configuration entity counts active rows only: a retired tier keeps its rank, and an active
+    // tier may take it, as V12 allows; two active tiers may not share it.
+    [Fact]
+    public void RowStoresCountOnlyActiveRowsForAConfigurationAlternateKey()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        int rank = 100_000 + Math.Abs(Guid.NewGuid().GetHashCode() % 1_000_000_000);
+        string path = "fixture-" + Marker();
+        string retired = store.Seed("tier", "{\"key\":\"" + path + "-a\",\"rank\":" + rank + ",\"isActive\":false}", Id(), path + "-a");
+        string active = store.Seed("tier", "{\"key\":\"" + path + "-b\",\"rank\":" + rank + ",\"isActive\":true}", Id(), path + "-b");
+        StoreConflictException conflict = Assert.Throws<StoreConflictException>(() => store.Seed("tier", "{\"key\":\"" + path + "-c\",\"rank\":" + rank + "}", Id(), path + "-c"));
+        Assert.Equal("tier rank \"" + rank + "\" is taken by another row.", conflict.Message);
+        Assert.Throws<StoreConflictException>(() => store.Replace("tier", retired, "{\"key\":\"" + path + "-a\",\"rank\":" + rank + ",\"isActive\":true}"));
+
+        // Retiring the active tier frees the rank for the other.
+        store.Replace("tier", active, "{\"key\":\"" + path + "-b\",\"rank\":" + rank + ",\"isActive\":false}");
+        store.Replace("tier", retired, "{\"key\":\"" + path + "-a\",\"rank\":" + rank + ",\"isActive\":true}");
+
+        // A binding's role, group and method, compared as the bundle names them.
+        string group = Guid.NewGuid().ToString("D");
+        store.Seed("role-group-binding", "{\"key\":\"" + path + "-x\",\"roleKey\":\"requester\",\"entraGroupObjectId\":\"" + group + "\",\"bindingMethod\":\"entra-app-role-assignment\"}", Id(), path + "-x");
+        store.Seed("role-group-binding", "{\"key\":\"" + path + "-y\",\"roleKey\":\"requester\",\"entraGroupObjectId\":\"" + group + "\",\"bindingMethod\":\"entra-group-team\"}", Id(), path + "-y");
+        Assert.Throws<StoreConflictException>(() => store.Seed("role-group-binding", "{\"key\":\"" + path + "-z\",\"roleKey\":\"requester\",\"entraGroupObjectId\":\"" + group.ToUpperInvariant() + "\",\"bindingMethod\":\"entra-app-role-assignment\"}", Id(), path + "-z"));
+    }
+
+    // A technical component's link kind and external ID count current components only: a resource registered again after
+    // its component was retired, or moved with the same ID, is a new component.
+    [Fact]
+    public void RowStoresCountOnlyCurrentComponentsForTheirLinkKindAndExternalId()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string external = "fixture-resource-" + Marker();
+        string columns = "\"linkKind\":\"power-platform-resource\",\"externalId\":\"" + external + "\"";
+        string old = Id();
+        Commit(store, tx => tx.Create("technical-component", old, null, J("{" + columns + "}")));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("technical-component", Id(), null, J("{" + columns + "}"))));
+
+        string moved = Id();
+        Commit(store, tx =>
+        {
+            tx.Update("technical-component", old, J("{\"retiredOn\":\"2026-11-20\"}"));
+            tx.Create("technical-component", moved, null, J("{" + columns + ",\"replacesComponent\":\"" + old + "\"}"));
+        });
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("technical-component", Id(), null, J("{" + columns + "}"))));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Update("technical-component", old, J("{\"retiredOn\":null}"))));
+    }
+
+    // A key with an optional part holds nothing for a row that leaves it empty: a document link without a requirement,
+    // and a top-level portfolio (no parent).
+    [Fact]
+    public void RowStoresIgnoreAStoreKeyWhoseOptionalPartIsEmpty()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string app = Id();
+        Commit(store, tx =>
+        {
+            tx.Create("document-link", Id(), null, J("{\"businessApplication\":\"" + app + "\",\"url\":\"https://example.com/a\"}"));
+            tx.Create("document-link", Id(), null, J("{\"businessApplication\":\"" + app + "\",\"url\":\"https://example.com/b\"}"));
+            tx.Create("document-link", Id(), null, J("{\"businessApplication\":\"" + app + "\",\"documentationRequirement\":\"architecture-doc\"}"));
+        });
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("document-link", Id(), null, J("{\"businessApplication\":\"" + app + "\",\"documentationRequirement\":\"architecture-doc\"}"))));
+
+        string name = "Fixture portfolio " + Marker();
+        string parent = Id();
+        store.Seed("portfolio", "{\"name\":\"" + name + "\"}", Id());
+        store.Seed("portfolio", "{\"name\":\"" + name + "\"}", Id());
+        store.Seed("portfolio", "{\"name\":\"" + name + "\",\"parentPortfolio\":\"" + parent + "\"}", Id());
+        Assert.Throws<StoreConflictException>(() => store.Seed("portfolio", "{\"name\":\"" + name + "\",\"parentPortfolio\":\"" + parent + "\"}", Id()));
+    }
+
+    // The keys held back (StoreKeyCatalog.HeldBack) take repeats, because documented engine behavior writes them.
+    [Fact]
+    public void RowStoresTakeRepeatsOfTheStoreKeysHeldBack()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string marker = Marker();
+        Commit(store, tx =>
+        {
+            tx.Create("artifact-version", Id(), null, J("{\"businessApplication\":\"" + Id() + "\",\"artifactName\":\"Fixture " + marker + "\",\"version\":\"1.0.0\"}"));
+            tx.Create("artifact-version", Id(), null, J("{\"businessApplication\":\"" + Id() + "\",\"artifactName\":\"Fixture " + marker + "\",\"version\":\"1.0.0\"}"));
+            tx.Create("review", Id(), null, J("{\"businessApplication\":\"" + marker + "\",\"reviewType\":\"post-change\",\"dueOn\":\"2026-12-07\"}"));
+            tx.Create("review", Id(), null, J("{\"businessApplication\":\"" + marker + "\",\"reviewType\":\"post-change\",\"dueOn\":\"2026-12-07\"}"));
+        });
+
+        string set = "fixture-set-" + marker;
+        Commit(store, tx =>
+        {
+            tx.Create("configuration-set-version", Id(), null, J("{\"configurationSet\":\"" + set + "\",\"versionNumber\":1,\"contentHash\":\"" + marker + "\"}"));
+            tx.Create("configuration-set-version", Id(), null, J("{\"configurationSet\":\"" + set + "\",\"versionNumber\":3,\"contentHash\":\"" + marker + "\"}"));
+        });
+    }
+
     // ---- Helpers ----
+
+    private static void Commit(IStoreUnderTest store, Action<IStoreTransaction> write)
+    {
+        using IStoreTransaction tx = store.Records.Begin();
+        write(tx);
+        tx.Commit();
+    }
 
     protected static JsonTreeNode J(string json)
     {

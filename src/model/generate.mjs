@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Model generators: from model/logical-model.json, both physical names for every entity and
 // column, a column map, a draft Azure SQL migration and a draft Dataverse metadata description.
-// Status of every output: draft, platform under review (D-22). Text files only. Nothing is applied to any database or
-// environment, and nothing here opens a connection. No packages: Node 20 or later.
+// Status of every output: draft, not applied; D-26 chose Azure SQL for the first release. Text files only. Nothing is
+// applied to any database or environment, and nothing here opens a connection. No packages: Node 20 or later.
 //
 // Usage:
 //   node model/generate.mjs names [--entity <id>] [--model <file>]    print both physical names for every column
@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { SRC, option } from '../tools/lib/files.mjs';
-import { readModel, bind, BindError } from './generators/physical.mjs';
+import { readModel, bind, BindError, DRAFT } from './generators/physical.mjs';
 import { renderNames } from './generators/names.mjs';
 import { renderAll } from './generators/outputs.mjs';
 
@@ -65,7 +65,7 @@ function main() {
       process.exit(1);
     }
     fs.mkdirSync(out, { recursive: true });
-    console.log(`Generate: ${rendered.files.length} files to ${out}. Status: draft, platform under review (D-22). Nothing was applied.`);
+    console.log(`Generate: ${rendered.files.length} files to ${out}. Status: ${DRAFT}. Nothing was applied.`);
     for (const f of rendered.files) {
       fs.writeFileSync(path.join(out, f.name), f.text, 'utf8');
       const sha = crypto.createHash('sha256').update(f.text).digest('hex');

@@ -12,10 +12,11 @@ using Product.Engine.Runtime.Ports;
 namespace Product.Azure.Stores.SqlServer;
 
 // One Azure SQL database: a table per entity (sql/0001-tables.sql), plus the host tables for the rate limit counters
-// (0004) and the approval outbox (0005). A pooled connection per operation, and on each
+// (0004), the approval outbox (0005) and the store keys (0006). A pooled connection per operation, and on each
 // connection the caller in SESSION_CONTEXT, read-only for the connection's life (document 22, section 11.1; a pooled
 // connection is reset before reuse, which clears it). Reads and writes are parameterized; the only names in SQL text come
-// from the entity catalog and from column names RowStore checked to be plain identifiers.
+// from the entity catalog and from column names RowStore checked to be plain identifiers. Transient failures are retried
+// as SqlTransientRetry describes.
 internal sealed class SqlServerRowDatabase : IRowDatabase
 {
     // SQL Server error numbers: a duplicate key in a unique index (2601) or a unique or primary key constraint (2627), and
@@ -39,40 +40,61 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         "UPDATE [host].[ApprovalOutbox] SET [State] = @state, [UpdatedOn] = @on, [RowVersion] = [RowVersion] + 1\n"
         + "WHERE [ApprovalRecordId] = @id AND [State] NOT IN ('answered', 'expired', 'cancelled');";
 
+    // The store keys (host.StoreKey, sql/0006-store-keys.sql).
+    private const string StoreKeyRemoveAll = "DELETE FROM [host].[StoreKey] WHERE [Entity] = @entity AND [RowId] = @id;";
+    private const string StoreKeyRemove = "DELETE FROM [host].[StoreKey] WHERE [Entity] = @entity AND [RowId] = @id AND [KeyName] = @name;";
+    private const string StoreKeyAdd = "INSERT INTO [host].[StoreKey] ([Entity], [KeyName], [ValueHash], [RowId]) VALUES (@entity, @name, @hash, @id);";
+
+    // The longest entity key the store key table holds (varchar(64)).
+    internal const int MaxEntityKeyLength = 64;
+
     private readonly string _connectionString;
     private readonly EntityCatalog _catalog;
     private readonly int _commandTimeoutSeconds;
     private readonly bool _setSessionContext;
+    private readonly SqlTransientRetry _retry;
     private readonly ConcurrentDictionary<string, string> _statements = new(StringComparer.Ordinal);
 
-    public SqlServerRowDatabase(string connectionString, EntityCatalog catalog, int commandTimeoutSeconds, bool setSessionContext)
+    public SqlServerRowDatabase(string connectionString, EntityCatalog catalog, int commandTimeoutSeconds, bool setSessionContext, SqlTransientRetry? retry = null)
     {
         _connectionString = connectionString;
         _catalog = catalog;
         _commandTimeoutSeconds = commandTimeoutSeconds;
         _setSessionContext = setSessionContext;
+        _retry = retry ?? new SqlTransientRetry();
     }
 
     public StoredRowData? Get(EntityInfo entity, string id)
     {
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable + " WHERE [Id] = @id");
-        command.Parameters.Add(IdParameter("@id", id));
-        List<StoredRowData> rows = Read(command, entity.Key);
-        return rows.Count == 0 ? null : rows[0];
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable + " WHERE [Id] = @id");
+            command.Parameters.Add(IdParameter("@id", id));
+            List<StoredRowData> rows = Read(command, entity.Key);
+            return rows.Count == 0 ? null : rows[0];
+        });
     }
 
     public IReadOnlyList<StoredRowData> GetByKey(EntityInfo entity, string key)
     {
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable + " WHERE [Key] = @key ORDER BY [Id]");
-        command.Parameters.Add(KeyParameter("@key", key));
-        return Read(command, entity.Key);
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable + " WHERE [Key] = @key ORDER BY [Id]");
+            command.Parameters.Add(KeyParameter("@key", key));
+            return Read(command, entity.Key);
+        });
     }
 
     public IReadOnlyList<StoredRowData> Query(EntityInfo entity, IReadOnlyList<KeyValuePair<string, string>> textConditions)
     {
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        return _retry.Run(() => QueryOnce(entity, textConditions));
+    }
+
+    private IReadOnlyList<StoredRowData> QueryOnce(EntityInfo entity, IReadOnlyList<KeyValuePair<string, string>> textConditions)
+    {
+        using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
         var sql = new StringBuilder("SELECT " + RowColumns + " FROM " + entity.QualifiedTable);
         using SqlCommand command = connection.CreateCommand();
         command.CommandTimeout = _commandTimeoutSeconds;
@@ -93,23 +115,31 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
     public StoredRowData? ProbeInForce()
     {
         EntityInfo set = _catalog.Get("configuration-set");
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT TOP (1) " + RowColumns + " FROM " + set.QualifiedTable + " WHERE [IsInForce] = 1 AND [Key] IS NOT NULL ORDER BY [Id]");
-        List<StoredRowData> rows = Read(command, set.Key);
-        return rows.Count == 0 ? null : rows[0];
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT TOP (1) " + RowColumns + " FROM " + set.QualifiedTable + " WHERE [IsInForce] = 1 AND [Key] IS NOT NULL ORDER BY [Id]");
+            List<StoredRowData> rows = Read(command, set.Key);
+            return rows.Count == 0 ? null : rows[0];
+        });
     }
 
     public IReadOnlyList<StoredRowData> GetVersionRows(string configurationSetKey, int versionNumber)
     {
         EntityInfo version = _catalog.Get("configuration-set-version");
         PromotedColumn setColumn = version.Promoted.Single(p => p.JsonName == "configurationSet");
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + version.QualifiedTable + " WHERE [ConfigurationSetKey] = @set AND [VersionNumber] = @number ORDER BY [Id]");
-        command.Parameters.Add(new SqlParameter("@set", SqlDbType.NVarChar, setColumn.MaxLength) { Value = configurationSetKey.Length <= setColumn.MaxLength ? configurationSetKey : string.Empty });
-        command.Parameters.Add(new SqlParameter("@number", SqlDbType.Int) { Value = versionNumber });
-        return Read(command, version.Key);
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + version.QualifiedTable + " WHERE [ConfigurationSetKey] = @set AND [VersionNumber] = @number ORDER BY [Id]");
+            command.Parameters.Add(new SqlParameter("@set", SqlDbType.NVarChar, setColumn.MaxLength) { Value = configurationSetKey.Length <= setColumn.MaxLength ? configurationSetKey : string.Empty });
+            command.Parameters.Add(new SqlParameter("@number", SqlDbType.Int) { Value = versionNumber });
+            return Read(command, version.Key);
+        });
     }
 
+    // One database transaction. A transient failure before the transaction is told to commit is retried whole on a fresh
+    // connection (the server rolled the transaction back); a failure during the commit is not.
     public void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation, IReadOnlyList<ApprovalOutboxWrite>? outbox = null)
     {
         if (context == null && !string.Equals(engineOperation, RowStoreOperations.Seed, StringComparison.Ordinal))
@@ -117,7 +147,19 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
             throw new InvalidOperationException("An engine write on Azure SQL runs as its caller: the host enters a StoreCallContext for the request before the engine runs, so row-level security can read it.");
         }
 
-        using SqlConnection connection = Open(context, engineOperation);
+        bool committing = false;
+        _retry.Run(
+            () =>
+            {
+                committing = false;
+                ApplyOnce(changes, context, engineOperation, outbox, () => committing = true);
+            },
+            _ => !committing);
+    }
+
+    private void ApplyOnce(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation, IReadOnlyList<ApprovalOutboxWrite>? outbox, Action committing)
+    {
+        using SqlConnection connection = OpenOnce(context, engineOperation);
         using SqlTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
 
         // The outbox writes first (host.ApprovalOutbox, sql/0005-approval-outbox.sql): a row change that fails afterwards
@@ -185,9 +227,60 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
             }
         }
 
+        ApplyStoreKeys(connection, transaction, changes);
+        committing();
         transaction.Commit();
     }
 
+    // Every removal of the commit first, then every addition (RowDatabase.cs, IRowDatabase.Apply).
+    private void ApplyStoreKeys(SqlConnection connection, SqlTransaction transaction, IReadOnlyList<RowChange> changes)
+    {
+        foreach (RowChange change in changes)
+        {
+            StoreKeyChanges keys = change.StoreKeys;
+            if (keys.RemovesAll)
+            {
+                using SqlCommand command = Command(connection, StoreKeyRemoveAll);
+                command.Transaction = transaction;
+                command.Parameters.Add(EntityParameter(change.Entity.Key));
+                command.Parameters.Add(IdParameter("@id", change.Id));
+                command.ExecuteNonQuery();
+            }
+
+            foreach (StoreKey key in keys.Removed)
+            {
+                using SqlCommand command = Command(connection, StoreKeyRemove);
+                command.Transaction = transaction;
+                command.Parameters.Add(EntityParameter(change.Entity.Key));
+                command.Parameters.Add(IdParameter("@id", change.Id));
+                command.Parameters.Add(new SqlParameter("@name", SqlDbType.VarChar, StoreKey.MaxNameLength) { Value = key.Name });
+                command.ExecuteNonQuery();
+            }
+        }
+
+        foreach (RowChange change in changes)
+        {
+            foreach (StoreKeyValue value in change.StoreKeys.Added)
+            {
+                using SqlCommand command = Command(connection, StoreKeyAdd);
+                command.Transaction = transaction;
+                command.Parameters.Add(EntityParameter(value.Key.EntityKey));
+                command.Parameters.Add(new SqlParameter("@name", SqlDbType.VarChar, StoreKey.MaxNameLength) { Value = value.Key.Name });
+                command.Parameters.Add(new SqlParameter("@hash", SqlDbType.Binary, 32) { Value = value.Hash });
+                command.Parameters.Add(IdParameter("@id", change.Id));
+                try
+                {
+                    command.ExecuteNonQuery();
+                }
+                catch (SqlException e) when (e.Number == DuplicateKeyRow || e.Number == DuplicateKeyConstraint)
+                {
+                    throw RowStore.StoreKeyTaken(value);
+                }
+            }
+        }
+    }
+
+    // One statement that commits on its own: only the connection open is retried.
     public long Increment(string counterKey, DateTime windowStartUtc, TimeSpan windowLength)
     {
         using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Write);
@@ -212,31 +305,42 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
 
     public ApprovalOutboxItem? OutboxGet(string approvalRecordId)
     {
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT " + OutboxColumns + " FROM [host].[ApprovalOutbox] WHERE [ApprovalRecordId] = @id;");
-        command.Parameters.Add(IdParameter("@id", approvalRecordId));
-        List<ApprovalOutboxItem> items = ReadOutbox(command);
-        return items.Count == 0 ? null : items[0];
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT " + OutboxColumns + " FROM [host].[ApprovalOutbox] WHERE [ApprovalRecordId] = @id;");
+            command.Parameters.Add(IdParameter("@id", approvalRecordId));
+            List<ApprovalOutboxItem> items = ReadOutbox(command);
+            return items.Count == 0 ? null : items[0];
+        });
     }
 
     public IReadOnlyList<ApprovalOutboxItem> OutboxClaimable(DateTime nowUtc, int limit)
     {
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT TOP (@limit) " + OutboxColumns + " FROM [host].[ApprovalOutbox] "
-            + "WHERE [State] = 'pending' OR ([State] = 'claimed' AND [ClaimedUntil] <= @now) ORDER BY [EnqueuedOn], [ApprovalRecordId];");
-        command.Parameters.Add(new SqlParameter("@limit", SqlDbType.Int) { Value = limit });
-        command.Parameters.Add(new SqlParameter("@now", SqlDbType.DateTime2) { Value = nowUtc });
-        return ReadOutbox(command);
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT TOP (@limit) " + OutboxColumns + " FROM [host].[ApprovalOutbox] "
+                + "WHERE [State] = 'pending' OR ([State] = 'claimed' AND [ClaimedUntil] <= @now) ORDER BY [EnqueuedOn], [ApprovalRecordId];");
+            command.Parameters.Add(new SqlParameter("@limit", SqlDbType.Int) { Value = limit });
+            command.Parameters.Add(new SqlParameter("@now", SqlDbType.DateTime2) { Value = nowUtc });
+            return ReadOutbox(command);
+        });
     }
 
     public IReadOnlyList<ApprovalOutboxItem> OutboxAll(int limit)
     {
-        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
-        using SqlCommand command = Command(connection, "SELECT TOP (@limit) " + OutboxColumns + " FROM [host].[ApprovalOutbox] ORDER BY [EnqueuedOn], [ApprovalRecordId];");
-        command.Parameters.Add(new SqlParameter("@limit", SqlDbType.Int) { Value = limit });
-        return ReadOutbox(command);
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT TOP (@limit) " + OutboxColumns + " FROM [host].[ApprovalOutbox] ORDER BY [EnqueuedOn], [ApprovalRecordId];");
+            command.Parameters.Add(new SqlParameter("@limit", SqlDbType.Int) { Value = limit });
+            return ReadOutbox(command);
+        });
     }
 
+    // A compare and set in one statement: only the connection open is retried, so a set that may have happened is never
+    // made twice.
     public bool OutboxSet(ApprovalOutboxItem next)
     {
         using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Write);
@@ -258,7 +362,7 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
 
     public void EnsureSchema(EntityCatalog catalog)
     {
-        int applied = SqlServerMigrations.AppliedVersion(_connectionString);
+        int applied = _retry.Run(() => SqlServerMigrations.AppliedVersion(_connectionString));
         if (applied < SqlServerMigrations.RequiredVersion)
         {
             throw new InvalidOperationException(
@@ -336,6 +440,11 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
     private static SqlParameter IdParameter(string name, string id)
     {
         return new SqlParameter(name, SqlDbType.VarChar, RowStore.MaxIdLength) { Value = id };
+    }
+
+    private static SqlParameter EntityParameter(string entityKey)
+    {
+        return new SqlParameter("@entity", SqlDbType.VarChar, MaxEntityKeyLength) { Value = entityKey };
     }
 
     private static SqlParameter KeyParameter(string name, string? key)
@@ -424,7 +533,13 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         return command;
     }
 
+    // A connection with its session context, retried while the failure is transient.
     private SqlConnection Open(StoreCallContext? context, string engineOperation)
+    {
+        return _retry.Run(() => OpenOnce(context, engineOperation));
+    }
+
+    private SqlConnection OpenOnce(StoreCallContext? context, string engineOperation)
     {
         var connection = new SqlConnection(_connectionString);
         try

@@ -16,8 +16,8 @@ The diagrams use Microsoft's official product icons, unchanged. Those icons stay
 
 ## Rules for this text
 
-- Every product statement says what the product **is designed to** do. Nothing is built yet.
-- No claim about which data store the product uses. That choice is still open.
+- Every product statement says what the product **is designed to** do. Nothing is released or deployed.
+- The first release is designed to run in the organization's own Azure subscription. No other claim about the data store.
 - Every Microsoft fact has a link and the date it was checked.
 - Outside frameworks appear only as "maps to".
 - Guideline numbers are permanent. A retired number keeps its file and is never reused.

@@ -20,6 +20,9 @@ namespace Product.Azure.Stores;
 //   transaction took first. The engine retries a conflict once and so sees the first result;
 // - the two unique keys of document 25, section 8 (Audit Entry Request Key, Deployment Record Idempotency Key), with the
 //   in-memory store's message;
+// - the other keys the logical model asks the store to enforce (StoreKeys.cs), which the in-memory store does not hold:
+//   the database refuses a second row with the same value at commit, as a StoreConflictException, so the engine's retry
+//   sees the first result (document 25, section 8, concurrent duplicates);
 // - seeding (IStoreSeeder) with the same rows and columns as InMemoryStore.Seed, Tamper and SeedVersion.
 // It holds no rule: the engine decides what to write.
 //
@@ -179,7 +182,7 @@ public abstract class RowStore : IProductStore
         string? storedKey = string.IsNullOrEmpty(key) ? null : key;
         RowChange change = existing == null
             ? RowChange.Insert(info, id, storedKey, columns)
-            : RowChange.Update(info, id, storedKey, columns, existing.Version);
+            : RowChange.Update(info, id, storedKey, columns, existing.Version, existing.Row);
         CheckUniqueLengths(change);
         Database.Apply(new[] { change }, StoreCallContext.Current, RowStoreOperations.Seed);
         return id;
@@ -198,7 +201,7 @@ public abstract class RowStore : IProductStore
             throw AppendOnlyRow(info, id);
         }
 
-        RowChange change = RowChange.Update(info, id, existing.Row.Key, columns, existing.Version);
+        RowChange change = RowChange.Update(info, id, existing.Row.Key, columns, existing.Version, existing.Row);
         CheckUniqueLengths(change);
         Database.Apply(new[] { change }, StoreCallContext.Current, RowStoreOperations.Seed);
     }
@@ -224,7 +227,7 @@ public abstract class RowStore : IProductStore
         string setId = set?.Row.Id ?? _options.NewSeedId("configuration-set");
         changes.Add(set == null
             ? RowChange.Insert(setEntity, setId, setKey, setColumns)
-            : RowChange.Update(setEntity, setId, setKey, setColumns, set.Version));
+            : RowChange.Update(setEntity, setId, setKey, setColumns, set.Version, set.Row));
 
         EntityInfo versionEntity = RequireEntity("configuration-set-version");
         string versionId = _options.NewSeedId("configuration-set-version");
@@ -334,6 +337,19 @@ public abstract class RowStore : IProductStore
         string names = string.Join(" and ", entity.UniqueColumns.Select(c => c.JsonName));
         string? value = columns == null ? null : RowJson.UniqueValue(entity, columns, "/");
         return new StoreConflictException(entity.Key + " " + (names.Length == 0 ? "key" : names) + " \"" + (value ?? string.Empty) + "\" is taken by a transaction that committed first.");
+    }
+
+    // The message when a store key's value is taken by another row: committed by another transaction, or written twice in
+    // this one.
+    public static StoreConflictException StoreKeyTaken(StoreKeyValue value)
+    {
+        if (value == null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
+        string names = string.Join(" and ", value.Key.Parts.Select(p => p == StoreKey.KeyPathPart ? "key" : p));
+        return new StoreConflictException(value.Key.EntityKey + " " + names + " \"" + value.Display + "\" is taken by another row.");
     }
 
     public static StoreConflictException RowCreatedFirst(EntityInfo entity, string id)
@@ -632,7 +648,7 @@ public abstract class RowStore : IProductStore
                     Pending p = write.Value;
                     RowChange? change = p.CommittedVersion == null
                         ? (p.Row == null ? null : RowChange.Insert(p.Entity, write.Key, p.Row.Key, p.Row.Columns))
-                        : (p.Row == null ? RowChange.Delete(p.Entity, write.Key, p.CommittedVersion.Value) : RowChange.Update(p.Entity, write.Key, p.Row.Key, p.Row.Columns, p.CommittedVersion.Value));
+                        : (p.Row == null ? RowChange.Delete(p.Entity, write.Key, p.CommittedVersion.Value) : RowChange.Update(p.Entity, write.Key, p.Row.Key, p.Row.Columns, p.CommittedVersion.Value, p.Committed));
                     if (change != null)
                     {
                         CheckUniqueLengths(change);
@@ -703,7 +719,7 @@ public abstract class RowStore : IProductStore
                 throw AppendOnlyRow(info, id!);
             }
 
-            pending = new Pending(info, committed.Row, committed.Version);
+            pending = new Pending(info, committed.Row, committed.Version, committed.Row);
             rows[id!] = pending;
             return pending;
         }
@@ -711,11 +727,12 @@ public abstract class RowStore : IProductStore
 
     private sealed class Pending
     {
-        public Pending(EntityInfo entity, StoredRow? row, long? committedVersion)
+        public Pending(EntityInfo entity, StoredRow? row, long? committedVersion, StoredRow? committed = null)
         {
             Entity = entity;
             Row = row;
             CommittedVersion = committedVersion;
+            Committed = committed;
         }
 
         public EntityInfo Entity { get; }
@@ -725,5 +742,8 @@ public abstract class RowStore : IProductStore
 
         // The version of the committed row when the transaction first touched it; null when the row did not exist.
         public long? CommittedVersion { get; }
+
+        // The committed row as the transaction first read it, at CommittedVersion; null when the row did not exist.
+        public StoredRow? Committed { get; }
     }
 }

@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 
-export const DRAFT = 'draft, platform under review (D-22)';
+export const DRAFT = 'draft, not applied; D-26 chose Azure SQL for the first release';
 export const PREFIX = '<prefix>';
 export const GENERATOR = 'model/generate.mjs';
 export const MODEL_PATH = 'model/logical-model.json';
@@ -637,6 +637,6 @@ export function sourceBlock(bound) {
 }
 
 export const PLACEHOLDERS = {
-  [PREFIX]: 'The Dataverse publisher prefix, picked with the product name (D-05). tools/rename-product.mjs swaps it',
-  Product: 'The product name placeholder. Stays until the product owner picks the name',
+  [PREFIX]: 'The Dataverse publisher prefix placeholder. tools/rename-product.mjs swaps it in a later, separate step',
+  Product: 'The code prefix placeholder. The product name is Enterprise Applications Governance (D-31); tools/rename-product.mjs swaps the placeholder in a later, separate step',
 };

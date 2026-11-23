@@ -10,6 +10,7 @@ applied in file order by `SqlServerMigrations`, which records each one in `host.
 | `0003-app-user.sql` | Generated | The `product_app` role (read and write the engine's rows, no DDL, no delete where the model never deletes, no read of history tables or ledger views), the `product_migrator` role, and the app's managed identity as a database user in `product_app` |
 | `0004-host.sql` | By hand | `host.RateLimitCounter`, the Tool Policy call counters, and the app's read of `host.SchemaVersion` |
 | `0005-approval-outbox.sql` | By hand | `host.ApprovalOutbox`, the approval runner's work list: one row per Approval Record the engine opens, written in the same transaction as the engine's rows. IDs, states and times only. The app reads, inserts and updates it and never deletes from it |
+| `0006-store-keys.sql` | By hand | `host.StoreKey`, the keys the logical model asks the store to enforce beyond the unique indexes of 0001: one row per key value of an engine row, with the entity, the key's name and the value's SHA-256 as the primary key. Hashes and IDs only. The app reads, inserts and deletes its rows and never updates them. Runs only on a database whose engine tables are still empty |
 
 ## Who runs them
 
@@ -35,12 +36,45 @@ configuration key path, null for operational rows), `Columns` (the row's columns
 store copies from the JSON in the same statement: the two unique keys (Audit Entry Request Key, Deployment Record
 Idempotency Key), the Configuration Set Version pair, the version probe, and the columns the block predicates read.
 
-The other keys the logical model asks the store to enforce (business keys such as Record Number, Claim Key and Entra
-Object Id, the configuration keys within a set, and alternate keys such as Content Hash) are not unique indexes here,
-as the in-memory store does not enforce them either: the engine checks them from its facts, so two concurrent writes
-that each pass that check can both commit. Audit Entry Request Key is unique on its own, which is stricter than the
-model's Operation and Request Key pair and is what the engine's replay lookup reads. The store tests list every such
-key (`LogicalModelConformanceTests`), so a key the model adds needs a decision.
+Audit Entry Request Key is unique on its own, which is stricter than the model's Operation and Request Key pair and is
+what the engine's replay lookup reads.
+
+## Store keys
+
+The other keys the logical model asks the store to enforce are rows of `host.StoreKey` (`0006-store-keys.sql`): business
+keys such as Record Number, Claim Key and Entra Object Id, the configuration keys within the set in force, and alternate
+keys such as Link Kind and External Id. The store computes each key's value from the row it writes, takes its SHA-256,
+and writes or removes the key row in the same transaction as the engine's row, so the primary key refuses a second row
+with the same value in any transaction. The store answers that refusal as a conflict, and the engine retries the call
+once, so a concurrent duplicate sees the first result (document 25, section 8). The SQLite store keeps the same table.
+
+- A row holds no value for a key when a part of it is empty, as a unique index ignores nulls and a Dataverse alternate
+  key ignores empty values: a document link without a requirement, a portfolio without a parent.
+- A live configuration row's key is its key path, unique in its table, retired rows included. Configuration Set is not
+  a part: the live tables hold the rows of the working set in force only. A List Value's key path holds its list's key,
+  so List Value Key is held as Value List and Key: the model's Key within the set would refuse every shipped preset,
+  which uses one value key (such as `other` or `medium`) in several lists.
+- The alternate keys of the configuration entities (tier rank, stage rank, a binding's role, group and method, and
+  others) count active rows only, as the engine's own checks of tier and stage ranks do: a retired row keeps its values
+  and an active row may take them again.
+- Technical Component Link Kind and External Id counts components with no Retired On, as the engine's key of the entity
+  does, so a resource registered again after its component retired is a new component.
+- A string that is a GUID compares without regard to case, as the engine compares Microsoft IDs; other text compares
+  exactly, trailing spaces included.
+- Within one commit the store removes every value it gives up before it adds any, so values that move between rows (two
+  tiers that swap ranks) never collide with themselves.
+
+Three store keys of the model are held back, because a documented engine behavior writes rows they would refuse:
+Configuration Set Version Content Hash (a version that returns to earlier content has its hash), Artifact Version
+Artifact Name and Version (the record step looks an artifact up by application as well), and Review Business
+Application, Review Type and Due On (two changes to one application finished on the same day open two post-change
+reviews). `StoreKeyCatalog.HeldBack` gives each reason, and the store tests list every key of the model
+(`LogicalModelConformanceTests`), so a key the model adds needs a decision.
+
+`0006-store-keys.sql` builds no key for rows a database already holds, so it stops with error 50006 on a database whose
+engine tables hold rows; a database created from these scripts is empty until its first seed or bootstrap. A SQLite file
+from an earlier build gets its keys from its rows on first use, and is refused with the key named when two of its rows
+share a value.
 
 The fully typed schema in `model/generated/azure-sql-0001-initial.draft.sql` stays the target of a later migration, once
 its open questions (circular required foreign keys at the bootstrap, constraints on ledger tables) are settled.
@@ -77,5 +111,6 @@ same store logic runs against SQLite. To run the store suite and the migrations 
 `PRODUCT_TEST_SQLSERVER` to the connection string of a new, empty Azure SQL Database (or SQL Server 2022) database whose
 identity owns it, and optionally `PRODUCT_TEST_SQLSERVER_APP_IDENTITY`. Use a new database for each run: ledger rows can
 never be deleted. Points to confirm there: filtered unique indexes and `ISJSON` checks on ledger tables, block
-predicates on ledger tables, filter predicates on temporal history tables, and the cost of the row-level security
-predicates per request.
+predicates on ledger tables, filter predicates on temporal history tables, the cost of the row-level security
+predicates per request, the cost of the store key rows on a bootstrap, and the error numbers a failover returns to the
+store's transient retries (`SqlTransientRetry`).

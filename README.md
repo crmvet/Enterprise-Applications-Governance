@@ -1,15 +1,15 @@
 # Enterprise-Applications-Governance
-Enterprise Applications Governance for Power Platform
-https://crm.vet/enterprise-applications-governance-for-power-platform/
+Enterprise Applications Governance for Power Platform (the 2021 title)
+https://crm.vet/blog/enterprise-applications-governance-for-power-platform/
 
 ## Next version (in design)
 
-The next version of Enterprise Applications Governance is in design. Nothing in it is released or running yet. It is designed to govern AI development of your apps: people build with AI at speed, and every app stays owned, tiered and decided by a person. Underneath is [open-source application portfolio management](https://citizendevelopmentacademy.com/solutions/enterprise-applications-governance/) for Microsoft Power Platform, Dataverse and the apps around them. It is designed to run in your own Azure subscription.
+The next version of Enterprise Applications Governance is in design. Nothing in it is released or deployed yet. It is designed to govern AI development of your apps: people build with AI at speed, and every app stays owned, tiered and decided by a person. Underneath is [open-source application portfolio management](https://citizendevelopmentacademy.com/solutions/enterprise-applications-governance/) for Microsoft Power Platform, Dataverse and the apps around them. It is designed to run in your own Azure subscription.
 
 - [Overview of the next version](docs/overview.md): what it is designed to be, who it is for, and its status.
 - [Architecture](docs/architecture/README.md): the technical design.
 
-The code of the next version is in [`src/`](src/), under the MIT License. It is early work that follows the design, not a release. The 2021 release in this repository stays here for reference.
+The code of the next version is in [`src/`](src/), under the MIT License. It is early work that follows the design, not a release. It runs only on a developer machine with fictional data ([what works today](src/adapters/azure/STATUS.md)). The 2021 release in this repository stays here for reference.
 
 ## Where things are
 

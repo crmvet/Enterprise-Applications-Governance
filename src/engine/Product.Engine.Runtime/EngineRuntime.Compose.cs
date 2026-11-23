@@ -347,20 +347,7 @@ public sealed partial class EngineRuntime
 
     internal IReadOnlyList<string> ComposedCancelPendingApprovals(RuntimeCall call, string decisionId)
     {
-        string cancelled = DefaultStatus(call.Snapshot, "approval-record", "cancelled");
-        var ids = new List<string>();
-        foreach (StoredRow record in Records(call, decisionId).Where(r => r.Text("outcomeMeaning") == "pending"))
-        {
-            GuardedWrite(call, new WriteSpec("approval-record", WriteOperation.Update)
-            {
-                RowId = record.Id,
-                After = RuntimeJson.Object(("outcome", JsonTreeNode.FromString(cancelled))),
-                Nested = true,
-            });
-            ids.Add(record.Id);
-        }
-
-        return ids;
+        return CancelPendingRecords(call, decisionId, null);
     }
 
     internal EvaluationResult<JsonTreeNode?> ComposedRequiredApprovals(RuntimeCall call, string decisionId)

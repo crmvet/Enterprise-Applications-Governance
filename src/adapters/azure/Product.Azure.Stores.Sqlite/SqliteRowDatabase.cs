@@ -8,13 +8,14 @@ using Product.Engine.Runtime.Ports;
 namespace Product.Azure.Stores.Sqlite;
 
 // One SQLite file: every row of every entity in one table, keyed by entity and ID, with the row's columns as canonical
-// JSON, an optimistic version and the entity's unique key value; plus the rate limit counters, the approval outbox and
-// the schema version. A pooled connection per operation. The caller context is ignored (SQLite has no row-level
-// security).
+// JSON, an optimistic version and the entity's unique key value; the store keys of the rows (StoreKeys.cs); plus the
+// rate limit counters, the approval outbox and the schema version. A pooled connection per operation. The caller
+// context is ignored (SQLite has no row-level security).
 internal sealed class SqliteRowDatabase : IRowDatabase
 {
-    // The schema this build creates. 2 adds the approval outbox; a file at 1 gets the table on first use.
-    public const int SchemaVersion = 2;
+    // The schema this build creates. 2 adds the approval outbox; 3 adds the store keys. A file at an earlier version
+    // gets the new tables on first use, and its store keys are built from the rows it holds.
+    public const int SchemaVersion = 3;
 
     // SQLite result codes for a constraint failure (19) on a unique index (2067) or on the primary key (1555).
     private const int ConstraintError = 19;
@@ -39,6 +40,11 @@ internal sealed class SqliteRowDatabase : IRowDatabase
             + "\"ClaimId\" TEXT NULL, \"ClaimedUntil\" TEXT NULL, \"Attempts\" INTEGER NOT NULL, \"CardRef\" TEXT NULL, \"RunnerRunUrl\" TEXT NULL, "
             + "\"UpdatedOn\" TEXT NOT NULL, \"RowVersion\" INTEGER NOT NULL) WITHOUT ROWID",
         "CREATE INDEX IF NOT EXISTS \"IX_ApprovalOutbox_State\" ON \"ApprovalOutbox\" (\"State\", \"EnqueuedOn\")",
+
+        // The store keys (sql/0006-store-keys.sql on Azure SQL): the SHA-256 of each key value, never the value itself.
+        "CREATE TABLE IF NOT EXISTS \"RowKey\" (\"Entity\" TEXT NOT NULL, \"KeyName\" TEXT NOT NULL, \"ValueHash\" BLOB NOT NULL, \"Id\" TEXT NOT NULL, "
+            + "PRIMARY KEY (\"Entity\", \"KeyName\", \"ValueHash\")) WITHOUT ROWID",
+        "CREATE INDEX IF NOT EXISTS \"IX_RowKey_Row\" ON \"RowKey\" (\"Entity\", \"Id\")",
     };
 
     private const string RowColumns = "\"Id\", \"Key\", \"Columns\", \"Version\"";
@@ -46,6 +52,7 @@ internal sealed class SqliteRowDatabase : IRowDatabase
     private const string OutboxColumns = "\"ApprovalRecordId\", \"DecisionId\", \"EnqueuedOn\", \"State\", \"ClaimId\", \"ClaimedUntil\", \"Attempts\", \"CardRef\", \"RunnerRunUrl\", \"UpdatedOn\", \"RowVersion\"";
 
     private readonly string _connectionString;
+    private readonly EntityCatalog _catalog;
     private readonly string? _filePath;
     private readonly bool _inMemory;
     private readonly int _busyTimeoutMilliseconds;
@@ -54,8 +61,9 @@ internal sealed class SqliteRowDatabase : IRowDatabase
     private volatile bool _ready;
     private bool _disposed;
 
-    public SqliteRowDatabase(SqliteConnectionStringBuilder builder, int busyTimeoutMilliseconds)
+    public SqliteRowDatabase(SqliteConnectionStringBuilder builder, int busyTimeoutMilliseconds, EntityCatalog catalog)
     {
+        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         if (string.Equals(builder.DataSource, ":memory:", StringComparison.Ordinal))
         {
             throw new ArgumentException("A private in-memory SQLite database lives only as long as one connection. Use a file, or \"Data Source=<name>;Mode=Memory;Cache=Shared\".", nameof(builder));
@@ -196,6 +204,7 @@ internal sealed class SqliteRowDatabase : IRowDatabase
             }
         }
 
+        ApplyStoreKeys(connection, transaction, changes);
         transaction.Commit();
     }
 
@@ -291,6 +300,104 @@ internal sealed class SqliteRowDatabase : IRowDatabase
             _keepAlive = null;
             using var connection = new SqliteConnection(_connectionString);
             SqliteConnection.ClearPool(connection);
+        }
+    }
+
+    // Every removal of the commit first, then every addition (RowDatabase.cs, IRowDatabase.Apply).
+    private static void ApplyStoreKeys(SqliteConnection connection, SqliteTransaction transaction, IReadOnlyList<RowChange> changes)
+    {
+        foreach (RowChange change in changes)
+        {
+            StoreKeyChanges keys = change.StoreKeys;
+            if (keys.RemovesAll)
+            {
+                using SqliteCommand command = Command(connection, "DELETE FROM \"RowKey\" WHERE \"Entity\" = $entity AND \"Id\" = $id");
+                command.Transaction = transaction;
+                command.Parameters.AddWithValue("$entity", change.Entity.Key);
+                command.Parameters.AddWithValue("$id", change.Id);
+                command.ExecuteNonQuery();
+            }
+
+            foreach (StoreKey key in keys.Removed)
+            {
+                using SqliteCommand command = Command(connection, "DELETE FROM \"RowKey\" WHERE \"Entity\" = $entity AND \"Id\" = $id AND \"KeyName\" = $name");
+                command.Transaction = transaction;
+                command.Parameters.AddWithValue("$entity", change.Entity.Key);
+                command.Parameters.AddWithValue("$id", change.Id);
+                command.Parameters.AddWithValue("$name", key.Name);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        foreach (RowChange change in changes)
+        {
+            foreach (StoreKeyValue value in change.StoreKeys.Added)
+            {
+                if (!TryAddKey(connection, transaction, change.Id, value))
+                {
+                    throw RowStore.StoreKeyTaken(value);
+                }
+            }
+        }
+    }
+
+    // False when the value is taken by another row.
+    private static bool TryAddKey(SqliteConnection connection, SqliteTransaction transaction, string id, StoreKeyValue value)
+    {
+        using SqliteCommand command = Command(connection, "INSERT INTO \"RowKey\" (\"Entity\", \"KeyName\", \"ValueHash\", \"Id\") VALUES ($entity, $name, $hash, $id)");
+        command.Transaction = transaction;
+        command.Parameters.AddWithValue("$entity", value.Key.EntityKey);
+        command.Parameters.AddWithValue("$name", value.Key.Name);
+        command.Parameters.AddWithValue("$hash", value.Hash);
+        command.Parameters.AddWithValue("$id", id);
+        try
+        {
+            command.ExecuteNonQuery();
+            return true;
+        }
+        catch (SqliteException e) when (e.SqliteErrorCode == ConstraintError && e.SqliteExtendedErrorCode == PrimaryKeyError)
+        {
+            return false;
+        }
+    }
+
+    // Builds the store keys of a file that an earlier build wrote, from the rows it holds, inside the schema transaction.
+    // A file that holds two rows with one key value cannot be used: the message names the key, and nothing changes.
+    private void RebuildStoreKeys(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using (SqliteCommand clear = Command(connection, "DELETE FROM \"RowKey\""))
+        {
+            clear.Transaction = transaction;
+            clear.ExecuteNonQuery();
+        }
+
+        var rows = new List<(string Entity, string Id, string? Key, string Columns)>();
+        using (SqliteCommand read = Command(connection, "SELECT \"Entity\", \"Id\", \"Key\", \"Columns\" FROM \"Row\" ORDER BY \"Entity\", \"Id\""))
+        {
+            read.Transaction = transaction;
+            using SqliteDataReader reader = read.ExecuteReader();
+            while (reader.Read())
+            {
+                rows.Add((reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetString(3)));
+            }
+        }
+
+        foreach ((string entity, string id, string? key, string columns) in rows)
+        {
+            if (!_catalog.TryGet(entity, out EntityInfo? info) || info.StoreKeys.Count == 0)
+            {
+                continue;
+            }
+
+            foreach (StoreKeyValue value in StoreKeyChanges.Values(info.StoreKeys, key, RowJson.Parse(columns)))
+            {
+                if (!TryAddKey(connection, transaction, id, value))
+                {
+                    throw new InvalidOperationException(
+                        "The SQLite file holds two rows with one value of a key the logical model asks the store to enforce (" + RowStore.StoreKeyTaken(value).Message
+                        + ") Change or remove one of them with an earlier build, or start a new file.");
+                }
+            }
         }
     }
 
@@ -412,6 +519,15 @@ internal sealed class SqliteRowDatabase : IRowDatabase
                         using SqliteCommand command = Command(connection, statement);
                         command.Transaction = transaction;
                         command.ExecuteNonQuery();
+                    }
+
+                    using (SqliteCommand recorded = Command(connection, "SELECT COALESCE(MAX(\"Version\"), 0) FROM \"SchemaVersion\""))
+                    {
+                        recorded.Transaction = transaction;
+                        if (Convert.ToInt64(recorded.ExecuteScalar(), CultureInfo.InvariantCulture) < SchemaVersion)
+                        {
+                            RebuildStoreKeys(connection, transaction);
+                        }
                     }
 
                     using SqliteCommand version = Command(connection, "INSERT OR IGNORE INTO \"SchemaVersion\" (\"Version\", \"AppliedOn\") VALUES ($version, $now)");

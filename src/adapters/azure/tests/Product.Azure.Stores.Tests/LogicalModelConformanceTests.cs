@@ -10,58 +10,23 @@ namespace Product.Azure.Stores.Tests;
 
 // The checked-in Azure SQL scripts and the SQLite store against the logical model as it is on disk
 // (src/model/logical-model.json), not the copy compiled into the engine core: every first-release entity has exactly one
-// table in the schema of its kind, its history class gives the table type the model names for Azure SQL, and every key
-// the stores enforce is a key the model asks the store to enforce, on both providers alike.
+// table in the schema of its kind, its history class gives the table type the model names for Azure SQL, and the stores
+// hold every key the model asks the store to enforce, on both providers alike, but the few held back on purpose.
 public sealed class LogicalModelConformanceTests
 {
     private static readonly Lazy<JsonDocument> LazyModel = new(() => JsonDocument.Parse(File.ReadAllText(Path.Combine(Paths.Source, "model", "logical-model.json"))));
 
-    // The store keys of the model that the row stores do not enforce in this release, as the in-memory store does not:
-    // the engine checks them from its facts. They are the unique constraints of the typed schema draft
-    // (model/generated/azure-sql-0001-initial.draft.sql), the target of a later migration. A store key the model adds
-    // fails this test until the stores enforce it or it joins this list on purpose.
-    private static readonly string[] StoreKeysLeftToTheEngine =
+    // The store keys of the model the row stores do not hold, each because a documented engine behavior writes rows the
+    // key would refuse (StoreKeyCatalog.HeldBack gives the reasons). A store key the model adds fails this test until the
+    // stores hold it or it joins this list on purpose.
+    private static readonly string[] StoreKeysHeldBack =
     {
-        "C01 Name",
-        "C01 Preset Key",
         "C02 Content Hash",
-        "C04 Key+Configuration Set", "C05 Key+Configuration Set", "C06 Key+Configuration Set",
-        "C07 Key+Configuration Set", "C07 Value List+Key+Configuration Set",
-        "C08 Key+Configuration Set", "C08 Rank+Configuration Set",
-        "C09 Key+Configuration Set", "C10 Key+Configuration Set",
-        "C11 Key+Configuration Set", "C11 Source Entity+Source Key+Vocabulary+Configuration Set",
-        "C12 Key+Configuration Set", "C12 Stage Rank+Configuration Set",
-        "C13 Key+Configuration Set", "C14 Key+Configuration Set", "C15 Key+Configuration Set", "C16 Key+Configuration Set",
-        "C17 Key+Configuration Set", "C18 Key+Configuration Set", "C19 Key+Configuration Set", "C20 Key+Configuration Set",
-        "C21 Key+Configuration Set", "C22 Key+Configuration Set", "C23 Key+Configuration Set", "C24 Key+Configuration Set",
-        "C25 Key+Configuration Set", "C25 Review Type+Tier+Configuration Set",
-        "C26 Key+Configuration Set", "C27 Key+Configuration Set", "C28 Key+Configuration Set", "C29 Key+Configuration Set",
-        "C30 Key+Configuration Set", "C30 Role+Entra Group+Binding Method+Configuration Set",
-        "C31 Key+Configuration Set", "C32 Key+Configuration Set",
-        "C33 Key+Configuration Set", "C33 Tier+Change Type+Target Stage+Portfolio+Configuration Set",
-        "C34 Key+Configuration Set", "C35 Key+Configuration Set", "C36 Key+Configuration Set", "C37 Key+Configuration Set",
-        "C38 Key+Configuration Set",
-        "C39 Key+Configuration Set", "C39 Number+Version+Configuration Set",
-        "C40 Key+Configuration Set", "C41 Key+Configuration Set",
-        "C42 Key+Configuration Set", "C42 Principal+Workload Role+Configuration Set",
-        "C43 Key+Configuration Set", "C44 Key+Configuration Set", "C45 Key+Configuration Set",
-        "C46 Record Number",
-        "O01 Name+Parent Portfolio",
-        "O02 Record Number",
-        "O03 Link Kind+External Id",
-        "O05 Entra Object Id",
-        "O07 Record Number",
-        "O09 Record Number",
-        "O11 Record Number",
-        "O12 Change Request+Business Application",
         "O13 Artifact Name+Version",
-        "O15 Link Kind+External Id",
-        "O16 Link Kind+External Id",
-        "O17 Business Application+Pipeline Reference+Deployment Target",
-        "O19 Business Application+Documentation Requirement",
         "O21 Business Application+Review Type+Due On",
-        "O23 Claim Key",
     };
+
+    private static readonly Lazy<JsonDocument> LazyBundleSchema = new(() => JsonDocument.Parse(File.ReadAllText(Path.Combine(Paths.Source, "config", "schema", "config-bundle.schema.json"))));
 
     private static JsonElement Model => LazyModel.Value.RootElement;
 
@@ -116,7 +81,7 @@ public sealed class LogicalModelConformanceTests
     }
 
     [Fact]
-    public void TheStoresEnforceOnlyKeysTheModelGivesTheStoreAndTheRestAreListed()
+    public void TheStoresHoldEveryStoreKeyOfTheModelButTheOnesHeldBack()
     {
         string tables = File.ReadAllText(Path.Combine(Paths.Sql, "0001-tables.sql"));
         var storeKeys = new List<(string Id, string[] Columns)>();
@@ -128,14 +93,15 @@ public sealed class LogicalModelConformanceTests
             }
         }
 
-        // Every unique key the stores hold covers a store key of the model (the same columns, or fewer, which is stricter).
-        var enforced = new HashSet<string>(StringComparer.Ordinal);
+        // Held by a unique index on the entity's own table: every such index covers a store key of the model (the same
+        // columns, or fewer, which is stricter), on both providers alike.
+        var indexed = new HashSet<string>(StringComparer.Ordinal);
         foreach (EntityInfo entity in EntityCatalog.Embedded.Entities.Where(e => e.UniqueColumns.Any()))
         {
             string[] columns = entity.UniqueColumns.Select(c => c.JsonName).ToArray();
             (string Id, string[] Columns) match = storeKeys.FirstOrDefault(k => k.Id == entity.ModelId && columns.All(c => k.Columns.Select(JsonName).Contains(c, StringComparer.Ordinal)));
             Assert.True(match.Id != null, entity.ModelId + " holds a unique key on " + string.Join(", ", columns) + " that the model does not give the store.");
-            enforced.Add(Label(match));
+            indexed.Add(Label(match));
 
             // Both providers from the same columns: the Azure SQL script holds this unique index, and the SQLite store's
             // one unique index takes the value RowChange.UniqueKey builds from the entity's unique columns.
@@ -144,9 +110,126 @@ public sealed class LogicalModelConformanceTests
             Assert.Contains(index, tables, StringComparison.Ordinal);
         }
 
-        Assert.Equal(new[] { "C02 Configuration Set+Version Number", "O14 Idempotency Key", "O24 Operation+Request Key" }, enforced.OrderBy(k => k, StringComparer.Ordinal));
-        string[] left = storeKeys.Select(Label).Where(k => !enforced.Contains(k)).OrderBy(k => k, StringComparer.Ordinal).ToArray();
-        Assert.Equal(StoreKeysLeftToTheEngine.OrderBy(k => k, StringComparer.Ordinal), left);
+        Assert.Equal(new[] { "C02 Configuration Set+Version Number", "O14 Idempotency Key", "O24 Operation+Request Key" }, indexed.OrderBy(k => k, StringComparer.Ordinal));
+
+        // Held in the store key table: each model key once, by the entity it belongs to.
+        var tabled = new List<string>();
+        foreach (EntityInfo entity in EntityCatalog.Embedded.Entities)
+        {
+            foreach (StoreKey key in entity.StoreKeys)
+            {
+                Assert.Equal(entity.Key, key.EntityKey);
+                Assert.NotEmpty(key.ModelKeys);
+                Assert.All(key.ModelKeys, label => Assert.StartsWith(entity.ModelId + " ", label, StringComparison.Ordinal));
+                tabled.AddRange(key.ModelKeys);
+            }
+        }
+
+        string[] all = storeKeys.Select(Label).OrderBy(k => k, StringComparer.Ordinal).ToArray();
+        Assert.Equal(tabled.Count, tabled.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(tabled, label => Assert.Contains(label, all));
+        Assert.Empty(tabled.Intersect(indexed, StringComparer.Ordinal));
+        Assert.Empty(tabled.Intersect(StoreKeysHeldBack, StringComparer.Ordinal));
+
+        // Nothing is left over: every store key of the model is held, or held back on purpose with its reason.
+        Assert.Equal(StoreKeysHeldBack.OrderBy(k => k, StringComparer.Ordinal), StoreKeyCatalog.HeldBack.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.All(StoreKeyCatalog.HeldBack.Values, reason => Assert.True(reason.Length > 40, reason));
+        string[] left = all.Where(k => !indexed.Contains(k) && !tabled.Contains(k, StringComparer.Ordinal)).ToArray();
+        Assert.Equal(StoreKeysHeldBack.OrderBy(k => k, StringComparer.Ordinal), left);
+        Assert.Equal(73, all.Length);
+        Assert.Equal(67, tabled.Count);
+    }
+
+    // The model keys the store holds on narrower terms than the model states them, each to match what the engine itself
+    // writes and checks (sql/README.md, "Store keys"). Like a held-back key, a new narrowing fails this test until it is
+    // listed here on purpose.
+    // - The configuration alternate keys count active rows only: the engine's own checks (V12 tier ranks, V14 stage ranks)
+    //   count active rows, so a retired row keeps its values and an active row may take them again.
+    // - O03 Link Kind and External Id counts rows with no Retired On, as the engine's key of the entity does, so a resource
+    //   registered again after its component retired is a new component.
+    // - C07 Key within the set is held as Value List and Key (the key path holds the list's key): every shipped preset
+    //   uses one value key in several lists (other, low, medium, high, power-platform), which Key alone would refuse.
+    [Fact]
+    public void TheKeysTheStoreHoldsOnNarrowerTermsThanTheModelAreListed()
+    {
+        string[] narrowed = EntityCatalog.Embedded.Entities
+            .SelectMany(e => e.StoreKeys)
+            .Where(k => k.Scope != StoreKeyScope.AllRows)
+            .SelectMany(k => k.ModelKeys)
+            .OrderBy(k => k, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(
+            new[]
+            {
+                "C08 Rank+Configuration Set",
+                "C11 Source Entity+Source Key+Vocabulary+Configuration Set",
+                "C12 Stage Rank+Configuration Set",
+                "C25 Review Type+Tier+Configuration Set",
+                "C30 Role+Entra Group+Binding Method+Configuration Set",
+                "C33 Tier+Change Type+Target Stage+Portfolio+Configuration Set",
+                "C39 Number+Version+Configuration Set",
+                "C42 Principal+Workload Role+Configuration Set",
+                "O03 Link Kind+External Id",
+            },
+            narrowed);
+        Assert.All(
+            EntityCatalog.Embedded.Entities.SelectMany(e => e.StoreKeys).Where(k => k.Scope == StoreKeyScope.ActiveRows),
+            k => Assert.True(k.ModelKeys.All(m => m.StartsWith("C", StringComparison.Ordinal)), k + " counts active rows, which only live configuration rows have."));
+
+        StoreKey listValue = EntityCatalog.Embedded.Get("list-value").StoreKeys.Single();
+        Assert.True(listValue.UsesKeyPath);
+        Assert.Equal(new[] { "C07 Key+Configuration Set", "C07 Value List+Key+Configuration Set" }, listValue.ModelKeys);
+    }
+
+    // The parts of every store key name what a stored row holds: an operational row's columns are the model's contract
+    // names, and a live configuration row's are the configuration bundle's field names (or its key path).
+    [Fact]
+    public void EveryStoreKeyPartIsAFieldOfTheRowsItKeys()
+    {
+        JsonElement defs = LazyBundleSchema.Value.RootElement.GetProperty("$defs");
+        foreach (EntityInfo entity in EntityCatalog.Embedded.Entities)
+        {
+            JsonElement model = FirstReleaseEntities().Single(e => e.GetProperty("id").GetString() == entity.ModelId);
+            bool liveConfiguration = entity.IsConfiguration && entity.Key != "configuration-set" && entity.Key != "configuration-set-version" && entity.Key != "configuration-draft";
+            HashSet<string> modelColumns = ModelColumns(model);
+            var bundleFields = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string group in new[] { "seedFields", "workingFields", "engineFields" })
+            {
+                if (defs.TryGetProperty(entity.Key + "." + group, out JsonElement fields) && fields.TryGetProperty("properties", out JsonElement properties))
+                {
+                    bundleFields.UnionWith(properties.EnumerateObject().Select(p => p.Name));
+                }
+            }
+
+            foreach (StoreKey key in entity.StoreKeys)
+            {
+                foreach (string part in key.Parts)
+                {
+                    if (part == StoreKey.KeyPathPart)
+                    {
+                        Assert.True(liveConfiguration, key + ": only a live configuration row has a key path.");
+                    }
+                    else if (liveConfiguration)
+                    {
+                        Assert.True(bundleFields.Contains(part), key + ": " + part + " is not a field of " + entity.Key + " in the configuration bundle schema.");
+                    }
+                    else
+                    {
+                        Assert.True(modelColumns.Contains(part), key + ": " + part + " is not a column of " + entity.ModelId + " in the logical model.");
+                    }
+                }
+
+                // The scope's own column is a field of the rows too.
+                if (key.Scope == StoreKeyScope.ActiveRows)
+                {
+                    Assert.True(liveConfiguration, key + " counts active rows, which only live configuration rows have.");
+                }
+                else if (key.Scope == StoreKeyScope.CurrentRows)
+                {
+                    Assert.Contains("retiredOn", modelColumns);
+                }
+            }
+        }
     }
 
     // ---- Helpers ----
@@ -184,6 +267,23 @@ public sealed class LogicalModelConformanceTests
     private static IEnumerable<string> Ids(string list)
     {
         return list.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries).Where(s => Regex.IsMatch(s, @"^[A-Z]\d\d$"));
+    }
+
+    // The contract names of an entity's columns in the model on disk: its column sets' attributes and its own.
+    private static HashSet<string> ModelColumns(JsonElement entity)
+    {
+        var columns = new HashSet<string>(StringComparer.Ordinal);
+        if (entity.TryGetProperty("columnSets", out JsonElement sets))
+        {
+            foreach (JsonElement set in sets.EnumerateArray())
+            {
+                JsonElement definition = Model.GetProperty("columnSets").EnumerateArray().Single(c => c.GetProperty("name").GetString() == set.GetString());
+                columns.UnionWith(definition.GetProperty("attributes").EnumerateArray().Select(a => JsonName(a.GetProperty("name").GetString()!)));
+            }
+        }
+
+        columns.UnionWith(entity.GetProperty("attributes").EnumerateArray().Select(a => JsonName(a.GetProperty("name").GetString()!)));
+        return columns;
     }
 
     private static string Label((string Id, string[] Columns) key)

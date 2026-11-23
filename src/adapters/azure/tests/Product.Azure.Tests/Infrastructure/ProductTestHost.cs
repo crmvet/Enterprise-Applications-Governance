@@ -44,6 +44,10 @@ internal sealed class HostSettings
     // Seed the demo (version 1 and the walkthrough estate) when the file is new.
     public bool Seed { get; set; } = true;
 
+    // More client binding operations for version 1, as a JSON array, after the demo binding's own (for example an
+    // Approval Rule that needs two answers). Null seeds the demo binding as it is.
+    public string? BindingOperations { get; set; }
+
     public DateTime Now { get; set; } = DemoSeed.Start;
 
     // The remote address every request appears to come from (an in-memory test server has none). Null leaves it unset.
@@ -140,7 +144,7 @@ internal sealed class ProductTestHost : IAsyncDisposable
         {
             using var store = new SqliteProductStore(new SqliteStoreOptions { ConnectionString = ConnectionString(file), NewSeedId = RowIds.EntityCounter() });
             store.EnsureSchema();
-            DemoSeed.Into(store);
+            DemoSeed.Into(store, settings.BindingOperations);
         }
 
         return new ProductTestHost(settings, file, scratch);
