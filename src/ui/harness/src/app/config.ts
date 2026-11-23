@@ -7,8 +7,10 @@
 //     "apiBase": "/api",                                   same origin by default; an absolute https URL is allowed
 //     "auth": { "mode": "entra", "authority": "https://login.microsoftonline.com/<tenant id>",
 //               "clientId": "<the web app's client ID>", "apiScope": "api://<API app ID>/api.access" },
+//     "demo": false,                                      true on a demo install: the page shows a demo badge
 //     "development": { "personas": [ { "name": "nadia-web", "label": "Nadia Ferreira, business owner" } ] }
 //   }
+// "demo" is optional (false when missing). A demo install holds the fictional demo estate (D-33), so every page says so.
 // "auth": { "mode": "development" } signs in as a fictional persona with the X-Product-Dev-Identity header. The page
 // takes it only on a loopback host name, and the server keeps its own guards (Development environment, a switch that is
 // off in every committed file, loopback requests only).
@@ -32,6 +34,8 @@ export interface AppConfig {
   // An absolute URL with no trailing slash, such as https://host/api.
   apiBase: string;
   auth: AuthConfig;
+  // A demo install: the store holds the fictional demo estate, and every page shows a badge that says so.
+  demo: boolean;
   development: { personas: DevPersona[] };
 }
 
@@ -130,8 +134,12 @@ export function validateConfig(raw: unknown, page: PageLocation): ConfigResult {
   }
   if (auth?.mode === 'development' && !personas.length) problems.push('The development sign-in needs at least one persona.');
 
+  // ---- demo install ----
+  if (raw.demo !== undefined && typeof raw.demo !== 'boolean') problems.push('demo must be true or false.');
+  const demo = raw.demo === true;
+
   if (problems.length || !auth) return { ok: false, problems };
-  return { ok: true, config: { schemaVersion: CONFIG_SCHEMA_VERSION, apiBase, auth, development: { personas } } };
+  return { ok: true, config: { schemaVersion: CONFIG_SCHEMA_VERSION, apiBase, auth, demo, development: { personas } } };
 }
 
 // Reads <base>config.json. Never cached: the host serves it with no-store, and a stale copy could point at an old API.

@@ -261,12 +261,31 @@ public sealed class SecurityTests
     }
 
     [Fact]
+    public void TheSeedCommandRunsInTheDemoEnvironmentForADemoInstall()
+    {
+        // D-33: a demo install seeds the fictional demo estate with the environment named Demo.
+        string folder = TestPaths.NewScratchFolder();
+        try
+        {
+            using var output = new StringWriter();
+            int code = ServerCommands.Seed(new[] { "--environment=" + ServerCommands.DemoEnvironment, "--Product:Store:Provider=sqlite", "--Product:Store:Sqlite:ConnectionString=Data Source=" + Path.Combine(folder, "product.db") }, output);
+            Assert.True(code == 0, output.ToString());
+            Assert.Contains("Seeded ", output.ToString(), StringComparison.Ordinal);
+            Assert.True(File.Exists(Path.Combine(folder, "product.db")));
+        }
+        finally
+        {
+            TestPaths.TryDelete(folder);
+        }
+    }
+
+    [Fact]
     public void TheSeedCommandRunsOnlyInDevelopment()
     {
         string folder = TestPaths.NewScratchFolder();
         try
         {
-            foreach (string environment in new[] { "Staging", "Test" })
+            foreach (string environment in new[] { "Staging", "Test", "Production", "demo-sandbox" })
             {
                 using var output = new StringWriter();
                 int code = ServerCommands.Seed(new[] { "--environment=" + environment, "--Product:Store:Provider=sqlite", "--Product:Store:Sqlite:ConnectionString=Data Source=" + Path.Combine(folder, "product.db") }, output);

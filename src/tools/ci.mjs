@@ -108,8 +108,12 @@ check('offline', 'Offline tests (no telemetry extension)', () => {
   return { code: leaks ? 1 : 0, note: `${files} registration files` };
 }, ['build']);
 
+// The net48 test targets need .NET Framework, so they run only on Windows. Elsewhere (Linux, including WSL) the check runs
+// the net10.0 targets and says so; the Windows CI job runs both.
 check('test', `dotnet test (${configuration})`,
-  () => ({ code: run('dotnet', ['test', '--solution', SOLUTION, '-c', configuration, '--no-build'], SRC) }),
+  () => process.platform === 'win32'
+    ? { code: run('dotnet', ['test', '--solution', SOLUTION, '-c', configuration, '--no-build'], SRC) }
+    : { code: run('dotnet', ['test', '--solution', SOLUTION, '-c', configuration, '--no-build', '-f', 'net10.0'], SRC), note: 'net10.0 only; net48 runs on Windows' },
   ['restore', 'build', 'offline']);
 
 // The Azure adapter has its own solution, adapters/azure/Product.Azure.sln: its hosts, stores and two test projects,

@@ -38,6 +38,14 @@ test('an Entra config with a same-origin API base is accepted and the base becom
   }
 });
 
+test('demo is false when missing, true when set, and anything else is refused', () => {
+  const missing = validateConfig(entra, deployed);
+  assert.equal(missing.ok && missing.config.demo, false);
+  const on = validateConfig({ ...entra, demo: true }, deployed);
+  assert.equal(on.ok && on.config.demo, true);
+  assert.deepEqual(problemsOf({ ...entra, demo: 'yes' }, deployed), ['demo must be true or false.']);
+});
+
 test('a trailing slash on the API base is dropped', () => {
   const r = validateConfig({ ...entra, apiBase: '/api/' }, deployed);
   assert.equal(r.ok && r.config.apiBase, 'https://product.example.org/api');

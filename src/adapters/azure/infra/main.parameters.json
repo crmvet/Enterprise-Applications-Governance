@@ -32,6 +32,9 @@
     "webAppApiScope": {
       "value": "${PRODUCT_WEB_APP_API_SCOPE=}"
     },
+    "demo": {
+      "value": "${PRODUCT_DEMO=false}"
+    },
     "approvalRunnerEnabled": {
       "value": "${PRODUCT_APPROVAL_RUNNER_ENABLED=false}"
     },

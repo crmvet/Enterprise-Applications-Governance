@@ -88,7 +88,7 @@ async function start() {
   }
 
   const api = createApiClient({ apiBase: config.apiBase, auth, fetch: window.fetch.bind(window) });
-  render(root, <AppShell auth={auth} api={api} base={base} />);
+  render(root, <AppShell auth={auth} api={api} base={base} demo={config.demo} />);
 }
 
 void start();

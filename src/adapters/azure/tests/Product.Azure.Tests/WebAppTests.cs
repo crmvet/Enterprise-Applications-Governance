@@ -135,10 +135,27 @@ public sealed class WebAppTests
         Assert.Equal(Personas.WebApp, config["auth"]!["clientId"]!.GetValue<string>());
         Assert.Equal("api://" + Personas.Audience + "/api.access", config["auth"]!["apiScope"]!.GetValue<string>());
         Assert.Empty(config["development"]!["personas"]!.AsArray());
+        Assert.False(config["demo"]!.GetValue<bool>());
 
         // Nothing in it is a secret or a token: only these members.
-        Assert.Equal(new[] { "apiBase", "auth", "development", "schemaVersion" }, config.AsObject().Select(m => m.Key).OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(new[] { "apiBase", "auth", "demo", "development", "schemaVersion" }, config.AsObject().Select(m => m.Key).OrderBy(k => k, StringComparer.Ordinal));
         Assert.Equal(new[] { "apiScope", "authority", "clientId", "mode" }, config["auth"]!.AsObject().Select(m => m.Key).OrderBy(k => k, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task ADemoInstallTellsThePageToShowTheDemoBadge()
+    {
+        // D-33: a demo install holds the fictional demo estate, so its page says so on every page.
+        string root = BuiltApp();
+        HostSettings settings = Enabled(root);
+        settings.DevIdentity = false;
+        settings.Settings["Product:Auth:ClientId"] = Personas.Audience;
+        settings.Settings["Product:WebApp:Demo"] = "true";
+        await using ProductTestHost host = ProductTestHost.Start(settings);
+
+        JsonNode config = (await host.Get("/app/config.json")).Json!;
+        Assert.True(config["demo"]!.GetValue<bool>());
+        Assert.Equal("entra", config["auth"]!["mode"]!.GetValue<string>());
     }
 
     [Fact]

@@ -22,7 +22,7 @@ personas; it has not been deployed, and its Microsoft Entra sign-in has not run 
 | `harness/src/components/ui/` | The shadcn/ui components, MIT source copied from the shadcn registry, with their license and the changes made (`README.md`) |
 | `harness/src/styles/` | `globals.css`: the Academy palette as theme tokens, the `narrow:` and `medium:` breakpoints; `shadcn-tailwind.css`: shadcn's Tailwind helpers |
 | `harness/src/data/` | Contract types, the `ToolClient`, the fixture client (harness), the API client (web app), labels, meanings, formatting |
-| `harness/src/app/` | The web app: entry, shell and routes, `config.json` checks, sign-in pages, the applications list, dialogs |
+| `harness/src/app/` | The web app: entry, shell and routes, `config.json` checks (including `demo`, which shows the "Demo, fictional data" badge on a demo install), sign-in pages, the applications list, dialogs |
 | `harness/src/auth/` | Sign-in for the web app: Entra ID through MSAL (`msalAuth.ts`) and the development persona (`devAuth.ts`) |
 | `harness/src/main.tsx`, `App.tsx` | The harness entry and shell |
 | `harness/public/config.json` | The web app's settings for the Vite dev loop only (development sign-in). Never copied into a build |

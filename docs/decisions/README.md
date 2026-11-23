@@ -81,6 +81,7 @@ Each record has the same parts:
 | D-30 | [Sixteen hours of independent work](D-30-sixteen-hours-of-independent-work.md) | Accepted | For about sixteen hours the AI session builds and publishes within fixed limits: no sign-in as a person, no Azure deployment, no release or tag, nothing private in public. |
 | D-31 | [The product's name is Enterprise Applications Governance](D-31-the-name-is-enterprise-applications-governance.md) | Accepted. Answers D-05 | The full name is the public name. "EAGov" is only for technical keys, and public text never uses a bare "EAG" or "APM". |
 | D-32 | [The web app is built on shadcn/ui](D-32-the-web-app-uses-shadcn-ui.md) | Accepted. Amends D-26 | The four pages move from Fluent UI to shadcn/ui: Radix primitives, Tailwind CSS and lucide icons, on the same Academy palette, light only. |
+| D-33 | [A demo install shows the fictional estate; the real bootstrap comes next](D-33-a-demo-install-shows-the-fictional-estate.md) | Accepted | A demo switch shows a "Demo, fictional data" badge on every page, and the seed command may load the fictional estate into an empty store in an environment named Demo. The real bootstrap route of version 1 is next. |
 
 ## Related
 

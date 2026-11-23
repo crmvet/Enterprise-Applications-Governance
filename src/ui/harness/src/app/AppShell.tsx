@@ -80,13 +80,13 @@ function signedIn(auth: AppAuth): boolean {
   return auth.mode === 'development' ? auth.persona() !== null : auth.account() !== null;
 }
 
-export function AppShell({ auth, api, base }: { auth: AppAuth; api: ApiClient; base: string }) {
+export function AppShell({ auth, api, base, demo = false }: { auth: AppAuth; api: ApiClient; base: string; demo?: boolean }) {
   useAuthVersion(auth);
   useLinkInterception(base);
   if (!signedIn(auth)) {
     return auth.mode === 'development' ? <DevSignIn auth={auth} /> : <EntraSignIn auth={auth} />;
   }
-  return <SignedIn auth={auth} api={api} base={base} key={auth.user()?.username ?? 'user'} />;
+  return <SignedIn auth={auth} api={api} base={base} demo={demo} key={auth.user()?.username ?? 'user'} />;
 }
 
 const tabs: { value: Route['page']; label: string; short: string }[] = [
@@ -96,7 +96,7 @@ const tabs: { value: Route['page']; label: string; short: string }[] = [
   { value: 'timeline', label: 'Timeline', short: 'Timeline' },
 ];
 
-function SignedIn({ auth, api, base }: { auth: AppAuth; api: ApiClient; base: string }) {
+function SignedIn({ auth, api, base, demo }: { auth: AppAuth; api: ApiClient; base: string; demo: boolean }) {
   const narrow = useNarrow();
   const locationKey = useLocationKey();
   const route = useMemo<AppRoute>(() => {
@@ -210,6 +210,11 @@ function SignedIn({ auth, api, base }: { auth: AppAuth; api: ApiClient; base: st
               </span>
               <span className="text-base font-semibold text-navy">Product</span>
             </a>
+            {demo && (
+              <Badge variant="warning" className="rounded-full px-2 font-medium">
+                {narrow ? 'Demo data' : 'Demo, fictional data'}
+              </Badge>
+            )}
             {auth.mode === 'development' && (
               <Badge variant="warning" className="rounded-full px-2 font-medium">
                 {narrow ? 'Development sign-in' : 'Development sign-in, fictional persona'}

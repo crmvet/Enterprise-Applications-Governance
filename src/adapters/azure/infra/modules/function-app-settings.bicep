@@ -48,6 +48,9 @@ param webAppClientId string
 @description('The scope the web app asks for. Empty means api://<API client ID>/api.access.')
 param webAppApiScope string
 
+@description('A demo install: the web app shows the demo badge.')
+param demo string
+
 @description('Serve the approval runner\'s routes: true or false.')
 param approvalRunnerEnabled string
 
@@ -89,6 +92,7 @@ var webAppSettings = empty(webAppClientId)
       Product__WebApp__ClientIds__0: webAppClientId
       Product__WebApp__TenantId: authTenantId
       Product__WebApp__ApiScope: webAppApiScope
+      Product__WebApp__Demo: demo
     }
 
 // The approval runner's routes and the directory reads. The directory reads use a user-assigned managed identity as the

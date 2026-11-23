@@ -101,6 +101,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Monday 2:12 to 2:22 AM | Working software under [D-30][dec]. Commit `2c5c227` adds an early Azure adapter: a host with the MCP endpoint and a read API over the engine, SQLite and Azure SQL stores, an Azure Functions wrapper and an azd template. Commits `629a35d` and `055d445` fix two details of the CI build. Nothing is deployed. |
 | Monday 5:06 AM | Commit `cffb7da` adds the web app with its four read-only pages on the product's own API, the approval runner's routes with a Power Automate flow template, and directory reads on behalf of the signed-in admin, tested against recorded, fictional responses. It runs end to end on one machine over SQLite with a development identity. Tests: engine and MCP core 1,782 of 1,782, Azure host 141 of 141, Azure stores 102 passed and 48 skipped (39 Azure SQL cases that need a test database, and 9 cases that only the row stores support), web app 49 of 49. Nothing is deployed. |
 | Monday evening | [D-32][dec]: the author asks whether the interface was designed and what it is built on, and chooses shadcn/ui if nothing is better. The four pages move from Fluent UI to shadcn/ui (React 19, Radix primitives, Tailwind CSS 4, lucide icons) on the same Academy palette, light only. Three AI agents port the pages and the shell in parallel on a shared foundation. The type check, the 49 unit tests, the package check, the accessibility check at 1280 px and 390 px and the screenshots pass. |
+| Monday evening | [D-33][dec]: to see the product in a sandbox subscription before the bootstrap route exists, the author chooses a demo install now and the real bootstrap next. The web app gets a demo switch and badge, and the seed command an environment named Demo. The local checks move into Linux under WSL2, where every check passes. |
 
 ## 2. What the design produced
 
@@ -112,7 +113,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Step 2 logical design, seven documents | Glossary and entities, the configuration model, the logical data model, 11 processes, the MCP tool surface, the engine and the security model. Written for both possible data stores, so the platform choice did not mean redoing it. |
 | Step 2 working defaults | The 16 internal conflicts settled, the 17 questions adopted as working defaults, and the 6 open design questions. |
 | Technical reference for readers | The overview, the Microsoft fit, and the architecture pages: configuration and presets, the data model, one page per process, the MCP tools, sign-in and security, the rules engine and the screens. |
-| Decision records | One per decision, D-01 to D-32, each with its context, options, choice and reasons. D-21 is not published. |
+| Decision records | One per decision, D-01 to D-33, each with its context, options, choice and reasons. D-21 is not published. |
 | Research notes | 24 notes at the first commit (8:17 PM), on Microsoft's tools, MCP and Copilot options, a Microsoft news sweep and a foundation study. Two more followed that evening, on governing AI development and the playbook outline. They stay private as working files. Public documents cite Microsoft Learn directly. |
 
 ### 2.2 Diagrams

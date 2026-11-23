@@ -27,7 +27,7 @@ public static class ServerCommands
 
 Commands:
   (none)          Run the server.
-  seed            Seed a fictional demo into an empty store (Development only):
+  seed            Seed a fictional demo into an empty store (Development, or Demo for a demo install):
                     --preset <key>       shipped preset, default balanced
                     --overlay <key>      overlay preset, repeatable
                     --binding <file>     seed patch, default seed/demo-binding.patch.json
@@ -39,15 +39,19 @@ Commands:
   schema-script   Write the table script generated from the logical model:
                     --out <file>         output file, default standard output";
 
+    /// <summary>The environment name of a demo install, where the seed command may write the fictional demo estate.</summary>
+    public const string DemoEnvironment = "Demo";
+
     /// <summary>Seeds the demo. Returns the process exit code.</summary>
     public static int Seed(string[] args, TextWriter output)
     {
         (Dictionary<string, List<string>> options, string[] configurationArgs) = Parse(args, "--preset", "--overlay", "--binding", "--rows", "--validated-on");
         (IConfiguration configuration, IHostEnvironment environment) = Configuration(configurationArgs);
-        // Seeding writes fictional rows past the engine, so it runs only in Development, as the usage says.
-        if (!environment.IsDevelopment())
+        // Seeding writes fictional rows past the engine, so it runs only in Development, or in an environment named Demo
+        // for a demo install whose web app shows the demo badge (Product:WebApp:Demo, D-33). Never for a real install.
+        if (!environment.IsDevelopment() && !environment.IsEnvironment(DemoEnvironment))
         {
-            output.WriteLine("seed is refused in the " + environment.EnvironmentName + " environment; it runs only in Development. A real install gets version 1 through the bootstrap.");
+            output.WriteLine("seed is refused in the " + environment.EnvironmentName + " environment; it runs only in Development, or in " + DemoEnvironment + " for a demo install. A real install gets version 1 through the bootstrap.");
             return 1;
         }
 

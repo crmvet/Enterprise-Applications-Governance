@@ -72,6 +72,13 @@ param webAppClientId string = ''
 @description('The scope the web app asks for. Empty means api://<API client ID>/api.access; set it to <Application ID URI>/api.access when the API uses another Application ID URI.')
 param webAppApiScope string = ''
 
+@description('A demo install (D-33): the web app shows a "Demo, fictional data" badge, because the store holds the fictional demo estate. Never true for a real install.')
+@allowed([
+  'true'
+  'false'
+])
+param demo string = 'false'
+
 @description('Serve the approval runner\'s routes (the Power Automate runner pulls approval requests). Turn it on once the runner flows, the runner\'s app registration and its Workload Grant exist.')
 @allowed([
   'true'
@@ -317,6 +324,7 @@ module appSettings 'modules/function-app-settings.bicep' = {
     telemetrySaltSecretName: telemetrySaltSecretName
     webAppClientId: webAppClientId
     webAppApiScope: webAppApiScope
+    demo: demo
     approvalRunnerEnabled: approvalRunnerEnabled
     directoryReads: directoryReads
     directoryIdentityClientId: directoryReads == 'Live' ? directoryIdentity!.outputs.clientId : ''

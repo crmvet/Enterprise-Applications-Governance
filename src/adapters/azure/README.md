@@ -315,7 +315,9 @@ groups, Workload Grants for the approval runner and the release pipeline, and Cl
 walkthrough estate (`seed/walkthrough-world.json`: people, a portfolio, four applications with owners, two targets,
 components and dependencies). The store is `Product.Azure.Server/data/product.db`: `dotnet run` starts the program in
 its project folder, and the store goes in a `data` folder under the folder the program starts in. Git ignores it. Seeding
-refuses a store that already has a version in force, so delete the file to start over.
+refuses a store that already has a version in force, so delete the file to start over. It runs only in the Development
+environment, or in the environment named `Demo` for a demo install with the demo badge on (`infra/README.md`, "After
+deployment").
 
 Options: `--preset <key>`, `--overlay <key>` (repeatable), `--binding <file>`, `--rows <file>`, `--validated-on <date>`,
 and `--Product:Store:Sqlite:ConnectionString="Data Source=<file>"` for another file (pass the same setting to the

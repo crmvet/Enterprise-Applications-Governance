@@ -245,6 +245,7 @@ Set these with `azd env set <NAME> <value>` before `azd up`. azd passes them thr
 | `PRODUCT_CUSTOM_BASE_URL` | `customBaseUrl` | The app's default host name | Public base URL once a custom domain is bound, such as `https://governance.contoso.com` |
 | `PRODUCT_WEB_APP_CLIENT_ID` | `webAppClientId` | None: the web app is off | Application (client) ID of the web app registration (step 4) |
 | `PRODUCT_WEB_APP_API_SCOPE` | `webAppApiScope` | `api://<API client ID>/api.access` | The scope the web app asks for, when the API's Application ID URI is another one |
+| `PRODUCT_DEMO` | `demo` | `false` | `true` only for a demo install: the web app shows a "Demo, fictional data" badge on every page, because the store holds the fictional demo estate (see "A demo install" below). Never on a real install |
 | `PRODUCT_APPROVAL_RUNNER_ENABLED` | `approvalRunnerEnabled` | `false` | `true` serves the approval runner's routes |
 | `PRODUCT_DIRECTORY_READS` | `directoryReads` | `Off` | `Live` turns the directory reads on and adds their managed identity (step 5) |
 | `SQL_CLIENT_IP_ADDRESS` | `sqlClientIpAddress` | None | Public IPv4 address of the machine that runs azd, let through the SQL firewall for the migration |
@@ -352,7 +353,15 @@ Application ID URI only on a verified domain of the tenant. So a production inst
   calls yet (guide S1, step 7, and guide S4, part F, in `../../../docs/setup/`). The local server's `seed` command
   (`../README.md`) is not a way around this: it writes version 1 and its rows past the engine, so no person is
   recorded as the decider, and it runs only in the Development environment, for local runs and tests. Do not point it
-  at a deployed database. The fictional demo binding in `../seed` is for local runs only.
+  at a deployed database, except a demo install (below). The fictional demo binding in `../seed` is for local runs only.
+- **A demo install** (for showing the product, never for real data): set `PRODUCT_DEMO` to `true` before `azd up`, so
+  the web app shows a "Demo, fictional data" badge on every page. Then seed the fictional walkthrough estate into the
+  empty database with the `seed` command in the environment named `Demo`, as the person who ran azd:
+  `dotnet run --project ../Product.Azure.Server -- seed --environment Demo --binding <your binding patch>
+  --Product:Store:Provider=sqlserver --ConnectionStrings:Product="<the database, Authentication=Active Directory Default>"`.
+  The binding patch must bind the product roles to your own Entra group IDs (a copy of `../seed/demo-binding.patch.json`
+  with your IDs, kept out of source control), or nobody who signs in holds a product role. The seed refuses every other
+  environment name and any store that already has a version in force.
 - `azd deploy` publishes a new build. `azd provision` reapplies the infrastructure and the migrations.
 - `azd down` deletes the resource group. Add `--purge` to purge the Key Vault too (not possible with purge protection
   on).

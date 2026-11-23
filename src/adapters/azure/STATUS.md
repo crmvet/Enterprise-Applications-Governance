@@ -15,13 +15,13 @@ store has not yet run against a real database.
 `Product.Azure.sln` builds with 0 warnings and 0 errors. A clean first build of the Functions project may show the
 known AZFW0108 notice (its extensions project is restored during the build); the next build shows none. The Bicep
 template in `infra/` compiles with `az bicep build` with no warnings and no sign-in. The web app builds with
-`npm run build:app` in `../../ui/harness`, and its 49 unit tests pass (`npm test`).
+`npm run build:app` in `../../ui/harness`, and its 50 unit tests pass (`npm test`).
 
 ### Tests
 
 | Project | Total | Passed | Skipped | Failed |
 |---|---|---|---|---|
-| `tests/Product.Azure.Tests` | 194 | 194 | 0 | 0 |
+| `tests/Product.Azure.Tests` | 196 | 196 | 0 | 0 |
 | `tests/Product.Azure.Stores.Tests` | 210 | 138 | 72 | 0 |
 
 The 72 skipped store tests are the 50 Azure SQL cases, which run only when `PRODUCT_TEST_SQLSERVER` names an empty
@@ -41,7 +41,7 @@ Known wording issue: in the `Recorded` directory mode, `get_role_holders` still 
 (the MCP core writes that text whatever reader is bound). The data is the recorded, fictional set; nothing is read
 live.
 
-What the 194 host tests cover:
+What the 196 host tests cover:
 
 | Area | Tests |
 |---|---|
@@ -50,7 +50,7 @@ What the 194 host tests cover:
 | The approval runner: outbox rows in the engine's own commit, claims and leases, sent reports, idempotent answers, conflicts, the engine's expiry of a request and its judgment of a late answer, the refresh batch per claim, releases, restarts of the server, the routes closed to everyone but the runner (15); a rule that needs two answers: two different people, one person counted once, an AI's answer never counted, a rejection that cancels the other card, an expired request refused by the engine and restarted (3); the whole loop through the product's wiring, from an AI draft to a person's answer on a card to the web app's view of it (2) | 20 |
 | The approver's ID: an agent user's, the approval runner's or the release pipeline's ID spelled another way (without hyphens, in braces, in parentheses) is refused and nothing is written (4); an agent user's answer in the usual form is a recommendation only, a self-approval is refused however the proposer's ID is spelled, an ID in capitals is stored in lower case, a second person's same answer that races the first is a conflict (4); an answer that says it was given before its request was made is refused (1) | 9 |
 | Security probes: path spellings of the MCP endpoint on both transports, body size, browser preflights, proxy headers, response headers, the development identity guards, SQL passwords outside Development | 18 |
-| The web app: off unless switched on, the page, its files and their caching, the Content-Security-Policy, nothing outside its folder, `config.json` for Entra sign-in and for a local run, startup checks, the Functions request delegate (8); the person entry: `/api/me` and `whoami` answer `person`, `SESSION_CONTEXT` names the person, read-only, only the declared web app, agents hold no role (5) | 13 |
+| The web app: off unless switched on, the page, its files and their caching, the Content-Security-Policy, nothing outside its folder, `config.json` for Entra sign-in and for a local run, startup checks, the Functions request delegate (8); a demo install: the badge in `config.json` and the seed in the `Demo` environment, refused in every other (2); the person entry: `/api/me` and `whoami` answer `person`, `SESSION_CONTEXT` names the person, read-only, only the declared web app, agents hold no role (5) | 15 |
 | Sign-in refusals on every product route, the development identity switch, the core's token rules over HTTP | 9 |
 | MCP endpoint: initialize, tool lists per caller, a read and a write tool, resources, the REST facade, the official SDK client | 9 |
 | The health probes: anonymous, status only; 503 while the store refuses and ready again without a restart; 503 within the time budget when the store hangs, with no second check started; the budget's startup check | 6 |

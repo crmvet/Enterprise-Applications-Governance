@@ -56,6 +56,12 @@ public sealed class ProductWebAppOptions
     /// </summary>
     public string ApiScope { get; set; } = string.Empty;
 
+    /// <summary>
+    /// True on a demo install whose store holds the fictional demo estate, seeded past the engine (D-33): the page shows a
+    /// "Demo, fictional data" badge on every page. Never set it on a real install.
+    /// </summary>
+    public bool Demo { get; set; }
+
     /// <summary>The Client App label stamped on the rows a person writes through the web app.</summary>
     public string ClientLabel { get; set; } = "Web app";
 
@@ -243,6 +249,7 @@ public static class ProductWebApp
             ("schemaVersion", JsonTreeNode.FromInt64(1)),
             ("apiBase", JsonTreeNode.FromString("/api")),
             ("auth", signIn),
+            ("demo", JsonTreeNode.FromBoolean(options.Demo)),
             ("development", Js.Obj(("personas", Js.Arr(personas.Select(p => Js.Obj(
                 ("name", JsonTreeNode.FromString(p.Name)),
                 ("label", JsonTreeNode.FromString(p.Label)))))))));
