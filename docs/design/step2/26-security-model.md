@@ -5,7 +5,7 @@
 - **Date:** 2026-11-22. **Status:** design draft, written client-neutral.
 - **Working defaults.** Aligned to [28-working-defaults.md](28-working-defaults.md) (2026-11-22). A line marked "(working default, 28 issue n)" or "(working default, Q n)" follows that file and is not a decision; the product owner can override it. A line marked "(working default, open design question n, see 28-working-defaults.md)" follows the recommended option of one of the six open design questions in section 3 of that file.
 - **Step:** 2 of 3 (the design). This document sets who may see, change and decide what in the product, how that is enforced, and how it is proven afterwards.
-- **Decisions it follows:** D-11 (roles only through Entra groups), D-20 (AI lead role, configurable), D-02 and D-10 (AI never approves; "performed by" on every write; rules are configuration; the engine is code), D-06 and D-07 (everything is a configuration row; presets), D-15, D-17 and D-19 (links, not copies), D-22 (the data store was open; D-26 answers it with Azure). Corrections from four rounds of Microsoft fit review are applied. Where this file and a decision disagree, the decision wins.
+- **Decisions it follows:** D-11 (roles only through Entra groups), D-20 (AI lead role, configurable), D-02 and D-10 (AI never approves; "performed by" on every write; rules are configuration; the engine is code), D-06 and D-07 (everything is a configuration row; presets), D-15, D-17 and D-19 (links, not copies), D-22 (the data store was open; D-26 answers it with Azure). Corrections from the Microsoft fit review are applied. Where this file and a decision disagree, the decision wins.
 - **Platform-neutral (D-22).** Sections 2 to 9 describe the logical model. Each section then gives a **Dataverse binding** and an **Azure binding** (a database, an API and the product's MCP server in the client's own Azure subscription). Nothing in the logical model depends on the store. D-26 picks the Azure binding for the first release.
 - **Names.** Entity and term names come from `docs/design/step2/20-glossary-and-entities.md` (entity IDs such as O10, C30). New terms this document needs are listed in section 15 and are proposals for document 20. This file does not edit the glossary.
 - **Sweep proposals.** Ideas from a review of Microsoft news up to 2026-11-21 that this design adopts are marked "(sweep proposal)". They are proposals, not decisions.
@@ -93,7 +93,7 @@ The principal kind list is fixed by the engine contract (document 20, section 2.
 | Service principal | An application identity | Graph type servicePrincipal; app-only tokens | **Never** (a human role) | Yes, a workload role from the list in section 3.4 | **Never** | Yes (a registered client app) |
 | Managed identity | An Azure-managed service principal | As service principal | **Never** (a human role) | Yes, a workload role | **Never** | Not used |
 
-Why agent users need special care: Learn says agent users "can be added to groups, assigned licenses" and use mailboxes and chat [SM23]. So an agent user could be added to a role group by mistake, and could receive an approval card. Two checks cover this: CHK-02 (section 4.5) and the responder check (section 7).
+Why agent users need special care: Learn says agent users have "user-like capabilities such as being added to groups, assigned licenses, and accessing collaborative features like mailboxes and chat" [SM23]. So an agent user could be added to a role group by mistake, and could receive an approval card. Two checks cover this: CHK-02 (section 4.5) and the responder check (section 7).
 
 ### 2.2 Actor kinds (engine contract)
 
@@ -504,7 +504,7 @@ Separation of duties uses document 21's **C40 Separation Rule** entity (document
 |---|---|---|---|---|---|
 | The product's MCP server, from Claude Code (reference client) or another MCP client | The signed-in person, through a registered client app or a Client ID Metadata Document client | Token audience is the MCP server; scope or app role present (401 for a missing token, 403 for a missing permission) [SM26]; never forwards the token; gets a new token on behalf of the user for the store [SM27] | AI client for a person | Calls custom APIs with an on-behalf-of token; Dataverse roles apply | Calls the API with an on-behalf-of token; the API applies section 5.6 |
 | Same, design rules | | Stateless server (sweep proposal); any gateway in front passes the caller's token and never uses a shared backend credential, because with a shared backend connection "authorized callers use the permissions of that connection" (sweep proposal; the quote is from [AI Gateway concepts](https://learn.microsoft.com/azure/ai-gateway/concepts)); the server's URL and tool names are published for MCP allow lists (sweep proposal) | | | |
-| Client registration for Claude Code | | Client ID Metadata Documents are public preview and "not recommended for production" [SM25]. Claude Code is listed as supported; a CIMD client becomes an agent identity in the tenant; it supports only delegated flows and never app-only tokens; tenants can block it through consent policy or add it in advance [SM25]. Working default (Q14): a registered Entra client app first; CIMD as an option for pilots; CIMD becomes the lead once it is generally available | | | |
+| Client registration for Claude Code | | Client ID Metadata Documents are public preview and "isn't recommended for production workloads" [SM25]. Claude Code is listed as supported; a CIMD client becomes an agent identity in the tenant; it supports only delegated flows and never app-only tokens; tenants can block it through consent policy or add it in advance [SM25]. Working default (Q14): a registered Entra client app first; CIMD as an option for pilots; CIMD becomes the lead once it is generally available | | | |
 | Microsoft's Dataverse MCP server | The signed-in person | Dataverse roles and row-level security [SM20]; each non-Microsoft client allowed per environment [SM20] | AI client for a person (declared only through the Draft default, section 2.3) | Plug-ins enforce everything; MCP allow list is not a security layer [SM20] | Not available |
 | Model-driven app and generative pages | The signed-in person | Dataverse roles; plug-ins | Person | Premium license per user (section 12) | Not used |
 | The product's web page | The signed-in person | API authorization (section 5.6) | Person | Not used | Conditional Access can target the app (P1, [SM31]) |
@@ -950,3 +950,20 @@ Only a person signed in as a user and holding the active `platform-admin` role e
 - **Tokens.** The core carries claims only and never logs or forwards a token. The on-behalf-of exchange needs the incoming token as its assertion and sends it only to Entra's token endpoint.
 - **Telemetry.** An event keeps a method only when the server knows it, and a tool name only when it is a contract tool or resource name; anything else is recorded as `(other)` or `(unknown)`. The salt of the caller hash has no default in code: the host sets it from its own configuration, and with no salt the event carries no caller field at all. Two hosts with different salts give different hashes for the same person, and neither the salt nor the object ID reaches the event. Proposal: a salt shorter than 16 characters is refused when the server is built, because a short word could be guessed. The setup guides and the host must name the app setting that carries it.
 - **Limits and input.** The rate limit counter lives in the store port, never in server memory, keyed by a hash of the person and the tool. Every tool input schema is closed and bounded (no extra properties, a length or pattern on every string, a maximum on every array).
+
+### B26-6 The web app's person entry, and a page to answer an approval (proposed by the build, 2026-11-23)
+
+- **Person entry, as built.** The REST API takes the web app's own tokens as the person: the host declares the web
+  app's client IDs, and the server admits the person entry only when the token's verified `azp` is one of them. Any
+  other client on the REST API, an AI client with a token for the same API among them, is the AI client entry and must
+  pass the Known Client check. An agent user or agent identity keeps its kind on every entry and holds no role (RA-06).
+  The web app registration is preauthorized for `api.access` only, with admin-only consent. The four pages are
+  read-only, so the REST API serves the read tools only.
+- **Answering an approval in the product itself.** AN-01, AN-02 and S1 keep approval outcomes to the approval runner,
+  and working default Q19 offers the product's own page only where a client's security review asks for token-level
+  evidence of who answered. Building it needs more than the person entry: a guarded engine path for a person answering
+  their own Approval Record (the responder is the signed-in person the token proves, never a value in the request), a
+  change to the `fn_ApprovalPending` predicate for that path, a page specification, step-up sign-in for the answer, and
+  a product owner decision on AN-02's wording.
+- **Proposal.** Keep the pages read-only for the first release, and take the approval page to the next design pass with
+  the parts above.

@@ -1,6 +1,6 @@
 # MCP tools
 
-**Status: in design.** This page describes the product's own MCP server as designed: its toolsets and tools, the identity path, and what AI may and may not write. Nothing here is built or running.
+**Status: in design.** This page describes the product's own MCP server as designed: its toolsets and tools, the identity path, and what AI may and may not write. Nothing here is released or deployed. Early code that follows it is in [`src/mcp`](../../src/mcp/), under the MIT License. It is not a release.
 
 ## In one screen
 

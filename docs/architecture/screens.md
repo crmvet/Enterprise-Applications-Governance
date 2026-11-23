@@ -1,6 +1,6 @@
 # Screens
 
-**Status: in design.** This page describes the four page designs of the next version's web app. The pages are designed, not built. The page designs were drawn with fictional data, and pictures of them will be added to this page later.
+**Status: in design.** This page describes the four page designs of the next version's web app. The pages exist as early React and Fluent UI code in [`src/ui`](../../src/ui/README.md), under the MIT License. It is early work, not a release, and nothing is deployed. The pictures below are screenshots of that code with fictional data, at desktop and phone width.
 
 The web app is designed to use React and Fluent UI, and to run in your own Azure subscription with the rest of the product. Each page reads the same operations the MCP tools use, so a page and an AI client always see the same answers.
 
@@ -9,7 +9,7 @@ The web app is designed to use React and Fluent UI, and to run in your own Azure
 | Rule | How the pages follow it |
 |---|---|
 | Light theme only | One light theme: navy text, a brand blue, and gold for attention and for "today". No dark theme |
-| Read-only | No page writes. Changes happen in the register's edit views or through an AI client, and the engine checks every write. Application 360 says so on the page |
+| Read-only | No page writes. Changes go through an AI client on the product's MCP server or a pipeline's record step, and decisions are made on approval cards. The engine checks every write. Application 360 says so on the page |
 | Numbers come from the server | The pages count nothing themselves. Every figure is a field of a tool's answer |
 | Every number leads to rows | Each count and bar opens the matching list |
 | Each panel fails on its own | Every panel holds the result of one call. A failure shows inside that panel, with the error and the correlation ID, and the rest of the page keeps working |
@@ -23,7 +23,9 @@ The web app is designed to use React and Fluent UI, and to run in your own Azure
 
 ## Portfolio overview
 
-> Picture to come: the portfolio overview at desktop width and at phone width, with fictional data.
+![The portfolio overview at desktop width, with fictional data](../design/step2/img/ui-overview-1280.png)
+
+![The portfolio overview at phone width, with fictional data](../design/step2/img/ui-overview-390.png)
 
 **What it shows.** Five key figures across the register: applications, owner gaps, reviews overdue, documents missing or stale, and old drafts. The three that need someone get a gold bar and a warning icon when they are above zero.
 
@@ -43,7 +45,9 @@ At the bottom, three distribution bars show applications by stage (in the config
 
 ## Application 360
 
-> Picture to come: Application 360 at desktop width and at phone width, with fictional data.
+![Application 360 at desktop width, with fictional data](../design/step2/img/ui-application-360-1280.png)
+
+![Application 360 at phone width, with fictional data](../design/step2/img/ui-application-360-390.png)
 
 **What it shows.** One application on one read-only page.
 
@@ -65,7 +69,9 @@ On a phone the order is owners, deployments, changes, documents, reviews, depend
 
 ## Dependency map
 
-> Picture to come: the dependency map at desktop width, and its list view at phone width, with fictional data.
+![The dependency map at desktop width, with fictional data](../design/step2/img/ui-dependency-map-1280.png)
+
+![The dependency map's list view at phone width, with fictional data](../design/step2/img/ui-dependency-map-390.png)
 
 **What it shows.** What breaks if an application changes or retires, and what it needs to run, up to three hops each way.
 
@@ -85,7 +91,9 @@ Hovering over or focusing a node lights the path back to the application and dim
 
 ## Timeline
 
-> Picture to come: the timeline at desktop width, and its agenda view at phone width, with fictional data.
+![The timeline at desktop width, with fictional data](../design/step2/img/ui-timeline-1280.png)
+
+![The timeline's agenda view at phone width, with fictional data](../design/step2/img/ui-timeline-390.png)
 
 **What it shows.** Changes and deployments over time.
 

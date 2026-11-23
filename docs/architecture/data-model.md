@@ -1,10 +1,10 @@
 # Data model
 
-**Status: in design.** This page describes the logical data model of the next version and how it is designed to bind to Azure SQL Database. Nothing here is built or running.
+**Status: in design.** This page describes the logical data model of the next version and how it is designed to bind to Azure SQL Database. Nothing here is released or deployed. Early code that follows it is in [`src/model`](../../src/model/) and [`src/adapters/azure/sql`](../../src/adapters/azure/sql/), under the MIT License. It is not a release, and its Azure SQL scripts have not run against a real database.
 
 ## In one screen
 
-1. **65 entities in the first release:** 41 for configuration and 24 for operational records, plus 5 kept for later.
+1. **66 entities in the first release:** 42 for configuration and 24 for operational records, plus 5 kept for later.
 2. **Configuration at the center.** Operational rows point to configuration rows inside the one working set in force. APIs and MCP tools carry configuration keys, never internal IDs. A live configuration row is never deleted, only retired, so no reference ever breaks.
 3. **Fixed meanings are copied onto rows.** Where an operational row has a configurable status, the engine also writes the fixed meaning next to it, such as "accepted" next to the label "Approved by board". The engine, row-level security and views read that one column.
 4. **Five history classes.** Every entity has one: append-only, freeze on final, effective-dated, mutable with history, or configuration versioned.

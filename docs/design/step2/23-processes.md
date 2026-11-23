@@ -164,7 +164,7 @@ Every process that needs a person's yes uses this one sub-process. It is how D-0
 | No decision without a person, outside the locked list | Step 1 above. A decision type with no matching rule still goes to its accountable holder. The locked list is a locked setting, so a client cannot extend it by configuration | The locked list itself (working default, open design question 8, see 28-working-defaults.md) |
 | Reassignment | Power Automate lets an approver reassign a request; the requester cannot [P7]. The engine counts the new responder only if they hold the required role | A reassigned card answered by someone without the role is recorded and flagged, never counted |
 | Sequential steps | Power Automate does not allow the same approver on two steps [P8]. The engine checks this when it builds a sequential card | None |
-| An approver's own tools answering for them | Microsoft Graph has an Approvals app API (beta, "not supported in production") whose `approvalItemResponse` create call takes a delegated permission (`ApprovalSolution.ReadWrite` or `ApprovalSolutionResponse.ReadWrite`) [P10]. Whether flow approvals are reachable through it is UNVERIFIED. Agent accounts that answer email and Teams are announced (sweep proposal) | The product cannot see who pressed the button inside Microsoft's approval. Mitigations: the setup guide tells admins not to consent those Graph permissions to AI client apps; typed reasons; Purview keeps the Teams approval audit [P9]; the approvals spike tests that an agent identity cannot complete a card (sweep proposal) |
+| An approver's own tools answering for them | Microsoft Graph has an Approvals app API (beta: "Use of these APIs in production applications is not supported") whose `approvalItemResponse` create call takes a delegated permission (`ApprovalSolution.ReadWrite` or `ApprovalSolutionResponse.ReadWrite`) [P10]. Whether flow approvals are reachable through it is UNVERIFIED. Agent accounts that answer email and Teams are announced (sweep proposal) | The product cannot see who pressed the button inside Microsoft's approval. Mitigations: the setup guide tells admins not to consent those Graph permissions to AI client apps; typed reasons; Purview keeps the Teams approval audit [P9]; the approvals spike tests that an agent identity cannot complete a card (sweep proposal) |
 
 **What approvers need.** "Users who respond to approval requests don't need a Premium license" [P1]. They need Power Automate rights, and the Approvals User role is not granted when ad hoc subscriptions are off, when a security group gates the environment, or on US Government plans [P4]. Guest approvers need a Power Automate license [P5].
 
@@ -585,7 +585,7 @@ Path A signs in with the pipeline's own workload identity, which holds the deplo
 
 **MCP tools used (document 24 names).** `record_deployment` (with reported code approvals), `get_deployments` (`flaggedOnly` for flags), `record_deployment_correction`. A pipeline step calls the API directly, not MCP.
 
-**Microsoft tools linked, never rebuilt.** Power Platform Pipelines (custom host for events and gates; personal pipelines "can't be extended") [P12]; Azure Pipelines approvals and checks [P13]; GitHub Actions and environments; Copilot Studio CLI named deployments [J2]; runtime app deployments (sweep proposal).
+**Microsoft tools linked, never rebuilt.** Power Platform Pipelines (custom host for events and gates; "You can't extend personal pipelines") [P12]; Azure Pipelines approvals and checks [P13]; GitHub Actions and environments; Copilot Studio CLI named deployments [J2]; runtime app deployments (sweep proposal).
 
 **Bindings.**
 
@@ -1205,3 +1205,21 @@ P05 step 5 says an emergency inside its follow-up time is not flagged until the 
 - **P03, linked mode.** The record step does not yet read authorization facts from Evidence Links, so a linked change is always flagged as missing approval today. The client-built ITSM step would hold the proposed `authorization-reporter` workload role (document 26, B26-1).
 - **P08.** `record_owner_leave` is allowed for the person, an owner of the person's application, or a platform admin, and its engine write sets only Leaves On, Directory State and its date on O05.
 - **S1.** The engine creates Approval Records pending, with Counts Toward Requirement false; the recompute after each answer sets it. A gate decision whose gate is not ready stays proposed, and the answer is kept with a warning. A restart after an approval timeout (an expired record, then a new pending record) is not built yet.
+
+### B23-6 S1: the approval runner pulls (proposed by the build, 2026-11-23)
+
+S1 (bindings) has the API push each approval request to an HTTP-triggered flow. The Azure binding's runner pulls
+instead: when the engine opens an Approval Record, the same database transaction adds a row to an approval outbox (IDs
+only), and a Power Automate flow claims waiting requests with a lease every few minutes, sends one card per request,
+reports it as sent, and posts the answer to the approval outcome endpoint with an idempotency key. When the engine
+writes the final outcome, the same transaction settles the row.
+
+- **Why.** The API stays inbound only: no outgoing credential, no timer and no queue to run in the client's
+  subscription, and a lost card is claimed again when its lease runs out.
+- **Cost.** The poll interval (five minutes by default) before a card goes out, and the Power Platform requests of the
+  polls.
+- **What stays the same.** Only the approval runner writes an outcome; the runner's routes take only an app-only token
+  with the approval writer app role and a current `approval-writer` Workload Grant; the engine decides whether an answer
+  counts. Step 3's one record per required response is still open: the engine opens one record per requirement, so a
+  rule with Minimum Count above 1 cannot be met yet, and expiry writes and restarts are not built.
+- **Proposal.** Accept pull as the Azure binding's S1 transport, and keep push as the Dataverse binding's.

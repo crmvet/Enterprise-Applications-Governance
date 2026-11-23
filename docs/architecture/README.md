@@ -1,6 +1,6 @@
 # Architecture
 
-**Status: in design.** These pages describe the logical design of the next version of Enterprise Applications Governance and how it binds to Azure. Nothing here is built or running. The code of the next version is in [`src/`](../../src/), under the MIT License. It is early work that follows this design, not a release.
+**Status: in design.** These pages describe the logical design of the next version of Enterprise Applications Governance and how it binds to Azure. Nothing here is released or deployed. The code of the next version is in [`src/`](../../src/), under the MIT License. It is early work that follows this design, not a release.
 
 Start with the [overview](../overview.md) if you have not read it. For the reasons behind the product, see the [product page](https://citizendevelopmentacademy.com/solutions/enterprise-applications-governance/) on the Citizen Development Academy site.
 
@@ -34,7 +34,7 @@ As designed, the first release has:
 
 | Item | Count |
 |---|---|
-| Entities | 65: 41 for configuration and 24 for operational records |
+| Entities | 66: 42 for configuration and 24 for operational records |
 | Processes | 11, from intake to retirement, on three shared parts: approval cards, reminders and the engine write path |
 | MCP tools | 51, in 10 toolsets |
 | Engine operations | 14, in one portable .NET library |

@@ -1,6 +1,6 @@
 # Processes
 
-**Status: in design.** Nothing on these pages is built or running. Enterprise Applications Governance (interim name) is designed to run in your own Azure subscription. This folder describes the design only.
+**Status: in design.** Nothing on these pages is released or deployed. Enterprise Applications Governance (interim name) is designed to run in your own Azure subscription. This folder describes the design only.
 
 This folder holds the eleven processes that carry an application from idea to retirement, one file per process. Each process has a number, P01 to P11, so the pages can point to each other.
 

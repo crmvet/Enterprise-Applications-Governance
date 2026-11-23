@@ -1,6 +1,6 @@
 # How it fits Microsoft
 
-**Status: in design.** This page states the rule the design follows. It describes what the product is designed to do, not something that runs today.
+**Status: in design.** This page states the rule the design follows. It describes what the product is designed to do, not something that is released or deployed.
 
 ## The fit rule
 

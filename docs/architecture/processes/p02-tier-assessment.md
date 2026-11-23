@@ -1,6 +1,6 @@
 # P02 Tier assessment and required approvals
 
-**Status: in design.** Nothing here is built or running. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
 
 ## In short
 

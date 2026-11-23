@@ -1,6 +1,6 @@
 # Sign-in and security
 
-**Status: in design.** This page describes who may see, change and decide what in the next version, how that is designed to be enforced, and how it can be proven afterwards. These are designed controls. None is built yet.
+**Status: in design.** This page describes who may see, change and decide what in the next version, how that is designed to be enforced, and how it can be proven afterwards. These are designed controls. Some exist as early code in [`src/adapters/azure`](../../src/adapters/azure/README.md), such as Microsoft Entra token checks, app roles and the approval runner's routes. That code is not a release. It is tested only on a developer machine, never against a real tenant, and nothing is deployed.
 
 ## Ten rules
 

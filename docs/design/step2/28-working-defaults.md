@@ -153,7 +153,7 @@ Each of these questions touches an accepted decision, so the product owner answe
 
 ## 4. Open from the build
 
-The first code build in `src/` was checked against documents 20 to 26 in several review rounds. Its proposals sit at the end of each document as "Proposed by the build (2026-11-22)" items (B20-1 to B20-5, B21-1 to B21-8, B22-1 to B22-7, B23-1 to B23-5, B24-1 to B24-5, B25-1 to B25-7, B26-1 to B26-5). Each is a proposal and changes no decision. Three design questions from the build stay open, because the design does not say which way to go. Only item 1 touches an accepted decision, and it belongs to question 9 (section 3.5), so it is not a seventh question. Items 2 and 3 are design points, not product owner decisions.
+The first code build in `src/` was checked against documents 20 to 26 in several reviews. Its proposals sit at the end of each document as "Proposed by the build" items: B20-1 to B20-5, B21-1 to B21-8, B22-1 to B22-7, B23-1 to B23-6, B24-1 to B24-5, B25-1 to B25-7 and B26-1 to B26-6. They are dated 2026-11-22, except B23-6 and B26-6, which are dated 2026-11-23. Each is a proposal and changes no decision. Three design questions from the build stay open, because the design does not say which way to go. Only item 1 touches an accepted decision, and it belongs to question 9 (section 3.5), so it is not a seventh question. Items 2 and 3 are design points, not product owner decisions.
 
 | Item | Question | Recommended | Where it lands |
 |---|---|---|---|

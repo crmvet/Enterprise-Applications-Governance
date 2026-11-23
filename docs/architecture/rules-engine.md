@@ -1,6 +1,6 @@
 # Rules engine
 
-**Status: in design.** This page describes the rules engine of the next version: the code that is designed to read the configuration and check every write. Nothing here is built or running.
+**Status: in design.** This page describes the rules engine of the next version: the code that is designed to read the configuration and check every write. Nothing here is released or deployed. Early code that follows it is in [`src/engine`](../../src/engine/), under the MIT License. It is not a release.
 
 ## In one screen
 

@@ -1,13 +1,13 @@
 # Configuration and presets
 
-**Status: in design.** This page describes how the next version is designed to hold everything an organization tailors. Nothing here is built or running.
+**Status: in design.** This page describes how the next version is designed to hold everything an organization tailors. Nothing here is released or deployed. Early code that follows it, with the shipped presets as JSON, is in [`src/config`](../../src/config/), under the MIT License. It is not a release.
 
 ## In one screen
 
 1. **Everything an organization can tailor is a configuration row.** Tiers, lifecycle stages, gates, change types, roles, decision rights, approval rules, gate levels, documentation rules, review cadences and separation of duties are all rows. The engine never branches on a fixed tier number or label.
 2. **One working set, many versions.** An organization has one working set in force. It changes only through versions. Each version is a full, hashed snapshot, exactly one version is active, and every operational record stamps the version it was judged by.
 3. **AI proposes, a person accepts, the engine activates.** An AI client, acting for a configuration admin, builds a draft. The engine validates it and computes the difference. A person accepts that difference on an approval card. Only then does the engine activate the new version.
-4. **Presets are shipped configuration sets.** Four full presets and three overlays ship. An organization picks one full preset, adds any compatible overlays, and owns the result.
+4. **Presets are shipped configuration sets.** Four full presets and three overlays are designed to ship. An organization picks one full preset, adds any compatible overlays, and owns the result.
 5. **The gate ladder is configuration.** What each gate level does is fixed in the engine. Which level applies to which tier, change type and target stage is a configuration row.
 6. **No silent fallback.** If a rule row the engine needs is missing, the engine refuses governed writes and reports the broken configuration. It never falls back to a built-in default.
 

@@ -1,6 +1,6 @@
 # Enterprise Applications Governance: the next version
 
-**Status: in design.** Nothing in the next version is built or running yet. Every capability on this page is something the product is designed to do. The code of the next version is in [`src/`](../src/), under the MIT License. It is early work that follows this design, not a release. The 2021 release stays in this repository for reference.
+**Status: in design.** Nothing in the next version is released or deployed yet. Every capability on this page is something the product is designed to do. The code of the next version is in [`src/`](../src/), under the MIT License. It is early work that follows this design, not a release. It runs only on a developer machine with fictional data ([what works today](../src/adapters/azure/STATUS.md)). The 2021 release stays in this repository for reference.
 
 "Enterprise Applications Governance" is an interim name. It may change before the first release.
 
@@ -12,7 +12,7 @@ Govern AI development of your apps: people build with AI at speed, and every app
 
 The product is designed to put governance inside the AI build loop. Its own MCP server is designed so the AI builder, such as Claude Code or another MCP client, can ask the governance questions while it builds: the risk tier, the required documents, the owners, the dependencies, and what needs a person's decision. AI drafts and people decide, on approval cards in Outlook and Teams.
 
-Underneath sits application portfolio management for Microsoft Power Platform, Dataverse and the apps around them. The next version is designed as a playbook, guidelines, processes and an engine, and it is designed to run in your own Azure subscription. It is designed to give the business, IT, AI, citizen developers, the PMO, change control and architects one shared record for every business application:
+Underneath, it is designed to provide application portfolio management for Microsoft Power Platform, Dataverse and the apps around them. The next version is designed as a playbook, guidelines, processes and an engine, and it is designed to run in your own Azure subscription. It is designed to give the business, IT, AI, citizen developers, the PMO, change control and architects one shared record for every business application:
 
 - what the application is and what it is made of;
 - who owns it, with a deputy for each owner;
@@ -21,13 +21,13 @@ Underneath sits application portfolio management for Microsoft Power Platform, D
 - which documents it needs, and whether they are current;
 - its change requests, approvals and deployment records.
 
-It is designed to be driven by configuration, not hardcoded. Tiers, stages, roles, approvals, gates and required documents are configuration rows that each organization sets for itself. The product ships ready-made presets to start from.
+It is designed to be driven by configuration, not hardcoded. Tiers, stages, roles, approvals, gates and required documents are configuration rows that each organization sets for itself. The product is designed to ship ready-made presets to start from.
 
 ## Who it is for
 
 The product is designed for organizations that run many business applications on Microsoft and need one place where decisions about them are made and kept. That includes Power Platform apps, agents, AI-built apps, code apps and SaaS from other vendors.
 
-Most of its users are owners and reviewers, not builders. They ask questions, answer approval cards and record facts. The default configuration names seven parties:
+Most of the people it is designed for are owners and reviewers, not builders. They ask questions, answer approval cards and record facts. The default configuration is designed to name seven parties:
 
 | Party | Typical people | What they do in the product |
 |---|---|---|
@@ -43,11 +43,11 @@ Parties and roles are configuration rows too. An organization can rename, merge 
 
 ## Three ways in
 
-People are designed to reach the product in three ways. All three go through the same rules engine.
+The product is designed to be reached in three ways. All three are designed to go through the same rules engine.
 
-1. **MCP clients.** The product is designed to have its own MCP server. AI tools can ask product questions such as "who owns this app?" or "what breaks if it retires?", and record drafts and facts for the signed-in person. Claude Code is the reference client. See [MCP tools](architecture/mcp-tools.md).
+1. **MCP clients.** The product is designed to have its own MCP server. It is designed so AI tools can ask product questions such as "who owns this app?" or "what breaks if it retires?", and record drafts and facts for the signed-in person. Claude Code is the reference client. See [MCP tools](architecture/mcp-tools.md).
 2. **A modern web app.** Four read-only pages: the portfolio overview, Application 360, the dependency map and the timeline. See [Screens](architecture/screens.md).
-3. **Approval cards in Outlook and Teams.** People approve on Power Automate approval cards. AI never approves. See [Sign-in and security](architecture/sign-in-and-security.md).
+3. **Approval cards in Outlook and Teams.** The product is designed so people approve on Power Automate approval cards. AI never approves. See [Sign-in and security](architecture/sign-in-and-security.md).
 
 ## Where it runs
 
@@ -68,6 +68,8 @@ The rules engine is designed as a portable library with no database code inside.
 
 ## Design principles
 
+These are the rules the design follows. They describe what the product is designed to do, not something that is released or deployed.
+
 - **Configuration, not code.** A new rule is a configuration row, never a code change or a redeploy.
 - **AI drafts, people decide.** Records an AI creates start as Draft or Proposed. Only people approve, on approval cards. Every record shows who performed it, including "AI client for a person".
 - **Roles only through Entra groups.** No product role is given to a person directly. Who holds a role is managed in Entra.
@@ -84,8 +86,8 @@ It is designed to stay open source under the MIT License, with all source public
 
 | Item | Status |
 |---|---|
-| The next version | In design. Nothing is built or running |
-| The code of the next version | In [`src/`](../src/), under the MIT License. Early work that follows the design, not a release |
+| The next version | In design. Not released and not deployed |
+| The code of the next version | In [`src/`](../src/), under the MIT License. Early work that follows the design, not a release. It runs on a developer machine with fictional data. Its [status page](../src/adapters/azure/STATUS.md) says what works today |
 | The design documents | Published here, in `docs/` |
 | The 2021 release | Still here. A Microsoft Dataverse solution, first published in 2021 under MIT. The unpacked source is in `Solutions/`, and the GitHub releases v1.1.7.7 and v1.1.7.8 carry managed solution zips. Kept for reference, not maintained |
 | Upgrade path | The next version is designed as a new product, not an in-place upgrade of the 2021 release |

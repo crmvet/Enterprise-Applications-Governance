@@ -1,6 +1,6 @@
 # Build log: Enterprise Applications Governance, the next version
 
-How the next version of Enterprise Applications Governance was designed, and how its first code core was built, over the weekend of Saturday 2026-11-21 and Sunday 2026-11-22, and how the technical work went public early on Monday 2026-11-23. All times are US Eastern. Counts are as of about 8:45 PM on the Sunday, unless a row says otherwise.
+How the next version of Enterprise Applications Governance was designed, and how its first code core was built, over the weekend of Saturday 2026-11-21 and Sunday 2026-11-22, and how the technical work went public early on Monday 2026-11-23, with the first working software after it. All times are US Eastern. Counts are as of about 8:45 PM on the Sunday, unless a row says otherwise.
 
 AI sessions drafted, built and checked the work. The author made every decision.
 
@@ -8,11 +8,11 @@ AI sessions drafted, built and checked the work. The author made every decision.
 
 - **The product is in design.** Every capability of the next version is something it is designed to do. Nothing in this log says it is released, running or available.
 - **The platform.** The first release is designed to run in the client's own Azure subscription ([D-26][dec]).
-- **The code is an offline core, not the product.** Its libraries and tests run on a developer machine with fictional data, an in-memory store and a mock sign-in. It runs in no cloud and for no client.
+- **The code is early work, not the product and not a release.** It runs on a developer machine with fictional data: the engine and the MCP server core on an in-memory store with a mock sign-in, and, from the Monday, an early Azure adapter over a SQLite file with a development identity. Its Azure SQL store has not run against a real database, and its Azure template has never been deployed. It runs in no cloud and for no client.
 - **The technical work is open source under the MIT License** ([D-27][dec]): the [source](../../src/), the [overview](../overview.md), the [architecture pages](../architecture/), the [step 2 design documents](../design/step2/), the [decision records](../decisions/) and the [diagrams](../diagrams/).
 - **The 2021 release** is the only release that ships. It is a Microsoft Dataverse solution, open source under MIT since 2021 and no longer maintained. Its source is in [Solutions](../../Solutions/). It was the author's own work ([D-23][dec]).
 - **"The author"** below is the product's author and owner.
-- **Decision numbers** (D-01 to D-30) match the [decision records][dec]. D-21 is about internal coordination and is not published. Its number is kept so the sequence has no gaps.
+- **Decision numbers** (D-01 to D-30) match the [decision records][dec]. D-21 is not about the technical design, so it is not published. Its number is kept so the sequence has no gaps.
 
 ## 1. Timeline
 
@@ -60,17 +60,17 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | About 2:13 AM | Visio batch 1: the two foundation options, the naming diagram, and two overview diagrams, a value stream and an ecosystem hub. |
 | About 2:30 AM | The solution code starts, offline, from the step 2 design. |
 | About 3:52 AM | Visio batch 2: six step 2 diagrams (18 pages) and a naming diagram. |
-| About 4:00 AM | Code round R1: 958 of 958 tests pass. |
-| About 5:25 AM | Code round R2: 11 of 11 checks pass. |
+| About 4:00 AM | Code build 1: 958 of 958 tests pass. |
+| About 5:25 AM | Code build 2: 11 of 11 checks pass. |
 | About 6:53 AM | The systems map's text generator is fixed: none of its 6,859 text pieces is cut mid-sentence. |
-| About 7:14 AM | Code round R3: 13 of 13 checks pass. |
-| About 8:45 AM | Code round R4: 14 of 14 checks pass. The review finds no path for an AI to approve, accept or activate. |
+| About 7:14 AM | Code build 3: 13 of 13 checks pass. |
+| About 8:45 AM | Code build 4: 14 of 14 checks pass. The review finds no path for an AI to approve, accept or activate. |
 | About 9:13 AM | All 16 systems map diagrams are rebuilt in Visio, every connector glued. The final picture critic passes. |
 | About 10:01 AM | The systems map is closed: 98 views, 105 images, 1,557 internal links, scrub clean. |
-| About 12:12 PM | Code round R5: 15 of 15 checks pass. The MCP security review passes. Seventeen adversarial probes find older gaps in the write guard. |
-| About 1:50 PM | Code round R6: the write guard is hardened, then attacked with 108 probes. It holds on 90. No probe gets an AI to approve, accept or activate. 16 of the 18 breaks are fixed, and 2 stay open as design questions. |
-| About 2:25 PM | Code round R7 and a design reconciliation: the code's proposals (57 reason codes, 20 data model items) are folded back into the design documents, marked as proposals. |
-| About 3:05 PM | Code round R8: a scripted walkthrough in eight steps, with fictional people. In step 4 the AI tries to approve three ways and is refused each time. |
+| About 12:12 PM | Code build 5: 15 of 15 checks pass. The MCP security review passes. Seventeen adversarial probes find older gaps in the write guard. |
+| About 1:50 PM | Code build 6: the write guard is hardened, then attacked with 108 probes. It holds on 90. No probe gets an AI to approve, accept or activate. 16 of the 18 breaks are fixed, and 2 stay open as design questions. |
+| About 2:25 PM | Code build 7 and a design reconciliation: the code's proposals (57 reason codes, 20 data model items) are folded back into the design documents, marked as proposals. |
+| About 3:05 PM | Code build 8: a scripted walkthrough in eight steps, with fictional people. In step 4 the AI tries to approve three ways and is refused each time. |
 
 ### Sunday 2026-11-22, evening
 
@@ -96,7 +96,10 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Monday 12:25 AM | Commit `4faba8f` changes 1,460 files in this repository. It adds 1,458 of them: the code, the playbook with 23 chapters and 24 numbered guidelines, the technical design, decision records D-01 to D-28, the architecture pages, the diagrams with their Visio source, this build log and the public CI. It also updates the license line and the README. |
 | Monday, about 12:26 AM | `4faba8f` is pushed after the final checks pass: the scan for private material is clean on the files and on the commit range, 1,734 of 1,734 tests pass on a fresh copy, 0 of 1,445 links are broken, a privacy search is clean, and an independent re-check agrees. The GitHub Actions CI run (45117742107) succeeds. |
 | Monday 12:30 AM | Commit `60a08bc` adds the decision records [D-29][dec] and [D-30][dec]. The CI run (45118242078) succeeds. |
-| In progress at the time of writing | Working software round 1, under [D-30][dec]: an Azure adapter, designed as a host with the MCP server and an API over the engine, with a local store and an Azure SQL store, and an azd template. It is not in this repository yet, and nothing is deployed. |
+| Monday 12:51 AM | Commit `f68a0ef` updates this build log with D-29, D-30 and the first public pushes. |
+| Monday 1:00 AM | Commit `79a1b22` publishes seven more systems map pages, rebuilt, with their Visio source. The other pages in their three sets now carry the platform line of [D-26][dec]. |
+| Monday 2:12 to 2:22 AM | Working software under [D-30][dec]. Commit `2c5c227` adds an early Azure adapter: a host with the MCP endpoint and a read API over the engine, SQLite and Azure SQL stores, an Azure Functions wrapper and an azd template. Commits `629a35d` and `055d445` fix two details of the CI build. Nothing is deployed. |
+| Monday 5:06 AM | Commit `cffb7da` adds the web app with its four read-only pages on the product's own API, the approval runner's routes with a Power Automate flow template, and directory reads on behalf of the signed-in admin, tested against recorded, fictional responses. It runs end to end on one machine over SQLite with a development identity. Tests: engine and MCP core 1,782 of 1,782, Azure host 141 of 141, Azure stores 102 passed and 48 skipped (39 Azure SQL cases that need a test database, and 9 cases that only the row stores support), web app 49 of 49. Nothing is deployed. |
 
 ## 2. What the design produced
 
@@ -135,7 +138,7 @@ The public diagrams, with their Visio source, are in [docs/diagrams](../diagrams
 
 ## 3. The code
 
-The code is an offline core on a developer machine, with fictional data. The pass counts below come only from runs that happened, with their times. The names still use the placeholder "Product" until the product has a name ([D-05][dec]).
+This section describes the code as of the Sunday evening: an offline core on a developer machine, with fictional data. The Monday rows in section 1 add the Azure adapter and the web app. The pass counts below come only from runs that happened, with their times. The names still use the placeholder "Product" until the product has a name ([D-05][dec]).
 
 | Module or asset | Status | What it is | Size or tests |
 |---|---|---|---|
@@ -144,44 +147,47 @@ The code is an offline core on a developer machine, with fictional data. The pas
 | Product.Engine.Runtime | exists | Storage ports, the snapshot cache, and one call per product operation in one transaction | 54 tests on each runtime (run 2:13 PM) |
 | Product.Engine.Testing | exists | The fixture runner, 11 design invariants as generated tests, and a replay tool | Used by the test runs |
 | Product.Engine.Cli | exists | Command line: validate, build presets, run fixtures, replay | Used by the checks |
-| Product.Mcp.Core | exists | The MCP server core: 50 first-release tools, run in one process on an in-memory store | 99 tests on .NET 10 (run 2:13 PM); 100 with the walkthrough test (R8) |
+| Product.Mcp.Core | exists | The MCP server core: 50 first-release tools, run in one process on an in-memory store | 99 tests on .NET 10 (run 2:13 PM); 100 with the walkthrough test (build 8) |
 | Product.Mcp.Testing | exists | The mock sign-in and test doubles, kept out of the production code | Used by the tests |
 | MCP tool contracts | exists | Input and output schemas for 51 tools | Every schema compiles |
 | Configuration schema and presets | exists | Four full presets (Balanced, Starter, Regulated, a Microsoft CoE baseline) and three overlays | 22 preset choices, 0 errors |
-| Logical model | exists | A machine-readable data model, plus generators for draft physical schemas | 75 entities |
+| Logical model | exists | A machine-readable data model, plus generators for draft physical schemas | 75 entities: 66 for the first release, 4 proposals and 5 kept for later |
 | Fixtures | exists | Test cases with expected answers | 611 passed (run 2:13 PM), plus 14 replay records |
 | Page designs | exists | Overview, Application 360, dependency map and timeline, in a local React and Fluent UI preview with made-up data | Checked at 1280 px and 390 px |
 | Playbook and guidelines | exists | 16 playbook chapters, 11 processes, 20 numbered guidelines (2 retired) | Drafts. The two tracks of D-28 were not written yet at 8:45 PM. By 11:17 PM there were 23 chapters (0 to 22) and 24 numbered guidelines (2 retired), all drafts |
 | Pipeline record step samples | exists | Azure DevOps, GitHub Actions and a Power Platform Pipelines extension flow | 33 of 33 tests (run 11:57 AM) |
 | Setup and admin guides | exists | Five skeletons, 40 Microsoft Learn links, each with its check date | Skeletons |
-| The registration effect, the record endpoint host, the approval runner | designed | Not built. The walkthrough marks them as stand-ins | None |
+| The registration effect | designed | Not built. The walkthrough marks it as a stand-in | None |
+| The record endpoint host, the approval runner | designed | Not built on the Sunday. Both came as early work in the Azure adapter on the Monday (section 1) | None |
 
 At the first commit the code had 11 .NET projects, 228 C# files and 1,227 files in all.
 
-**Code rounds (all on Sunday 2026-11-22):**
+On the Monday, the early Azure adapter added a record endpoint host and the approval runner's routes, with a flow template for the runner. Its status page, [src/adapters/azure/STATUS.md](../../src/adapters/azure/STATUS.md), says what works today, the test counts, and what is designed but not built yet.
 
-| Round | When | What the round added | Checks | Tests passed | Fixtures passed |
+**Code builds (all on Sunday 2026-11-22):**
+
+| Build | When | What the build added | Checks | Tests passed | Fixtures passed |
 |---|---|---|---|---|---|
-| R1 | Done about 4:00 AM | Scaffold, configuration schema, presets and overlays, first engine libraries with 44 validation rules, the 51 tool contracts, the logical model | Builds clean on three targets. 3 of 11 checks could not run on .NET 10 (see note) | 958 of 958 | not reported |
-| R2 | Review run 5:02 to 5:20 AM | Verification on both runtimes, 28 new preset tests | 11 of 11 | 1,169 of 1,169 | 119 |
-| R3 | Review run 7:00 to 7:15 AM | The engine operations, the playbook and guidelines, the page designs | 13 of 13 | 1,389 of 1,389 | 329 |
-| R4 | Review run 8:36 to 8:50 AM | Standard changes, the gap check, the write guard, activation, erasure, guide skeletons, pipeline samples | 14 of 14 | 1,475 of 1,475 | 538 |
-| R5 | Run 11:57 to 11:59 AM | The engine runtime, the MCP server core with 50 tools, the generators | 15 of 15 | 1,666 of 1,666 | 547 |
-| R6 | Final run 1:43 to 1:44 PM | Write guard hardening; 108 adversarial probes (12:55 to 1:13 PM) | 14 of 14 (samples skipped) | 1,687 of 1,687 | 611 |
-| R7 | Run 2:13 to 2:14 PM | 11 invariants as generated tests over all 22 preset choices; the replay tool | 15 of 15 (samples skipped) | 1,733 of 1,733 | 611, plus 14 of 14 replays |
-| R8 | About 2:30 to 3:00 PM | The scripted walkthrough, run as a test | 15 of 15 (samples skipped) | 1,734 of 1,734 | 611 |
+| 1 | Done about 4:00 AM | Scaffold, configuration schema, presets and overlays, first engine libraries with 44 validation rules, the 51 tool contracts, the logical model | Builds clean on three targets. 3 of 11 checks could not run on .NET 10 (see note) | 958 of 958 | not reported |
+| 2 | Review run 5:02 to 5:20 AM | Verification on both runtimes, 28 new preset tests | 11 of 11 | 1,169 of 1,169 | 119 |
+| 3 | Review run 7:00 to 7:15 AM | The engine operations, the playbook and guidelines, the page designs | 13 of 13 | 1,389 of 1,389 | 329 |
+| 4 | Review run 8:36 to 8:50 AM | Standard changes, the gap check, the write guard, activation, erasure, guide skeletons, pipeline samples | 14 of 14 | 1,475 of 1,475 | 538 |
+| 5 | Run 11:57 to 11:59 AM | The engine runtime, the MCP server core with 50 tools, the generators | 15 of 15 | 1,666 of 1,666 | 547 |
+| 6 | Final run 1:43 to 1:44 PM | Write guard hardening; 108 adversarial probes (12:55 to 1:13 PM) | 14 of 14 (samples skipped) | 1,687 of 1,687 | 611 |
+| 7 | Run 2:13 to 2:14 PM | 11 invariants as generated tests over all 22 preset choices; the replay tool | 15 of 15 (samples skipped) | 1,733 of 1,733 | 611, plus 14 of 14 replays |
+| 8 | About 2:30 to 3:00 PM | The scripted walkthrough, run as a test | 15 of 15 (samples skipped) | 1,734 of 1,734 | 611 |
 
-Note on local builds: in R1 and later, Windows Smart App Control on the build machine sometimes refused to load newly built, unsigned files. Nobody tried to get around it. The same tests ran on .NET Framework 4.8 instead, and later builds loaded.
+Note on local builds: in build 1 and later, Windows Smart App Control on the build machine sometimes refused to load newly built, unsigned files. Nobody tried to get around it. The same tests ran on .NET Framework 4.8 instead, and later builds loaded.
 
 ## 4. Verification practice
 
 | Practice | What it does | Weekend numbers |
 |---|---|---|
-| The scrub gate | A private list of terms that must never go public, run over every file before it can ship | The code's own scrub step ran over 1,226 source files in R7. The gate also runs before anything is pushed to this repository |
+| The scrub gate | A private list of terms that must never go public, run over every file before it can ship | The code's own scrub step ran over 1,226 source files in build 7. The gate also runs before anything is pushed to this repository |
 | The claims check | Every statement about the next version is checked against the design. Next-version features are always "designed to", never present tense | Run on public drafts before they ship. This log follows the same rule |
-| Adversarial probes | Attacks written to break the rules, run against the code | 17 probes in R5 found older gaps. 108 probes in R6: the guard held on 90, 16 breaks were fixed, and 2 stay open as design questions |
+| Adversarial probes | Attacks written to break the rules, run against the code | 17 probes in build 5 found older gaps. 108 probes in build 6: the guard held on 90, 16 breaks were fixed, and 2 stay open as design questions |
 | Adversarial fact checks | Independent checkers try to prove a claim wrong | Three checkers matched every Microsoft quote in one set of drafts to its live Microsoft Learn page. One adversarial pass on the foundation study |
-| Critics | A separate agent reviews each deliverable before it counts as done | On the step 2 design, the diagrams, the pictures and each code round |
+| Critics | A separate agent reviews each deliverable before it counts as done | On the step 2 design, the diagrams, the pictures and each code build |
 | Microsoft Learn re-checks | Microsoft facts are checked against Microsoft Learn, with the check date | A news sweep with 12 corrections. Licensing facts checked on Learn when the question came up. 40 Learn links in the guides, each dated |
 | Code checks | One command runs every check: build, tests, presets, fixtures, replays, dashes, scrub, JSON, model, content, pages, samples and generated files | 15 of 15 on the last runs |
 
@@ -208,7 +214,7 @@ The AI sessions:
 - wrote the offline code core and its tests, attacked it, fixed what broke, and kept two open points open instead of guessing;
 - ran the scrub gate, the claims checks, the critics and the adversarial checks;
 - compared the platforms and recommended one. They did not decide. AI never picked the platform or the name;
-- under [D-29][dec], the AI session in the product's workspace pushed the private backup and, after the final checks passed, this repository (`4faba8f` and `60a08bc`), never by force.
+- under [D-29][dec], the AI session in the product's workspace pushed the private backup and, after the final checks passed, this repository (`4faba8f` and `60a08bc` first, then each later commit on the Monday), never by force.
 
 ### 5.2 The decision practice
 
