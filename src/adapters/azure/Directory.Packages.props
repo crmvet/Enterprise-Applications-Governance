@@ -1,0 +1,57 @@
+<Project>
+  <!--
+    Central package versions for the Azure adapter.
+    NuGet uses the nearest Directory.Packages.props, so this file imports the one in src/ first: every version pinned
+    there (System.Text.Json, the net48 reference assemblies, xunit.v3) applies here unchanged. It only adds the versions
+    the Azure adapter needs. Every version is exact, stable, from nuget.org, at least two weeks old when picked, and
+    MIT or Apache 2.0 licensed. src/THIRD-PARTY.md (section ".NET: adapters/azure") records each one and every
+    transitive package they bring, with the two transitive Microsoft packages that carry the Microsoft Software License
+    Terms.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- Sign-in: Microsoft Entra ID JWT bearer validation with app roles (Product.Azure.Host). MIT.
+         Brings Microsoft.AspNetCore.Authentication.JwtBearer and Microsoft.IdentityModel transitively. -->
+    <PackageVersion Include="Microsoft.Identity.Web" Version="4.18.0" />
+
+    <!-- Local and test store (Product.Azure.Stores.Sqlite). MIT; the native SQLite bundle is Apache 2.0. -->
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+
+    <!-- Azure SQL store (Product.Azure.Stores.SqlServer). MIT.
+         From version 7 the Entra authentication methods (managed identity, default credential) live in the
+         Extensions.Azure package, so both are pinned together. -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="7.1.1" />
+    <!-- SqlClient 7.1.1 asks for System.Security.Cryptography.Pkcs 9.0.18, which has a known denial of service
+         vulnerability (fixed in 10.0.13). The SQL store references this patched version directly. MIT. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+
+    <!-- Azure Functions wrapper (Product.Azure.Functions), isolated worker with ASP.NET Core integration. MIT.
+         The project SDK is Azure.Functions.Sdk, pinned in the project file's Sdk attribute (1.0.1). -->
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" Version="1.2.0" />
+    <!-- The managed identity credential the Functions wrapper gives the telemetry exporter. MIT.
+         From 1.21 this package forwards its types to Azure.Core. SqlClient's Azure extension asks for 1.18, a full copy
+         of the same types, while the telemetry exporter lifts Azure.Core to a version that already holds them, so code
+         that names a credential type sees it twice. Pinning the forwarding version gives every credential type one
+         home. -->
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+
+    <!-- Telemetry to Application Insights through OpenTelemetry, used only when a connection string is configured.
+         AspNetCore for the Kestrel host, Exporter for the Functions wrapper. MIT. -->
+    <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
+    <PackageVersion Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.10.0" />
+
+    <!-- The official MCP C# SDK. Apache 2.0.
+         ModelContextProtocol: the MCP client the tests use to prove the endpoint speaks streamable HTTP to a third-party
+         client. ModelContextProtocol.AspNetCore: the SDK server transport in stateless streamable HTTP mode, in the host
+         library, used when Product:Mcp:Transport is sdk. -->
+    <PackageVersion Include="ModelContextProtocol" Version="2.4.0" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
+
+    <!-- Tests only: the in-memory HTTP test server for the hosts. MIT. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.14" />
+  </ItemGroup>
+</Project>

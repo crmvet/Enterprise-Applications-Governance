@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Azure SQL store: the storage ports over Azure SQL Database with Microsoft.Data.SqlClient.
+    Connects with the app's managed identity (no password in any file), writes the caller to SESSION_CONTEXT on every
+    connection for row-level security, and carries the migration scripts in ../sql as embedded resources with a small
+    runner that a deployment identity runs (the app identity never runs DDL).
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Azure.Stores\Product.Azure.Stores.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
+    <!-- Lifts the vulnerable transitive 9.0.18 to a patched version (see Directory.Packages.props). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <!-- The Azure SQL scripts, found by the part of the name after ".Sql/", in file name order. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\sql\**\*.sql" Link="Sql\%(RecursiveDir)%(Filename)%(Extension)" LogicalName="Product.Azure.Stores.SqlServer.Sql/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Azure.Tests" />
+    <InternalsVisibleTo Include="Product.Azure.Stores.Tests" />
+  </ItemGroup>
+</Project>

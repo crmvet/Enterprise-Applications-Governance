@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Store base for the Azure adapter.
+    Implements the engine runtime's storage ports (IRecordStore, IConfigurationStore) once, over a small database
+    gateway that each provider implements: the overlay transaction (reads see their own writes, nothing reaches the
+    database before Commit), optimistic row versions, the unique keys, StoreConflictException, row IDs, the entity
+    catalog read from the logical model compiled into the engine core, the rate limit counter port, the ambient caller
+    context that the SQL provider writes to SESSION_CONTEXT, and seeding for local runs and tests (never an engine write).
+    No database driver here: Product.Azure.Stores.Sqlite and Product.Azure.Stores.SqlServer bring their own.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\engine\Product.Engine.Runtime\Product.Engine.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Azure.Stores.Sqlite" />
+    <InternalsVisibleTo Include="Product.Azure.Stores.SqlServer" />
+    <InternalsVisibleTo Include="Product.Azure.Tests" />
+    <InternalsVisibleTo Include="Product.Azure.Stores.Tests" />
+  </ItemGroup>
+</Project>

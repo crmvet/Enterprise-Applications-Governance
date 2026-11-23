@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION}"
+    },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "principalType": {
+      "value": "${AZURE_PRINCIPAL_TYPE=User}"
+    },
+    "apiClientId": {
+      "value": "${PRODUCT_API_CLIENT_ID}"
+    },
+    "apiAudience": {
+      "value": "${PRODUCT_API_AUDIENCE=}"
+    },
+    "apiTenantId": {
+      "value": "${PRODUCT_API_TENANT_ID=}"
+    },
+    "customBaseUrl": {
+      "value": "${PRODUCT_CUSTOM_BASE_URL=}"
+    },
+    "sqlAdministratorObjectId": {
+      "value": "${SQL_ADMINISTRATOR_OBJECT_ID=}"
+    },
+    "sqlAdministratorPrincipalType": {
+      "value": "${SQL_ADMINISTRATOR_PRINCIPAL_TYPE=}"
+    },
+    "sqlClientIpAddress": {
+      "value": "${SQL_CLIENT_IP_ADDRESS=}"
+    },
+    "telemetrySalt": {
+      "value": "${PRODUCT_TELEMETRY_SALT=}"
+    },
+    "maximumInstanceCount": {
+      "value": 10
+    },
+    "alwaysReadyInstances": {
+      "value": 0
+    },
+    "sqlMaxVCores": {
+      "value": 1
+    },
+    "sqlAutoPauseDelayMinutes": {
+      "value": 60
+    }
+  }
+}

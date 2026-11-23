@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    The Kestrel host for local runs and containers: the host library over a SQLite file (local) or Azure SQL
+    (container), plus the commands seed, migrate and schema-script.
+    The development identity lives only in this project. It needs the Development environment, an explicit switch and
+    a loopback request, and startup fails if the switch is on in any other environment.
+    No app host executable: run it with "dotnet run" or "dotnet Product.Azure.Server.dll", in a container too.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Azure.Host\Product.Azure.Host.csproj" />
+    <ProjectReference Include="..\Product.Azure.Stores.Sqlite\Product.Azure.Stores.Sqlite.csproj" />
+    <ProjectReference Include="..\Product.Azure.Stores.SqlServer\Product.Azure.Stores.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" />
+  </ItemGroup>
+
+  <!-- The fictional demo seed (binding patch and estate) for local runs. -->
+  <ItemGroup>
+    <None Include="..\seed\**\*.json" Link="seed\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Azure.Tests" />
+  </ItemGroup>
+</Project>

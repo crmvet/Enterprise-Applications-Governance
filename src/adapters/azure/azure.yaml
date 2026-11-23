@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+#
+# The Azure Developer CLI template for the Azure binding: one Azure Functions app on the Flex Consumption plan that
+# hosts the API, the product's MCP server and the engine, over Azure SQL Database, in the client's own subscription.
+# The client's administrator runs "azd up" from this folder under their own sign-in ("azd auth login").
+# infra/README.md lists what gets deployed, the Microsoft Entra app registration steps and the parameters.
+name: product-azure
+metadata:
+  template: product-azure@0.1.0
+infra:
+  provider: bicep
+  path: infra
+  module: main
+services:
+  api:
+    project: ./Product.Azure.Functions
+    language: dotnet
+    host: function
+hooks:
+  # Runs the Azure SQL migrations as the signed-in deployer, which also creates the function app's managed identity
+  # as a contained database user. Runs before the code is deployed.
+  postprovision:
+    windows:
+      shell: pwsh
+      run: ./infra/hooks/postprovision.ps1
+      continueOnError: false
+      interactive: true
+    posix:
+      shell: sh
+      run: ./infra/hooks/postprovision.sh
+      continueOnError: false
+      interactive: true

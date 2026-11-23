@@ -1,5 +1,7 @@
-# Runs every check of src/ with the repository's own check runner (src/tools/ci.mjs): build, tests, presets,
+# Runs every check of src/ with the repository's own check runner (src/tools/ci.mjs): build, tests, the Azure adapter
+# (its own solution, src/adapters/azure/Product.Azure.sln, built in Release with its two test projects run), presets,
 # fixtures, replays, dash check, JSON, model, content, UI harness packages, pipeline step samples and generated files.
+# The adapter's Azure SQL store tests skip without a test database (PRODUCT_TEST_SQLSERVER is never set here).
 # --no-scrub: the scrub gate and its term list are not part of this repository, so that one check is skipped here.
 # No secrets and no sign-in. Packages come from nuget.org and npmjs only.
 name: CI

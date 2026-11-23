@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Tests for the Azure adapter, net10.0, xUnit v3 on Microsoft.Testing.Platform.
+    Store port semantics and parity with the in-memory store, the SQLite store across restarts, the host over the
+    in-memory HTTP test server (MCP endpoint, REST API, record and approval endpoints, health, metadata), the
+    development identity guards, the auth refusals, the walkthrough transcript replayed over HTTP, an MCP client from
+    the official SDK against the endpoint, and the check that the checked-in SQL scripts match their generator.
+    A test project (a folder named tests), so it may reference the engine and MCP testing assemblies for the in-memory
+    store, the manual clock and the repeatable IDs. No production project references them.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Product.Azure.Server\Product.Azure.Server.csproj" />
+    <ProjectReference Include="..\..\Product.Azure.Host\Product.Azure.Host.csproj" />
+    <ProjectReference Include="..\..\Product.Azure.Stores\Product.Azure.Stores.csproj" />
+    <ProjectReference Include="..\..\Product.Azure.Stores.Sqlite\Product.Azure.Stores.Sqlite.csproj" />
+    <ProjectReference Include="..\..\Product.Azure.Stores.SqlServer\Product.Azure.Stores.SqlServer.csproj" />
+    <ProjectReference Include="..\..\..\..\engine\Product.Engine.Testing\Product.Engine.Testing.csproj" />
+    <ProjectReference Include="..\..\..\..\mcp\Product.Mcp.Testing\Product.Mcp.Testing.csproj" />
+  </ItemGroup>
+
+  <!-- The tests find src/ (the transcript, the seed files, the presets) from this folder, so they also run when the
+       build output lives outside the repository (dotnet build artifacts path). -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ProjectDirectory</_Parameter1>
+      <_Parameter2>$(MSBuildProjectDirectory)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

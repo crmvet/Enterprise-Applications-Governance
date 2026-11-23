@@ -1,24 +1,34 @@
 # Third-party packages
 
 Every package below comes from a public feed: nuget.org for .NET and npmjs.com for Node.
-Every version is exact and pinned. Licenses are MIT, Apache 2.0 or BSD (0BSD counts as BSD here), with one open
-exception: picocolors (ISC), a build-only package of the page harness (see "Node: ui/harness only").
-Licenses were read from each package's own metadata on 2026-11-22.
+Every version is exact and pinned. Licenses are MIT, Apache 2.0 or BSD (0BSD counts as BSD here), with these
+exceptions:
+- picocolors (ISC), a build-only package of the page harness, still open (see "Node: ui/harness only");
+- two transitive Microsoft packages of the Azure adapter under the Microsoft Software License Terms,
+  Microsoft.Data.SqlClient.SNI.runtime and Microsoft.Identity.Client.NativeInterop. They are restored from NuGet
+  under Microsoft's terms and are not part of this repository's MIT-licensed source (see ".NET: adapters/azure").
+
+Licenses were read from each package's own metadata on 2026-11-22, and for the Azure adapter on 2026-11-23.
 
 ## Notices in shipped builds
 
 This repository holds no third-party code. Packages are restored from the feeds, and build output (`bin/`, `obj/`,
 `node_modules/`, `ui/harness/dist/`) is never committed. MIT, BSD, ISC and Apache 2.0 all ask that the license text
 goes with every copy of the package. So any build that is handed to others must carry the license text, and any
-notice file, of every package inside it. Two builds would carry packages:
+notice file, of every package inside it. Four builds would carry packages:
 
 - the Dataverse plug-in package: System.Text.Json and the System packages it needs on net48 (all MIT);
-- a built page bundle: React, Fluent UI and their runtime packages (MIT), plus @swc/helpers (Apache 2.0) and tslib (0BSD).
+- a built page bundle: React, Fluent UI and their runtime packages (MIT), plus @swc/helpers (Apache 2.0) and tslib (0BSD);
+- the Azure adapter's Functions deployment package: the packages marked "Functions app" in the column "In" of both
+  tables under ".NET: adapters/azure", including the two Microsoft packages listed there under their own terms;
+- the Azure adapter's server container image: the packages marked "Server" there, including the same two, on top of
+  the .NET base image, which carries its own notices.
 
 Build-only and test-only packages (xunit, Vite, esbuild, Rollup, postcss, TypeScript) are never shipped.
 
 Where versions live:
-- .NET direct versions: `Directory.Packages.props`. Transitive versions: each project's `packages.lock.json`.
+- .NET direct versions: `Directory.Packages.props`, plus `adapters/azure/Directory.Packages.props` for the Azure
+  adapter (it imports the one in `src/` first). Transitive versions: each project's `packages.lock.json`.
 - Node versions: `tools/package.json` and `tools/package-lock.json`; for the page harness, `ui/harness/package.json` and `ui/harness/package-lock.json`.
 
 Add a row here for every new package, direct or transitive, in the same change.
@@ -77,6 +87,245 @@ The SDK also adds NETStandard.Library 2.0.3 (MIT) to every netstandard2.0 build 
 Two versions of some System packages appear because the engine projects and the test projects resolve them separately.
 Each project's lock file holds one version per target.
 
+## .NET: adapters/azure
+
+The Azure adapter (`adapters/azure/`, with its own solution `Product.Azure.sln`) adds the packages below, direct and
+transitive, that the sections above do not already list at the same version.
+
+- Direct versions are pinned in `adapters/azure/Directory.Packages.props`, which imports `Directory.Packages.props`
+  in `src/` first. Transitive versions come from each adapter project's `packages.lock.json`.
+- Licenses were read from each package's own metadata (the license expression in its nuspec, or the license file it
+  carries) on 2026-11-23.
+- Every direct version is a stable release from nuget.org that was at least two weeks old when it was picked.
+- The xUnit, Microsoft.Testing and System packages that the adapter's test projects share with the rest of `src/`
+  are listed above and not repeated here.
+
+Two builds of the adapter would carry packages: the Azure Functions deployment package (`Product.Azure.Functions`,
+built by `azd deploy`) and the server container image (`Product.Azure.Server/Dockerfile`). The column "In" of both
+tables below says which of them carries each package. "Library and test builds only" means a version that a
+library or test project restores but neither of those builds carries, because the host resolves a newer version of
+the same package. "Build only" and "Tests only" packages are in neither.
+
+### Licenses outside MIT, Apache 2.0 and BSD
+
+Two transitive Microsoft packages carry the Microsoft Software License Terms. The adapter does not reference either
+one directly. Both are restored from NuGet under Microsoft's terms and are not part of this repository's MIT-licensed
+source: the repository holds no copy of them, and its MIT license does not cover them.
+
+- **Microsoft.Data.SqlClient.SNI.runtime 7.1.0, Microsoft Software License Terms.** The native SQL Server network
+  layer that Microsoft.Data.SqlClient uses on Windows (`runtimes/win-*/native/Microsoft.Data.SqlClient.SNI.dll`).
+  Microsoft.Data.SqlClient depends on it on every platform, so every .NET application that talks to Azure SQL with
+  Microsoft.Data.SqlClient restores it. On Linux, where the Functions app and the container run, SqlClient uses its
+  managed network layer and never loads the file, but a portable build still carries the Windows folders; a build
+  published for `linux-x64` leaves them out. Its terms allow the object code to be distributed inside an
+  application (as "Distributable Code"), not on its own.
+- **Microsoft.Identity.Client.NativeInterop 0.20.6, Microsoft Software License Terms.** The native runtime of the
+  Windows sign-in broker (`runtimes/*/native/msalruntime*`) and its managed wrapper
+  (`Microsoft.Identity.Client.NativeInterop.dll`), brought by Microsoft.Identity.Client.Broker 4.84.2,
+  which Microsoft.Data.SqlClient.Extensions.Azure 7.1.1 references for interactive sign-in. The product never uses
+  interactive or broker sign-in: the app connects with its managed identity and the migration with the deployer's
+  default credential. Its terms grant use and do not allow the software to be shared or distributed to others, so a
+  deployment package or image built from this source carries files that may not be handed on. Each deployment is
+  built from source into its own subscription (the azd template builds on the deployer's machine). Giving SqlClient
+  its token through `SqlConnection.AccessTokenCallback` with an Azure.Identity credential, in place of
+  Microsoft.Data.SqlClient.Extensions.Azure, would remove this package from every build.
+
+### Direct references
+
+| Package | Version | License | Used by | Why | In |
+|---|---|---|---|---|---|
+| Microsoft.Identity.Web | 4.18.0 | MIT | Product.Azure.Host | Microsoft Entra ID JWT bearer validation with app roles | Functions app, server |
+| Microsoft.Data.Sqlite | 10.0.14 | MIT | Product.Azure.Stores.Sqlite | The SQLite store for local runs, demos and tests | Server |
+| Microsoft.Data.SqlClient | 7.1.1 | MIT | Product.Azure.Stores.SqlServer | The Azure SQL store | Functions app, server |
+| Microsoft.Data.SqlClient.Extensions.Azure | 7.1.1 | MIT | Product.Azure.Stores.SqlServer | Microsoft Entra authentication for SqlClient (managed identity, default credential). Brings the broker runtime listed under "Licenses outside MIT, Apache 2.0 and BSD" | Functions app, server |
+| System.Security.Cryptography.Pkcs | 10.0.14 | MIT | Product.Azure.Stores.SqlServer | Lifts the vulnerable 9.0.18 that Microsoft.Data.SqlClient asks for | Functions app, server |
+| Azure.Identity | 1.21.0 | MIT | Product.Azure.Functions | The managed identity credential of the telemetry exporter; one home for the credential types | Functions app |
+| Azure.Functions.Sdk | 1.0.1 | MIT | Product.Azure.Functions | The project SDK of the Functions wrapper (pinned in the project file's `Sdk` attribute) | Functions app: one file, the function metadata loader in `.azurefunctions/` |
+| Microsoft.Azure.Functions.Worker | 2.52.0 | MIT | Product.Azure.Functions | The isolated worker | Functions app |
+| Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore | 2.1.1 | MIT | Product.Azure.Functions | ASP.NET Core integration for the HTTP trigger | Functions app |
+| Microsoft.Azure.Functions.Worker.OpenTelemetry | 1.2.0 | MIT | Product.Azure.Functions | Worker telemetry through OpenTelemetry | Functions app |
+| Microsoft.Azure.Functions.Worker.Sdk.Analyzers | 1.2.2 | MIT | Product.Azure.Functions | Added by the Azure.Functions.Sdk project SDK | Build only |
+| Microsoft.Azure.Functions.Worker.Sdk.Generators | 1.4.0 | MIT | Product.Azure.Functions | Added by the Azure.Functions.Sdk project SDK | Build only |
+| Azure.Monitor.OpenTelemetry.Exporter | 1.10.0 | MIT | Product.Azure.Functions | Telemetry to Application Insights, only when a connection string is set | Functions app |
+| Azure.Monitor.OpenTelemetry.AspNetCore | 1.6.0 | MIT | Product.Azure.Server | Telemetry to Application Insights, only when a connection string is set | Server |
+| ModelContextProtocol | 2.4.0 | Apache-2.0 | Product.Azure.Tests | The official MCP C# SDK client that proves a third-party client speaks to the endpoint. The hosts get it too, through ModelContextProtocol.AspNetCore | Functions app, server |
+| ModelContextProtocol.AspNetCore | 2.4.0 | Apache-2.0 | Product.Azure.Host | The SDK server transport, chosen with `Product:Mcp:Transport` = `sdk` | Functions app, server |
+| Microsoft.AspNetCore.Mvc.Testing | 10.0.14 | MIT | Product.Azure.Tests | The in-memory HTTP test server | Tests only |
+
+The .NET 10 shared frameworks (Microsoft.NETCore.App, Microsoft.AspNetCore.App) come with the SDK and the runtime, not
+from packages.
+
+### Transitive packages
+
+Some packages appear at two or more versions because each project resolves its own graph. Each lock file holds one
+version per package.
+
+| Package | Version | License | Comes from | In |
+|---|---|---|---|---|
+| Azure.Core | 1.50.0 | MIT | Azure.Identity | Library and test builds only |
+| Azure.Core | 1.51.1 | MIT | Azure.Identity | Library and test builds only |
+| Azure.Core | 1.60.0 | MIT | Azure.Identity | Server |
+| Azure.Core | 1.63.0 | MIT | Azure.Identity | Functions app |
+| Azure.Identity | 1.17.2 | MIT | Microsoft.Identity.Web.Certificate | Library and test builds only |
+| Azure.Identity | 1.18.0 | MIT | Microsoft.Data.SqlClient.Extensions.Azure | Server |
+| Azure.Monitor.OpenTelemetry.Exporter | 1.8.3 | MIT | Azure.Monitor.OpenTelemetry.AspNetCore | Server |
+| Azure.Security.KeyVault.Certificates | 4.6.0 | MIT | Microsoft.Identity.Web.Certificate | Functions app, server |
+| Azure.Security.KeyVault.Secrets | 4.6.0 | MIT | Microsoft.Identity.Web.Certificate | Functions app, server |
+| Google.Protobuf | 3.28.0 | BSD-3-Clause | Microsoft.Azure.Functions.Worker.Grpc | Functions app |
+| Grpc.Core.Api | 2.65.0 | Apache-2.0 | Grpc.Net.Common | Functions app |
+| Grpc.Net.Client | 2.65.0 | Apache-2.0 | Grpc.Net.ClientFactory | Functions app |
+| Grpc.Net.ClientFactory | 2.65.0 | Apache-2.0 | Microsoft.Azure.Functions.Worker.Grpc | Functions app |
+| Grpc.Net.Common | 2.65.0 | Apache-2.0 | Grpc.Net.Client | Functions app |
+| Microsoft.AspNetCore.Authentication.JwtBearer | 10.0.13 | MIT | Microsoft.Identity.Web.TokenAcquisition | Functions app, server |
+| Microsoft.AspNetCore.Authentication.OpenIdConnect | 10.0.13 | MIT | Microsoft.Identity.Web.TokenAcquisition | Functions app, server |
+| Microsoft.AspNetCore.Cryptography.Internal | 10.0.13 | MIT | Microsoft.AspNetCore.DataProtection | Functions app |
+| Microsoft.AspNetCore.DataProtection | 10.0.13 | MIT | Microsoft.Identity.Web.TokenCache | Functions app |
+| Microsoft.AspNetCore.DataProtection.Abstractions | 10.0.13 | MIT | Microsoft.AspNetCore.DataProtection | Functions app |
+| Microsoft.AspNetCore.TestHost | 10.0.14 | MIT | Microsoft.AspNetCore.Mvc.Testing | Tests only |
+| Microsoft.Azure.Functions.Worker.Core | 2.52.0 | MIT | Microsoft.Azure.Functions.Worker | Functions app |
+| Microsoft.Azure.Functions.Worker.Extensions.Abstractions | 1.3.0 | MIT | Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore | Functions app |
+| Microsoft.Azure.Functions.Worker.Extensions.Http | 3.3.0 | MIT | Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore | Functions app |
+| Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore.Analyzers | 1.0.4 | MIT | Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore | Functions app |
+| Microsoft.Azure.Functions.Worker.Grpc | 2.52.0 | MIT | Microsoft.Azure.Functions.Worker | Functions app |
+| Microsoft.Bcl.AsyncInterfaces | 8.0.0 | MIT | Azure.Core | Library and test builds only |
+| Microsoft.Bcl.AsyncInterfaces | 10.0.2 | MIT | Azure.Core | Library and test builds only |
+| Microsoft.Bcl.AsyncInterfaces | 10.0.9 | MIT | Azure.Core | Server |
+| Microsoft.Bcl.AsyncInterfaces | 10.0.10 | MIT | Azure.Core | Functions app |
+| Microsoft.Bcl.Cryptography | 9.0.18 | MIT | Microsoft.Data.SqlClient | Library and test builds only |
+| Microsoft.Bcl.Cryptography | 10.0.2 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| Microsoft.Data.SqlClient.Extensions.Abstractions | 7.1.1 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| Microsoft.Data.SqlClient.Internal.Logging | 7.1.1 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| Microsoft.Data.SqlClient.SNI.runtime | 7.1.0 | Microsoft Software License Terms (see "Licenses outside MIT, Apache 2.0 and BSD") | Microsoft.Data.SqlClient | Functions app, server |
+| Microsoft.Data.Sqlite.Core | 10.0.14 | MIT | Microsoft.Data.Sqlite | Server |
+| Microsoft.Extensions.AI.Abstractions | 10.11.0 | MIT | ModelContextProtocol.Core | Functions app, server |
+| Microsoft.Extensions.Caching.Abstractions | 9.0.18 | MIT | Microsoft.Extensions.Caching.Memory | Library and test builds only |
+| Microsoft.Extensions.Caching.Abstractions | 10.0.14 | MIT | ModelContextProtocol | Functions app |
+| Microsoft.Extensions.Caching.Memory | 9.0.18 | MIT | Microsoft.Data.SqlClient | Library and test builds only |
+| Microsoft.Extensions.Caching.Memory | 10.0.0 | MIT | Microsoft.Data.SqlClient | Functions app |
+| Microsoft.Extensions.Configuration | 10.0.0 | MIT | Microsoft.Extensions.Configuration.Binder | Functions app |
+| Microsoft.Extensions.Configuration | 10.0.14 | MIT | Microsoft.Extensions.Configuration.Binder | Tests only |
+| Microsoft.Extensions.Configuration.Abstractions | 10.0.3 | MIT | Azure.Identity | Library and test builds only |
+| Microsoft.Extensions.Configuration.Abstractions | 10.0.14 | MIT | Azure.Identity | Functions app |
+| Microsoft.Extensions.Configuration.Binder | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Configuration.Binder | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Configuration.CommandLine | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Configuration.CommandLine | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Configuration.EnvironmentVariables | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Configuration.EnvironmentVariables | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Configuration.FileExtensions | 10.0.0 | MIT | Microsoft.Extensions.Configuration.Json | Functions app |
+| Microsoft.Extensions.Configuration.FileExtensions | 10.0.14 | MIT | Microsoft.Extensions.Configuration.Json | Tests only |
+| Microsoft.Extensions.Configuration.Json | 10.0.0 | MIT | Microsoft.Extensions.Configuration.UserSecrets | Functions app |
+| Microsoft.Extensions.Configuration.Json | 10.0.14 | MIT | Microsoft.Extensions.Configuration.UserSecrets | Tests only |
+| Microsoft.Extensions.Configuration.UserSecrets | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Configuration.UserSecrets | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.DependencyInjection | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.DependencyInjection | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.3 | MIT | Microsoft.Extensions.Caching.Memory | Library and test builds only |
+| Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.14 | MIT | Microsoft.AspNetCore.DataProtection | Functions app |
+| Microsoft.Extensions.DependencyModel | 10.0.14 | MIT | Microsoft.AspNetCore.Mvc.Testing | Tests only |
+| Microsoft.Extensions.Diagnostics | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Diagnostics | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Diagnostics.Abstractions | 10.0.3 | MIT | Microsoft.Extensions.Hosting.Abstractions | Library and test builds only |
+| Microsoft.Extensions.Diagnostics.Abstractions | 10.0.14 | MIT | Microsoft.Extensions.Diagnostics | Functions app |
+| Microsoft.Extensions.FileProviders.Abstractions | 10.0.3 | MIT | Microsoft.Extensions.Hosting.Abstractions | Library and test builds only |
+| Microsoft.Extensions.FileProviders.Abstractions | 10.0.14 | MIT | Microsoft.Extensions.Configuration.FileExtensions | Functions app |
+| Microsoft.Extensions.FileProviders.Physical | 10.0.0 | MIT | Microsoft.Extensions.Configuration.FileExtensions | Functions app |
+| Microsoft.Extensions.FileProviders.Physical | 10.0.14 | MIT | Microsoft.Extensions.Configuration.FileExtensions | Tests only |
+| Microsoft.Extensions.FileSystemGlobbing | 10.0.0 | MIT | Microsoft.Extensions.FileProviders.Physical | Functions app |
+| Microsoft.Extensions.FileSystemGlobbing | 10.0.14 | MIT | Microsoft.Extensions.FileProviders.Physical | Tests only |
+| Microsoft.Extensions.Hosting | 10.0.0 | MIT | Microsoft.Azure.Functions.Worker.Core | Functions app |
+| Microsoft.Extensions.Hosting | 10.0.14 | MIT | Microsoft.AspNetCore.Mvc.Testing | Tests only |
+| Microsoft.Extensions.Hosting.Abstractions | 10.0.3 | MIT | Azure.Identity | Library and test builds only |
+| Microsoft.Extensions.Hosting.Abstractions | 10.0.14 | MIT | Azure.Identity | Functions app |
+| Microsoft.Extensions.Http | 6.0.0 | MIT | Grpc.Net.ClientFactory | Functions app |
+| Microsoft.Extensions.Logging | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Logging | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Logging.Abstractions | 10.0.3 | MIT | Microsoft.Extensions.Caching.Memory | Library and test builds only |
+| Microsoft.Extensions.Logging.Abstractions | 10.0.14 | MIT | Grpc.Net.Client | Functions app |
+| Microsoft.Extensions.Logging.Configuration | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Logging.Configuration | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Logging.Console | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Logging.Console | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Logging.Debug | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Logging.Debug | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Logging.EventLog | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Logging.EventLog | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Logging.EventSource | 10.0.0 | MIT | Microsoft.Extensions.Hosting | Functions app |
+| Microsoft.Extensions.Logging.EventSource | 10.0.14 | MIT | Microsoft.Extensions.Hosting | Tests only |
+| Microsoft.Extensions.Options | 10.0.3 | MIT | Microsoft.Extensions.Caching.Memory | Library and test builds only |
+| Microsoft.Extensions.Options | 10.0.14 | MIT | Microsoft.AspNetCore.DataProtection | Functions app |
+| Microsoft.Extensions.Options.ConfigurationExtensions | 10.0.0 | MIT | Microsoft.Extensions.Diagnostics | Functions app |
+| Microsoft.Extensions.Options.ConfigurationExtensions | 10.0.14 | MIT | Microsoft.Extensions.Diagnostics | Tests only |
+| Microsoft.Extensions.Primitives | 10.0.3 | MIT | Microsoft.Extensions.Caching.Abstractions | Library and test builds only |
+| Microsoft.Extensions.Primitives | 10.0.14 | MIT | Microsoft.Extensions.Caching.Abstractions | Functions app |
+| Microsoft.Identity.Abstractions | 12.7.0 | MIT | Microsoft.Identity.Web.Certificate | Functions app, server |
+| Microsoft.Identity.Client | 4.84.2 | MIT | Azure.Identity | Library and test builds only |
+| Microsoft.Identity.Client | 4.90.1 | MIT | Azure.Identity | Functions app, server |
+| Microsoft.Identity.Client.Broker | 4.84.2 | MIT | Microsoft.Data.SqlClient.Extensions.Azure | Functions app, server |
+| Microsoft.Identity.Client.Extensions.Msal | 4.78.0 | MIT | Azure.Identity | Library and test builds only |
+| Microsoft.Identity.Client.Extensions.Msal | 4.83.1 | MIT | Azure.Identity | Library and test builds only |
+| Microsoft.Identity.Client.Extensions.Msal | 4.84.2 | MIT | Azure.Identity | Server |
+| Microsoft.Identity.Client.Extensions.Msal | 4.90.0 | MIT | Azure.Core | Functions app |
+| Microsoft.Identity.Client.NativeInterop | 0.20.6 | Microsoft Software License Terms (see "Licenses outside MIT, Apache 2.0 and BSD") | Microsoft.Identity.Client.Broker | Functions app, server |
+| Microsoft.Identity.Web.Certificate | 4.18.0 | MIT | Microsoft.Identity.Web | Functions app, server |
+| Microsoft.Identity.Web.Certificateless | 4.18.0 | MIT | Microsoft.Identity.Web | Functions app, server |
+| Microsoft.Identity.Web.Diagnostics | 4.18.0 | MIT | Microsoft.Identity.Web.Certificate | Functions app, server |
+| Microsoft.Identity.Web.TokenAcquisition | 4.18.0 | MIT | Microsoft.Identity.Web | Functions app, server |
+| Microsoft.Identity.Web.TokenCache | 4.18.0 | MIT | Microsoft.Identity.Web | Functions app, server |
+| Microsoft.IdentityModel.Abstractions | 8.16.0 | MIT | Microsoft.Identity.Client | Library and test builds only |
+| Microsoft.IdentityModel.Abstractions | 8.23.0 | MIT | Microsoft.Identity.Client | Functions app, server |
+| Microsoft.IdentityModel.JsonWebTokens | 8.16.0 | MIT | Microsoft.Data.SqlClient | Library and test builds only |
+| Microsoft.IdentityModel.JsonWebTokens | 8.23.0 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| Microsoft.IdentityModel.Logging | 8.16.0 | MIT | Microsoft.IdentityModel.Tokens | Library and test builds only |
+| Microsoft.IdentityModel.Logging | 8.23.0 | MIT | Microsoft.Identity.Web.TokenAcquisition | Functions app, server |
+| Microsoft.IdentityModel.LoggingExtensions | 8.23.0 | MIT | Microsoft.Identity.Web.Certificateless | Functions app, server |
+| Microsoft.IdentityModel.Protocols | 8.16.0 | MIT | Microsoft.IdentityModel.Protocols.OpenIdConnect | Library and test builds only |
+| Microsoft.IdentityModel.Protocols | 8.23.0 | MIT | Microsoft.IdentityModel.Protocols.OpenIdConnect | Functions app, server |
+| Microsoft.IdentityModel.Protocols.OpenIdConnect | 8.16.0 | MIT | Microsoft.Data.SqlClient | Library and test builds only |
+| Microsoft.IdentityModel.Protocols.OpenIdConnect | 8.23.0 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| Microsoft.IdentityModel.Tokens | 8.16.0 | MIT | Microsoft.IdentityModel.JsonWebTokens | Library and test builds only |
+| Microsoft.IdentityModel.Tokens | 8.23.0 | MIT | Microsoft.IdentityModel.JsonWebTokens | Functions app, server |
+| Microsoft.IdentityModel.Validators | 8.23.0 | MIT | Microsoft.Identity.Web | Functions app, server |
+| Microsoft.SqlServer.Server | 1.0.0 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| ModelContextProtocol.Core | 2.4.0 | Apache-2.0 | ModelContextProtocol | Functions app, server |
+| OpenTelemetry | 1.15.3 | Apache-2.0 | OpenTelemetry.Extensions.Hosting | Server |
+| OpenTelemetry | 1.18.0 | Apache-2.0 | Microsoft.Azure.Functions.Worker.OpenTelemetry | Functions app |
+| OpenTelemetry.Api | 1.15.3 | Apache-2.0 | OpenTelemetry.Api.ProviderBuilderExtensions | Server |
+| OpenTelemetry.Api | 1.18.0 | Apache-2.0 | Microsoft.Azure.Functions.Worker.OpenTelemetry | Functions app |
+| OpenTelemetry.Api.ProviderBuilderExtensions | 1.15.3 | Apache-2.0 | OpenTelemetry | Server |
+| OpenTelemetry.Api.ProviderBuilderExtensions | 1.18.0 | Apache-2.0 | OpenTelemetry | Functions app |
+| OpenTelemetry.Extensions.Hosting | 1.15.3 | Apache-2.0 | Azure.Monitor.OpenTelemetry.AspNetCore | Server |
+| OpenTelemetry.Extensions.Hosting | 1.18.0 | Apache-2.0 | Azure.Monitor.OpenTelemetry.Exporter | Functions app |
+| OpenTelemetry.Instrumentation.AspNetCore | 1.15.2 | Apache-2.0 | Azure.Monitor.OpenTelemetry.AspNetCore | Server |
+| OpenTelemetry.Instrumentation.Http | 1.15.1 | Apache-2.0 | Azure.Monitor.OpenTelemetry.AspNetCore | Server |
+| OpenTelemetry.PersistentStorage.Abstractions | 1.0.3 | Apache-2.0 | OpenTelemetry.PersistentStorage.FileSystem | Server |
+| OpenTelemetry.PersistentStorage.Abstractions | 1.1.1 | Apache-2.0 | OpenTelemetry.PersistentStorage.FileSystem | Functions app |
+| OpenTelemetry.PersistentStorage.FileSystem | 1.0.3 | Apache-2.0 | Azure.Monitor.OpenTelemetry.Exporter | Server |
+| OpenTelemetry.PersistentStorage.FileSystem | 1.1.1 | Apache-2.0 | Azure.Monitor.OpenTelemetry.Exporter | Functions app |
+| SQLitePCLRaw.bundle_e_sqlite3 | 2.1.13 | Apache-2.0 | Microsoft.Data.Sqlite | Server |
+| SQLitePCLRaw.core | 2.1.13 | Apache-2.0 | Microsoft.Data.Sqlite | Server |
+| SQLitePCLRaw.lib.e_sqlite3 | 2.1.13 | Apache-2.0 | SQLitePCLRaw.bundle_e_sqlite3 | Server |
+| SQLitePCLRaw.provider.e_sqlite3 | 2.1.13 | Apache-2.0 | SQLitePCLRaw.bundle_e_sqlite3 | Server |
+| System.ClientModel | 1.8.0 | MIT | Azure.Core | Library and test builds only |
+| System.ClientModel | 1.9.0 | MIT | Azure.Core | Library and test builds only |
+| System.ClientModel | 1.14.0 | MIT | Azure.Core | Server |
+| System.ClientModel | 1.16.0 | MIT | Azure.Core | Functions app |
+| System.Configuration.ConfigurationManager | 9.0.18 | MIT | Microsoft.Data.SqlClient | Functions app, server |
+| System.Diagnostics.EventLog | 9.0.18 | MIT | System.Configuration.ConfigurationManager | Library and test builds only |
+| System.Diagnostics.EventLog | 10.0.0 | MIT | Microsoft.Extensions.Logging.EventLog | Functions app |
+| System.Diagnostics.EventLog | 10.0.14 | MIT | Microsoft.Extensions.Logging.EventLog | Tests only |
+| System.IdentityModel.Tokens.Jwt | 8.16.0 | MIT | Microsoft.IdentityModel.Protocols.OpenIdConnect | Library and test builds only |
+| System.IdentityModel.Tokens.Jwt | 8.23.0 | MIT | Microsoft.Identity.Web | Functions app, server |
+| System.Memory.Data | 8.0.1 | MIT | Azure.Core | Library and test builds only |
+| System.Memory.Data | 10.0.1 | MIT | Azure.Core | Library and test builds only |
+| System.Memory.Data | 10.0.9 | MIT | Azure.Core | Server |
+| System.Memory.Data | 10.0.10 | MIT | Azure.Core | Functions app |
+| System.Security.Cryptography.Pkcs | 10.0.13 | MIT | Microsoft.Identity.Web.TokenCache | Library and test builds only |
+| System.Security.Cryptography.ProtectedData | 4.5.0 | MIT (license URL to the dotnet repo; license file in the package) | Microsoft.Identity.Client.Extensions.Msal | Library and test builds only |
+| System.Security.Cryptography.ProtectedData | 9.0.18 | MIT | Microsoft.Identity.Client.Extensions.Msal | Functions app, server |
+| System.Security.Cryptography.Xml | 10.0.13 | MIT | Microsoft.AspNetCore.DataProtection | Functions app |
+| System.Threading.RateLimiting | 9.0.18 | MIT | Microsoft.Data.SqlClient | Functions app |
+
 ## Node: tools/ only
 
 | Package | Version | License | Direct or transitive | Why |
@@ -94,8 +343,10 @@ The pipeline record step samples add no package. Their stub loads the ajv above 
 the record step script that clients copy uses Node's built-ins only.
 
 The MCP server core adds no package either. It references only the engine projects; its JSON, schema checking
-and protocol handling use the engine's own code. The official MCP C# SDK is not referenced: the library sits behind
-`IMcpLibraryAdapter` with a pass-through stub until the MCP library is picked, and gets a row here, pinned, if its license fits.
+and protocol handling use the engine's own code. The core does not reference the official MCP C# SDK: the library
+sits behind `IMcpLibraryAdapter` with a pass-through stub. The Azure adapter references the SDK (ModelContextProtocol
+and ModelContextProtocol.AspNetCore 2.4.0, Apache-2.0): its tests use the SDK client, and its host offers the SDK
+server transport as an option behind that seam. Both are listed under ".NET: adapters/azure".
 
 ## Node: ui/harness only
 

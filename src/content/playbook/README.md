@@ -24,7 +24,7 @@ Every chapter starts with a header: its version, its track, the parties, the gui
 
 Then every chapter has the same parts: why it exists, what good looks like, how it works, who decides by default, the guidelines it applies, the processes it uses, how the product is designed to support it, what you can tailor, the Microsoft guidance it applies (with links and the date each was checked), and when it is done.
 
-Right after "Why this chapter exists", every chapter except 0 and 17 has two more sections:
+Every chapter except 0 and 17 has two more sections. Chapters 1 to 16 place them just before "Done when"; chapters 18 to 22 place them right after "Why this chapter exists":
 
 - **How AI changes this:** what changes when people build apps with AI in days.
 - **Old paradigm to avoid:** one of the ten old paradigms in [chapter 17](17-old-paradigms-and-how-not-to-slide-back.md), how it shows up in that chapter, and the signal that a team is sliding back to it. The signals in chapter 17 are the ones the quarterly check reviews; a chapter's own signal adds detail for that chapter.

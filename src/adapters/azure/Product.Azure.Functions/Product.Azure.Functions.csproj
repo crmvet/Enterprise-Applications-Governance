@@ -1,0 +1,39 @@
+<Project Sdk="Azure.Functions.Sdk/1.0.1">
+  <!--
+    The Azure Functions wrapper: isolated worker, ASP.NET Core integration, Flex Consumption (Linux), .NET 10.
+    One HTTP-triggered function with a catch-all route hands each request to the host library's pipeline
+    (ProductPipeline.Build), so the Functions app and the local server serve the same endpoints from the same mapping.
+    host.json sets the route prefix to empty, so /mcp, /api/... and /.well-known/... keep their paths, and sets the
+    telemetry mode to OpenTelemetry.
+    Azure SQL only, with the app's system-assigned managed identity. No development identity: this project does not
+    reference the local server, so the scheme cannot be loaded here, and a startup guard refuses its switch.
+    Azure.Identity is referenced at its forwarding version (see Directory.Packages.props) so the managed identity
+    credential for telemetry ingestion has one definition; the Azure SQL store's SqlClient extension binds to it too.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+    <!-- The worker starts as "dotnet Product.Azure.Functions.dll" (worker.config.json), so no app host executable. -->
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Azure.Host\Product.Azure.Host.csproj" />
+    <ProjectReference Include="..\Product.Azure.Stores.SqlServer\Product.Azure.Stores.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
+    <PackageReference Include="Azure.Identity" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="host.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Azure.Tests" />
+  </ItemGroup>
+</Project>

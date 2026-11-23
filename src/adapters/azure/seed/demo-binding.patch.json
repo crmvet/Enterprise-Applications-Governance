@@ -1,0 +1,142 @@
+{
+  "description": "Fictional demo client binding for local runs and tests. Every ID is a patterned placeholder. The eight role groups of the MCP test harness bound to their product roles, two workload identities holding their workload roles through Workload Grants (the approval runner and the build pipeline), and Claude Code on the Known Client list with the harness client ID. Compiled with the balanced preset as version 1 by the local server's seed command.",
+  "bindingOperations": [
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "requester-group",
+      "values": {
+        "label": "requester group",
+        "roleKey": "requester",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000101",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role requester"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "maker-group",
+      "values": {
+        "label": "maker group",
+        "roleKey": "maker",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000102",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role maker"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "application-owner-group",
+      "values": {
+        "label": "application-owner group",
+        "roleKey": "application-owner",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000103",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role application-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "change-manager-group",
+      "values": {
+        "label": "change-manager group",
+        "roleKey": "change-manager",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000104",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role change-manager"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "platform-admin-group",
+      "values": {
+        "label": "platform-admin group",
+        "roleKey": "platform-admin",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000105",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role platform-admin"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "configuration-admin-group",
+      "values": {
+        "label": "configuration-admin group",
+        "roleKey": "configuration-admin",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000106",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role configuration-admin"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "reader-group",
+      "values": {
+        "label": "reader group",
+        "roleKey": "reader",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000107",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role reader"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "architect-group",
+      "values": {
+        "label": "architect group",
+        "roleKey": "architect",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000108",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role architect"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "workload-grant",
+      "key": "approval-runner",
+      "values": {
+        "label": "approval-runner",
+        "principalObjectId": "00000000-0000-4000-8000-000000000301",
+        "workloadRoleKey": "approval-writer",
+        "reason": "Fixture workload approval-runner",
+        "usesFederatedCredential": true,
+        "bindingDetail": "App role assignment approval-runner",
+        "expiresOn": "2027-06-30"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "workload-grant",
+      "key": "build-pipeline",
+      "values": {
+        "label": "build-pipeline",
+        "principalObjectId": "00000000-0000-4000-8000-000000000302",
+        "workloadRoleKey": "deployment-recorder",
+        "reason": "Fixture workload build-pipeline",
+        "usesFederatedCredential": true,
+        "bindingDetail": "App role assignment build-pipeline",
+        "expiresOn": "2027-06-30"
+      }
+    }
+  ],
+  "draftOperations": [
+    {
+      "op": "upsert",
+      "entity": "known-client",
+      "key": "claude-code",
+      "values": {
+        "label": "Claude Code",
+        "clientIdentifier": "00000000-0000-4000-8000-0000000000ac",
+        "isAiClient": true,
+        "isAllowed": true
+      }
+    }
+  ]
+}

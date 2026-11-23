@@ -1,0 +1,370 @@
+{
+  "description": "The fictional field operations estate of the scripted walkthrough, for local runs and tests: Principal References for the role groups, five people and two workload identities, one portfolio, four registered applications with their owners, two deployment targets, two components and three dependencies. Every ID is a patterned placeholder and every name is fictional. Seeded in this order after version 1.",
+  "rows": [
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000701",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000101",
+        "displayLabel": "Product requesters",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000702",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000102",
+        "displayLabel": "Field ops makers",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000703",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000103",
+        "displayLabel": "Application owners",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000704",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000104",
+        "displayLabel": "Change managers",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000705",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000105",
+        "displayLabel": "Platform admins",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000706",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000106",
+        "displayLabel": "Configuration admins",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000707",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000107",
+        "displayLabel": "Portfolio readers",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000708",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000108",
+        "displayLabel": "Architects",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000709",
+      "columns": {
+        "principalKind": "user",
+        "entraObjectId": "00000000-0000-4000-8000-000000000211",
+        "displayLabel": "Priya Castell",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000710",
+      "columns": {
+        "principalKind": "user",
+        "entraObjectId": "00000000-0000-4000-8000-000000000212",
+        "displayLabel": "Nadia Ferreira",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000711",
+      "columns": {
+        "principalKind": "user",
+        "entraObjectId": "00000000-0000-4000-8000-000000000213",
+        "displayLabel": "Owen Achterberg",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000712",
+      "columns": {
+        "principalKind": "user",
+        "entraObjectId": "00000000-0000-4000-8000-000000000214",
+        "displayLabel": "Mateo Brandt",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000713",
+      "columns": {
+        "principalKind": "user",
+        "entraObjectId": "00000000-0000-4000-8000-000000000215",
+        "displayLabel": "Ines Varga",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000714",
+      "columns": {
+        "principalKind": "service-principal",
+        "entraObjectId": "00000000-0000-4000-8000-000000000301",
+        "displayLabel": "Approval runner",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000715",
+      "columns": {
+        "principalKind": "service-principal",
+        "entraObjectId": "00000000-0000-4000-8000-000000000302",
+        "displayLabel": "Field ops release pipeline",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "portfolio",
+      "id": "00000000-0000-4000-8000-000000000501",
+      "columns": {
+        "name": "Field operations",
+        "level": "department",
+        "isActive": true
+      }
+    },
+    {
+      "entity": "business-application",
+      "id": "00000000-0000-4000-8000-000000000511",
+      "columns": {
+        "name": "Inspection Scheduler",
+        "recordNumber": "APP-0101",
+        "purpose": "Plan site inspections and send checklists to inspectors",
+        "applicationKind": "power-platform-app",
+        "portfolio": "00000000-0000-4000-8000-000000000501",
+        "status": "app-registered",
+        "statusMeaning": "registered",
+        "tier": "tier-2",
+        "lifecycleStage": "operate",
+        "stageSince": "2025-03-03T00:00:00Z",
+        "buildPath": "citizen",
+        "usesAi": false,
+        "configurationSetVersion": 1
+      }
+    },
+    {
+      "entity": "business-application",
+      "id": "00000000-0000-4000-8000-000000000512",
+      "columns": {
+        "name": "Route Planner",
+        "recordNumber": "APP-0102",
+        "purpose": "Plan the daily routes of the field crews",
+        "applicationKind": "power-platform-app",
+        "portfolio": "00000000-0000-4000-8000-000000000501",
+        "status": "app-registered",
+        "statusMeaning": "registered",
+        "tier": "tier-1",
+        "lifecycleStage": "operate",
+        "stageSince": "2025-06-02T00:00:00Z",
+        "buildPath": "citizen",
+        "usesAi": false,
+        "configurationSetVersion": 1
+      }
+    },
+    {
+      "entity": "business-application",
+      "id": "00000000-0000-4000-8000-000000000513",
+      "columns": {
+        "name": "Crew Roster",
+        "recordNumber": "APP-0103",
+        "purpose": "Keep the crew shifts and skills",
+        "applicationKind": "power-platform-app",
+        "portfolio": "00000000-0000-4000-8000-000000000501",
+        "status": "app-registered",
+        "statusMeaning": "registered",
+        "tier": "tier-2",
+        "lifecycleStage": "operate",
+        "stageSince": "2025-01-13T00:00:00Z",
+        "buildPath": "citizen",
+        "usesAi": false,
+        "configurationSetVersion": 1
+      }
+    },
+    {
+      "entity": "business-application",
+      "id": "00000000-0000-4000-8000-000000000514",
+      "columns": {
+        "name": "Crew Shift Mobile",
+        "recordNumber": "APP-0104",
+        "purpose": "Show each crew member their shifts on the phone",
+        "applicationKind": "power-platform-app",
+        "portfolio": "00000000-0000-4000-8000-000000000501",
+        "status": "app-registered",
+        "statusMeaning": "registered",
+        "tier": "tier-1",
+        "lifecycleStage": "operate",
+        "stageSince": "2025-09-01T00:00:00Z",
+        "buildPath": "citizen",
+        "usesAi": false,
+        "configurationSetVersion": 1
+      }
+    },
+    {
+      "entity": "owner-assignment",
+      "id": "00000000-0000-4000-8000-000000000551",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000511",
+        "ownerRole": "business-owner",
+        "principal": "00000000-0000-4000-8000-000000000212",
+        "isDeputy": false,
+        "startOn": "2025-01-06"
+      }
+    },
+    {
+      "entity": "owner-assignment",
+      "id": "00000000-0000-4000-8000-000000000552",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000511",
+        "ownerRole": "technical-owner",
+        "principal": "00000000-0000-4000-8000-000000000211",
+        "isDeputy": false,
+        "startOn": "2025-01-06"
+      }
+    },
+    {
+      "entity": "owner-assignment",
+      "id": "00000000-0000-4000-8000-000000000553",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000512",
+        "ownerRole": "business-owner",
+        "principal": "00000000-0000-4000-8000-000000000215",
+        "isDeputy": false,
+        "startOn": "2025-01-06"
+      }
+    },
+    {
+      "entity": "owner-assignment",
+      "id": "00000000-0000-4000-8000-000000000554",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000513",
+        "ownerRole": "business-owner",
+        "principal": "00000000-0000-4000-8000-000000000215",
+        "isDeputy": false,
+        "startOn": "2025-01-06"
+      }
+    },
+    {
+      "entity": "owner-assignment",
+      "id": "00000000-0000-4000-8000-000000000555",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000514",
+        "ownerRole": "business-owner",
+        "principal": "00000000-0000-4000-8000-000000000215",
+        "isDeputy": false,
+        "startOn": "2025-01-06"
+      }
+    },
+    {
+      "entity": "deployment-target",
+      "id": "00000000-0000-4000-8000-000000000521",
+      "columns": {
+        "targetKind": "power-platform-environment",
+        "targetStage": "test",
+        "changePath": "pipeline-only",
+        "linkKind": "power-platform-resource",
+        "externalId": "field-ops-test",
+        "labelAsSeen": "Field Ops Test"
+      }
+    },
+    {
+      "entity": "deployment-target",
+      "id": "00000000-0000-4000-8000-000000000522",
+      "columns": {
+        "targetKind": "power-platform-environment",
+        "targetStage": "production",
+        "changePath": "pipeline-only",
+        "linkKind": "power-platform-resource",
+        "externalId": "field-ops-prod",
+        "labelAsSeen": "Field Ops Prod"
+      }
+    },
+    {
+      "entity": "technical-component",
+      "id": "00000000-0000-4000-8000-000000000531",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000511",
+        "componentKind": "canvas-app",
+        "linkKind": "power-platform-resource",
+        "externalId": "00000000-0000-0000-0000-000000000201",
+        "url": "https://make.powerapps.com/environments/field-ops-prod/apps/201",
+        "labelAsSeen": "Inspection Scheduler"
+      }
+    },
+    {
+      "entity": "technical-component",
+      "id": "00000000-0000-4000-8000-000000000532",
+      "columns": {
+        "businessApplication": "00000000-0000-4000-8000-000000000512",
+        "componentKind": "model-driven-app",
+        "linkKind": "power-platform-resource",
+        "externalId": "00000000-0000-0000-0000-000000000202",
+        "url": "https://make.powerapps.com/environments/field-ops-prod/apps/202",
+        "labelAsSeen": "Route Planner"
+      }
+    },
+    {
+      "entity": "dependency",
+      "id": "00000000-0000-4000-8000-000000000561",
+      "columns": {
+        "fromApplication": "00000000-0000-4000-8000-000000000512",
+        "toApplication": "00000000-0000-4000-8000-000000000511",
+        "dependencyType": "reads-data-from"
+      }
+    },
+    {
+      "entity": "dependency",
+      "id": "00000000-0000-4000-8000-000000000562",
+      "columns": {
+        "fromApplication": "00000000-0000-4000-8000-000000000513",
+        "toApplication": "00000000-0000-4000-8000-000000000511",
+        "dependencyType": "calls-api-of"
+      }
+    },
+    {
+      "entity": "dependency",
+      "id": "00000000-0000-4000-8000-000000000563",
+      "columns": {
+        "fromApplication": "00000000-0000-4000-8000-000000000514",
+        "toApplication": "00000000-0000-4000-8000-000000000513",
+        "dependencyType": "reads-data-from"
+      }
+    }
+  ]
+}

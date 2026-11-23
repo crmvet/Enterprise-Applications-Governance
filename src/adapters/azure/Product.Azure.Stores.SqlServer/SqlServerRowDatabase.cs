@@ -1,0 +1,358 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using Microsoft.Data.SqlClient;
+using Product.Engine.Runtime.Callers;
+using Product.Engine.Runtime.Ports;
+
+namespace Product.Azure.Stores.SqlServer;
+
+// One Azure SQL database: a table per entity (sql/0001-tables.sql). A pooled connection per operation, and on each
+// connection the caller in SESSION_CONTEXT, read-only for the connection's life (document 22, section 11.1; a pooled
+// connection is reset before reuse, which clears it). Reads and writes are parameterized; the only names in SQL text come
+// from the entity catalog and from column names RowStore checked to be plain identifiers.
+internal sealed class SqlServerRowDatabase : IRowDatabase
+{
+    // SQL Server error numbers: a duplicate key in a unique index (2601) or a unique or primary key constraint (2627), and
+    // a write refused by a row-level security block predicate (33504).
+    private const int DuplicateKeyRow = 2601;
+    private const int DuplicateKeyConstraint = 2627;
+    private const int BlockPredicate = 33504;
+
+    private const string RowColumns = "[Id], [Key], [Columns], [Version]";
+
+    private readonly string _connectionString;
+    private readonly EntityCatalog _catalog;
+    private readonly int _commandTimeoutSeconds;
+    private readonly bool _setSessionContext;
+    private readonly ConcurrentDictionary<string, string> _statements = new(StringComparer.Ordinal);
+
+    public SqlServerRowDatabase(string connectionString, EntityCatalog catalog, int commandTimeoutSeconds, bool setSessionContext)
+    {
+        _connectionString = connectionString;
+        _catalog = catalog;
+        _commandTimeoutSeconds = commandTimeoutSeconds;
+        _setSessionContext = setSessionContext;
+    }
+
+    public StoredRowData? Get(EntityInfo entity, string id)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable + " WHERE [Id] = @id");
+        command.Parameters.Add(IdParameter("@id", id));
+        List<StoredRowData> rows = Read(command, entity.Key);
+        return rows.Count == 0 ? null : rows[0];
+    }
+
+    public IReadOnlyList<StoredRowData> GetByKey(EntityInfo entity, string key)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable + " WHERE [Key] = @key ORDER BY [Id]");
+        command.Parameters.Add(KeyParameter("@key", key));
+        return Read(command, entity.Key);
+    }
+
+    public IReadOnlyList<StoredRowData> Query(EntityInfo entity, IReadOnlyList<KeyValuePair<string, string>> textConditions)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        var sql = new StringBuilder("SELECT " + RowColumns + " FROM " + entity.QualifiedTable);
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandTimeout = _commandTimeoutSeconds;
+        for (int i = 0; i < textConditions.Count; i++)
+        {
+            string name = "@p" + i.ToString(CultureInfo.InvariantCulture);
+
+            // The column name is a plain identifier (RowStore checks it). JSON_VALUE compares in the database collation,
+            // which may ignore case: RowStore filters the result exactly.
+            sql.Append(i == 0 ? " WHERE " : " AND ").Append("JSON_VALUE([Columns], N'$.\"").Append(textConditions[i].Key).Append("\"') = ").Append(name);
+            command.Parameters.Add(new SqlParameter(name, SqlDbType.NVarChar, RowStore.MaxNarrowingLength) { Value = textConditions[i].Value });
+        }
+
+        command.CommandText = sql.Append(" ORDER BY [Id]").ToString();
+        return Read(command, entity.Key);
+    }
+
+    public StoredRowData? ProbeInForce()
+    {
+        EntityInfo set = _catalog.Get("configuration-set");
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT TOP (1) " + RowColumns + " FROM " + set.QualifiedTable + " WHERE [IsInForce] = 1 AND [Key] IS NOT NULL ORDER BY [Id]");
+        List<StoredRowData> rows = Read(command, set.Key);
+        return rows.Count == 0 ? null : rows[0];
+    }
+
+    public IReadOnlyList<StoredRowData> GetVersionRows(string configurationSetKey, int versionNumber)
+    {
+        EntityInfo version = _catalog.Get("configuration-set-version");
+        PromotedColumn setColumn = version.Promoted.Single(p => p.JsonName == "configurationSet");
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Read);
+        using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + version.QualifiedTable + " WHERE [ConfigurationSetKey] = @set AND [VersionNumber] = @number ORDER BY [Id]");
+        command.Parameters.Add(new SqlParameter("@set", SqlDbType.NVarChar, setColumn.MaxLength) { Value = configurationSetKey.Length <= setColumn.MaxLength ? configurationSetKey : string.Empty });
+        command.Parameters.Add(new SqlParameter("@number", SqlDbType.Int) { Value = versionNumber });
+        return Read(command, version.Key);
+    }
+
+    public void Apply(IReadOnlyList<RowChange> changes, StoreCallContext? context, string engineOperation)
+    {
+        if (context == null && !string.Equals(engineOperation, RowStoreOperations.Seed, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("An engine write on Azure SQL runs as its caller: the host enters a StoreCallContext for the request before the engine runs, so row-level security can read it.");
+        }
+
+        using SqlConnection connection = Open(context, engineOperation);
+        using SqlTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+        foreach (RowChange change in changes)
+        {
+            using SqlCommand command = Command(connection, Statement(change));
+            command.Transaction = transaction;
+            command.Parameters.Add(IdParameter("@id", change.Id));
+            if (change.Kind != RowChangeKind.Insert)
+            {
+                command.Parameters.Add(new SqlParameter("@version", SqlDbType.BigInt) { Value = change.ExpectedVersion });
+            }
+
+            if (change.Kind != RowChangeKind.Delete)
+            {
+                command.Parameters.Add(KeyParameter("@key", change.Key));
+                command.Parameters.Add(new SqlParameter("@columns", SqlDbType.NVarChar, -1) { Value = change.ColumnsText });
+                foreach (PromotedColumn column in change.Entity.Promoted)
+                {
+                    command.Parameters.Add(PromotedParameter(column, column.ValueOf(change.Columns!)));
+                }
+            }
+
+            int affected;
+            try
+            {
+                affected = command.ExecuteNonQuery();
+            }
+            catch (SqlException e) when (e.Number == DuplicateKeyRow || e.Number == DuplicateKeyConstraint)
+            {
+                throw e.Message.IndexOf("'PK_", StringComparison.Ordinal) >= 0
+                    ? RowStore.RowCreatedFirst(change.Entity, change.Id)
+                    : RowStore.UniqueKeyTaken(change.Entity, change.Columns);
+            }
+            catch (SqlException e) when (e.Number == BlockPredicate)
+            {
+                throw new InvalidOperationException(
+                    "Azure SQL refused " + change + " by a row-level security block predicate (operation " + engineOperation + ", actor kind "
+                    + (context?.ActorKindWire ?? "none") + "). The engine's guard should have refused it first.",
+                    e);
+            }
+
+            if (affected != 1)
+            {
+                throw RowStore.RowChangedFirst(change.Entity, change.Id);
+            }
+        }
+
+        transaction.Commit();
+    }
+
+    public long Increment(string counterKey, DateTime windowStartUtc, TimeSpan windowLength)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Write);
+        using SqlCommand command = Command(connection,
+            "SET NOCOUNT ON; SET XACT_ABORT ON;\n"
+            + "DECLARE @count bigint;\n"
+            + "BEGIN TRANSACTION;\n"
+            + "UPDATE [host].[RateLimitCounter] WITH (UPDLOCK, HOLDLOCK)\n"
+            + "SET @count = [Count] = CASE WHEN [WindowStart] = @start THEN [Count] + 1 ELSE 1 END, [WindowStart] = @start\n"
+            + "WHERE [CounterKey] = @key;\n"
+            + "IF @@ROWCOUNT = 0\n"
+            + "BEGIN\n"
+            + "    INSERT INTO [host].[RateLimitCounter] ([CounterKey], [WindowStart], [Count]) VALUES (@key, @start, 1);\n"
+            + "    SET @count = 1;\n"
+            + "END;\n"
+            + "COMMIT TRANSACTION;\n"
+            + "SELECT @count;");
+        command.Parameters.Add(new SqlParameter("@key", SqlDbType.NVarChar, 400) { Value = counterKey });
+        command.Parameters.Add(new SqlParameter("@start", SqlDbType.DateTime2) { Value = windowStartUtc });
+        return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    public void EnsureSchema(EntityCatalog catalog)
+    {
+        int applied = SqlServerMigrations.AppliedVersion(_connectionString);
+        if (applied < SqlServerMigrations.RequiredVersion)
+        {
+            throw new InvalidOperationException(
+                "The Azure SQL schema is at version " + applied + " and this build needs version " + SqlServerMigrations.RequiredVersion
+                + ". A deployment identity applies the migrations (the local server's migrate command); the app identity never runs DDL.");
+        }
+    }
+
+    public bool CanConnect()
+    {
+        try
+        {
+            using var connection = new SqlConnection(_connectionString);
+            connection.Open();
+            using SqlCommand command = Command(connection, "SELECT 1");
+            return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) == 1;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public void Dispose()
+    {
+    }
+
+    // The session context keys of document 22, section 11.1, read-only for the connection's life. Without a caller
+    // context only a seed sets keys (as the deployment identity); every other connection sets none, and the row-level
+    // security filter then hides every product row. A seed is always setup work, whoever runs it.
+    internal static IReadOnlyList<KeyValuePair<string, object>> SessionValues(StoreCallContext? context, string engineOperation)
+    {
+        var values = new List<KeyValuePair<string, object>>();
+        bool seed = string.Equals(engineOperation, RowStoreOperations.Seed, StringComparison.Ordinal);
+        if (context == null && !seed)
+        {
+            return values;
+        }
+
+        void Add(string key, object? value)
+        {
+            if (value != null && !(value is string text && text.Length == 0))
+            {
+                values.Add(new KeyValuePair<string, object>(key, value));
+            }
+        }
+
+        Add("PrincipalId", context?.PrincipalId ?? "seed");
+        Add("Entry", seed ? EntryWire(null) : EntryWire(context?.Entry));
+        Add("ActorKind", context?.ActorKindWire);
+        Add("OnBehalfOfId", context?.OnBehalfOfId);
+        Add("ClientApp", context?.ClientApp);
+        Add("ClientAppVerified", context == null ? null : context.ClientAppVerified);
+        Add("Roles", context == null || context.RoleKeys.Count == 0 ? null : string.Join(",", context.RoleKeys));
+        Add("CorrelationId", context?.CorrelationId);
+        Add("EngineOperation", engineOperation);
+        return values;
+    }
+
+    internal static string EntryWire(CallerEntry? entry)
+    {
+        switch (entry)
+        {
+            case CallerEntry.Person:
+                return "person";
+            case CallerEntry.AiClient:
+                return "ai-client";
+            case CallerEntry.Workload:
+                return "workload";
+            default:
+                return "setup";
+        }
+    }
+
+    private static SqlParameter IdParameter(string name, string id)
+    {
+        return new SqlParameter(name, SqlDbType.VarChar, RowStore.MaxIdLength) { Value = id };
+    }
+
+    private static SqlParameter KeyParameter(string name, string? key)
+    {
+        return new SqlParameter(name, SqlDbType.NVarChar, RowStore.MaxKeyLength) { Value = (object?)key ?? DBNull.Value };
+    }
+
+    private static SqlParameter PromotedParameter(PromotedColumn column, object? value)
+    {
+        string name = "@" + column.SqlName;
+        switch (column.Kind)
+        {
+            case PromotedKind.Flag:
+                return new SqlParameter(name, SqlDbType.Bit) { Value = value ?? DBNull.Value };
+            case PromotedKind.Number:
+                return new SqlParameter(name, SqlDbType.Int) { Value = value ?? DBNull.Value };
+            default:
+                return new SqlParameter(name, SqlDbType.NVarChar, column.MaxLength) { Value = value ?? DBNull.Value };
+        }
+    }
+
+    private static List<StoredRowData> Read(SqlCommand command, string entityKey)
+    {
+        var rows = new List<StoredRowData>();
+        using SqlDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            string id = reader.GetString(0);
+            string? key = reader.IsDBNull(1) ? null : reader.GetString(1);
+            rows.Add(new StoredRowData(new StoredRow(entityKey, id, key, RowJson.Parse(reader.GetString(2))), reader.GetInt64(3)));
+        }
+
+        return rows;
+    }
+
+    // The INSERT, UPDATE or DELETE of a change, cached per entity.
+    private string Statement(RowChange change)
+    {
+        EntityInfo e = change.Entity;
+        return _statements.GetOrAdd(change.Kind + " " + e.Key, _ =>
+        {
+            string promotedNames = string.Concat(e.Promoted.Select(p => ", [" + p.SqlName + "]"));
+            string promotedValues = string.Concat(e.Promoted.Select(p => ", @" + p.SqlName));
+            string promotedSets = string.Concat(e.Promoted.Select(p => ", [" + p.SqlName + "] = @" + p.SqlName));
+            switch (change.Kind)
+            {
+                case RowChangeKind.Insert:
+                    return "INSERT INTO " + e.QualifiedTable + " ([Id], [Key], [Columns], [Version]" + promotedNames + ") VALUES (@id, @key, @columns, 1" + promotedValues + ");";
+                case RowChangeKind.Update:
+                    return "UPDATE " + e.QualifiedTable + " SET [Key] = @key, [Columns] = @columns, [Version] = [Version] + 1, [ModifiedOn] = SYSUTCDATETIME()" + promotedSets
+                        + " WHERE [Id] = @id AND [Version] = @version;";
+                default:
+                    return "DELETE FROM " + e.QualifiedTable + " WHERE [Id] = @id AND [Version] = @version;";
+            }
+        });
+    }
+
+    private SqlCommand Command(SqlConnection connection, string sql)
+    {
+        SqlCommand command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.CommandTimeout = _commandTimeoutSeconds;
+        return command;
+    }
+
+    private SqlConnection Open(StoreCallContext? context, string engineOperation)
+    {
+        var connection = new SqlConnection(_connectionString);
+        try
+        {
+            connection.Open();
+            if (_setSessionContext)
+            {
+                IReadOnlyList<KeyValuePair<string, object>> values = SessionValues(context, engineOperation);
+                if (values.Count > 0)
+                {
+                    var sql = new StringBuilder();
+                    using SqlCommand command = Command(connection, string.Empty);
+                    for (int i = 0; i < values.Count; i++)
+                    {
+                        string name = "@v" + i.ToString(CultureInfo.InvariantCulture);
+                        sql.Append("EXEC sys.sp_set_session_context @key = N'").Append(values[i].Key).Append("', @value = ").Append(name).Append(", @read_only = 1;\n");
+                        command.Parameters.Add(values[i].Value is bool flag
+                            ? new SqlParameter(name, SqlDbType.Bit) { Value = flag }
+                            : new SqlParameter(name, SqlDbType.NVarChar, 4000) { Value = values[i].Value });
+                    }
+
+                    command.CommandText = sql.ToString();
+                    command.ExecuteNonQuery();
+                }
+            }
+
+            return connection;
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
+}

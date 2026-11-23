@@ -1,0 +1,10 @@
+# Local SQLite stores made by local runs and the smoke test
+*.db
+*.db-wal
+*.db-shm
+
+# Azure Functions local settings: local only, never committed
+local.settings.json
+
+# Azure Developer CLI environment state
+.azure/

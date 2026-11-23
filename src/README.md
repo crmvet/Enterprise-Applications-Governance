@@ -7,7 +7,7 @@ For what the product is designed to do, start with `docs/overview.md` at the rep
 
 | Path | What |
 |---|---|
-| `Product.sln` | The solution with every .NET project |
+| `Product.sln` | The solution with every .NET project except the Azure adapter, which has its own (`adapters/azure/Product.Azure.sln`) |
 | `Directory.Build.props` | Language version, nullable, warnings as errors, target lists, net48 reference assemblies |
 | `Directory.Build.targets` | Keeps test runs offline: removes the test platform telemetry hook |
 | `Directory.Packages.props` | Central, exact package versions |
@@ -27,7 +27,8 @@ For what the product is designed to do, start with `docs/overview.md` at the rep
 | `mcp/Product.Mcp.Core/` | MCP server core, independent of store and host: the contracts (embedded), the tool registry, the envelope and the 11 fixed error codes, Tool Policy (proposed C41) with its rate limit counted in the store port, `X-Toolsets`, the Known Client check (proposed C45), the R1 resources, input validation, the token validation interface, telemetry without tokens or typed text (the caller hash salt is a host setting with no default; without it no caller field is sent), the backend port, and the in-process backend (the Azure shape) with all 50 R1 tools. The MCP library sits behind `IMcpLibraryAdapter` (a pass-through stub until the library is picked). net10.0 |
 | `mcp/Product.Mcp.Testing/` | The stand-ins for tests and the local harness: the mock identity (`MockTokenValidator`), the in-memory rate limit counter and the repeatable GUID wrapper over the in-memory store. No host references it, and a dependency test proves the core holds no test double. net10.0 |
 | `mcp/tests/` | MCP contract tests through the whole core on the in-memory store: every R1 tool and resource, every fixed error code, policy, identity, telemetry. net10.0 |
-| `adapters/` | Placeholder for the platform store adapters. Empty in this version |
+| `adapters/` | The platform adapters around the portable engine. `azure/` is the first; a `dataverse/` adapter stays possible later. See `adapters/README.md` |
+| `adapters/azure/` | The Azure adapter: early work, not a release, and nothing from it is deployed. Hosts and stores around the engine and the MCP server core, which it does not change: a host library with the MCP endpoint, a REST API, the record and approval outcome endpoints and Microsoft Entra ID sign-in (`Product.Azure.Host`); a local Kestrel server with a development identity for local runs only (`Product.Azure.Server`); an Azure Functions wrapper (`Product.Azure.Functions`); a SQLite store for local runs and tests and an Azure SQL store (`Product.Azure.Stores*`, with the scripts in `sql/`); an Azure Developer CLI template with Bicep (`infra/`, never provisioned); and two test projects. Its own solution, `Product.Azure.sln`. It runs on one machine over SQLite with no Azure subscription and no sign-in (see "The Azure adapter" below). Read [`adapters/azure/README.md`](adapters/azure/README.md) and [`adapters/azure/STATUS.md`](adapters/azure/STATUS.md) |
 | `ui/` | The four page designs (Overview, Application 360, dependency map, timeline): `design/pages.md`, the React and Fluent UI v9 harness in `harness/` with fictional fixtures, and `screenshots/`. See `ui/README.md` |
 | `content/` | The playbook (23 chapters, 0 to 22, the processes P01 to P11 and the diagrams) and the guidelines G1 to G24 as Markdown |
 | `docs/` | Setup and admin guide drafts. See `docs/README.md` |
@@ -54,6 +55,7 @@ It runs these checks in order and prints a summary. The exit code is 1 if any ch
 | build | `dotnet build Product.sln -c Release` for net10.0, net48 and netstandard2.0 |
 | offline | Fails if any test project registers the test platform telemetry extension |
 | test | `dotnet test --solution Product.sln -c Release` on net10.0 and net48 |
+| azure | `dotnet build adapters/azure/Product.Azure.sln -c Release`, the same telemetry check for its test projects, then `dotnet test` on its two test projects (the engine and MCP suites already ran in `test`). The Azure SQL store tests skip unless `PRODUCT_TEST_SQLSERVER` names an empty test database, so no secret and no database is needed |
 | presets | The engine command line builds every full preset into `config/build/` and runs OP-09 on each, alone and with each allowed overlay combination |
 | fixtures | The engine command line runs every fixture under `fixtures/` and reports pass or fail per fixture |
 | replay | The engine command line replays every record under `fixtures/replay/` against its snapshot version. Each record must show exactly the differences it expects, and none for a true record |
@@ -67,6 +69,28 @@ It runs these checks in order and prints a summary. The exit code is 1 if any ch
 | generated | `model/check-generated.mjs`: two runs of the model generators give the same bytes, and `model/generated/` matches a fresh run. The outputs are drafts. Nothing is applied to any database or environment |
 
 Options: `--skip dash,scrub` skips checks by name. `--configuration Debug` changes the build configuration.
+
+## The Azure adapter
+
+`adapters/azure/` is early work, not a release, and nothing from it is deployed. It runs on one machine over a SQLite
+file, with a fictional demo estate and a development identity in place of Microsoft Entra ID sign-in, so it needs no
+Azure subscription, no tenant and no sign-in. From `src/adapters/azure`:
+
+```
+dotnet run --project Product.Azure.Server -- seed --environment Development
+dotnet run --project Product.Azure.Server -- --environment Development --urls http://127.0.0.1:5080 --Product:DevIdentity:Enabled=true
+```
+
+The first command writes version 1 of the demo configuration and the demo estate to
+`Product.Azure.Server/data/product.db` (git ignores it). The second serves the MCP endpoint at
+`http://127.0.0.1:5080/mcp`, the REST API, the record endpoint and the approval outcome endpoint. Each request names a
+fictional persona in the `X-Product-Dev-Identity` header. The development identity works only in the Development
+environment, with the switch on the command line, on a loopback address. The `azure` check of `tools/ci.mjs` builds
+`Product.Azure.sln` and runs its tests.
+
+[`adapters/azure/README.md`](adapters/azure/README.md) has the full steps, the personas, the endpoints and how to
+connect an MCP client. [`adapters/azure/STATUS.md`](adapters/azure/STATUS.md) says what works today and what is
+designed but not built yet.
 
 ## The engine command line
 
@@ -125,4 +149,5 @@ to find every place an answer would change.
   in data. Fixtures and samples use fictional data only.
 - Never commit a client binding patch or any tenant value.
 - No em dashes or en dashes anywhere.
-- Packages: well-known, exact version, MIT, Apache 2.0 or BSD, recorded in `THIRD-PARTY.md`.
+- Packages: well-known, exact version, MIT, Apache 2.0 or BSD, recorded in `THIRD-PARTY.md`. The few exceptions are
+  named there with what they are and why they come in.

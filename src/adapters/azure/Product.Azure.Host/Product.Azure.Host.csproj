@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Host library: everything both hosts share. Service registration (AddProduct, AddProductStore), Entra sign-in with
+    app roles, the claims-to-caller mapping, the request pipeline (UseProductPipeline, ProductPipeline.Build) and the
+    endpoint mapping (MapProduct): the MCP endpoint over streamable HTTP, stateless, through the MCP server core and its
+    in-process backend; the REST API for the web app; the record endpoint for pipelines; the approval outcome endpoint
+    for the approval runner; health; the protected resource metadata.
+    No development identity here: only the local server (Product.Azure.Server) has one, so the Functions app cannot
+    load it. No store driver here: hosts pick a store and register it with AddProductStore.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\mcp\Product.Mcp.Core\Product.Mcp.Core.csproj" />
+    <ProjectReference Include="..\Product.Azure.Stores\Product.Azure.Stores.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Web" />
+    <!-- The official MCP C# SDK server transport, stateless streamable HTTP, selectable with Product:Mcp:Transport = sdk. -->
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+
+  <!-- The shipped presets and the playbook index source, copied next to every host that references this library. -->
+  <ItemGroup>
+    <None Include="..\..\..\config\presets\**\*.json" Link="presets\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\..\content\playbook\*.md" Link="content\playbook\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Azure.Tests" />
+  </ItemGroup>
+</Project>

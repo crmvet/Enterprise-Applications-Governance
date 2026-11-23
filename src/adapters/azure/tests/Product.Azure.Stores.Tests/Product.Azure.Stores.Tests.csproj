@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Store conformance tests for the Azure adapter, net10.0, xUnit v3 on Microsoft.Testing.Platform.
+    The same cases run against InMemoryStore (the reference), the SQLite store and, when PRODUCT_TEST_SQLSERVER holds a
+    connection string to an empty database, the Azure SQL store (skipped otherwise). Also: the same engine calls on the
+    in-memory store and on SQLite give the same rows, SQLite keeps its rows across a restart, the entity catalog matches
+    the logical model and the column map, and the checked-in SQL scripts equal their generator.
+    A test project (a folder named tests), so it may reference the engine and MCP testing assemblies. It needs nothing
+    from the hosts, so it builds and runs on its own.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Product.Azure.Stores\Product.Azure.Stores.csproj" />
+    <ProjectReference Include="..\..\Product.Azure.Stores.Sqlite\Product.Azure.Stores.Sqlite.csproj" />
+    <ProjectReference Include="..\..\Product.Azure.Stores.SqlServer\Product.Azure.Stores.SqlServer.csproj" />
+    <ProjectReference Include="..\..\..\..\engine\Product.Engine.Testing\Product.Engine.Testing.csproj" />
+    <ProjectReference Include="..\..\..\..\mcp\Product.Mcp.Testing\Product.Mcp.Testing.csproj" />
+  </ItemGroup>
+
+  <!-- The tests find src/ from this folder, so they also run when the build output lives outside the repository
+       (dotnet build artifacts path). -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ProjectDirectory</_Parameter1>
+      <_Parameter2>$(MSBuildProjectDirectory)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

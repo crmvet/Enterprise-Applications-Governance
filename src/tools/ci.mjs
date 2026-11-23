@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Check runner for src/. The same command runs on a developer machine and in the public repository's CI workflow
 // (.github/workflows/ci.yml runs "node tools/ci.mjs --no-scrub" from src/).
-// Checks, in order: tool packages, restore, build, offline tests, test, preset build, fixtures, replay, dash check,
-// scrub gate, JSON check, model check, content check, UI harness packages, pipeline record step samples, model
-// generators.
+// Checks, in order: tool packages, restore, build, offline tests, test, Azure adapter, preset build, fixtures, replay,
+// dash check, scrub gate, JSON check, model check, content check, UI harness packages, pipeline record step samples,
+// model generators.
 // Every check runs. Then a summary prints, and the exit code is 1 if any check failed.
 //
 // Usage: node tools/ci.mjs [--configuration Release] [--skip <name,name>] [--no-scrub]
-//   --skip       skip checks by name: packages, restore, build, offline, test, presets, fixtures, replay, dash, scrub, json,
-//                model, content, ui, samples, generated
+//   --skip       skip checks by name: packages, restore, build, offline, test, azure, presets, fixtures, replay, dash,
+//                scrub, json, model, content, ui, samples, generated
 //   --no-scrub   for a copy of src/ without the workspace scrub script, such as the public repository. The content
 //                check then also runs with --no-sources, because content/SOURCES.md is not published either
 //
@@ -85,8 +85,8 @@ check('build', `dotnet build (${configuration})`,
   () => ({ code: run('dotnet', ['build', SOLUTION, '-c', configuration, '--no-restore'], SRC) }),
   ['restore']);
 
-check('offline', 'Offline tests (no telemetry extension)', () => {
-  // Directory.Build.targets removes the test platform telemetry hook. Prove it from the generated code.
+// Directory.Build.targets removes the test platform telemetry hook. Proves it from the generated code under root.
+function telemetryLeaks(root) {
   const generated = [];
   const find = dir => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -96,16 +96,40 @@ check('offline', 'Offline tests (no telemetry extension)', () => {
       else if (e.name === 'SelfRegisteredExtensions.cs' && full.includes(`${path.sep}obj${path.sep}`)) generated.push(full);
     }
   };
-  find(SRC);
+  find(root);
   const leaks = generated.filter(f => fs.readFileSync(f, 'utf8').includes('Extensions.Telemetry'));
   for (const f of leaks) console.error(`  telemetry extension registered in ${path.relative(SRC, f)}`);
   console.log(`  ${generated.length} generated registration file(s) checked`);
-  return { code: leaks.length ? 1 : 0, note: `${generated.length} registration files` };
+  return { files: generated.length, leaks: leaks.length };
+}
+
+check('offline', 'Offline tests (no telemetry extension)', () => {
+  const { files, leaks } = telemetryLeaks(SRC);
+  return { code: leaks ? 1 : 0, note: `${files} registration files` };
 }, ['build']);
 
 check('test', `dotnet test (${configuration})`,
   () => ({ code: run('dotnet', ['test', '--solution', SOLUTION, '-c', configuration, '--no-build'], SRC) }),
   ['restore', 'build', 'offline']);
+
+// The Azure adapter has its own solution, adapters/azure/Product.Azure.sln: its hosts, stores and two test projects,
+// plus the engine and MCP projects it builds on. The check builds that solution as the adapter's README does, proves
+// its test projects stay offline too, and then runs only the adapter's two test projects, because the engine and MCP
+// suites already ran in the test check. The Azure SQL store tests skip unless PRODUCT_TEST_SQLSERVER names an empty test
+// database, so the check needs no secret, no database and no sign-in.
+const AZURE = path.join(SRC, 'adapters', 'azure');
+const AZURE_TESTS = ['tests/Product.Azure.Tests', 'tests/Product.Azure.Stores.Tests'];
+check('azure', `Azure adapter: build and test (${configuration})`, () => {
+  let code = run('dotnet', ['build', 'Product.Azure.sln', '-c', configuration], AZURE);
+  if (code !== 0) return { code, note: 'build failed' };
+  const { files, leaks } = telemetryLeaks(AZURE);
+  if (leaks) return { code: 1, note: `telemetry extension registered in ${leaks} of ${files} files` };
+  for (const project of AZURE_TESTS) {
+    code = run('dotnet', ['test', '--project', project, '-c', configuration, '--no-build'], AZURE);
+    if (code !== 0) return { code, note: `${project} failed` };
+  }
+  return { code: 0, note: `${AZURE_TESTS.length} test projects` };
+}, ['build']);
 
 // The engine command line. It reads files only.
 const CLI = path.join(SRC, 'engine', 'Product.Engine.Cli', 'bin', configuration, 'net10.0', 'Product.Engine.Cli.dll');

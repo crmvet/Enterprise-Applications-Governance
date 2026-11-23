@@ -1,0 +1,23 @@
+# What the server image build leaves out of its context (src/). Docker reads this file because it sits next to the
+# Dockerfile and carries its name, so it applies to "docker build -f adapters/azure/Product.Azure.Server/Dockerfile ."
+# without a .dockerignore at the root of src/.
+#
+# Build output from the machine that runs the build: the image restores and builds from source, and a local obj folder
+# would hand the container restore results with this machine's paths.
+**/bin/
+**/obj/
+**/TestResults/
+**/node_modules/
+**/dist/
+**/.vs/
+**/*.user
+
+# Local state that must never reach an image layer: SQLite files from local runs, Azure Functions local settings and
+# Azure Developer CLI environment values.
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/local.settings.json
+**/.azure/
+**/.env
+**/.env.*

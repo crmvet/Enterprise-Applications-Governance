@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    SQLite store: the storage ports over one SQLite file, for local runs, demos and tests.
+    Same behavior as the Azure SQL store through the shared base (Product.Azure.Stores); no ledger, no row-level security.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(HostTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Product.Azure.Stores\Product.Azure.Stores.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Product.Azure.Tests" />
+    <InternalsVisibleTo Include="Product.Azure.Stores.Tests" />
+  </ItemGroup>
+</Project>
