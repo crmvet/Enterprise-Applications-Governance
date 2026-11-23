@@ -4,14 +4,16 @@
 // 3. <base>config.json says which API and which sign-in to use; a bad file shows its problems instead of the app.
 // 4. Sign-in: Entra ID through MSAL, or the fictional development persona on a loopback host.
 // 5. The shell renders the four pages over the REST API. The fixture client is never part of this build.
-import { FluentProvider, MessageBar, MessageBarBody, MessageBarTitle } from '@fluentui/react-components';
+import '../styles/globals.css';
+import { CircleAlert } from 'lucide-react';
 import { StrictMode, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { hasSignInResponse } from '../auth/bridge';
 import { createDevAuth, sessionPersonaStore } from '../auth/devAuth';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { TooltipProvider } from '../components/ui/tooltip';
 import { createApiClient } from '../data/apiClient';
 import { configureDisplayZone } from '../data/format';
-import { academyTheme } from '../theme';
 import { AppShell, type AppAuth } from './AppShell';
 import { loadConfig } from './config';
 import { normalizeBase } from './routes';
@@ -19,24 +21,25 @@ import { normalizeBase } from './routes';
 function render(root: Root, children: ReactNode) {
   root.render(
     <StrictMode>
-      <FluentProvider theme={academyTheme} style={{ backgroundColor: 'transparent', minHeight: '100vh' }}>
+      <TooltipProvider delayDuration={300}>
         {children}
-      </FluentProvider>
+      </TooltipProvider>
     </StrictMode>,
   );
 }
 
 function Problem({ title, lines }: { title: string; lines: string[] }) {
   return (
-    <main id="main" style={{ maxWidth: 720, margin: '48px auto', padding: '0 16px' }}>
-      <MessageBar intent="error" layout="multiline">
-        <MessageBarBody>
-          <MessageBarTitle>{title}</MessageBarTitle>
-          <ul style={{ margin: '6px 0 0', paddingLeft: 20 }}>
+    <main id="main" className="mx-auto my-12 max-w-[720px] px-4">
+      <Alert variant="error">
+        <CircleAlert aria-hidden />
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>
+          <ul className="m-0 mt-1 list-disc pl-5">
             {lines.map(line => <li key={line}>{line}</li>)}
           </ul>
-        </MessageBarBody>
-      </MessageBar>
+        </AlertDescription>
+      </Alert>
     </main>
   );
 }

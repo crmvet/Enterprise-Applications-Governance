@@ -4,8 +4,7 @@
 // direction, because the built-in query tool appears to lack recursion (document 24, tool 7).
 // The graph is a layered drawing: what it needs on the left, the application in the middle, what depends on it on
 // the right. Arrows point to what is needed. The list view holds every node, so nothing is reachable only by mouse.
-import { Button, Link, MessageBar, MessageBarBody, Tab, TabList, makeStyles, mergeClasses, shorthands, tokens } from '@fluentui/react-components';
-import { ArrowLeft16Regular, Warning16Filled } from '@fluentui/react-icons';
+import { ArrowLeft, Info, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Bucket, DependencyImpact, ImpactNode } from '../data/contracts';
 import { plural } from '../data/format';
@@ -13,9 +12,12 @@ import { useLabels, type Labels } from '../data/labels';
 import { lifecycleText } from '../data/meanings';
 import { dataOf, useTool, type ToolState } from '../data/toolClient';
 import { useHost } from '../harness';
+import { cn } from '../lib/utils';
 import { palette } from '../theme';
 import { Row, RowList } from '../components/rows';
-import { BarList, DataStamp, Empty, PageHeader, Panel, PanelFailure, ToneBadge, media, useNarrow } from '../components/ui';
+import { BarList, DataStamp, Empty, PageHeader, Panel, PanelFailure, SwitchTabs, TextLink, ToneBadge, useNarrow } from '../components/blocks';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
 import { criticalityTone } from './Application360';
 
 type Side = 'dependants' | 'dependencies';
@@ -28,109 +30,8 @@ const GAP_Y = 14;
 const PAD = 6;
 const HEADER_H = 26;
 
-const useStyles = makeStyles({
-  controls: {
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '8px 20px',
-    marginBottom: '14px',
-  },
-  controlLabel: { fontSize: tokens.fontSizeBase200, color: palette.navy3, marginRight: '4px' },
-  control: { display: 'flex', alignItems: 'center', columnGap: '4px', flexWrap: 'wrap' },
-  scroller: { overflowX: 'auto', overflowY: 'hidden', paddingBottom: '4px' },
-  canvas: { position: 'relative', margin: '0 auto' },
-  svg: { position: 'absolute', inset: 0, overflow: 'visible' },
-  colHead: {
-    position: 'absolute',
-    top: 0,
-    fontSize: tokens.fontSizeBase100,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy3,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    textAlign: 'center',
-  },
-  node: {
-    position: 'absolute',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    rowGap: '1px',
-    padding: '6px 10px',
-    backgroundColor: tokens.colorNeutralBackground1,
-    border: `1px solid ${palette.lineStrong}`,
-    borderRadius: '8px',
-    color: palette.navy,
-    textDecoration: 'none',
-    boxShadow: '0 1px 2px rgba(10, 42, 74, 0.06)',
-    transitionProperty: 'opacity, border-color, box-shadow',
-    transitionDuration: '120ms',
-    ':hover': { ...shorthands.borderColor(palette.blue), boxShadow: '0 2px 6px rgba(10, 42, 74, 0.12)' },
-    ':focus-visible': { outline: `2px solid ${palette.blue}`, outlineOffset: '2px' },
-  },
-  root: {
-    backgroundColor: palette.lightBlue,
-    border: `2px solid ${palette.blue}`,
-    '::before': {
-      content: '""',
-      position: 'absolute',
-      left: '-2px',
-      right: '-2px',
-      top: '-2px',
-      height: '5px',
-      borderRadius: '8px 8px 0 0',
-      backgroundColor: palette.gold,
-    },
-  },
-  dim: { opacity: 0.38 },
-  lit: { ...shorthands.borderColor(palette.blue) },
-  nodeName: {
-    fontSize: '13px',
-    lineHeight: '17px',
-    fontWeight: tokens.fontWeightSemibold,
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-    flexShrink: 0,
-  },
-  nodeLine: { flexShrink: 0, lineHeight: '16px', fontSize: '12px', color: palette.navy3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', columnGap: '4px' },
-  warnIcon: { color: palette.goldDark, flexShrink: 0 },
-  legend: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: '8px 18px',
-    paddingTop: '12px',
-    borderTop: `1px solid ${palette.line}`,
-    fontSize: tokens.fontSizeBase200,
-    color: palette.navy2,
-  },
-  legendItem: { display: 'inline-flex', alignItems: 'center', columnGap: '6px' },
-  counts: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-    gap: '16px',
-    marginTop: '16px',
-    [media.medium]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-    [media.narrow]: { gap: '12px', marginTop: '12px' },
-  },
-  countCols: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', [media.narrow]: { gridTemplateColumns: '1fr' } },
-  countHead: { margin: '0 0 4px', fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: palette.navy3, textTransform: 'uppercase', letterSpacing: '0.04em' },
-  total: { fontSize: tokens.fontSizeBase300, color: palette.navy2 },
-  totalNumber: { fontSize: '24px', fontWeight: tokens.fontWeightSemibold, color: palette.navy, marginRight: '6px' },
-  depthHead: { margin: '10px 0 2px', fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: palette.navy3, textTransform: 'uppercase', letterSpacing: '0.04em' },
-  listGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-    gap: '16px',
-    [media.medium]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-    [media.narrow]: { gap: '12px' },
-  },
-  ownerWarn: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', color: palette.goldDark, fontWeight: tokens.fontWeightSemibold },
-});
+// Section heads inside the panels (hops, "By tier", "By criticality").
+const smallHead = 'text-xs font-semibold tracking-[0.04em] text-navy-3 uppercase';
 
 const edgeStyle: Record<string, { stroke: string; width: number; dash?: string }> = {
   high: { stroke: palette.navy, width: 2.5 },
@@ -141,7 +42,6 @@ const edgeStyle: Record<string, { stroke: string; width: number; dash?: string }
 const critKey = (k: string | null) => (k === 'high' || k === 'medium' || k === 'low' ? k : 'none');
 
 export function DependencyMap({ applicationId }: { applicationId: string }) {
-  const s = useStyles();
   const host = useHost();
   const narrow = useNarrow();
   const dependants = useTool('get_dependency_impact', { businessApplicationId: applicationId, direction: 'dependants', depth: 3 });
@@ -164,25 +64,38 @@ export function DependencyMap({ applicationId }: { applicationId: string }) {
         title={rootName}
         subtitle={`What breaks if ${rootName} changes or retires, and what it needs to run. Up to 3 hops.`}
         meta={<DataStamp envelope={stampEnv} />}
-        actions={<Button appearance="secondary" icon={<ArrowLeft16Regular />} as="a" href={host.href({ page: 'app', id: applicationId })}>Application 360</Button>}
+        actions={
+          <Button variant="outline" className="bg-card" asChild>
+            <a href={host.href({ page: 'app', id: applicationId })}>
+              <ArrowLeft aria-hidden />
+              Application 360
+            </a>
+          </Button>
+        }
       />
 
-      <div className={s.controls}>
-        <div className={s.control}>
-          <span className={s.controlLabel}>Show</span>
-          <TabList size="small" appearance="subtle-circular" selectedValue={show} onTabSelect={(_, d) => setShow(d.value as Show)} aria-label="Direction">
-            <Tab value="both">Both</Tab>
-            <Tab value="dependants">What breaks</Tab>
-            <Tab value="dependencies">What it needs</Tab>
-          </TabList>
-        </div>
-        <div className={s.control}>
-          <span className={s.controlLabel}>View</span>
-          <TabList size="small" appearance="subtle-circular" selectedValue={shownView} onTabSelect={(_, d) => setView(d.value as 'graph' | 'list')} aria-label="View">
-            <Tab value="graph">Graph</Tab>
-            <Tab value="list">List</Tab>
-          </TabList>
-        </div>
+      <div className="mb-3.5 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <SwitchTabs<Show>
+          label="Show"
+          ariaLabel="Direction"
+          value={show}
+          onChange={setShow}
+          options={[
+            { value: 'both', label: 'Both' },
+            { value: 'dependants', label: 'What breaks' },
+            { value: 'dependencies', label: 'What it needs' },
+          ]}
+        />
+        <SwitchTabs<'graph' | 'list'>
+          label="View"
+          ariaLabel="View"
+          value={shownView}
+          onChange={setView}
+          options={[
+            { value: 'graph', label: 'Graph' },
+            { value: 'list', label: 'List' },
+          ]}
+        />
       </div>
 
       {bothFailed && dependants.status === 'done' && !dependants.envelope.ok ? (
@@ -192,7 +105,7 @@ export function DependencyMap({ applicationId }: { applicationId: string }) {
           <GraphBody show={show} rootId={applicationId} rootName={rootName} left={left} right={right} types={types} />
         </Panel>
       ) : (
-        <div className={s.listGrid}>
+        <div className="grid grid-cols-2 gap-4 medium:grid-cols-1 narrow:gap-3">
           {show !== 'dependencies' && (
             <ImpactListPanel side="dependants" title={`What breaks if ${rootName} changes or retires`} state={dependants} rootId={applicationId} rootName={rootName} types={types} />
           )}
@@ -202,7 +115,7 @@ export function DependencyMap({ applicationId }: { applicationId: string }) {
         </div>
       )}
 
-      <div className={s.counts}>
+      <div className="mt-4 grid grid-cols-2 gap-4 medium:grid-cols-1 narrow:mt-3 narrow:gap-3">
         {show !== 'dependencies' && <CountsPanel title="What breaks, in numbers" state={dependants} noun="depend on it" />}
         {show !== 'dependants' && <CountsPanel title="What it needs, in numbers" state={dependencies} noun="it needs" />}
       </div>
@@ -272,7 +185,6 @@ function layout(show: Show, rootId: string, left: DependencyImpact | null, right
 }
 
 function GraphBody(props: { show: Show; rootId: string; rootName: string; left: DependencyImpact | null; right: DependencyImpact | null; types: Labels }) {
-  const s = useStyles();
   const host = useHost();
   const [focus, setFocus] = useState<string | null>(null);
   const { placed, cols, minCol, width, height, rootKey } = useMemo(
@@ -310,15 +222,16 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
   return (
     <>
       {truncated && (
-        <MessageBar intent="info" layout="multiline" aria-labelledby={undefined} aria-label="Note">
-          <MessageBarBody>
-            The walk stopped at 3 hops and there is more beyond. A deeper walk is possible up to the limit the configuration sets.
-          </MessageBarBody>
-        </MessageBar>
+        <Alert variant="info" aria-label="Note">
+          <Info aria-hidden />
+          <AlertDescription>
+            <p>The walk stopped at 3 hops and there is more beyond. A deeper walk is possible up to the limit the configuration sets.</p>
+          </AlertDescription>
+        </Alert>
       )}
-      <div className={s.scroller}>
-        <div className={s.canvas} style={{ width, height }}>
-          <svg className={s.svg} width={width} height={height} aria-hidden>
+      <div className="overflow-x-auto overflow-y-hidden pb-1">
+        <div className="relative mx-auto" style={{ width, height }}>
+          <svg className="absolute inset-0 overflow-visible" width={width} height={height} aria-hidden>
             <defs>
               {Object.entries(edgeStyle).map(([k, st]) => (
                 <marker key={k} id={`arrow-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
@@ -359,7 +272,11 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
             })}
           </svg>
           {cols.map(c => (
-            <div key={`head-${c}`} className={s.colHead} style={{ left: PAD + (c - minCol) * (NODE_W + GAP_X), width: NODE_W }}>
+            <div
+              key={`head-${c}`}
+              className="absolute top-0 text-center text-[10px] font-semibold tracking-[0.05em] text-navy-3 uppercase"
+              style={{ left: PAD + (c - minCol) * (NODE_W + GAP_X), width: NODE_W }}
+            >
               {colTitle(c)}
             </div>
           ))}
@@ -382,7 +299,14 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
               <a
                 key={p.key}
                 href={href}
-                className={mergeClasses(s.node, isRoot && s.root, focus !== null && !lit.has(p.key) && s.dim, focus !== null && lit.has(p.key) && !isRoot && s.lit)}
+                className={cn(
+                  'absolute flex flex-col justify-center gap-y-px rounded-md border border-line-strong bg-card px-2.5 py-1.5 text-navy no-underline shadow-[0_1px_2px_rgba(10,42,74,0.06)] transition-[opacity,border-color,box-shadow] duration-120',
+                  'hover:border-primary hover:shadow-[0_2px_6px_rgba(10,42,74,0.12)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+                  // The application itself: light blue with a gold bar along the top.
+                  isRoot && 'border-2 border-primary bg-secondary before:absolute before:-inset-x-0.5 before:-top-0.5 before:h-[5px] before:rounded-t-md before:bg-gold',
+                  focus !== null && !lit.has(p.key) && 'opacity-38',
+                  focus !== null && lit.has(p.key) && !isRoot && 'border-primary',
+                )}
                 style={{ left: p.x, top: p.y, width: NODE_W, height: NODE_H }}
                 onMouseEnter={() => setFocus(p.key)}
                 onMouseLeave={() => setFocus(null)}
@@ -391,45 +315,47 @@ function GraphBody(props: { show: Show; rootId: string; rootName: string; left: 
                 aria-label={label}
                 title={name}
               >
-                <span className={s.nodeName}>{name}</span>
-                <span className={s.nodeLine}>{relation}</span>
+                <span className="line-clamp-2 shrink-0 text-[13px] leading-[17px] font-semibold">{name}</span>
+                <span className="shrink-0 truncate text-xs leading-4 text-navy-3">{relation}</span>
                 {!isRoot && (
-                  <span className={s.nodeLine}>
-                    {noOwner && <Warning16Filled className={s.warnIcon} aria-hidden />}
-                    {noOwner ? 'No business owner' : facts}
+                  <span className="flex min-w-0 shrink-0 items-center gap-x-1 text-xs leading-4 text-navy-3">
+                    {noOwner && <TriangleAlert className="size-3.5 shrink-0 text-gold-strong" aria-hidden />}
+                    <span className="truncate">{noOwner ? 'No business owner' : facts}</span>
                   </span>
                 )}
-                {isRoot && <span className={s.nodeLine}>Select to open its 360</span>}
+                {isRoot && <span className="shrink-0 truncate text-xs leading-4 text-navy-3">Select to open its 360</span>}
               </a>
             );
           })}
         </div>
       </div>
-      <div className={s.legend} role="group" aria-label="Legend">
+      <div className="flex flex-wrap items-center gap-x-[18px] gap-y-2 border-t border-line pt-3 text-xs text-navy-2" role="group" aria-label="Legend">
         <span>Criticality of the link:</span>
         {(['high', 'medium', 'low', 'none'] as const).map(k => (
-          <span key={k} className={s.legendItem}>
+          <span key={k} className="inline-flex items-center gap-x-1.5">
             <svg width="30" height="10" aria-hidden>
               <line x1="1" y1="5" x2="29" y2="5" stroke={edgeStyle[k].stroke} strokeWidth={edgeStyle[k].width} strokeDasharray={edgeStyle[k].dash} strokeLinecap="round" />
             </svg>
             {k === 'none' ? 'Not set' : k.charAt(0).toUpperCase() + k.slice(1)}
           </span>
         ))}
-        <span className={s.legendItem}>
+        <span className="inline-flex items-center gap-x-1.5">
           <svg width="22" height="10" aria-hidden>
             <line x1="20" y1="5" x2="6" y2="5" stroke={palette.navy3} strokeWidth="1.5" />
             <path d="M 2 5 L 8 1.5 L 8 8.5 z" fill={palette.navy3} />
           </svg>
           Arrows point to what is needed
         </span>
-        <span className={s.legendItem}><Warning16Filled className={s.warnIcon} aria-hidden />No business owner</span>
+        <span className="inline-flex items-center gap-x-1.5">
+          <TriangleAlert className="size-3.5 shrink-0 text-gold-strong" aria-hidden />
+          No business owner
+        </span>
       </div>
     </>
   );
 }
 
 function ImpactListPanel(props: { side: Side; title: string; state: ToolState<DependencyImpact>; rootId: string; rootName: string; types: Labels }) {
-  const s = useStyles();
   const host = useHost();
   return (
     <Panel title={props.title} state={props.state} count={dataOf(props.state)?.nodes.length} skeletonRows={6}>
@@ -440,13 +366,16 @@ function ImpactListPanel(props: { side: Side; title: string; state: ToolState<De
         return (
           <>
             {data.truncatedAtDepth && (
-              <MessageBar intent="info" layout="multiline" aria-labelledby={undefined} aria-label="Note">
-                <MessageBarBody>There is more beyond 3 hops. A deeper walk is possible up to the configured limit.</MessageBarBody>
-              </MessageBar>
+              <Alert variant="info" aria-label="Note">
+                <Info aria-hidden />
+                <AlertDescription>
+                  <p>There is more beyond 3 hops. A deeper walk is possible up to the configured limit.</p>
+                </AlertDescription>
+              </Alert>
             )}
             {depths.map(depth => (
               <div key={depth}>
-                <h3 className={s.depthHead}>{plural(depth, 'hop', 'hops')}</h3>
+                <h3 className={cn(smallHead, 'mt-2.5 mb-0.5')}>{plural(depth, 'hop', 'hops')}</h3>
                 <RowList label={`${plural(depth, 'hop', 'hops')} away`}>
                   {data.nodes.filter(n => n.depth === depth).map(n => {
                     const parent = names.get(n.path[n.path.length - 2]) ?? props.rootName;
@@ -457,9 +386,14 @@ function ImpactListPanel(props: { side: Side; title: string; state: ToolState<De
                     return (
                       <Row
                         key={n.businessApplicationId}
-                        primary={<Link href={host.href({ page: 'app', id: n.businessApplicationId })}>{n.name}</Link>}
+                        primary={<TextLink href={host.href({ page: 'app', id: n.businessApplicationId })}>{n.name}</TextLink>}
                         secondary={relation}
-                        tertiary={owners ?? <span className={s.ownerWarn}><Warning16Filled aria-hidden />No business owner</span>}
+                        tertiary={owners ?? (
+                          <span className="inline-flex items-center gap-x-1 font-semibold text-gold-strong">
+                            <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+                            No business owner
+                          </span>
+                        )}
                         end={<ToneBadge tone={criticalityTone(n.criticalityKey)} icon={null}>{critText(n.criticalityKey)}</ToneBadge>}
                         endSub={[n.tier?.label ?? 'No tier yet', n.lifecycleMeaning ? lifecycleText[n.lifecycleMeaning] : null].filter(Boolean).join(', ')}
                       />
@@ -478,24 +412,23 @@ function ImpactListPanel(props: { side: Side; title: string; state: ToolState<De
 const critText = (k: string | null) => (k === 'high' ? 'High' : k === 'medium' ? 'Medium' : k === 'low' ? 'Low' : 'Not set');
 
 function CountsPanel({ title, state, noun }: { title: string; state: ToolState<DependencyImpact>; noun: string }) {
-  const s = useStyles();
   const host = useHost();
   const toItems = (buckets: Bucket[]) => buckets.map(b => ({ key: b.key, label: b.label, count: b.count, muted: b.key === null }));
   return (
     <Panel title={title} state={state} skeletonRows={4}>
       {data => (
         <>
-          <div className={s.total}>
-            <span className={s.totalNumber}>{data.nodes.length}</span>
+          <div className="text-sm text-navy-2">
+            <span className="mr-1.5 text-2xl font-semibold text-navy tabular-nums">{data.nodes.length}</span>
             {data.nodes.length === 1 ? 'application' : 'applications'} {noun} within 3 hops{data.truncatedAtDepth ? ', and more beyond' : ''}
           </div>
-          {data.nodes.length > 0 && <div className={s.countCols}>
+          {data.nodes.length > 0 && <div className="grid grid-cols-2 gap-4 narrow:grid-cols-1">
             <div>
-              <h3 className={s.countHead}>By tier</h3>
+              <h3 className={cn(smallHead, 'mt-0 mb-1')}>By tier</h3>
               <BarList ariaLabel={`${title} by tier`} noun={['application', 'applications']} labelWidth={90} items={toItems(data.counts.byTier)} onDrill={b => host.drill(`${title}: ${b.label}`)} />
             </div>
             <div>
-              <h3 className={s.countHead}>By criticality</h3>
+              <h3 className={cn(smallHead, 'mt-0 mb-1')}>By criticality</h3>
               <BarList ariaLabel={`${title} by criticality`} noun={['link', 'links']} labelWidth={90} items={toItems(data.counts.byCriticality)} onDrill={b => host.drill(`${title}: ${b.label} criticality`)} />
             </div>
           </div>}

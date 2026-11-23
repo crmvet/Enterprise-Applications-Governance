@@ -1,78 +1,50 @@
 // The sign-in page, shown until there is a signed-in person.
 // Production: one button that starts the Entra ID sign-in (a full-page redirect).
 // Development: a choice of fictional personas, sent as X-Product-Dev-Identity to the local server.
-import {
-  Button,
-  MessageBar,
-  MessageBarBody,
-  MessageBarTitle,
-  Radio,
-  RadioGroup,
-  makeStyles,
-  tokens,
-} from '@fluentui/react-components';
-import { PersonArrowRight20Regular } from '@fluentui/react-icons';
+import { TriangleAlert, UserRoundCheck } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import type { DevAuth } from '../auth/devAuth';
 import type { MsalAuth } from '../auth/msalAuth';
-import { palette } from '../theme';
-import { media } from '../components/ui';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
 
-const useStyles = makeStyles({
-  wrap: { maxWidth: '560px', margin: '48px auto', display: 'flex', flexDirection: 'column', rowGap: '16px', [media.narrow]: { margin: '24px auto' } },
-  card: {
-    backgroundColor: tokens.colorNeutralBackground1,
-    border: `1px solid ${palette.line}`,
-    borderRadius: '10px',
-    padding: '24px',
-    display: 'flex',
-    flexDirection: 'column',
-    rowGap: '14px',
-    [media.narrow]: { padding: '16px' },
-  },
-  h1: { margin: 0, fontSize: '24px', lineHeight: '32px', fontWeight: tokens.fontWeightSemibold, color: palette.navy },
-  text: { margin: 0, fontSize: tokens.fontSizeBase300, color: palette.navy2 },
-  small: { margin: 0, fontSize: tokens.fontSizeBase200, color: palette.navy3 },
-  legend: { fontSize: tokens.fontSizeBase300, fontWeight: tokens.fontWeightSemibold, color: palette.navy, padding: 0, marginBottom: '4px' },
-  fieldset: { border: 'none', margin: 0, padding: 0 },
-  action: { alignSelf: 'flex-start' },
-});
+// The page keeps a 16 px gutter on a phone; the card itself is at most 560 px wide.
+const wrap = 'mx-auto my-12 flex w-full max-w-[592px] flex-col gap-4 px-4 narrow:my-6';
+const card = 'flex flex-col gap-3.5 rounded-xl border bg-card p-6 text-card-foreground shadow-xs narrow:p-4';
+const h1 = 'm-0 text-2xl leading-8 font-semibold tracking-tight text-navy';
+const text = 'm-0 text-sm leading-relaxed text-navy-2';
+const small = 'm-0 text-xs leading-relaxed text-navy-3';
 
 function Problem({ text }: { text: string | null }) {
   if (!text) return null;
   return (
-    <MessageBar intent="warning" layout="multiline">
-      <MessageBarBody>
-        <MessageBarTitle>Sign-in needs another try</MessageBarTitle>
-        {text}
-      </MessageBarBody>
-    </MessageBar>
+    <Alert variant="warning">
+      <TriangleAlert aria-hidden />
+      <AlertTitle>Sign-in needs another try</AlertTitle>
+      <AlertDescription>
+        <p>{text}</p>
+      </AlertDescription>
+    </Alert>
   );
 }
 
 export function EntraSignIn({ auth }: { auth: MsalAuth }) {
-  const s = useStyles();
   const [busy, setBusy] = useState(false);
   useEffect(() => { document.title = 'Sign in | Product'; }, []);
   return (
-    <main className={s.wrap} id="main">
+    <main className={wrap} id="main">
       <Problem text={auth.problem()} />
-      <section className={s.card} aria-labelledby="sign-in-title">
-        <h1 className={s.h1} id="sign-in-title">Sign in</h1>
-        <p className={s.text}>
+      <section className={card} aria-labelledby="sign-in-title">
+        <h1 className={h1} id="sign-in-title">Sign in</h1>
+        <p className={text}>
           Sign in with your work account to see the application register: the portfolio, each application, its
           dependencies, and planned changes and deployments.
         </p>
-        <p className={s.small}>
+        <p className={small}>
           The pages are read-only. Your organization's groups decide which product roles you hold and what you can see.
         </p>
-        <Button
-          className={s.action}
-          appearance="primary"
-          icon={<PersonArrowRight20Regular />}
-          disabled={busy}
-          onClick={() => { setBusy(true); void auth.signIn(); }}
-        >
+        <Button className="self-start" disabled={busy} onClick={() => { setBusy(true); void auth.signIn(); }}>
+          <UserRoundCheck aria-hidden />
           {busy ? 'Opening the sign-in page' : 'Sign in'}
         </Button>
       </section>
@@ -81,29 +53,43 @@ export function EntraSignIn({ auth }: { auth: MsalAuth }) {
 }
 
 export function DevSignIn({ auth }: { auth: DevAuth }) {
-  const s = useStyles();
   const legendId = useId();
+  const groupName = useId();
   const [choice, setChoice] = useState<string>(auth.personas[0]?.name ?? '');
   useEffect(() => { document.title = 'Development sign-in | Product'; }, []);
   return (
-    <main className={s.wrap} id="main">
+    <main className={wrap} id="main">
       <Problem text={auth.problem()} />
-      <section className={s.card} aria-labelledby="sign-in-title">
-        <h1 className={s.h1} id="sign-in-title">Development sign-in</h1>
-        <p className={s.text}>
+      <section className={card} aria-labelledby="sign-in-title">
+        <h1 className={h1} id="sign-in-title">Development sign-in</h1>
+        <p className={text}>
           A local run with no tenant. Choose a fictional persona; the local server signs each request in as that persona,
           with the groups and claims an Entra ID token would carry.
         </p>
-        <fieldset className={s.fieldset}>
-          <legend className={s.legend} id={legendId}>Persona</legend>
-          <RadioGroup aria-labelledby={legendId} value={choice} onChange={(_, d) => setChoice(d.value)}>
-            {auth.personas.map(p => <Radio key={p.name} value={p.name} label={`${p.label} (${p.name})`} />)}
-          </RadioGroup>
+        <fieldset className="m-0 border-0 p-0">
+          <legend className="mb-1.5 p-0 text-sm font-semibold text-navy" id={legendId}>Persona</legend>
+          {/* Native radio buttons: one tab stop for the group, arrow keys move the choice. */}
+          <div className="flex flex-col gap-0.5" role="radiogroup" aria-labelledby={legendId}>
+            {auth.personas.map(p => (
+              <label key={p.name} className="flex min-h-8 cursor-pointer items-center gap-2.5 rounded-md px-1 text-sm text-navy hover:bg-muted">
+                <input
+                  type="radio"
+                  name={groupName}
+                  value={p.name}
+                  checked={choice === p.name}
+                  onChange={() => setChoice(p.name)}
+                  className="size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-input bg-card shadow-xs outline-none checked:border-primary checked:bg-primary checked:shadow-[inset_0_0_0_3px_var(--card)] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                />
+                {`${p.label} (${p.name})`}
+              </label>
+            ))}
+          </div>
         </fieldset>
-        <Button className={s.action} appearance="primary" icon={<PersonArrowRight20Regular />} disabled={!choice} onClick={() => auth.choose(choice)}>
+        <Button className="self-start" disabled={!choice} onClick={() => auth.choose(choice)}>
+          <UserRoundCheck aria-hidden />
           Continue as this persona
         </Button>
-        <p className={s.small}>
+        <p className={small}>
           Works only on 127.0.0.1 or localhost, against the local server started in the Development environment with
           Product:DevIdentity:Enabled=true. The Azure deployment has no development sign-in.
         </p>

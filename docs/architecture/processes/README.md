@@ -158,7 +158,7 @@ Every process writes through the same path, whoever calls: the web app, an MCP c
 | Data store | Azure SQL Database. Append-only and frozen records (decisions, approval records, deployment records, configuration versions, audit entries) are designed as ledger tables |
 | Database access | The API connects with its managed identity and passes the signed-in person's ID in the session context, so row-level security applies to that person |
 | Sign-in and roles | Microsoft Entra ID. Each product role is an app role assigned to an Entra group |
-| Screens | A web app built with React and Fluent UI, in the organization's own subscription |
+| Screens | A web app built with React and shadcn/ui, in the organization's own subscription |
 | Approval cards | Power Automate approval flows (the approval runner) in one Power Platform environment kept for approvals. The API starts them over HTTP, and only the API's identity may start them. The runner writes answers back through the API with its own workload role |
 | Timers | Timer-triggered functions for the daily refresh. Durable Functions for long waits, racing a timer against the person's answer |
 | Events between steps | An outbox row plus an Azure Service Bus queue message, picked up by a function |
@@ -214,4 +214,4 @@ All checked on Microsoft Learn on 2026-11-22.
 
 ---
 
-Microsoft, Azure, Entra, Power Automate, Power Platform, Dataverse, Outlook, Teams and Fluent are trademarks of the Microsoft group of companies. Claude Code is a product of Anthropic. Enterprise Applications Governance is not a Microsoft product and is not endorsed by Microsoft.
+Microsoft, Azure, Entra, Power Automate, Power Platform, Dataverse, Outlook and Teams are trademarks of the Microsoft group of companies. Claude Code is a product of Anthropic. Enterprise Applications Governance is not a Microsoft product and is not endorsed by Microsoft.

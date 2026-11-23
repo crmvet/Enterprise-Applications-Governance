@@ -1,0 +1,155 @@
+/* The Academy palette as shadcn/ui theme tokens. Light only: there is no dark theme and no theme switch, on purpose
+   (D-18). Navy 0A2A4A for text and lines, blue 0071DC for brand, gold FFC221 as the accent. Fills: white, light blue
+   E8F1FB, light gold FFF4D6, light gray F3F5F8 for the page.
+   The CSS is static (built by Tailwind at build time), so the page needs no inline styles from a runtime. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./shadcn-tailwind.css";
+
+/* dark: utilities in copied components apply only under a .dark class, which the app never sets. Without this line
+   Tailwind would apply them when the operating system is in dark mode. */
+@custom-variant dark (&:is(.dark *));
+
+/* The pages' two breakpoints: narrow below 720 px (phones: one column, lists instead of tables and charts) and medium
+   below 1024 px. useNarrow() in components/blocks.tsx uses the same 720 px line. */
+/* medium comes first, so where both apply (below 720 px) the narrow rules come later in the CSS and win. */
+@custom-variant medium (@media (max-width: 1023px));
+@custom-variant narrow (@media (max-width: 719px));
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+
+  --background: #f3f5f8;
+  --foreground: #0a2a4a;
+  --card: #ffffff;
+  --card-foreground: #0a2a4a;
+  --popover: #ffffff;
+  --popover-foreground: #0a2a4a;
+  --primary: #0071dc;
+  --primary-foreground: #ffffff;
+  --secondary: #e8f1fb;
+  --secondary-foreground: #0a2a4a;
+  --muted: #eef2f6;
+  --muted-foreground: #4a6582;
+  --accent: #e8f1fb;
+  --accent-foreground: #0a2a4a;
+  --destructive: #b10e1c;
+  --border: #dfe5ec;
+  --input: #c5d0dc;
+  --ring: #0071dc;
+
+  /* Academy extras */
+  --navy: #0a2a4a;
+  --navy-2: #1f3f5f;
+  --navy-3: #4a6582;
+  --navy-4: #6a8199;
+  --brand-dark: #005bb3;
+  --gold: #ffc221;
+  --gold-strong: #8a6100;
+  --gold-soft: #fff4d6;
+  --line: #dfe5ec;
+  --line-strong: #c5d0dc;
+  --bar-muted: #9aabbd;
+
+  /* Status tones. Each text color on its soft fill passes WCAG AA (4.5:1). Status is never shown by color alone. */
+  --success: #0e700e;
+  --success-soft: #e7f4e4;
+  --success-line: #b7dbb0;
+  --warning: #835c00;
+  --warning-soft: #fff4d6;
+  --warning-line: #f2d68a;
+  --danger: #b10e1c;
+  --danger-soft: #fdecec;
+  --danger-line: #f3b9be;
+  --info: #005bb3;
+  --info-soft: #e8f1fb;
+  --info-line: #b9d4f1;
+  --subtle-soft: #eef2f6;
+  --subtle-line: #dfe5ec;
+
+  --chart-1: #0071dc;
+  --chart-2: #ffc221;
+  --chart-3: #0a2a4a;
+  --chart-4: #6aa8ec;
+  --chart-5: #9aabbd;
+}
+
+@theme inline {
+  --font-sans: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-navy-3: var(--navy-3);
+  --color-navy-4: var(--navy-4);
+  --color-brand-dark: var(--brand-dark);
+  --color-gold: var(--gold);
+  --color-gold-strong: var(--gold-strong);
+  --color-gold-soft: var(--gold-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-bar-muted: var(--bar-muted);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-line: var(--info-line);
+  --color-subtle-soft: var(--subtle-soft);
+  --color-subtle-line: var(--subtle-line);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  /* 14 px body text, as the pages were designed; components size their own text in rem from the 16 px root. */
+  body {
+    @apply bg-background font-sans text-sm text-foreground antialiased;
+  }
+  #root {
+    min-height: 100vh;
+  }
+}

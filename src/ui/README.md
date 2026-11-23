@@ -1,6 +1,6 @@
 # ui
 
-The four pages: Overview, Application 360, the dependency map and the timeline. React and Fluent UI v9, the Academy
+The four pages: Overview, Application 360, the dependency map and the timeline. React 19 and shadcn/ui (Radix primitives, Tailwind CSS 4, lucide icons; D-32), the Academy
 palette, light only. One source gives two builds:
 
 - **the harness**: the pages on fictional fixture JSON shaped by the MCP tool output schemas (`src/mcp/contracts/`),
@@ -16,9 +16,11 @@ personas; it has not been deployed, and its Microsoft Entra sign-in has not run 
 | Path | What |
 |---|---|
 | `design/pages.md` | The page specs: calls, panels, states, phone layout, fallbacks, working defaults, the web app, open points |
-| `harness/` | The one package: Vite, React 18, Fluent UI v9, TypeScript, MSAL for the browser (web app only) |
+| `harness/` | The one package: Vite, React 19, shadcn/ui on Tailwind CSS 4 and Radix, TypeScript, MSAL for the browser (web app only) |
 | `harness/src/pages/` | The four pages. They see only the `Host` and the `ToolClient`, so both builds render the same components |
-| `harness/src/components/` | Panel, status badge, KPI tile, bar list, list row |
+| `harness/src/components/` | `blocks.tsx`: panel, status badge, KPI tile, bar list, page header, links, the in-page switch; `rows.tsx`: list row |
+| `harness/src/components/ui/` | The shadcn/ui components, MIT source copied from the shadcn registry, with their license and the changes made (`README.md`) |
+| `harness/src/styles/` | `globals.css`: the Academy palette as theme tokens, the `narrow:` and `medium:` breakpoints; `shadcn-tailwind.css`: shadcn's Tailwind helpers |
 | `harness/src/data/` | Contract types, the `ToolClient`, the fixture client (harness), the API client (web app), labels, meanings, formatting |
 | `harness/src/app/` | The web app: entry, shell and routes, `config.json` checks, sign-in pages, the applications list, dialogs |
 | `harness/src/auth/` | Sign-in for the web app: Entra ID through MSAL (`msalAuth.ts`) and the development persona (`devAuth.ts`) |
@@ -161,7 +163,7 @@ packages the app, and the client's administrator registers the web app as a sing
   that is not loopback, and says why on the page.
 - **Hosting notes.** `index.html` and `config.json` must not be cached; the files under `assets/` carry a content
   hash and can be cached for a year. The Content-Security-Policy needs `script-src 'self'`, `style-src 'self'
-  'unsafe-inline'` (Fluent writes its styles at run time), and `connect-src` and `frame-src` for the sign-in host.
+  'unsafe-inline'` (Radix writes a style tag when a dialog or popover locks page scrolling), and `connect-src` and `frame-src` for the sign-in host.
   The pages under `/app/` must not send a `Cross-Origin-Opener-Policy` header, because MSAL's redirect bridge does
   not work with one
   ([Set up the redirect bridge page in MSAL Browser](https://learn.microsoft.com/entra/msal/javascript/browser/redirect-bridge)).

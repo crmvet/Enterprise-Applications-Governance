@@ -1,8 +1,8 @@
 # Screens
 
-**Status: in design.** This page describes the four page designs of the next version's web app. The pages exist as early React and Fluent UI code in [`src/ui`](../../src/ui/README.md), under the MIT License. It is early work, not a release, and nothing is deployed. The pictures below are screenshots of that code with fictional data, at desktop and phone width.
+**Status: in design.** This page describes the four page designs of the next version's web app. The pages exist as early React and shadcn/ui code in [`src/ui`](../../src/ui/README.md), under the MIT License. It is early work, not a release, and nothing is deployed. The pictures below are screenshots of that code with fictional data, at desktop and phone width.
 
-The web app is designed to use React and Fluent UI, and to run in your own Azure subscription with the rest of the product. Each page reads the same operations the MCP tools use, so a page and an AI client always see the same answers.
+The web app is designed to use React and shadcn/ui (Radix primitives and Tailwind CSS), and to run in your own Azure subscription with the rest of the product. Each page reads the same operations the MCP tools use, so a page and an AI client always see the same answers.
 
 ## Rules for all four pages
 

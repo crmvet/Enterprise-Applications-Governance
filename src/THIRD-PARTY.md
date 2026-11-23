@@ -12,21 +12,25 @@ Licenses were read from each package's own metadata on 2026-11-22, and for the A
 
 ## Notices in shipped builds
 
-This repository holds no third-party code. Packages are restored from the feeds, and build output (`bin/`, `obj/`,
+This repository holds one piece of third-party source: the shadcn/ui components and shadcn's Tailwind helper CSS
+(MIT), copied into `ui/harness/src/components/ui/` and `ui/harness/src/styles/shadcn-tailwind.css`, with their license
+text in `ui/harness/src/components/ui/README.md`. Everything else is restored from the feeds, and build output (`bin/`, `obj/`,
 `node_modules/`, `ui/harness/dist/`) is never committed. MIT, BSD, ISC and Apache 2.0 all ask that the license text
 goes with every copy of the package. So any build that is handed to others must carry the license text, and any
 notice file, of every package inside it. Four builds would carry packages:
 
 - the Dataverse plug-in package: System.Text.Json and the System packages it needs on net48 (all MIT);
-- a built page bundle (the harness or the web app): React, Fluent UI and their runtime packages (MIT), in the web app also
-  MSAL for the browser (@azure/msal-browser and @azure/msal-common, MIT), plus @swc/helpers (Apache 2.0) and tslib (0BSD);
+- a built page bundle (the harness or the web app): React, the Radix primitives, the shadcn/ui components and their
+  runtime packages (MIT), lucide-react (ISC), class-variance-authority (Apache 2.0) and tslib (0BSD), in the web app also
+  MSAL for the browser (@azure/msal-browser and @azure/msal-common, MIT);
 - the Azure adapter's Functions deployment package: the packages marked "Functions app" in the column "In" of both
   tables under ".NET: adapters/azure", including the two Microsoft packages listed there under their own terms, and,
   because the package carries the built web app under `wwwroot/app`, the packages of the web app's page bundle above;
 - the Azure adapter's server container image: the packages marked "Server" there, including the same two, on top of
   the .NET base image, which carries its own notices.
 
-Build-only and test-only packages (xunit, Vite, esbuild, Rollup, postcss, TypeScript) are never shipped.
+Build-only and test-only packages (xunit, Vite, esbuild, Rollup, postcss, Tailwind CSS and lightningcss, TypeScript) are
+never shipped.
 
 Where versions live:
 - .NET direct versions: `Directory.Packages.props`, plus `adapters/azure/Directory.Packages.props` for the Azure
@@ -354,29 +358,34 @@ server transport as an option behind that seam. Both are listed under ".NET: ada
 
 ## Node: ui/harness only
 
-The four pages: React and Fluent UI v9, built by Vite. One source gives two builds: the local harness on fixture JSON,
-served by Vite on 127.0.0.1, and the web app, which the product's host serves under `/app/`.
-Installed with `npm ci --ignore-scripts` in `ui/harness/`. Every package was published on or before 2026-11-08
-(the install used `--before=2026-11-08`), so each one was at least two weeks old on 2026-11-22.
+The four pages: React 19 and shadcn/ui (Radix primitives, Tailwind CSS 4, lucide icons), built by Vite (D-32 moved them
+off Fluent UI on 2026-11-23). The shadcn/ui components are MIT source copied into `ui/harness/src/components/ui/`, not a
+package. One source gives two builds: the local harness on fixture JSON, served by Vite on 127.0.0.1, and the web app,
+which the product's host serves under `/app/`.
+Installed with `npm install --before=2026-11-09 --ignore-scripts` in `ui/harness/` on 2026-11-23, so every package was
+at least two weeks old that day; the lock file pins them, and CI installs with `npm ci --ignore-scripts`.
 No Babel: esbuild compiles the TSX, so the React plugin for Vite and its Babel tree are not used.
 The web app signs in with MSAL for the browser: @azure/msal-browser 5.29.0 and its exact dependency @azure/msal-common
-16.16.1, both MIT and both published on 2026-11-06, added on 2026-11-23 with the same `--before=2026-11-08` (17 days
-old that day). msal-react is not used. esbuild is also a direct devDependency, because `scripts/run-tests.mjs` bundles
-the unit tests with it.
+16.16.1, both MIT. msal-react is not used. esbuild is also a direct devDependency, because `scripts/run-tests.mjs`
+bundles the unit tests with it.
 `node ui/harness/scripts/check-packages.mjs` checks this table against the lock file (the `ui` check of `tools/ci.mjs`).
 
 Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be confirmed by the product owner:
-- **picocolors 1.1.1, ISC.** postcss needs it for terminal colors, and Vite needs postcss. Build time only; it is never
-  in the page bundle. ISC is a short permissive license, close to MIT, but it is not on the house list. No Vite
-  release drops postcss. If the exception is refused, the harness can move from Vite to esbuild alone (esbuild is MIT).
-- **tslib 2.9.1, 0BSD (BSD Zero Clause).** Runtime helpers used by Fluent's styling and icon packages. Counted as BSD here.
+- **lucide-react 1.70.0, ISC.** The icons on the pages, in the page bundle. ISC is a short permissive license, close to
+  MIT, but it is not on the house list.
+- **lightningcss 1.33.0 and its platform binaries, MPL-2.0.** The CSS compiler inside Tailwind CSS 4. Build time only,
+  never in the page bundle, used unchanged. MPL-2.0 is a file-level copyleft license: it would apply only to changes to
+  lightningcss's own files, and there are none.
+- **picocolors 1.1.1 and graceful-fs 4.2.11, ISC.** Terminal colors for postcss inside the Vite build, and file reads
+  inside the Tailwind CSS build. Build time only; never in the page bundle.
 
 | Package | Version | License | Direct or transitive | Use |
 |---|---|---|---|---|
 | @azure/msal-browser | 5.29.0 | MIT | Direct | Runtime dependency, web app only. Entra ID sign-in (authorization code flow with PKCE, full-page redirect) and access tokens for the product API |
-| @azure/msal-common | 16.16.1 | MIT | Transitive (@azure/msal-browser) | Runtime dependency, web app only |
-| @babel/runtime | 7.29.13 | MIT | Transitive (rtl-css-js) | Runtime dependency |
-| @emotion/hash | 0.9.2 | MIT | Transitive (@griffel/core) | Runtime dependency |
+| @azure/msal-common | 16.16.1 | MIT | Transitive (@azure/msal-browser) | Runtime dependency |
+| @emnapi/core | 1.11.3 | MIT | Transitive (@napi-rs/wasm-runtime) | Build only |
+| @emnapi/runtime | 1.11.3 | MIT | Transitive (@napi-rs/wasm-runtime) | Build only |
+| @emnapi/wasi-threads | 1.2.3 | MIT | Transitive (@emnapi/core) | Build only |
 | @esbuild/aix-ppc64 | 0.28.2 | MIT | Transitive (esbuild) | Build only. Optional platform binary for another system; not installed here |
 | @esbuild/android-arm | 0.28.2 | MIT | Transitive (esbuild) | Build only. Optional platform binary for another system; not installed here |
 | @esbuild/android-arm64 | 0.28.2 | MIT | Transitive (esbuild) | Build only. Optional platform binary for another system; not installed here |
@@ -404,80 +413,75 @@ Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be c
 | @esbuild/win32-ia32 | 0.28.2 | MIT | Transitive (esbuild) | Build only. Optional platform binary for another system; not installed here |
 | @esbuild/win32-x64 | 0.28.2 | MIT | Transitive (esbuild) | Build only. Optional platform binary, the one installed on Windows x64 |
 | @floating-ui/core | 1.8.0 | MIT | Transitive (@floating-ui/dom) | Runtime dependency |
-| @floating-ui/devtools | 0.2.3 | MIT | Transitive (@fluentui/react-positioning) | Runtime dependency |
-| @floating-ui/dom | 1.8.0 | MIT | Transitive (@floating-ui/devtools) | Runtime dependency |
+| @floating-ui/dom | 1.8.0 | MIT | Transitive (@floating-ui/react-dom) | Runtime dependency |
+| @floating-ui/react-dom | 2.1.9 | MIT | Transitive (@radix-ui/react-popper) | Runtime dependency |
 | @floating-ui/utils | 0.2.12 | MIT | Transitive (@floating-ui/core) | Runtime dependency |
-| @fluentui/keyboard-keys | 9.0.9 | MIT | Transitive (@fluentui/react-aria) | Runtime dependency |
-| @fluentui/priority-overflow | 9.4.3 | MIT | Transitive (@fluentui/react-overflow) | Runtime dependency |
-| @fluentui/react-accordion | 9.12.5 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-alert | 9.0.2-beta.1 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-aria | 9.17.16 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-avatar | 9.11.9 | MIT | Transitive (@fluentui/react-alert) | Runtime dependency |
-| @fluentui/react-badge | 9.5.7 | MIT | Transitive (@fluentui/react-avatar) | Runtime dependency |
-| @fluentui/react-breadcrumb | 9.4.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-button | 9.11.3 | MIT | Transitive (@fluentui/react-alert) | Runtime dependency |
-| @fluentui/react-card | 9.7.4 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-carousel | 9.9.16 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-checkbox | 9.6.6 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-color-picker | 9.3.3 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-combobox | 9.17.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-components | 9.75.1 | MIT | Direct | Runtime dependency. Fluent UI v9 components, tokens and the light theme of the four pages |
-| @fluentui/react-context-selector | 9.2.21 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-dialog | 9.18.6 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-divider | 9.7.6 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-drawer | 9.13.5 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-field | 9.5.6 | MIT | Transitive (@fluentui/react-checkbox) | Runtime dependency |
-| @fluentui/react-icons | 2.0.345 | MIT | Direct | Runtime dependency. Fluent icons on the pages |
-| @fluentui/react-image | 9.4.6 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-infobutton | 9.0.1-beta.1 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-infolabel | 9.4.28 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-input | 9.8.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-jsx-runtime | 9.4.7 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-label | 9.4.6 | MIT | Transitive (@fluentui/react-checkbox) | Runtime dependency |
-| @fluentui/react-link | 9.8.6 | MIT | Transitive (@fluentui/react-breadcrumb) | Runtime dependency |
-| @fluentui/react-list | 9.7.0 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-menu | 9.25.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-message-bar | 9.7.9 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-motion | 9.16.5 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-motion-components-preview | 0.15.10 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-nav | 9.4.9 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-overflow | 9.9.5 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-persona | 9.7.11 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-popover | 9.14.10 | MIT | Transitive (@fluentui/react-avatar) | Runtime dependency |
-| @fluentui/react-portal | 9.8.17 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-positioning | 9.23.4 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-progress | 9.5.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-provider | 9.22.23 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-radio | 9.6.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-rating | 9.4.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-search | 9.4.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-select | 9.5.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-shared-contexts | 9.26.4 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-skeleton | 9.7.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-slider | 9.6.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-spinbutton | 9.6.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-spinner | 9.8.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-swatch-picker | 9.6.3 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-switch | 9.7.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-table | 9.19.23 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-tabs | 9.12.6 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-tabster | 9.26.19 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-tag-picker | 9.10.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-tags | 9.9.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-teaching-popover | 9.7.9 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-text | 9.6.21 | MIT | Transitive (@fluentui/react-card) | Runtime dependency |
-| @fluentui/react-textarea | 9.7.8 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-theme | 9.2.2 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-toast | 9.8.5 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-toolbar | 9.8.7 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-tooltip | 9.10.8 | MIT | Transitive (@fluentui/react-avatar) | Runtime dependency |
-| @fluentui/react-tree | 9.17.0 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/react-utilities | 9.27.0 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @fluentui/react-virtualizer | 9.0.0-alpha.116 | MIT | Transitive (@fluentui/react-components) | Runtime dependency |
-| @fluentui/tokens | 1.0.0-alpha.24 | MIT | Transitive (@fluentui/react-theme) | Runtime dependency |
-| @griffel/core | 1.21.4 | MIT | Transitive (@fluentui/react-provider) | Runtime dependency |
-| @griffel/react | 1.7.8 | MIT | Transitive (@fluentui/react-accordion) | Runtime dependency |
-| @griffel/style-types | 1.4.3 | MIT | Transitive (@griffel/core) | Runtime dependency |
+| @jridgewell/gen-mapping | 0.3.13 | MIT | Transitive (@jridgewell/remapping) | Build only |
+| @jridgewell/remapping | 2.3.5 | MIT | Transitive (@tailwindcss/node) | Build only |
+| @jridgewell/resolve-uri | 3.1.2 | MIT | Transitive (@jridgewell/trace-mapping) | Build only |
+| @jridgewell/sourcemap-codec | 1.6.0 | MIT | Transitive (@jridgewell/gen-mapping) | Build only |
+| @jridgewell/trace-mapping | 0.3.31 | MIT | Transitive (@jridgewell/gen-mapping) | Build only |
+| @napi-rs/wasm-runtime | 1.2.2 | MIT | Transitive (@tailwindcss/oxide-wasm32-wasi) | Build only |
+| @radix-ui/number | 1.1.3 | MIT | Transitive (@radix-ui/react-one-time-password-field) | Runtime dependency |
+| @radix-ui/primitive | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-accessible-icon | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-accordion | 1.3.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-alert-dialog | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-arrow | 1.1.17 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-aspect-ratio | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-avatar | 1.3.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-checkbox | 1.4.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-collapsible | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-collection | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-compose-refs | 1.1.5 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-context | 1.3.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-context-menu | 2.4.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-dialog | 1.3.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-direction | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-dismissable-layer | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-dropdown-menu | 2.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-focus-guards | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-focus-scope | 1.3.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-form | 0.3.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-hover-card | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-id | 1.1.4 | MIT | Transitive (@radix-ui/react-accordion) | Runtime dependency |
+| @radix-ui/react-label | 2.1.17 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-menu | 2.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-menubar | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-navigation-menu | 1.4.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-one-time-password-field | 0.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-password-toggle-field | 0.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-popover | 1.3.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-popper | 1.4.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-portal | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-presence | 1.1.11 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-primitive | 2.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-progress | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-radio-group | 1.5.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-roving-focus | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-scroll-area | 1.4.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-select | 2.4.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-separator | 1.2.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-slider | 1.6.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-slot | 1.5.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-switch | 1.4.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-tabs | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-toast | 1.3.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-toggle | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-toggle-group | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-toolbar | 1.2.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-tooltip | 1.4.1 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-callback-ref | 1.1.5 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-controllable-state | 1.3.0 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-effect-event | 0.0.5 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-escape-keydown | 1.1.6 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-is-hydrated | 0.1.3 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-layout-effect | 1.1.4 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-use-previous | 1.1.4 | MIT | Transitive (@radix-ui/react-navigation-menu) | Runtime dependency |
+| @radix-ui/react-use-rect | 1.1.4 | MIT | Transitive (@radix-ui/react-popper) | Runtime dependency |
+| @radix-ui/react-use-size | 1.1.5 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/react-visually-hidden | 1.2.13 | MIT | Transitive (radix-ui) | Runtime dependency |
+| @radix-ui/rect | 1.1.3 | MIT | Transitive (@radix-ui/react-popper) | Runtime dependency |
 | @rollup/rollup-android-arm-eabi | 4.68.0 | MIT | Transitive (rollup) | Build only. Optional platform binary for another system; not installed here |
 | @rollup/rollup-android-arm64 | 4.68.0 | MIT | Transitive (rollup) | Build only. Optional platform binary for another system; not installed here |
 | @rollup/rollup-android-x64 | 4.68.0 | MIT | Transitive (rollup) | Build only. Optional platform binary for another system; not installed here |
@@ -504,36 +508,73 @@ Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be c
 | @rollup/rollup-win32-ia32-msvc | 4.68.0 | MIT | Transitive (rollup) | Build only. Optional platform binary for another system; not installed here |
 | @rollup/rollup-win32-x64-gnu | 4.68.0 | MIT | Transitive (rollup) | Build only. Optional platform binary, the one installed on Windows x64 |
 | @rollup/rollup-win32-x64-msvc | 4.68.0 | MIT | Transitive (rollup) | Build only. Optional platform binary, the one installed on Windows x64 |
-| @swc/helpers | 0.5.24 | Apache-2.0 | Transitive (@fluentui/keyboard-keys) | Runtime dependency |
+| @tailwindcss/node | 4.3.5 | MIT | Transitive (@tailwindcss/vite) | Build only |
+| @tailwindcss/oxide | 4.3.5 | MIT | Transitive (@tailwindcss/vite) | Build only |
+| @tailwindcss/oxide-android-arm64 | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-darwin-arm64 | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-darwin-x64 | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-freebsd-x64 | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-linux-arm-gnueabihf | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-linux-arm64-gnu | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-linux-arm64-musl | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-linux-x64-gnu | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-linux-x64-musl | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-wasm32-wasi | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only |
+| @tailwindcss/oxide-win32-arm64-msvc | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary for another system; not installed here |
+| @tailwindcss/oxide-win32-x64-msvc | 4.3.5 | MIT | Transitive (@tailwindcss/oxide) | Build only. Optional platform binary, the one installed on Windows x64 |
+| @tailwindcss/vite | 4.3.5 | MIT | Direct | Build only. Runs Tailwind CSS inside the Vite build |
+| @tybys/wasm-util | 0.10.3 | MIT | Transitive (@napi-rs/wasm-runtime) | Build only |
 | @types/estree | 1.0.10 | MIT | Transitive (rollup) | Types only, never in the bundle |
-| @types/prop-types | 15.7.15 | MIT | Transitive (@types/react) | Types only, never in the bundle |
-| @types/react | 18.3.31 | MIT | Direct | Types only, never in the bundle. Types for the typecheck |
-| @types/react-dom | 18.3.7 | MIT | Direct | Types only, never in the bundle. Types for the typecheck |
-| csstype | 3.2.3 | MIT | Transitive (@griffel/core) | Types only, never in the bundle |
-| embla-carousel | 8.6.0 | MIT | Transitive (@fluentui/react-carousel) | Runtime dependency |
-| embla-carousel-autoplay | 8.6.0 | MIT | Transitive (@fluentui/react-carousel) | Runtime dependency |
-| embla-carousel-fade | 8.6.0 | MIT | Transitive (@fluentui/react-carousel) | Runtime dependency |
-| esbuild | 0.28.2 | MIT | Direct, and transitive (vite) | Build only. Vite's compiler, and the bundler of the unit tests (`scripts/run-tests.mjs`) |
-| fdir | 6.5.0 | MIT | Transitive (tinyglobby) | Build only |
-| fsevents | 2.3.3 | MIT | Transitive (rollup) | Build only. Optional platform binary for another system; not installed here |
-| js-tokens | 4.0.0 | MIT | Transitive (loose-envify) | Runtime dependency |
-| keyborg | 3.498.0 | MIT | Transitive (@fluentui/react-tabster) | Runtime dependency |
-| loose-envify | 1.4.0 | MIT | Transitive (react) | Runtime dependency |
+| @types/react | 19.3.0 | MIT | Direct | Types only, never in the bundle. Types for the typecheck |
+| @types/react-dom | 19.3.0 | MIT | Direct | Types only, never in the bundle. Types for the typecheck |
+| aria-hidden | 1.2.6 | MIT | Transitive (@radix-ui/react-dialog) | Runtime dependency |
+| class-variance-authority | 0.7.1 | Apache-2.0 | Direct | Runtime dependency. Component variants of the shadcn/ui components |
+| clsx | 2.1.1 | MIT | Direct | Runtime dependency. Class name joining (the cn helper) |
+| csstype | 3.2.3 | MIT | Transitive (@types/react) | Build only |
+| detect-libc | 2.1.2 | Apache-2.0 | Transitive (lightningcss) | Build only |
+| detect-node-es | 1.1.0 | MIT | Transitive (use-sidecar) | Runtime dependency |
+| enhanced-resolve | 5.26.1 | MIT | Transitive (@tailwindcss/node) | Build only |
+| esbuild | 0.28.2 | MIT | Direct | Build only. Bundles the unit tests (scripts/run-tests.mjs) |
+| fdir | 6.5.0 | MIT | Transitive (vite) | Build only |
+| fsevents | 2.3.3 | MIT | Transitive (vite) | Build only. Optional platform binary for another system; not installed here |
+| get-nonce | 1.0.1 | MIT | Transitive (react-style-singleton) | Runtime dependency |
+| graceful-fs | 4.2.11 | ISC | Transitive (enhanced-resolve) | Build only |
+| jiti | 2.7.0 | MIT | Transitive (vite) | Build only |
+| lightningcss | 1.33.0 | MPL-2.0 | Transitive (vite) | Build only |
+| lightningcss-android-arm64 | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-darwin-arm64 | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-darwin-x64 | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-freebsd-x64 | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-linux-arm-gnueabihf | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-linux-arm64-gnu | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-linux-arm64-musl | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-linux-x64-gnu | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-linux-x64-musl | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-win32-arm64-msvc | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary for another system; not installed here |
+| lightningcss-win32-x64-msvc | 1.33.0 | MPL-2.0 | Transitive (lightningcss) | Build only. Optional platform binary, the one installed on Windows x64 |
+| lucide-react | 1.70.0 | ISC | Direct | Runtime dependency. The icons on the pages. ISC, a listed exception |
+| magic-string | 1.4.5 | MIT | Transitive (@tailwindcss/node) | Build only |
 | nanoid | 3.3.20 | MIT | Transitive (postcss) | Build only |
-| picocolors | 1.1.1 | ISC (exception, open question: build time only) | Transitive (postcss) | Build only |
-| picomatch | 4.0.7 | MIT | Transitive (fdir) | Build only |
+| picocolors | 1.1.1 | ISC | Transitive (postcss) | Build only |
+| picomatch | 4.0.7 | MIT | Transitive (vite) | Build only |
 | postcss | 8.5.32 | MIT | Transitive (vite) | Build only |
-| react | 18.3.1 | MIT | Direct | Runtime dependency. UI runtime |
-| react-dom | 18.3.1 | MIT | Direct | Runtime dependency. UI runtime in the browser |
+| radix-ui | 1.8.1 | MIT | Direct | Runtime dependency. The accessible primitives under the shadcn/ui components (tooltip, tabs, dialog, popover, toast, avatar) |
+| react | 19.3.1 | MIT | Direct | Runtime dependency. UI runtime |
+| react-dom | 19.3.1 | MIT | Direct | Runtime dependency. UI runtime in the browser |
+| react-remove-scroll | 2.7.2 | MIT | Transitive (@radix-ui/react-dialog) | Runtime dependency |
+| react-remove-scroll-bar | 2.3.8 | MIT | Transitive (react-remove-scroll) | Runtime dependency |
+| react-style-singleton | 2.2.3 | MIT | Transitive (react-remove-scroll) | Runtime dependency |
 | rollup | 4.68.0 | MIT | Transitive (vite) | Build only |
-| rtl-css-js | 1.16.1 | MIT | Transitive (@griffel/core) | Runtime dependency |
-| scheduler | 0.23.2 | MIT | Transitive (react-dom) | Runtime dependency |
-| scheduler | 0.28.0 | MIT | Transitive (@fluentui/react-context-selector, as a peer) | Runtime dependency |
-| source-map-js | 1.2.2 | BSD-3-Clause | Transitive (postcss) | Build only |
-| stylis | 4.4.0 | MIT | Transitive (@griffel/core) | Runtime dependency |
-| tabster | 8.8.1 | MIT | Transitive (@fluentui/react-tabster) | Runtime dependency |
+| scheduler | 0.28.0 | MIT | Transitive (react-dom) | Runtime dependency |
+| source-map-js | 1.2.2 | BSD-3-Clause | Transitive (@tailwindcss/node) | Build only |
+| tailwind-merge | 3.7.0 | MIT | Direct | Runtime dependency. Resolves conflicting Tailwind classes (the cn helper) |
+| tailwindcss | 4.3.5 | MIT | Direct | Build only. Builds the static style sheet from src/styles/globals.css |
+| tapable | 2.3.3 | MIT | Transitive (enhanced-resolve) | Build only |
 | tinyglobby | 0.2.17 | MIT | Transitive (vite) | Build only |
-| tslib | 2.9.1 | 0BSD (BSD Zero Clause) | Transitive (@fluentui/react-icons) | Runtime dependency |
+| tslib | 2.8.1 | 0BSD | Transitive (@emnapi/core) | Build only |
+| tslib | 2.9.1 | 0BSD | Transitive (@emnapi/core) | Runtime dependency |
+| tw-animate-css | 1.4.0 | MIT | Direct | Build only. Animation utilities, compiled into the static style sheet |
 | typescript | 5.9.3 | Apache-2.0 | Direct | Build only. Typecheck (tsc --noEmit). The JavaScript compiler, no native binary |
-| use-sync-external-store | 1.7.0 | MIT | Transitive (@fluentui/react-positioning) | Runtime dependency |
+| use-callback-ref | 1.3.3 | MIT | Transitive (react-remove-scroll) | Runtime dependency |
+| use-sidecar | 1.1.3 | MIT | Transitive (react-remove-scroll) | Runtime dependency |
 | vite | 7.3.7 | MIT | Direct | Build only. Local build, and the preview server on 127.0.0.1 for the screenshots |

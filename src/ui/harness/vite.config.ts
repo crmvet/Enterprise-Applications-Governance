@@ -8,7 +8,9 @@
 //                       (development sign-in) and /api proxied to the local server on http://127.0.0.1:5080.
 //
 // No React plugin: esbuild compiles TSX with the automatic JSX runtime, so no Babel packages are needed.
+// Tailwind CSS 4 builds the static style sheet from src/styles/globals.css at build time (no styles written at run time).
 // Every server listens on 127.0.0.1 only.
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';
 
 // The local server's address for the dev loop (src/adapters/azure, "Run it locally").
@@ -41,7 +43,7 @@ export default defineConfig(({ command, mode }) => {
     base: app ? '/app/' : './',
     // public/ holds the dev loop's config.json only. It is served by the dev server and never copied into a build.
     publicDir: app && command === 'serve' ? 'public' : false,
-    plugins: [entryFor(app)],
+    plugins: [entryFor(app), tailwindcss()],
     esbuild: { jsx: 'automatic' },
     build: {
       outDir: app ? 'dist/app' : 'dist/harness',
@@ -49,7 +51,7 @@ export default defineConfig(({ command, mode }) => {
       sourcemap: false,
       chunkSizeWarningLimit: 1500,
       rollupOptions: {
-        // Fluent packages start with a 'use client' directive for server frameworks. It has no meaning in this bundle.
+        // Radix packages start with a 'use client' directive for server frameworks. It has no meaning in this bundle.
         onwarn(warning, warn) {
           if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
           warn(warning);

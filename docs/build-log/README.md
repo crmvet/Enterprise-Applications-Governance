@@ -100,6 +100,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Monday 1:00 AM | Commit `79a1b22` publishes seven more systems map pages, rebuilt, with their Visio source. The other pages in their three sets now carry the platform line of [D-26][dec]. |
 | Monday 2:12 to 2:22 AM | Working software under [D-30][dec]. Commit `2c5c227` adds an early Azure adapter: a host with the MCP endpoint and a read API over the engine, SQLite and Azure SQL stores, an Azure Functions wrapper and an azd template. Commits `629a35d` and `055d445` fix two details of the CI build. Nothing is deployed. |
 | Monday 5:06 AM | Commit `cffb7da` adds the web app with its four read-only pages on the product's own API, the approval runner's routes with a Power Automate flow template, and directory reads on behalf of the signed-in admin, tested against recorded, fictional responses. It runs end to end on one machine over SQLite with a development identity. Tests: engine and MCP core 1,782 of 1,782, Azure host 141 of 141, Azure stores 102 passed and 48 skipped (39 Azure SQL cases that need a test database, and 9 cases that only the row stores support), web app 49 of 49. Nothing is deployed. |
+| Monday evening | [D-32][dec]: the author asks whether the interface was designed and what it is built on, and chooses shadcn/ui if nothing is better. The four pages move from Fluent UI to shadcn/ui (React 19, Radix primitives, Tailwind CSS 4, lucide icons) on the same Academy palette, light only. Three AI agents port the pages and the shell in parallel on a shared foundation. The type check, the 49 unit tests, the package check, the accessibility check at 1280 px and 390 px and the screenshots pass. |
 
 ## 2. What the design produced
 
@@ -111,7 +112,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Step 2 logical design, seven documents | Glossary and entities, the configuration model, the logical data model, 11 processes, the MCP tool surface, the engine and the security model. Written for both possible data stores, so the platform choice did not mean redoing it. |
 | Step 2 working defaults | The 16 internal conflicts settled, the 17 questions adopted as working defaults, and the 6 open design questions. |
 | Technical reference for readers | The overview, the Microsoft fit, and the architecture pages: configuration and presets, the data model, one page per process, the MCP tools, sign-in and security, the rules engine and the screens. |
-| Decision records | One per decision, D-01 to D-30, each with its context, options, choice and reasons. D-21 is not published. |
+| Decision records | One per decision, D-01 to D-32, each with its context, options, choice and reasons. D-21 is not published. |
 | Research notes | 24 notes at the first commit (8:17 PM), on Microsoft's tools, MCP and Copilot options, a Microsoft news sweep and a foundation study. Two more followed that evening, on governing AI development and the playbook outline. They stay private as working files. Public documents cite Microsoft Learn directly. |
 
 ### 2.2 Diagrams
@@ -153,7 +154,7 @@ This section describes the code as of the Sunday evening: an offline core on a d
 | Configuration schema and presets | exists | Four full presets (Balanced, Starter, Regulated, a Microsoft CoE baseline) and three overlays | 22 preset choices, 0 errors |
 | Logical model | exists | A machine-readable data model, plus generators for draft physical schemas | 75 entities: 66 for the first release, 4 proposals and 5 kept for later |
 | Fixtures | exists | Test cases with expected answers | 611 passed (run 2:13 PM), plus 14 replay records |
-| Page designs | exists | Overview, Application 360, dependency map and timeline, in a local React and Fluent UI preview with made-up data | Checked at 1280 px and 390 px |
+| Page designs | exists | Overview, Application 360, dependency map and timeline, in a local React and shadcn/ui preview with made-up data | Checked at 1280 px and 390 px |
 | Playbook and guidelines | exists | 16 playbook chapters, 11 processes, 20 numbered guidelines (2 retired) | Drafts. The two tracks of D-28 were not written yet at 8:45 PM. By 11:17 PM there were 23 chapters (0 to 22) and 24 numbered guidelines (2 retired), all drafts |
 | Pipeline record step samples | exists | Azure DevOps, GitHub Actions and a Power Platform Pipelines extension flow | 33 of 33 tests (run 11:57 AM) |
 | Setup and admin guides | exists | Five skeletons, 40 Microsoft Learn links, each with its check date | Skeletons |

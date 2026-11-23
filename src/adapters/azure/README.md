@@ -127,7 +127,8 @@ sign-in authority, the web app's client ID and the API scope. It holds no secret
   makes them the person entry above.
 - **Headers.** The page and `config.json` are never cached; hashed files under `/app/assets/` are cached for a year.
   The page carries a Content-Security-Policy that allows scripts, styles and calls only from this origin, calls and
-  frames to the sign-in host, inline styles (Fluent UI writes its styles at run time), no plug-ins, and no framing by
+  frames to the sign-in host, inline styles (the Radix primitives under the shadcn/ui components write a style tag at run time when a dialog
+  or popover locks page scrolling), no plug-ins, and no framing by
   another page. Outside Development, with an https public URL, every answer carries Strict-Transport-Security, so the
   page and its sign-in never load over plain HTTP. A link out of the product is rendered only for an https URL.
 - **Read-only.** The REST API serves the read tools only, because the four pages are read-only by design. An AI client

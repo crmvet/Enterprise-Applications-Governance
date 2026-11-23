@@ -57,7 +57,7 @@ The next version is designed to run in your own Azure subscription. As designed,
 |---|---|
 | One service | The API, the MCP server and the rules engine in one Azure Functions app on the Flex Consumption plan |
 | Data | Azure SQL Database, with ledger tables for records that must never change and row-level security |
-| Web app | A React and Fluent UI app with the four pages |
+| Web app | A React and shadcn/ui app with the four pages |
 | Sign-in | Microsoft Entra ID, with product roles given only through Entra groups |
 | Approval cards | A small group of Power Automate flows that send the cards and write back the answers |
 | Install | A template that your Azure team deploys in your own subscription |
@@ -107,4 +107,4 @@ It is designed to stay open source under the MIT License, with all source public
 
 ---
 
-Microsoft, Azure, Dataverse, Entra, Fluent, Outlook, Power Apps, Power Automate, Power BI, Power Platform and Teams are trademarks of the Microsoft group of companies. Claude and Claude Code are products of Anthropic. Other names are trademarks of their owners.
+Microsoft, Azure, Dataverse, Entra, Outlook, Power Apps, Power Automate, Power BI, Power Platform and Teams are trademarks of the Microsoft group of companies. Claude and Claude Code are products of Anthropic. Other names are trademarks of their owners.

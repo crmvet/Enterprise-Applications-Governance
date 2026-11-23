@@ -2,173 +2,43 @@
 // (D-13): no booking and no freeze tables. Enforcing a window stays in the deployment tool.
 // Reads (document 24 names): get_change_schedule (two weeks back, four weeks ahead), get_deployments (history, two
 // weeks back, latestOnly false), get_configuration (target-stage and deployment-route labels).
-import { Tab, TabList, Tooltip, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
-import { CalendarLtr20Regular, Rocket20Regular } from '@fluentui/react-icons';
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { CalendarDays, Rocket } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { DeploymentItem, ScheduledChange } from '../data/contracts';
 import { addDays, dayKey, dayStartMs, daysBetween, fmtDate, fmtDateTime, fmtDayMonth, fmtTime, fmtTimeRange, fmtWeekday, fmtWindow, inDays, inWindowDays, plural, utcDayRange, zoneLabel } from '../data/format';
 import { useLabels, type Labels } from '../data/labels';
 import { activeFlags, flagHelp, flagText } from '../data/meanings';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost } from '../harness';
-import { palette } from '../theme';
+import { cn } from '../lib/utils';
 import { Row, RowList } from '../components/rows';
-import { DataStamp, Empty, EnvelopeNotes, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, StatusBadge, ToneBadge, media, useNarrow } from '../components/ui';
+import { DataStamp, Empty, EnvelopeNotes, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, StatusBadge, SwitchTabs, ToneBadge, useNarrow } from '../components/blocks';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
 import { ChangeTypeBadge } from './Application360';
 
 const BACK_DAYS = 14;
 const AHEAD_DAYS = 28;
-const LANE_H = 50;
-const DANGER = '#c4314b';
-const AMBER = '#c98a00';
 
-const useStyles = makeStyles({
-  controls: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 20px', marginBottom: '14px' },
-  control: { display: 'flex', alignItems: 'center', columnGap: '4px', flexWrap: 'wrap' },
-  controlLabel: { fontSize: tokens.fontSizeBase200, color: palette.navy3, marginRight: '4px' },
-  chart: { display: 'grid', gridTemplateColumns: '196px minmax(0, 1fr)', borderTop: `1px solid ${palette.line}` },
-  axisLabel: { height: '34px', borderBottom: `1px solid ${palette.line}` },
-  axis: { position: 'relative', height: '34px', borderBottom: `1px solid ${palette.line}` },
-  tick: { position: 'absolute', top: '8px', fontSize: tokens.fontSizeBase200, color: palette.navy3, transform: 'translateX(-50%)', whiteSpace: 'nowrap' },
-  todayPill: {
-    position: 'absolute',
-    top: '6px',
-    transform: 'translateX(-50%)',
-    fontSize: tokens.fontSizeBase100,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy,
-    backgroundColor: palette.gold,
-    borderRadius: '10px',
-    padding: '1px 8px',
-    whiteSpace: 'nowrap',
-    zIndex: 2,
-  },
-  groupLabel: {
-    gridColumn: '1 / -1',
-    padding: '6px 0 4px',
-    fontSize: tokens.fontSizeBase100,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy3,
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-    borderBottom: `1px solid ${palette.line}`,
-    backgroundColor: '#fafbfd',
-    paddingLeft: '2px',
-  },
-  laneLabel: {
-    height: `${LANE_H}px`,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    paddingLeft: '2px',
-    paddingRight: '12px',
-    borderBottom: `1px solid ${palette.line}`,
-    minWidth: 0,
-  },
-  laneName: { fontSize: tokens.fontSizeBase300, fontWeight: tokens.fontWeightSemibold, color: palette.navy, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  lane: { position: 'relative', height: `${LANE_H}px`, borderBottom: `1px solid ${palette.line}` },
-  past: { position: 'absolute', top: 0, bottom: 0, left: 0, backgroundColor: '#f5f7fa' },
-  grid: { position: 'absolute', top: 0, bottom: 0, width: '1px', backgroundColor: '#e7ecf2' },
-  today: { position: 'absolute', top: 0, bottom: 0, width: '2px', marginLeft: '-1px', backgroundColor: palette.gold, zIndex: 1 },
-  window: {
-    position: 'absolute',
-    top: '9px',
-    height: '14px',
-    minWidth: '10px',
-    borderRadius: '4px',
-    boxSizing: 'border-box',
-    cursor: 'default',
-    zIndex: 2,
-    ':focus-visible': { outline: `2px solid ${palette.navy}`, outlineOffset: '2px' },
-  },
-  wAuthorized: { backgroundColor: palette.blue },
-  wPending: { backgroundColor: palette.white, border: `2px solid ${palette.blue}` },
-  wDraft: { backgroundColor: palette.white, border: `2px solid ${palette.muted}` },
-  wClosed: { backgroundColor: '#a9c1dc' },
-  wEmergency: { boxShadow: `0 0 0 2px ${DANGER}` },
-  windowText: {
-    position: 'absolute',
-    top: '6px',
-    fontSize: tokens.fontSizeBase200,
-    color: palette.navy2,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    pointerEvents: 'none',
-    zIndex: 2,
-  },
-  marker: {
-    position: 'absolute',
-    top: '29px',
-    width: '12px',
-    height: '12px',
-    marginLeft: '-6px',
-    borderRadius: '50%',
-    boxSizing: 'border-box',
-    border: `2px solid ${palette.white}`,
-    cursor: 'default',
-    zIndex: 3,
-    ':focus-visible': { outline: `2px solid ${palette.navy}`, outlineOffset: '2px' },
-  },
-  mSucceeded: { backgroundColor: palette.navy },
-  mPartly: { backgroundColor: AMBER },
-  mFailed: { backgroundColor: DANGER },
-  mOther: { backgroundColor: palette.muted },
-  mFlagged: { boxShadow: `0 0 0 3px ${palette.gold}` },
-  tip: { display: 'flex', flexDirection: 'column', rowGap: '2px', maxWidth: '280px' },
-  tipTitle: { fontWeight: tokens.fontWeightSemibold },
-  legend: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: '8px 16px',
-    paddingTop: '12px',
-    fontSize: tokens.fontSizeBase200,
-    color: palette.navy2,
-  },
-  legendItem: { display: 'inline-flex', alignItems: 'center', columnGap: '6px' },
-  legendBar: { display: 'inline-block', width: '22px', height: '10px', borderRadius: '3px', boxSizing: 'border-box' },
-  legendDot: { display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%' },
-  lists: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-    gap: '16px',
-    marginTop: '16px',
-    alignItems: 'start',
-    [media.medium]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-  },
-  dayHead: {
-    margin: '14px 0 2px',
-    fontSize: tokens.fontSizeBase200,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy3,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-    ':first-child': { marginTop: 0 },
-  },
-  todayRule: {
-    display: 'flex',
-    alignItems: 'center',
-    columnGap: '8px',
-    margin: '14px 0 4px',
-    fontSize: tokens.fontSizeBase200,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy,
-    '::before': { content: '""', height: '2px', width: '16px', backgroundColor: palette.gold },
-    '::after': { content: '""', height: '2px', flexGrow: 1, backgroundColor: palette.gold },
-  },
-  agendaIcon: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    display: 'grid',
-    placeItems: 'center',
-    backgroundColor: palette.lightBlue,
-    color: palette.blueDark,
-  },
-  agendaIconDeploy: { backgroundColor: palette.lightGrey, color: palette.navy2 },
-  flags: { display: 'contents' },
-});
+// The chart marks, shared by the chart and its legend. Lanes are 50 px high (h-[50px]). Change windows: solid blue
+// when authorized, hollow blue when not yet, hollow gray for a draft, pale blue when closed, a red ring (c4314b) for an
+// emergency. Deployments: navy succeeded, amber (c98a00) partly succeeded, red failed, a gold ring when flagged.
+const windowTone = {
+  authorized: 'bg-primary',
+  pending: 'border-2 border-primary bg-card',
+  draft: 'border-2 border-bar-muted bg-card',
+  closed: 'bg-[#a9c1dc]',
+};
+const emergencyRing = 'ring-2 ring-[#c4314b]';
+const markerTone = {
+  succeeded: 'bg-navy',
+  partly: 'bg-[#c98a00]',
+  failed: 'bg-[#c4314b]',
+  other: 'bg-bar-muted',
+};
+const flaggedRing = 'ring-3 ring-gold';
+
+// Day headings in the agenda.
+const smallHead = 'text-xs font-semibold tracking-[0.04em] text-navy-3 uppercase';
 
 interface Lane {
   key: string;
@@ -177,7 +47,6 @@ interface Lane {
 }
 
 export function Timeline() {
-  const s = useStyles();
   const host = useHost();
   const narrow = useNarrow();
   const from = addDays(host.today, -BACK_DAYS);
@@ -219,21 +88,24 @@ export function Timeline() {
         meta={<DataStamp envelope={changes.status === 'done' ? changes.envelope : undefined} />}
       />
 
-      <div className={s.controls}>
-        <div className={s.control}>
-          <span className={s.controlLabel}>Targets</span>
-          <TabList size="small" appearance="subtle-circular" selectedValue={stage} onTabSelect={(_, d) => setStage(String(d.value))} aria-label="Target stage">
-            <Tab value="all">All</Tab>
-            {stageOptions.map(k => <Tab key={k} value={k}>{stages.label(k)}</Tab>)}
-          </TabList>
-        </div>
-        <div className={s.control}>
-          <span className={s.controlLabel}>View</span>
-          <TabList size="small" appearance="subtle-circular" selectedValue={shownView} onTabSelect={(_, d) => setView(d.value as 'chart' | 'agenda')} aria-label="View">
-            <Tab value="chart">Chart</Tab>
-            <Tab value="agenda">Agenda</Tab>
-          </TabList>
-        </div>
+      <div className="mb-3.5 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <SwitchTabs
+          label="Targets"
+          ariaLabel="Target stage"
+          value={stage}
+          onChange={setStage}
+          options={[{ value: 'all', label: 'All' }, ...stageOptions.map(k => ({ value: k, label: stages.label(k) }))]}
+        />
+        <SwitchTabs<'chart' | 'agenda'>
+          label="View"
+          ariaLabel="View"
+          value={shownView}
+          onChange={setView}
+          options={[
+            { value: 'chart', label: 'Chart' },
+            { value: 'agenda', label: 'Agenda' },
+          ]}
+        />
       </div>
 
       {shownView === 'chart' ? (
@@ -248,7 +120,7 @@ export function Timeline() {
               </>
             )}
           </Panel>
-          <div className={s.lists}>
+          <div className="mt-4 grid grid-cols-2 items-start gap-4 medium:grid-cols-1">
             <Panel title="Planned changes" count={dataOf(changes) ? shownChanges.length : undefined} state={changes} skeletonRows={6}>
               {data => (
                 <>
@@ -315,7 +187,6 @@ function lanesOf(changes: ScheduledChange[], deployments: DeploymentItem[], stag
 }
 
 function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[]; from: string; to: string; today: string; stages: Labels; routes: Labels }) {
-  const s = useStyles();
   // Day boundaries are midnights in the display zone, so a window shows on the day the viewer reads.
   const start = dayStartMs(props.from);
   const end = dayStartMs(addDays(props.to, 1));
@@ -340,7 +211,11 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
   for (const lane of lanes) {
     const group = lane.key === 'none' ? 'No target yet' : props.stages.label(lane.stageKey);
     if (group !== lastGroup) {
-      rows.push(<div key={`g-${group}`} className={s.groupLabel}>{group}</div>);
+      rows.push(
+        <div key={`g-${group}`} className="col-span-full border-b border-line bg-[#fafbfd] pt-1.5 pb-1 pl-0.5 text-[10px] font-semibold tracking-[0.06em] text-navy-3 uppercase">
+          {group}
+        </div>,
+      );
       lastGroup = group;
     }
     const laneChanges = props.changes
@@ -348,37 +223,51 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
       .sort((a, b) => Date.parse(a.windowStart!) - Date.parse(b.windowStart!));
     const laneDeploys = props.deployments.filter(d => d.deploymentTargetId === lane.key);
     rows.push(
-      <div key={`l-${lane.key}`} className={s.laneLabel}>
-        <span className={s.laneName} title={lane.label}>{lane.key === 'none' ? 'Target to come' : lane.label}</span>
+      <div key={`l-${lane.key}`} className="flex h-[50px] min-w-0 flex-col justify-center border-b border-line pr-3 pl-0.5">
+        <span className="truncate text-sm font-semibold text-navy" title={lane.label}>{lane.key === 'none' ? 'Target to come' : lane.label}</span>
       </div>,
     );
     rows.push(
-      <div key={`r-${lane.key}`} className={s.lane}>
-        <div className={s.past} style={{ width: `${todayPct}%` }} />
-        {ticks.map(t => <div key={t} className={s.grid} style={{ left: `${dayPct(t)}%` }} />)}
-        <div className={s.today} style={{ left: `${todayPct}%` }} />
+      <div key={`r-${lane.key}`} className="relative h-[50px] border-b border-line">
+        <div className="absolute inset-y-0 left-0 bg-[#f5f7fa]" style={{ width: `${todayPct}%` }} />
+        {ticks.map(t => <div key={t} className="absolute inset-y-0 w-px bg-[#e7ecf2]" style={{ left: `${dayPct(t)}%` }} />)}
+        <div className="absolute inset-y-0 z-[1] -ml-px w-0.5 bg-gold" style={{ left: `${todayPct}%` }} />
         {laneChanges.map((c, i) => {
           const x1 = pct(c.windowStart!);
           const x2 = pct(c.windowEnd!);
           const next = laneChanges[i + 1];
           const room = (next ? pct(next.windowStart!) : 100) - x2;
           const kind =
-            c.status.meaning === 'completed' ? s.wClosed
-              : c.status.meaning === 'draft' ? s.wDraft
-                : c.authorized ? s.wAuthorized : s.wPending;
+            c.status.meaning === 'completed' ? windowTone.closed
+              : c.status.meaning === 'draft' ? windowTone.draft
+                : c.authorized ? windowTone.authorized : windowTone.pending;
           return (
             <span key={c.changeRequestId}>
-              <Tooltip relationship="description" withArrow content={<ChangeTip change={c} stages={props.stages} />}>
-                <span
-                  tabIndex={0}
-                  role="img"
-                  aria-label={`Change window: ${c.title}, ${fmtWindow(c.windowStart, c.windowEnd)}, ${c.status.label}`}
-                  className={mergeClasses(s.window, kind, c.changeType.key === 'emergency' && s.wEmergency)}
-                  style={{ left: `${x1}%`, width: `${Math.max(0, x2 - x1)}%` }}
-                />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    tabIndex={0}
+                    role="img"
+                    aria-label={`Change window: ${c.title}, ${fmtWindow(c.windowStart, c.windowEnd)}, ${c.status.label}`}
+                    className={cn(
+                      'absolute top-[9px] z-[2] h-3.5 min-w-2.5 cursor-default rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy',
+                      kind,
+                      c.changeType.key === 'emergency' && emergencyRing,
+                    )}
+                    style={{ left: `${x1}%`, width: `${Math.max(0, x2 - x1)}%` }}
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[280px]">
+                  <ChangeTip change={c} stages={props.stages} />
+                </TooltipContent>
               </Tooltip>
               {Date.parse(c.windowEnd!) >= todayStart && room > 7 && (
-                <span className={s.windowText} style={{ left: `calc(${x2}% + 14px)`, maxWidth: `calc(${room}% - 22px)` }}>{c.title}</span>
+                <span
+                  className="pointer-events-none absolute top-1.5 z-[2] truncate text-xs text-navy-2"
+                  style={{ left: `calc(${x2}% + 14px)`, maxWidth: `calc(${room}% - 22px)` }}
+                >
+                  {c.title}
+                </span>
               )}
             </span>
           );
@@ -386,16 +275,25 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
         {laneDeploys.map(d => {
           const flagged = activeFlags(d.flags).length > 0;
           const m = d.result.meaning;
-          const kind = m === 'succeeded' ? s.mSucceeded : m === 'partly-succeeded' ? s.mPartly : m === 'failed' ? s.mFailed : s.mOther;
+          const kind = m === 'succeeded' ? markerTone.succeeded : m === 'partly-succeeded' ? markerTone.partly : m === 'failed' ? markerTone.failed : markerTone.other;
           return (
-            <Tooltip key={d.deploymentRecordId} relationship="description" withArrow content={<DeployTip deployment={d} routes={props.routes} />}>
-              <span
-                tabIndex={0}
-                role="img"
-                aria-label={`Deployment: ${d.applicationName} ${d.artifactVersion}, ${d.result.label}, ${fmtDateTime(d.finishedOn)}${flagged ? ', flagged' : ''}`}
-                className={mergeClasses(s.marker, kind, flagged && s.mFlagged)}
-                style={{ left: `${pct(d.finishedOn)}%` }}
-              />
+            <Tooltip key={d.deploymentRecordId}>
+              <TooltipTrigger asChild>
+                <span
+                  tabIndex={0}
+                  role="img"
+                  aria-label={`Deployment: ${d.applicationName} ${d.artifactVersion}, ${d.result.label}, ${fmtDateTime(d.finishedOn)}${flagged ? ', flagged' : ''}`}
+                  className={cn(
+                    'absolute top-[29px] z-[3] -ml-1.5 size-3 cursor-default rounded-full border-2 border-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy',
+                    kind,
+                    flagged && flaggedRing,
+                  )}
+                  style={{ left: `${pct(d.finishedOn)}%` }}
+                />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <DeployTip deployment={d} routes={props.routes} />
+              </TooltipContent>
             </Tooltip>
           );
         })}
@@ -404,11 +302,20 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
   }
 
   return (
-    <div className={s.chart} role="group" aria-label="Timeline chart. The lists below hold the same items.">
-      <div className={s.axisLabel} />
-      <div className={s.axis}>
-        {ticks.filter(t => Math.abs(dayPct(t) - todayPct) > 6).map(t => <span key={t} className={s.tick} style={{ left: `${dayPct(t)}%` }}>{fmtDayMonth(t)}</span>)}
-        <span className={s.todayPill} style={{ left: `${todayPct}%` }}>Today, {fmtDayMonth(props.today)}</span>
+    <div className="grid grid-cols-[196px_minmax(0,1fr)] border-t border-line" role="group" aria-label="Timeline chart. The lists below hold the same items.">
+      <div className="h-[34px] border-b border-line" />
+      <div className="relative h-[34px] border-b border-line">
+        {ticks.filter(t => Math.abs(dayPct(t) - todayPct) > 6).map(t => (
+          <span key={t} className="absolute top-2 -translate-x-1/2 text-xs whitespace-nowrap text-navy-3" style={{ left: `${dayPct(t)}%` }}>
+            {fmtDayMonth(t)}
+          </span>
+        ))}
+        <span
+          className="absolute top-1.5 z-[2] -translate-x-1/2 rounded-full bg-gold px-2 py-px text-[10px] leading-4 font-semibold whitespace-nowrap text-navy"
+          style={{ left: `${todayPct}%` }}
+        >
+          Today, {fmtDayMonth(props.today)}
+        </span>
       </div>
       {rows}
     </div>
@@ -416,10 +323,9 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
 }
 
 function ChangeTip({ change, stages }: { change: ScheduledChange; stages: Labels }) {
-  const s = useStyles();
   return (
-    <div className={s.tip}>
-      <span className={s.tipTitle}>{change.title}</span>
+    <div className="flex flex-col gap-y-0.5">
+      <span className="font-semibold">{change.title}</span>
       <span>{change.applicationName} to {change.target ? `${change.target.label} (${stages.label(change.target.targetStageKey)})` : 'no target yet'}</span>
       <span>{fmtWindow(change.windowStart, change.windowEnd)}</span>
       <span>{change.changeType.label} change, {change.status.label.toLowerCase()}. {authorizationText(change)}.</span>
@@ -428,11 +334,10 @@ function ChangeTip({ change, stages }: { change: ScheduledChange; stages: Labels
 }
 
 function DeployTip({ deployment, routes }: { deployment: DeploymentItem; routes: Labels }) {
-  const s = useStyles();
   const flags = activeFlags(deployment.flags);
   return (
-    <div className={s.tip}>
-      <span className={s.tipTitle}>{deployment.applicationName} {deployment.artifactVersion}</span>
+    <div className="flex flex-col gap-y-0.5">
+      <span className="font-semibold">{deployment.applicationName} {deployment.artifactVersion}</span>
       <span>{deployment.result.label}, {fmtDateTime(deployment.finishedOn)}</span>
       <span>Recorded by: {routes.label(deployment.route.key)}</span>
       {flags.length > 0 && <span>Flags: {flags.map(f => flagText[f]).join(', ')}</span>}
@@ -441,20 +346,20 @@ function DeployTip({ deployment, routes }: { deployment: DeploymentItem; routes:
 }
 
 function Legend() {
-  const s = useStyles();
-  const bar = (style: CSSProperties) => <span className={s.legendBar} style={style} aria-hidden />;
-  const dot = (style: CSSProperties) => <span className={s.legendDot} style={style} aria-hidden />;
+  const bar = (tone: string) => <span className={cn('inline-block h-2.5 w-[22px] rounded-[3px]', tone)} aria-hidden />;
+  const dot = (tone: string) => <span className={cn('inline-block size-2.5 rounded-full', tone)} aria-hidden />;
+  const item = 'inline-flex items-center gap-x-1.5';
   return (
-    <div className={s.legend} role="group" aria-label="Legend">
-      <span className={s.legendItem}>{bar({ backgroundColor: palette.blue })}Authorized window</span>
-      <span className={s.legendItem}>{bar({ border: `2px solid ${palette.blue}`, backgroundColor: palette.white })}Not authorized yet</span>
-      <span className={s.legendItem}>{bar({ border: `2px solid ${palette.muted}`, backgroundColor: palette.white })}Draft</span>
-      <span className={s.legendItem}>{bar({ backgroundColor: '#a9c1dc' })}Closed</span>
-      <span className={s.legendItem}>{bar({ backgroundColor: palette.blue, boxShadow: `0 0 0 2px ${DANGER}` })}Emergency</span>
-      <span className={s.legendItem}>{dot({ backgroundColor: palette.navy })}Succeeded</span>
-      <span className={s.legendItem}>{dot({ backgroundColor: AMBER })}Partly succeeded</span>
-      <span className={s.legendItem}>{dot({ backgroundColor: DANGER })}Failed</span>
-      <span className={s.legendItem}>{dot({ backgroundColor: palette.navy, boxShadow: `0 0 0 3px ${palette.gold}` })}Flagged</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 text-xs text-navy-2" role="group" aria-label="Legend">
+      <span className={item}>{bar(windowTone.authorized)}Authorized window</span>
+      <span className={item}>{bar(windowTone.pending)}Not authorized yet</span>
+      <span className={item}>{bar(windowTone.draft)}Draft</span>
+      <span className={item}>{bar(windowTone.closed)}Closed</span>
+      <span className={item}>{bar(cn(windowTone.authorized, emergencyRing))}Emergency</span>
+      <span className={item}>{dot(markerTone.succeeded)}Succeeded</span>
+      <span className={item}>{dot(markerTone.partly)}Partly succeeded</span>
+      <span className={item}>{dot(markerTone.failed)}Failed</span>
+      <span className={item}>{dot(cn(markerTone.succeeded, flaggedRing))}Flagged</span>
     </div>
   );
 }
@@ -481,14 +386,18 @@ function ChangeRow({ change, stages }: { change: ScheduledChange; stages: Labels
 }
 
 function FlagBadges({ deployment }: { deployment: DeploymentItem }) {
-  const s = useStyles();
   const flags = activeFlags(deployment.flags);
   if (!flags.length) return null;
   return (
-    <span className={s.flags}>
+    <span className="contents">
       {flags.map(f => (
-        <Tooltip key={f} content={flagHelp[f]} relationship="description" withArrow>
-          <span tabIndex={0}><ToneBadge tone="warning">{flagText[f]}</ToneBadge></span>
+        <Tooltip key={f}>
+          <TooltipTrigger asChild>
+            <span tabIndex={0} className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring">
+              <ToneBadge tone="warning">{flagText[f]}</ToneBadge>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-[280px]">{flagHelp[f]}</TooltipContent>
         </Tooltip>
       ))}
     </span>
@@ -513,8 +422,11 @@ type AgendaItem =
   | { at: string; kind: 'change'; change: ScheduledChange }
   | { at: string; kind: 'deploy'; deployment: DeploymentItem };
 
+// The gold "Today" rule between the past and the coming days.
+const todayRule = 'mt-3.5 mb-1 flex items-center gap-x-2 text-xs font-semibold text-navy before:h-0.5 before:w-4 before:bg-gold after:h-0.5 after:grow after:bg-gold';
+const agendaIcon = 'grid size-8 place-items-center rounded-full';
+
 function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem[]; today: string; stages: Labels; routes: Labels }) {
-  const s = useStyles();
   const items: AgendaItem[] = [
     ...props.changes.filter(c => c.windowStart).map(c => ({ at: c.windowStart!, kind: 'change' as const, change: c })),
     ...props.deployments.map(d => ({ at: d.finishedOn, kind: 'deploy' as const, deployment: d })),
@@ -533,20 +445,20 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
     const d = dayKey(item.at);
     if (!todayShown && d >= props.today) {
       flush();
-      out.push(<div key="today" className={s.todayRule}>Today, {fmtDayMonth(props.today)}</div>);
+      out.push(<div key="today" className={todayRule}>Today, {fmtDayMonth(props.today)}</div>);
       todayShown = true;
     }
     if (d !== day) {
       flush();
       day = d;
-      out.push(<h3 key={`h-${d}`} className={s.dayHead}>{fmtWeekday(d)}</h3>);
+      out.push(<h3 key={`h-${d}`} className={cn(smallHead, 'mt-3.5 mb-0.5 first:mt-0')}>{fmtWeekday(d)}</h3>);
     }
     if (item.kind === 'change') {
       const c = item.change;
       group.push(
         <Row
           key={c.changeRequestId}
-          lead={<span className={s.agendaIcon} aria-hidden><CalendarLtr20Regular /></span>}
+          lead={<span className={cn(agendaIcon, 'bg-secondary text-brand-dark')} aria-hidden><CalendarDays className="size-4.5" aria-hidden /></span>}
           primary={c.title}
           secondary={`${c.applicationName} to ${c.target?.label ?? 'no target yet'}`}
           tertiary={c.windowStart && c.windowEnd ? `${fmtTimeRange(c.windowStart, c.windowEnd)} ${zoneLabel()}. ${authorizationText(c)}.` : `${authorizationText(c)}.`}
@@ -558,7 +470,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
       group.push(
         <Row
           key={dep.deploymentRecordId}
-          lead={<span className={mergeClasses(s.agendaIcon, s.agendaIconDeploy)} aria-hidden><Rocket20Regular /></span>}
+          lead={<span className={cn(agendaIcon, 'bg-background text-navy-2')} aria-hidden><Rocket className="size-4.5" aria-hidden /></span>}
           primary={`${dep.applicationName ?? 'Unknown application'} ${dep.artifactVersion}`}
           secondary={`Deployed to ${dep.targetLabel ?? 'an unknown target'} at ${fmtTime(dep.finishedOn)} ${zoneLabel()}`}
           tertiary={`Recorded by: ${props.routes.label(dep.route.key)}`}
@@ -568,7 +480,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
     }
   }
   flush();
-  if (!todayShown) out.push(<div key="today" className={s.todayRule}>Today, {fmtDayMonth(props.today)}</div>);
+  if (!todayShown) out.push(<div key="today" className={todayRule}>Today, {fmtDayMonth(props.today)}</div>);
   return (
     <>
       <Muted>{plural(items.length, 'item', 'items')}, oldest first. Times in {zoneLabel()}.</Muted>

@@ -22,9 +22,9 @@
 //
 // --axe <absolute file> also runs axe-core from that file (the person running the check provides it; axe-core is
 // MPL-2.0, so it is never a dependency of this package) with the WCAG 2.0, 2.1 and 2.2 A and AA rules, and lists its
-// violations next to this script's own. It leaves out Fluent UI's focus guards (the hidden, focusable "i" elements
-// marked data-tabster-dummy that keep keyboard focus inside a tab list or toolbar), which axe would report as
-// aria-hidden-focus: they hand focus on at once and never hold it.
+// violations next to this script's own. It leaves out Radix's focus guards (the hidden, focusable spans marked
+// data-radix-focus-guard that an open dialog or popover puts around itself to keep keyboard focus inside), which axe
+// would report as aria-hidden-focus: they hand focus on at once and never hold it.
 //
 // Usage, from Git Bash in src/ui/harness (Chrome on Windows needs absolute Windows paths, so cygpath converts them):
 //   node scripts/a11y.mjs --chrome "$(cygpath -aw '/c/Program Files/Google/Chrome/Application/chrome.exe')"
@@ -215,7 +215,7 @@ async function waitReady(cdp, sessionId, inflight) {
   let stable = 0;
   let last = '';
   for (let i = 0; i < 300; i++) {
-    const v = await evaluate(cdp, sessionId, `JSON.stringify([document.readyState, document.fonts.status, document.querySelectorAll('[aria-busy="true"], .fui-Spinner').length, document.body ? document.body.innerText.length : 0])`);
+    const v = await evaluate(cdp, sessionId, `JSON.stringify([document.readyState, document.fonts.status, document.querySelectorAll('[aria-busy="true"]').length, document.body ? document.body.innerText.length : 0])`);
     const state = `${v}|${inflight.size}`;
     const [ready, fonts, busy] = JSON.parse(v);
     if (ready === 'complete' && fonts === 'loaded' && busy === 0 && inflight.size === 0 && state === last) stable++;
@@ -393,11 +393,11 @@ async function namelessNodes(cdp, sessionId) {
 
 // Walks the page with the Tab key from the top, as a keyboard user does. Every stop must be shown, and focus must move
 // on: three presses on one element, or a long walk that never gets back to the start and circles a few elements, is a
-// keyboard trap. Fluent UI's focus guards hand focus on at once and are not counted as stops.
+// keyboard trap. Radix's focus guards hand focus on at once and are not counted as stops.
 const FOCUS_STATE = String.raw`(() => {
   const e = document.activeElement;
   if (!e || e === document.body || e === document.documentElement) return JSON.stringify(null);
-  if (e.hasAttribute('data-tabster-dummy')) return JSON.stringify({ guard: true });
+  if (e.hasAttribute('data-radix-focus-guard')) return JSON.stringify({ guard: true });
   const r = e.getBoundingClientRect();
   let hidden = false;
   for (let p = e; p && p.nodeType === 1; p = p.parentElement) {
@@ -445,7 +445,7 @@ async function keyboardWalk(cdp, sessionId, maxPresses = 150) {
 async function runAxe(cdp, sessionId, source) {
   const loaded = await evaluate(cdp, sessionId, 'typeof window.axe');
   if (loaded !== 'object') await evaluate(cdp, sessionId, source);
-  const text = await evaluate(cdp, sessionId, `axe.run({ include: [['body']], exclude: [['[data-tabster-dummy]']] }, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] }, resultTypes: ['violations'] }).then(r => JSON.stringify(r.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.map(n => ({ target: n.target.join(' '), summary: (n.failureSummary || '').replace(/\\s+/g, ' ').slice(0, 240) })) }))))`, true);
+  const text = await evaluate(cdp, sessionId, `axe.run({ include: [['body']], exclude: [['[data-radix-focus-guard]']] }, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] }, resultTypes: ['violations'] }).then(r => JSON.stringify(r.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.map(n => ({ target: n.target.join(' '), summary: (n.failureSummary || '').replace(/\\s+/g, ' ').slice(0, 240) })) }))))`, true);
   const out = [];
   for (const v of JSON.parse(text)) {
     for (const n of v.nodes) out.push({ rule: `axe:${v.id}`, target: n.target, detail: `${v.impact ?? ''} ${v.help}. ${n.summary}`.trim() });

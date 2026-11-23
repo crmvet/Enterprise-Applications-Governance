@@ -43,6 +43,10 @@ At the same time, D-15, D-16 and D-17 had dropped three packages. What the first
 - D-26 chose Azure for the first release. The four page designs became a React and Fluent UI web app with the same designs: Overview, Application 360, the dependency map and the timeline. The web app's pages are read-only. Writes go through the API, the MCP tools and approval cards.
 - Dataverse forms and views apply only to a possible later Dataverse edition. That is an option, not a plan.
 
+## Amendment, 2026-11-23
+
+[D-32](D-32-the-web-app-uses-shadcn-ui.md) builds the four pages on shadcn/ui instead of Fluent UI. The designs, the Academy palette and the light-only rule stay.
+
 ## Related
 
 - [D-03](D-03-change-gate-record-or-stop.md), [D-15](D-15-gap-check-instead-of-inventory-import.md), [D-16](D-16-no-copilot-or-teams-agent.md), [D-17](D-17-track-documentation-do-not-write-it.md), [D-19](D-19-never-build-pipelines.md), [D-22](D-22-choose-the-foundation-by-need-and-running-cost.md), [D-26](D-26-first-release-runs-in-the-clients-azure.md)

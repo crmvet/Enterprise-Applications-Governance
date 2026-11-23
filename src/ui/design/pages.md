@@ -1,6 +1,6 @@
 # Page designs: Overview, Application 360, dependency map, timeline
 
-The four pages of the product's interface (D-18), as React and Fluent UI v9 components. One source gives two builds:
+The four pages of the product's interface (D-18), as React components on shadcn/ui (Radix primitives and Tailwind CSS; D-32). One source gives two builds:
 the local harness on fictional fixture JSON, and the web app of binding C on the product's REST API (section 8).
 The web app is the first release design. Binding A (generative pages in a model-driven app) belongs to a possible later
 Dataverse edition, not planned (D-26). The binding A notes below and each section's fallback apply only to that
@@ -16,7 +16,7 @@ Screenshots of every page at 1280 px and 390 px: `src/ui/screenshots/`.
 
 | Rule | How the pages follow it |
 |---|---|
-| Light only (D-18) | One Fluent light theme built on the Academy palette (`harness/src/theme.ts`). There is no dark theme and no theme switch. Page background light gray `F3F5F8`, panels white, text navy `0A2A4A`, brand blue `0071DC`, gold `FFC221` for attention and for "today" |
+| Light only (D-18) | One light theme: the Academy palette as shadcn/ui tokens (`harness/src/styles/globals.css`). There is no dark theme and no theme switch. Page background light gray `F3F5F8`, panels white, text navy `0A2A4A`, brand blue `0071DC`, gold `FFC221` for attention and for "today" |
 | Read-only | No page writes. Changes go through an AI client on the product's MCP server or a pipeline's record step, and decisions are made on approval cards. The engine checks every write. Application 360 says so on the page |
 | Numbers come from the server | The pages count nothing. Every figure is a field of a tool output (stored rollups at scale). A list shown next to its count is the same server list. Until a figure is read, its tile shows a placeholder, never a zero |
 | Every number drills to rows | KPI tiles and bars hand a drill-down to the host (`Host.drill`). In a possible later Dataverse edition, not planned, binding A would open the matching view. The web app opens the applications list for the Applications tile and the stage, tier and kind bars, and shows the request for an AI client for the others. The harness shows a toast |
@@ -152,7 +152,7 @@ Questions 4 and 9 do not reach these read-only pages: no page proposes configura
 
 ## 7. Open points
 
-1. Reusing these components inside a generative page is UNVERIFIED (React and Fluent versions of the page runtime,
+1. Reusing these components inside a generative page is UNVERIFIED (React and UI library versions of the page runtime,
    custom API calls are preview; document 25, source L16). A test in a real environment should load one panel in a page.
 2. `get_application_card` returns no portfolio, so Application 360 shows none. Document 24 could add it to the card.
 3. A stage stepper on Application 360 needs the configured stage list (`get_configuration` for `lifecycle-stage`, a third call).

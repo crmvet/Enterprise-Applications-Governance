@@ -2,8 +2,7 @@
 // Reads (document 24 names): get_portfolio_summary three times (by stage with the owner gap list, by tier, by kind),
 // get_deployments (flagged, last 30 days), get_change_schedule (next 14 days), get_configuration (owner-role labels).
 // Every number comes from the server (stored rollups at scale). The page counts nothing itself.
-import { Badge, Link, Tooltip, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
-import { ArrowRight16Regular, PersonWarning20Regular, ShieldError20Regular } from '@fluentui/react-icons';
+import { ArrowRight, ShieldAlert, UserRoundX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ScheduledChange } from '../data/contracts';
 import { addDays, dayOfMonth, fmtDate, fmtMonth, fmtTimeRange, fmtWeekday, fmtWeekdayOnly, inDays, inWindowDays, plural, utcDayRange, zoneLabel } from '../data/format';
@@ -11,98 +10,19 @@ import { useLabels } from '../data/labels';
 import { activeFlags, flagHelp, flagText } from '../data/meanings';
 import { dataOf, useTool, type ToolState } from '../data/toolClient';
 import { useHost } from '../harness';
-import { palette } from '../theme';
-import { BarList, DataStamp, Empty, KpiTile, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, ToneBadge, media } from '../components/ui';
+import { cn } from '../lib/utils';
+import { BarList, DataStamp, Empty, KpiTile, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, TextLink, ToneBadge } from '../components/blocks';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
+import { ChangeTypeBadge } from './Application360';
 
-const useStyles = makeStyles({
-  kpis: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-    gap: '12px',
-    marginBottom: '16px',
-    [media.medium]: { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' },
-    [media.narrow]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' },
-  },
-  heroTile: { [media.narrow]: { gridColumn: '1 / -1' } },
-  row: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)',
-    gap: '16px',
-    marginBottom: '16px',
-    alignItems: 'stretch',
-    [media.medium]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-    [media.narrow]: { gap: '12px', marginBottom: '12px' },
-  },
-  stack: { display: 'flex', flexDirection: 'column', rowGap: '16px', minWidth: 0, [media.narrow]: { rowGap: '12px' } },
-  group: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
-  groupTitle: {
-    margin: '4px 0 6px',
-    fontSize: tokens.fontSizeBase200,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy3,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-  },
-  item: {
-    display: 'grid',
-    gridTemplateColumns: '36px minmax(0, 1fr)',
-    columnGap: '12px',
-    padding: '10px 0',
-    borderTop: `1px solid ${palette.line}`,
-  },
-  firstItem: { borderTop: 'none', paddingTop: '4px' },
-  itemIcon: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '50%',
-    display: 'grid',
-    placeItems: 'center',
-    backgroundColor: palette.lightGold,
-    color: palette.goldDark,
-  },
-  itemBody: { display: 'flex', flexDirection: 'column', rowGap: '3px', minWidth: 0 },
-  itemTop: { display: 'flex', alignItems: 'baseline', columnGap: '8px', flexWrap: 'wrap', rowGap: '2px' },
-  itemName: { fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase300 },
-  itemText: { fontSize: tokens.fontSizeBase300, color: palette.navy2 },
-  badges: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '3px' },
-  change: {
-    display: 'grid',
-    gridTemplateColumns: '52px minmax(0, 1fr)',
-    columnGap: '12px',
-    padding: '10px 0',
-    borderTop: `1px solid ${palette.line}`,
-  },
-  dateChip: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '52px',
-    height: '56px',
-    borderRadius: '8px',
-    backgroundColor: palette.lightBlue,
-    color: palette.navy,
-    lineHeight: 1.1,
-  },
-  dateDay: { fontSize: '20px', fontWeight: tokens.fontWeightSemibold },
-  dateWeek: { fontSize: tokens.fontSizeBase100, textTransform: 'uppercase', letterSpacing: '0.05em', color: palette.navy2 },
-  // Read by screen readers only: the date chip is drawn for the eye and hidden from them.
-  srOnly: {
-    position: 'absolute',
-    width: '1px',
-    height: '1px',
-    margin: '-1px',
-    padding: 0,
-    border: 0,
-    overflow: 'hidden',
-    clip: 'rect(0 0 0 0)',
-    whiteSpace: 'nowrap',
-  },
-  footerLink: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', fontWeight: tokens.fontWeightSemibold },
-});
+// Two columns side by side; one column below 1024 px.
+const rowClass = 'mb-4 grid grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-stretch gap-4 medium:grid-cols-1 narrow:mb-3 narrow:gap-3';
+const groupTitleClass = 'mt-1 mb-1.5 text-xs font-semibold tracking-[0.04em] text-navy-3 uppercase';
+const itemBodyClass = 'flex min-w-0 flex-col gap-y-[3px]';
+const itemNameClass = 'text-sm font-semibold text-navy';
+const badgesClass = 'mt-[3px] flex flex-wrap gap-1.5';
 
 export function Overview() {
-  const s = useStyles();
   const host = useHost();
   const today = host.today;
   const byStage = useTool('get_portfolio_summary', { groupBy: 'stage', includeOwnerGaps: true, top: 50 });
@@ -130,10 +50,16 @@ export function Overview() {
       />
 
       {stageEnvelope && !stageEnvelope.ok ? (
-        <div className={s.row}><PanelFailure failure={stageEnvelope} /></div>
+        <div className={rowClass}><PanelFailure failure={stageEnvelope} /></div>
       ) : (
-        <div className={s.kpis} role="group" aria-label="Key figures">
-          <KpiTile className={s.heroTile} label="Applications" value={total} caption="All portfolios, every stage" onClick={() => host.drill('All applications', {})} />
+        // Five across, three below 1024 px, two below 720 px. The three-column rule is limited to "not narrow" because
+        // the medium variant is emitted after the narrow one and would otherwise win on a phone.
+        <div
+          className="mb-4 grid grid-cols-5 gap-3 medium:not-narrow:grid-cols-3 narrow:grid-cols-2 narrow:gap-2.5"
+          role="group"
+          aria-label="Key figures"
+        >
+          <KpiTile className="narrow:col-span-full" label="Applications" value={total} caption="All portfolios, every stage" onClick={() => host.drill('All applications', {})} />
           <KpiTile label="Owner gaps" value={summary?.ownerGaps ?? null} caption="Owner roles with no holder or no deputy" attention={!!summary?.ownerGaps} onClick={() => host.drill('Applications with owner gaps')} />
           <KpiTile label="Reviews overdue" value={summary?.reviewsOverdue ?? null} caption="Past their due date" attention={!!summary?.reviewsOverdue} onClick={() => host.drill('Overdue reviews')} />
           <KpiTile label="Documents missing or stale" value={summary?.documentsMissingOrStale ?? null} caption="Required by each app's tier" attention={!!summary?.documentsMissingOrStale} onClick={() => host.drill('Missing or stale documents')} />
@@ -141,18 +67,18 @@ export function Overview() {
         </div>
       )}
 
-      <div className={s.row}>
+      <div className={rowClass}>
         <Panel title="Needs attention" subtitle="Owner gaps across the register, and deployments flagged in the last 30 days" id="attention">
-          <div className={s.group}>
-            <h3 className={s.groupTitle}>Owner gaps</h3>
+          <div className="flex flex-col gap-y-0.5">
+            <h3 className={groupTitleClass}>Owner gaps</h3>
             <Section state={byStage}>
               {summary?.ownerGapList?.length ? (
                 summary.ownerGapList.map((g, i) => (
                   <AttentionItem
                     key={`${g.businessApplicationId}-${g.ownerRoleKey}`}
                     first={i === 0}
-                    icon={<PersonWarning20Regular />}
-                    name={<Link href={host.href({ page: 'app', id: g.businessApplicationId })}>{g.name}</Link>}
+                    icon={<UserRoundX className="size-5" aria-hidden />}
+                    name={<TextLink href={host.href({ page: 'app', id: g.businessApplicationId })}>{g.name}</TextLink>}
                     aside={g.portfolio ? <Muted>{g.portfolio.name}</Muted> : null}
                     text={`${ownerRoles.label(g.ownerRoleKey)}: ${g.missing === 'holder' ? 'no holder' : 'no deputy'}`}
                     badges={
@@ -168,8 +94,8 @@ export function Overview() {
               <MoreRowsNote skipToken={summary?.skipToken} what="owner gaps" />
             </Section>
           </div>
-          <div className={s.group}>
-            <h3 className={s.groupTitle}>Flagged deployments</h3>
+          <div className="flex flex-col gap-y-0.5">
+            <h3 className={groupTitleClass}>Flagged deployments</h3>
             <Section state={flagged}>
               {(() => {
                 const data = dataOf(flagged);
@@ -180,17 +106,23 @@ export function Overview() {
                   <AttentionItem
                     key={d.deploymentRecordId}
                     first={i === 0}
-                    icon={<ShieldError20Regular />}
+                    icon={<ShieldAlert className="size-5" aria-hidden />}
                     name={
                       d.businessApplicationId
-                        ? <Link href={host.href({ page: 'app', id: d.businessApplicationId })}>{d.applicationName}</Link>
+                        ? <TextLink href={host.href({ page: 'app', id: d.businessApplicationId })}>{d.applicationName}</TextLink>
                         : <span>{d.applicationName ?? 'Unknown application'}</span>
                     }
                     aside={<Muted>{fmtDate(d.finishedOn)}</Muted>}
                     text={`${d.artifactName} ${d.artifactVersion} to ${d.targetLabel ?? 'an unknown target'}`}
                     badges={activeFlags(d.flags).map(f => (
-                      <Tooltip key={f} content={flagHelp[f]} relationship="description" withArrow>
-                        <span tabIndex={0}><ToneBadge tone="warning">{flagText[f]}</ToneBadge></span>
+                      // The flag's explanation describes the badge (the trigger gets aria-describedby while it shows).
+                      <Tooltip key={f}>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0} className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring">
+                            <ToneBadge tone="warning">{flagText[f]}</ToneBadge>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={4}>{flagHelp[f]}</TooltipContent>
                       </Tooltip>
                     ))}
                   />
@@ -205,7 +137,11 @@ export function Overview() {
           subtitle="Change windows in the next 14 days, read-only"
           state={coming}
           skeletonRows={5}
-          actions={<Link href={host.href({ page: 'timeline' })} className={s.footerLink}>Timeline <ArrowRight16Regular /></Link>}
+          actions={
+            <TextLink href={host.href({ page: 'timeline' })} className="inline-flex items-center gap-x-1 font-semibold">
+              Timeline <ArrowRight className="size-4" aria-hidden />
+            </TextLink>
+          }
         >
           {data => {
             const items = data.items.filter(c => inWindowDays(c.windowStart, c.windowEnd, today, comingTo));
@@ -218,7 +154,7 @@ export function Overview() {
           }}
         </Panel>
       </div>
-      <div className={s.row}>
+      <div className={rowClass}>
         <Panel title="Applications by stage" subtitle="Lifecycle stages from the configuration in force, in stage order" state={byStage} skeletonRows={8}>
           {data => (
             <BarList
@@ -230,7 +166,7 @@ export function Overview() {
             />
           )}
         </Panel>
-        <div className={s.stack}>
+        <div className="flex min-w-0 flex-col gap-y-4 narrow:gap-y-3">
           <Panel title="By tier" state={byTier} skeletonRows={4}>
             {data => (
               <BarList
@@ -268,47 +204,44 @@ function Section<T>({ state, children }: { state: ToolState<T>; children: ReactN
 }
 
 function AttentionItem(props: { first: boolean; icon: ReactNode; name: ReactNode; aside: ReactNode; text: string; badges: ReactNode }) {
-  const s = useStyles();
   return (
-    <div className={mergeClasses(s.item, props.first && s.firstItem)}>
-      <span className={s.itemIcon} aria-hidden>{props.icon}</span>
-      <div className={s.itemBody}>
-        <div className={s.itemTop}>
-          <span className={s.itemName}>{props.name}</span>
+    <div className={cn('grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 border-t border-line py-2.5', props.first && 'border-t-0 pt-1')}>
+      <span className="grid size-9 place-items-center rounded-full bg-gold-soft text-gold-strong" aria-hidden>{props.icon}</span>
+      <div className={itemBodyClass}>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className={itemNameClass}>{props.name}</span>
           {props.aside}
         </div>
-        <span className={s.itemText}>{props.text}</span>
-        {props.badges && <div className={s.badges}>{props.badges}</div>}
+        <span className="text-sm text-navy-2">{props.text}</span>
+        {props.badges && <div className={badgesClass}>{props.badges}</div>}
       </div>
     </div>
   );
 }
 
 function ComingChange({ change, first }: { change: ScheduledChange; first: boolean }) {
-  const s = useStyles();
   const start = change.windowStart;
   const authorized = change.authorized;
   // WORKING DEFAULT (open design question 8): a standard change is on the locked list the engine may accept
   // without a card, because a person approved its model once. The page calls it pre-authorized.
   const preAuthorized = authorized && change.changeType.key === 'standard';
   return (
-    <div className={mergeClasses(s.change, first && s.firstItem)}>
-      <div className={s.dateChip} aria-hidden>
-        <span className={s.dateWeek}>{start ? fmtWeekdayOnly(start) : 'TBD'}</span>
-        <span className={s.dateDay}>{start ? dayOfMonth(start) : '-'}</span>
-        <span className={s.dateWeek}>{start ? fmtMonth(start) : ''}</span>
+    <div className={cn('grid grid-cols-[52px_minmax(0,1fr)] gap-x-3 border-t border-line py-2.5', first && 'border-t-0 pt-1')}>
+      {/* The date chip is drawn for the eye and hidden from screen readers; the sr-only line below reads the date. */}
+      <div className="flex h-14 w-[52px] flex-col items-center justify-center rounded-lg bg-secondary leading-[1.1] text-navy" aria-hidden>
+        <span className="text-[10px] tracking-[0.05em] text-navy-2 uppercase">{start ? fmtWeekdayOnly(start) : 'TBD'}</span>
+        <span className="text-xl font-semibold">{start ? dayOfMonth(start) : '-'}</span>
+        <span className="text-[10px] tracking-[0.05em] text-navy-2 uppercase">{start ? fmtMonth(start) : ''}</span>
       </div>
-      <div className={s.itemBody}>
-        <span className={s.srOnly}>{start ? `${fmtWeekday(start)}.` : 'No date yet.'}</span>
-        <span className={s.itemName}>{change.title}</span>
+      <div className={itemBodyClass}>
+        <span className="sr-only">{start ? `${fmtWeekday(start)}.` : 'No date yet.'}</span>
+        <span className={itemNameClass}>{change.title}</span>
         <Muted>
           {change.applicationName} to {change.target?.label ?? 'no target yet'}
           {start && change.windowEnd ? `, ${fmtTimeRange(start, change.windowEnd)} ${zoneLabel()}` : ''}
         </Muted>
-        <div className={s.badges}>
-          <Badge appearance="outline" color={change.changeType.key === 'emergency' ? 'danger' : 'informative'} shape="rounded">
-            {change.changeType.label}
-          </Badge>
+        <div className={badgesClass}>
+          <ChangeTypeBadge type={change.changeType} />
           {preAuthorized ? (
             <ToneBadge tone="success">Pre-authorized</ToneBadge>
           ) : authorized ? (

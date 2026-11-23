@@ -4,147 +4,44 @@
 // generative pages does not bind this page (the card reads its tables on the server).
 // Read-only: edits happen in the form, or through an AI client, and every write goes through the engine.
 // In the web app the route is /app/records/business-application/<id>, the record link the tools return.
-import { Avatar, Badge, Button, Link, makeStyles, tokens } from '@fluentui/react-components';
-import {
-  ArrowRight16Regular,
-  CalendarLtr20Regular,
-  Flowchart20Regular,
-  Info16Regular,
-  Open16Regular,
-  PeopleTeam16Regular,
-  PersonWarning20Regular,
-  Sparkle16Regular,
-} from '@fluentui/react-icons';
+import { ArrowRight, CalendarDays, ExternalLink as ExternalLinkIcon, Info, Sparkles, UserRoundX, UsersRound, Workflow } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ApplicationCard, ApplicationOwners, LabelledKey } from '../data/contracts';
 import { externalHref, fmtDate, fmtWindow } from '../data/format';
 import { useLabels, type Labels } from '../data/labels';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost } from '../harness';
-import { palette } from '../theme';
+import { cn } from '../lib/utils';
 import { ExternalLink, Row, RowList } from '../components/rows';
-import { DataStamp, Empty, Muted, PageHeader, Panel, PanelFailure, StatusBadge, ToneBadge, media } from '../components/ui';
+import { DataStamp, Empty, LinkButton, Muted, PageHeader, Panel, PanelFailure, StatusBadge, TextLink, ToneBadge } from '../components/blocks';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import type { Tone } from '../data/meanings';
 
 const CARD_SECTIONS = ['components', 'dependencies', 'decisions', 'changes', 'deployments', 'documents', 'reviews', 'links'];
 
-const useStyles = makeStyles({
-  head: {
-    backgroundColor: tokens.colorNeutralBackground1,
-    border: `1px solid ${palette.line}`,
-    borderRadius: '10px',
-    padding: '20px 24px',
-    marginBottom: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    rowGap: '14px',
-    [media.narrow]: { padding: '16px 14px', marginBottom: '12px', rowGap: '12px' },
-  },
-  purpose: { margin: 0, fontSize: tokens.fontSizeBase400, lineHeight: tokens.lineHeightBase400, color: palette.navy2, maxWidth: '820px', [media.narrow]: { fontSize: tokens.fontSizeBase300 } },
-  facts: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
-    gap: '12px',
-    margin: 0,
-    padding: '14px 0 0',
-    borderTop: `1px solid ${palette.line}`,
-    [media.medium]: { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' },
-    [media.narrow]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', rowGap: '14px' },
-  },
-  fact: { display: 'flex', flexDirection: 'column', rowGap: '2px', minWidth: 0 },
-  factLabel: { fontSize: tokens.fontSizeBase200, color: palette.navy3, margin: 0 },
-  factValue: { fontSize: tokens.fontSizeBase300, fontWeight: tokens.fontWeightSemibold, color: palette.navy, margin: 0, display: 'flex', alignItems: 'center', columnGap: '4px' },
-  attention: {
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '6px 8px',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    backgroundColor: palette.lightGold,
-    border: '1px solid #f3dfa6',
-  },
-  attentionLabel: { fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: palette.navy, marginRight: '4px' },
-  readOnly: { display: 'flex', alignItems: 'center', columnGap: '6px', fontSize: tokens.fontSizeBase200, color: palette.navy3 },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)',
-    gap: '16px',
-    alignItems: 'start',
-    [media.medium]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-    [media.narrow]: { display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'stretch' },
-  },
-  column: {
-    display: 'flex',
-    flexDirection: 'column',
-    rowGap: '16px',
-    minWidth: 0,
-    [media.narrow]: { display: 'contents' },
-  },
-  o1: { [media.narrow]: { order: 1 } },
-  o2: { [media.narrow]: { order: 2 } },
-  o3: { [media.narrow]: { order: 3 } },
-  o4: { [media.narrow]: { order: 4 } },
-  o5: { [media.narrow]: { order: 5 } },
-  o6: { [media.narrow]: { order: 6 } },
-  o7: { [media.narrow]: { order: 7 } },
-  o8: { [media.narrow]: { order: 8 } },
-  o9: { [media.narrow]: { order: 9 } },
-  stats: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' },
-  stat: {
-    appearance: 'none',
-    margin: 0,
-    fontFamily: 'inherit',
-    fontSize: 'inherit',
-    lineHeight: 'inherit',
-    color: 'inherit',
-    textAlign: 'left',
-    textDecoration: 'none',
-    cursor: 'pointer',
-    boxSizing: 'border-box',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    backgroundColor: palette.lightBlue,
-    display: 'flex',
-    flexDirection: 'column',
-    ':hover': { backgroundColor: '#dcebfa' },
-    ':focus-visible': { outline: `2px solid ${palette.blue}`, outlineOffset: '2px' },
-  },
-  statValue: { fontSize: '24px', lineHeight: '30px', fontWeight: tokens.fontWeightSemibold, color: palette.navy },
-  statLabel: { fontSize: tokens.fontSizeBase200, color: palette.navy2 },
-  subhead: {
-    margin: '6px 0 2px',
-    fontSize: tokens.fontSizeBase200,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.navy3,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-  },
-  gapIcon: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    display: 'grid',
-    placeItems: 'center',
-    backgroundColor: palette.lightGold,
-    color: palette.goldDark,
-  },
-  info: {
-    display: 'flex',
-    columnGap: '8px',
-    alignItems: 'flex-start',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    backgroundColor: palette.lightBlue,
-    fontSize: tokens.fontSizeBase200,
-    color: palette.navy2,
-  },
-  infoIcon: { color: palette.blueDark, flexShrink: 0, marginTop: '1px' },
-  panelLink: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', fontWeight: tokens.fontWeightSemibold },
-});
+// Below 720 px the two columns dissolve (display: contents) into one list, and these set the phone order:
+// owners, deployments, changes, documents, reviews, dependencies, decisions, components, links.
+// Written out in full so Tailwind finds each class in the source.
+const order = {
+  owners: 'narrow:order-1',
+  deployments: 'narrow:order-2',
+  changes: 'narrow:order-3',
+  documents: 'narrow:order-4',
+  reviews: 'narrow:order-5',
+  dependencies: 'narrow:order-6',
+  decisions: 'narrow:order-7',
+  components: 'narrow:order-8',
+  links: 'narrow:order-9',
+} as const;
+
+const columnClass = 'flex min-w-0 flex-col gap-y-4 narrow:contents';
+const panelLinkClass = 'inline-flex items-center gap-x-1 font-semibold';
+const factLabelClass = 'm-0 text-xs text-navy-3';
+const subheadClass = 'mt-1.5 mb-0.5 text-xs font-semibold tracking-[0.04em] text-navy-3 uppercase';
 
 export function Application360({ applicationId }: { applicationId: string }) {
-  const s = useStyles();
   const host = useHost();
   const card = useTool('get_application_card', { businessApplicationId: applicationId, sections: CARD_SECTIONS });
   const owners = useTool('get_application_owners', { businessApplicationId: applicationId });
@@ -172,7 +69,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
       <PageHeader
         eyebrow="Application 360"
         title={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span className="inline-flex flex-wrap items-center gap-3">
             {app?.name ?? 'Loading'}
             {app && <StatusBadge status={app.status} />}
           </span>
@@ -180,11 +77,15 @@ export function Application360({ applicationId }: { applicationId: string }) {
         meta={<DataStamp envelope={cardEnv} />}
         actions={
           <>
-            <Button appearance="primary" icon={<Flowchart20Regular />} as="a" href={mapHref}>Dependency map</Button>
-            <Button appearance="secondary" icon={<CalendarLtr20Regular />} as="a" href={host.href({ page: 'timeline' })}>Timeline</Button>
+            <Button asChild>
+              <a href={mapHref}><Workflow aria-hidden />Dependency map</a>
+            </Button>
+            <Button variant="outline" asChild>
+              <a href={host.href({ page: 'timeline' })}><CalendarDays aria-hidden />Timeline</a>
+            </Button>
             {recordUrl && (
-              <Button appearance="subtle" icon={<Open16Regular />} as="a" href={recordUrl} target="_blank" rel="noopener noreferrer">
-                Open the form
+              <Button variant="ghost" asChild>
+                <a href={recordUrl} target="_blank" rel="noopener noreferrer"><ExternalLinkIcon aria-hidden />Open the form</a>
               </Button>
             )}
           </>
@@ -192,39 +93,44 @@ export function Application360({ applicationId }: { applicationId: string }) {
       />
 
       {app && data && (
-        <section className={s.head} aria-label="Summary">
-          <p className={s.purpose}>{app.purpose}</p>
+        <section
+          className="mb-4 flex flex-col gap-y-3.5 rounded-xl border bg-card px-6 py-5 shadow-xs narrow:mb-3 narrow:gap-y-3 narrow:rounded-lg narrow:px-3.5 narrow:py-4"
+          aria-label="Summary"
+        >
+          <p className="m-0 max-w-[820px] text-base leading-6 text-navy-2 narrow:text-sm">{app.purpose}</p>
           <AttentionStrip card={data} owners={dataOf(owners)} ownerRoles={ownerRoles} />
-          <dl className={s.facts}>
+          {/* Six across, three below 1024 px, two below 720 px. The three-column rule is limited to "not narrow" because
+              the medium variant is emitted after the narrow one and would otherwise win on a phone. */}
+          <dl className="m-0 grid grid-cols-6 gap-3 border-t border-line pt-3.5 medium:not-narrow:grid-cols-3 narrow:grid-cols-2 narrow:gap-y-3.5">
             <Fact label="Kind" value={app.kind.label} />
             <Fact label="Tier" value={app.tier?.label ?? 'No tier yet'} />
             <Fact label="Stage" value={app.stage?.label ?? 'Not set'} sub={app.stage?.since ? `since ${fmtDate(app.stage.since)}` : undefined} />
             <Fact label="Build path" value={app.buildPath?.label ?? 'Not set'} />
             <Fact
               label="Uses AI"
-              value={<>{app.usesAi === true && <Sparkle16Regular aria-hidden />}{app.usesAi === null ? 'Not stated' : app.usesAi ? 'Yes' : 'No'}</>}
+              value={<>{app.usesAi === true && <Sparkles className="size-4" aria-hidden />}{app.usesAi === null ? 'Not stated' : app.usesAi ? 'Yes' : 'No'}</>}
               sub={app.agreedAutonomyLevel ? `Autonomy: ${app.agreedAutonomyLevel.label}` : app.usesAi ? "Owner's statement" : undefined}
             />
             <Fact label="Next review" value={fmtDate(app.nextReviewOn)} />
           </dl>
-          <div className={s.readOnly}>
-            <Info16Regular aria-hidden />
+          <div className="flex items-center gap-x-1.5 text-xs text-navy-3">
+            <Info className="size-4 shrink-0" aria-hidden />
             Read-only page. Changes happen {host.showRecordLinks ? 'in the form or through an AI client' : 'through an AI client'}, and the engine checks every write.
           </div>
         </section>
       )}
 
-      <div className={s.grid}>
-        <div className={s.column}>
-          <Panel title="Deployments" subtitle="Latest deployment per target" state={card} className={s.o2} notes={['deployment-record']}>
+      <div className="grid grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start gap-4 medium:grid-cols-1 narrow:flex narrow:flex-col narrow:items-stretch narrow:gap-3">
+        <div className={columnClass}>
+          <Panel title="Deployments" subtitle="Latest deployment per target" state={card} className={order.deployments} notes={['deployment-record']}>
             {d => <DeploymentsList card={d} stages={stages} />}
           </Panel>
           <Panel
             title="Open changes"
             state={card}
-            className={s.o3}
+            className={order.changes}
             notes={['change-request']}
-            actions={<Link href={host.href({ page: 'timeline' })} className={s.panelLink}>Timeline <ArrowRight16Regular /></Link>}
+            actions={<TextLink href={host.href({ page: 'timeline' })} className={panelLinkClass}>Timeline <ArrowRight className="size-4" aria-hidden /></TextLink>}
           >
             {d => (d.changes?.length ? (
               <RowList label="Open changes">
@@ -243,13 +149,13 @@ export function Application360({ applicationId }: { applicationId: string }) {
           <Panel
             title="Dependencies"
             state={card}
-            className={s.o6}
+            className={order.dependencies}
             notes={['dependency']}
-            actions={<Link href={mapHref} className={s.panelLink}>Dependency map <ArrowRight16Regular /></Link>}
+            actions={<TextLink href={mapHref} className={panelLinkClass}>Dependency map <ArrowRight className="size-4" aria-hidden /></TextLink>}
           >
             {d => <DependencySummary card={d} mapHref={mapHref} />}
           </Panel>
-          <Panel title="Decisions" subtitle="The latest five" state={card} className={s.o7} notes={['decision']}>
+          <Panel title="Decisions" subtitle="The latest five" state={card} className={order.decisions} notes={['decision']}>
             {d => (d.decisions?.length ? (
               <RowList label="Decisions">
                 {d.decisions.map(x => (
@@ -264,7 +170,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
               </RowList>
             ) : <Empty>No decisions yet.</Empty>)}
           </Panel>
-          <Panel title="Delivery links" state={card} className={s.o9} notes={['delivery-link']}>
+          <Panel title="Delivery links" state={card} className={order.links} notes={['delivery-link']}>
             {d => (d.links?.length ? (
               <RowList label="Delivery links">
                 {d.links.map(l => (
@@ -275,11 +181,11 @@ export function Application360({ applicationId }: { applicationId: string }) {
           </Panel>
         </div>
 
-        <div className={s.column}>
-          <Panel title="Owners" state={owners} className={s.o1} skeletonRows={5}>
+        <div className={columnClass}>
+          <Panel title="Owners" state={owners} className={order.owners} skeletonRows={5}>
             {o => <OwnersList owners={o} ownerRoles={ownerRoles} applicationName={app?.name ?? null} />}
           </Panel>
-          <Panel title="Documents" subtitle="Status per required document type" state={card} className={s.o4} notes={['document-link']}>
+          <Panel title="Documents" subtitle="Status per required document type" state={card} className={order.documents} notes={['document-link']}>
             {d => (d.documents?.length ? (
               <RowList label="Documents">
                 {d.documents.map(doc => (
@@ -297,7 +203,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
               </RowList>
             ) : <Empty>No documents are required at this tier.</Empty>)}
           </Panel>
-          <Panel title="Reviews" subtitle="Due, and the last one done per type" state={card} className={s.o5} notes={['review']}>
+          <Panel title="Reviews" subtitle="Due, and the last one done per type" state={card} className={order.reviews} notes={['review']}>
             {d => (d.reviews?.length ? (
               <RowList label="Reviews">
                 {d.reviews.map(r => (
@@ -311,7 +217,7 @@ export function Application360({ applicationId }: { applicationId: string }) {
               </RowList>
             ) : <Empty>No reviews due.</Empty>)}
           </Panel>
-          <Panel title="Components" subtitle="Technical parts, linked where they live" state={card} className={s.o8} notes={['technical-component']}>
+          <Panel title="Components" subtitle="Technical parts, linked where they live" state={card} className={order.components} notes={['technical-component']}>
             {d => (d.components?.length ? (
               <RowList label="Components">
                 {d.components.map(c => (
@@ -331,19 +237,17 @@ export function Application360({ applicationId }: { applicationId: string }) {
 }
 
 function Fact({ label, value, sub }: { label: string; value: ReactNode; sub?: string }) {
-  const s = useStyles();
   return (
-    <div className={s.fact}>
-      <dt className={s.factLabel}>{label}</dt>
-      <dd className={s.factValue}>{value}</dd>
-      {sub && <dd className={s.factLabel}>{sub}</dd>}
+    <div className="flex min-w-0 flex-col gap-y-0.5">
+      <dt className={factLabelClass}>{label}</dt>
+      <dd className="m-0 flex items-center gap-x-1 text-sm font-semibold text-navy">{value}</dd>
+      {sub && <dd className={factLabelClass}>{sub}</dd>}
     </div>
   );
 }
 
 // The few things on this card that need someone. Each chip repeats a fact shown in its panel; nothing is counted here.
 function AttentionStrip({ card, owners, ownerRoles }: { card: ApplicationCard; owners: ApplicationOwners | null; ownerRoles: Labels }) {
-  const s = useStyles();
   const chips: { key: string; tone: Tone; text: string }[] = [];
   for (const g of owners?.gaps ?? []) {
     chips.push({ key: `gap-${g.ownerRoleKey}-${g.missing}`, tone: 'warning', text: `${ownerRoles.label(g.ownerRoleKey)}: no ${g.missing}` });
@@ -359,8 +263,12 @@ function AttentionStrip({ card, owners, ownerRoles }: { card: ApplicationCard; o
   if (owners?.microsoftOwnerDiffers) chips.push({ key: 'ms-owner', tone: 'informative', text: "Microsoft's listed owner differs" });
   if (!chips.length) return null;
   return (
-    <div className={s.attention} role="group" aria-label="Needs attention">
-      <span className={s.attentionLabel}>Needs attention</span>
+    <div
+      className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg border border-warning-line bg-gold-soft px-3 py-2.5"
+      role="group"
+      aria-label="Needs attention"
+    >
+      <span className="mr-1 text-xs font-semibold text-navy">Needs attention</span>
       {chips.map(c => <ToneBadge key={c.key} tone={c.tone}>{c.text}</ToneBadge>)}
     </div>
   );
@@ -396,16 +304,16 @@ export function CriticalityBadge({ criticality }: { criticality: LabelledKey | n
   );
 }
 
+// An outlined badge: red line and text for an emergency change, navy for the others.
 export function ChangeTypeBadge({ type }: { type: LabelledKey }) {
   return (
-    <Badge appearance="outline" shape="rounded" color={type.key === 'emergency' ? 'danger' : 'informative'}>
+    <Badge variant="outline" className={type.key === 'emergency' ? 'border-danger-line text-danger' : 'border-line-strong text-navy-2'}>
       {type.label}
     </Badge>
   );
 }
 
 function DependencySummary({ card, mapHref }: { card: ApplicationCard; mapHref: string }) {
-  const s = useStyles();
   const host = useHost();
   const deps = card.dependencies;
   if (!deps) return <Empty>No dependencies recorded.</Empty>;
@@ -414,32 +322,34 @@ function DependencySummary({ card, mapHref }: { card: ApplicationCard; mapHref: 
   const row = (e: (typeof deps.top)[number]) => (
     <Row
       key={`${e.direction}-${e.businessApplicationId ?? e.technicalComponentId}`}
-      primary={e.businessApplicationId ? <Link href={host.href({ page: 'app', id: e.businessApplicationId })}>{e.name}</Link> : e.name}
+      primary={e.businessApplicationId ? <TextLink href={host.href({ page: 'app', id: e.businessApplicationId })}>{e.name}</TextLink> : e.name}
       secondary={e.dependencyType.label}
       end={<CriticalityBadge criticality={e.criticality} />}
     />
   );
+  const statClass =
+    'flex cursor-pointer flex-col rounded-lg bg-secondary px-3 py-2.5 text-left text-inherit no-underline transition-colors hover:bg-[#dcebfa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
   return (
     <>
-      <div className={s.stats}>
-        <a className={s.stat} href={mapHref}>
-          <span className={s.statValue}>{deps.dependsOnCount}</span>
-          <span className={s.statLabel}>It depends on</span>
+      <div className="grid grid-cols-2 gap-2.5">
+        <a className={statClass} href={mapHref}>
+          <span className="text-2xl leading-[30px] font-semibold text-navy tabular-nums">{deps.dependsOnCount}</span>
+          <span className="text-xs text-navy-2">It depends on</span>
         </a>
-        <a className={s.stat} href={mapHref}>
-          <span className={s.statValue}>{deps.usedByCount}</span>
-          <span className={s.statLabel}>Depend on it</span>
+        <a className={statClass} href={mapHref}>
+          <span className="text-2xl leading-[30px] font-semibold text-navy tabular-nums">{deps.usedByCount}</span>
+          <span className="text-xs text-navy-2">Depend on it</span>
         </a>
       </div>
       {usedBy.length > 0 && (
         <div>
-          <h3 className={s.subhead}>Most important dependants</h3>
+          <h3 className={subheadClass}>Most important dependants</h3>
           <RowList label="Most important dependants">{usedBy.map(row)}</RowList>
         </div>
       )}
       {needs.length > 0 && (
         <div>
-          <h3 className={s.subhead}>Most important dependencies</h3>
+          <h3 className={subheadClass}>Most important dependencies</h3>
           <RowList label="Most important dependencies">{needs.map(row)}</RowList>
         </div>
       )}
@@ -447,8 +357,31 @@ function DependencySummary({ card, mapHref }: { card: ApplicationCard; mapHref: 
   );
 }
 
+// Initials for a person's avatar: the first letters of the first and the last word of the name.
+function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
+  const first = Array.from(words[0])[0] ?? '';
+  const last = words.length > 1 ? Array.from(words[words.length - 1])[0] ?? '' : '';
+  return (first + last).toUpperCase();
+}
+
+// A stable tint per name, so the same person keeps the same color on every render. Academy tints only; the color
+// carries no meaning.
+const avatarTints = [
+  'bg-info-soft text-info',
+  'bg-gold-soft text-gold-strong',
+  'bg-success-soft text-success',
+  'bg-subtle-soft text-navy-2',
+];
+
+function avatarTint(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return avatarTints[Math.abs(h) % avatarTints.length];
+}
+
 function OwnersList({ owners, ownerRoles, applicationName }: { owners: ApplicationOwners; ownerRoles: Labels; applicationName: string | null }) {
-  const s = useStyles();
   const host = useHost();
   return (
     <>
@@ -458,8 +391,16 @@ function OwnersList({ owners, ownerRoles, applicationName }: { owners: Applicati
             key={o.ownerAssignmentId}
             lead={
               o.principal.principalKind === 'group'
-                ? <Avatar size={32} icon={<PeopleTeam16Regular />} color="brand" aria-hidden />
-                : <Avatar size={32} name={o.principal.displayLabel} color="colorful" aria-hidden />
+                ? (
+                  <Avatar aria-hidden>
+                    <AvatarFallback className="bg-primary text-primary-foreground"><UsersRound className="size-4" aria-hidden /></AvatarFallback>
+                  </Avatar>
+                )
+                : (
+                  <Avatar aria-hidden>
+                    <AvatarFallback className={cn('text-xs font-semibold', avatarTint(o.principal.displayLabel))}>{initials(o.principal.displayLabel)}</AvatarFallback>
+                  </Avatar>
+                )
             }
             primary={o.principal.displayLabel}
             secondary={o.isDeputy ? `${o.label}, deputy` : o.label}
@@ -469,12 +410,11 @@ function OwnersList({ owners, ownerRoles, applicationName }: { owners: Applicati
         {owners.gaps.map(g => (
           <Row
             key={`gap-${g.ownerRoleKey}-${g.missing}`}
-            lead={<span className={s.gapIcon} aria-hidden><PersonWarning20Regular /></span>}
+            lead={<span className="grid size-8 place-items-center rounded-full bg-gold-soft text-gold-strong" aria-hidden><UserRoundX className="size-[18px]" aria-hidden /></span>}
             primary={`${ownerRoles.label(g.ownerRoleKey)}: no ${g.missing}`}
             secondary="An owner change needs a decision by a person."
             end={
-              <Link
-                as="button"
+              <LinkButton
                 aria-label={`Propose an owner change for ${ownerRoles.label(g.ownerRoleKey)}`}
                 onClick={() => host.handOff({
                   title: 'Propose an owner change',
@@ -483,14 +423,14 @@ function OwnersList({ owners, ownerRoles, applicationName }: { owners: Applicati
                 })}
               >
                 Propose
-              </Link>
+              </LinkButton>
             }
           />
         ))}
       </RowList>
       {owners.microsoftOwnerDiffers && (
-        <div className={s.info}>
-          <Info16Regular className={s.infoIcon} aria-hidden />
+        <div className="flex items-start gap-x-2 rounded-lg bg-secondary px-3 py-2.5 text-xs leading-5 text-navy-2">
+          <Info className="mt-px size-4 shrink-0 text-brand-dark" aria-hidden />
           <span>The owner Microsoft lists for a component differs from this register. The product never copies that owner; check it at the next owner check.</span>
         </div>
       )}

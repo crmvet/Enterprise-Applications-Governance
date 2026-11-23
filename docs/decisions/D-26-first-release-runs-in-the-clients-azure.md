@@ -51,6 +51,10 @@ Option 2. The first release runs on Azure, in the organization's own subscriptio
 - The next version is not a Dataverse solution. The 2021 release still is.
 - Some parts of the design still need a technical test, such as sign-in on behalf of the person on Azure and the route for approval cards.
 
+## Amendment, 2026-11-23
+
+[D-32](D-32-the-web-app-uses-shadcn-ui.md) moves the web app from Fluent UI to shadcn/ui (Radix primitives, Tailwind CSS 4 and lucide icons) on the same Academy palette, light only. The pages and their designs stay as they are.
+
 ## Related
 
 - [D-02](D-02-how-people-and-ai-clients-use-the-product.md), [D-09](D-09-the-product-has-its-own-mcp-server.md), [D-10](D-10-rules-are-configuration-and-the-engine-is-code.md), [D-11](D-11-roles-only-through-entra-groups.md), [D-16](D-16-no-copilot-or-teams-agent.md), [D-18](D-18-pages-are-the-core-interface.md), [D-19](D-19-never-build-pipelines.md)

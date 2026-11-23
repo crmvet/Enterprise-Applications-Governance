@@ -201,8 +201,9 @@ public static class ProductWebApp
     }
 
     /// <summary>
-    /// The Content-Security-Policy of the page: scripts and styles from this origin only (Fluent UI writes its styles at
-    /// run time, so inline styles are allowed), calls and frames to this origin and the sign-in host only, no plug-ins,
+    /// The Content-Security-Policy of the page: scripts and styles from this origin only (inline styles are allowed,
+    /// because the Radix primitives under the shadcn/ui components write a style tag at run time when a dialog or popover
+    /// locks page scrolling; a per-request nonce would remove that), calls and frames to this origin and the sign-in host only, no plug-ins,
     /// and no framing by any other page.
     /// </summary>
     public static string ContentSecurityPolicy(string signInOrigin)

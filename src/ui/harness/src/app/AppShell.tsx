@@ -2,25 +2,9 @@
 // It is the host of the four pages (Host in ../harness.tsx): today in the viewer's zone, path routes under /app/,
 // drill-downs to the applications list, and hand-offs to an AI client. The pages are the same components the harness
 // renders; only the tool client differs (the REST API here, fixture JSON there).
-import {
-  Avatar,
-  Button,
-  MessageBar,
-  MessageBarActions,
-  MessageBarBody,
-  MessageBarTitle,
-  Popover,
-  PopoverSurface,
-  PopoverTrigger,
-  Select,
-  Tab,
-  TabList,
-  makeStyles,
-  tokens,
-  useId,
-} from '@fluentui/react-components';
-import { ArrowClockwise16Regular, SignOut20Regular } from '@fluentui/react-icons';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { ChevronDown, CircleAlert, LogOut, RefreshCw, TriangleAlert, UserRound } from 'lucide-react';
+import { Popover as PopoverPrimitive } from 'radix-ui';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { DevAuth } from '../auth/devAuth';
 import type { MsalAuth } from '../auth/msalAuth';
 import type { Answer, ApiClient, Me, ServiceInfo } from '../data/apiClient';
@@ -31,8 +15,13 @@ import { Application360 } from '../pages/Application360';
 import { DependencyMap } from '../pages/DependencyMap';
 import { Overview } from '../pages/Overview';
 import { Timeline } from '../pages/Timeline';
-import { media, useNarrow } from '../components/ui';
-import { palette } from '../theme';
+import { useNarrow } from '../components/blocks';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
+import { cn } from '../lib/utils';
 import { ApplicationsList, NotFound, OtherRecord } from './AppPages';
 import { AppDialog, type DialogRequest } from './dialogs';
 import { navigate, useLinkInterception, useLocationKey } from './navigation';
@@ -41,93 +30,45 @@ import { DevSignIn, EntraSignIn } from './SignIn';
 
 export type AppAuth = MsalAuth | DevAuth;
 
-const useStyles = makeStyles({
-  skip: {
-    position: 'absolute',
-    left: '8px',
-    top: '-48px',
-    zIndex: 20,
-    padding: '8px 12px',
-    backgroundColor: palette.white,
-    color: palette.navy,
-    border: `2px solid ${palette.blue}`,
-    borderRadius: '6px',
-    ':focus': { top: '8px' },
-  },
-  bar: {
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
-    backgroundColor: tokens.colorNeutralBackground1,
-    borderBottom: `1px solid ${palette.line}`,
-    boxShadow: '0 1px 2px rgba(10, 42, 74, 0.04)',
-  },
-  accent: { height: '3px', backgroundColor: palette.blue },
-  barInner: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '0 24px',
-    display: 'flex',
-    alignItems: 'center',
-    columnGap: '20px',
-    minHeight: '52px',
-    [media.narrow]: { padding: '8px 16px 0', flexWrap: 'wrap', rowGap: '4px', columnGap: '12px', minHeight: 'auto' },
-  },
-  brand: { display: 'flex', alignItems: 'center', columnGap: '10px', flexShrink: 0, color: palette.navy, textDecoration: 'none' },
-  mark: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '7px',
-    backgroundColor: palette.navy,
-    color: palette.white,
-    display: 'grid',
-    placeItems: 'center',
-    fontWeight: tokens.fontWeightBold,
-    fontSize: '15px',
-    position: 'relative',
-    overflow: 'hidden',
-    '::after': { content: '""', position: 'absolute', right: 0, bottom: 0, width: '9px', height: '9px', backgroundColor: palette.gold },
-  },
-  name: { fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase400, color: palette.navy },
-  devTag: {
-    fontSize: tokens.fontSizeBase100,
-    fontWeight: tokens.fontWeightSemibold,
-    color: palette.goldDark,
-    backgroundColor: palette.lightGold,
-    border: '1px solid #f3dfa6',
-    borderRadius: '10px',
-    padding: '1px 8px',
-    whiteSpace: 'nowrap',
-  },
-  tabs: {
-    marginLeft: 'auto',
-    [media.narrow]: { order: 3, marginLeft: '-10px', width: 'calc(100% + 20px)' },
-  },
-  user: { display: 'flex', alignItems: 'center', columnGap: '4px', [media.narrow]: { marginLeft: 'auto' } },
-  main: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '24px 24px 32px',
-    outline: 'none',
-    [media.narrow]: { padding: '16px 16px 24px' },
-  },
-  banner: { maxWidth: '1280px', margin: '16px auto 0', padding: '0 24px', [media.narrow]: { padding: '0 16px' } },
-  footer: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '0 24px 32px',
-    fontSize: tokens.fontSizeBase200,
-    color: palette.navy3,
-    [media.narrow]: { padding: '0 16px 24px' },
-  },
-  code: { fontFamily: tokens.fontFamilyMonospace, overflowWrap: 'anywhere' },
-  card: { display: 'flex', flexDirection: 'column', rowGap: '10px', maxWidth: '320px', color: palette.navy },
-  cardName: { fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase400 },
-  cardLine: { fontSize: tokens.fontSizeBase200, color: palette.navy3, overflowWrap: 'anywhere' },
-  cardHead: { margin: '4px 0 0', fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: palette.navy3, textTransform: 'uppercase', letterSpacing: '0.04em' },
-  roles: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', rowGap: '6px' },
-  role: { display: 'flex', flexDirection: 'column', fontSize: tokens.fontSizeBase300 },
-});
+// Page width and gutters shared by the bar, the banners, the page area and the footer.
+const frame = 'mx-auto max-w-[1280px] px-6 narrow:px-4';
+const cardLine = 'text-xs text-navy-3 [overflow-wrap:anywhere]';
+const cardHead = 'm-0 mt-1 text-xs font-semibold tracking-[0.04em] text-navy-3 uppercase';
+
+// One page link in the underlined tab bar. The current page gets the blue line and semibold text; a hidden semibold
+// copy of the label reserves its width, so the bar does not shift when the current page changes.
+function tabClass(current: boolean): string {
+  return cn(
+    'relative flex h-[52px] items-center rounded-md px-3 text-sm text-navy-2 no-underline transition-colors',
+    'after:absolute after:inset-x-3 after:bottom-1.5 after:h-[3px] after:rounded-full after:transition-colors',
+    'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
+    'narrow:h-10 narrow:px-2.5 narrow:after:inset-x-2.5 narrow:after:bottom-1',
+    current ? 'font-semibold text-navy after:bg-primary' : 'hover:text-navy hover:after:bg-line-strong',
+  );
+}
+
+function TabText({ text }: { text: string }) {
+  return (
+    <span className="grid">
+      <span className="col-start-1 row-start-1">{text}</span>
+      <span className="invisible col-start-1 row-start-1 font-semibold" aria-hidden>{text}</span>
+    </span>
+  );
+}
+
+// Up to two initials for the avatar: the first letters of the first and last words of the name (or of the part of a
+// sign-in name before the @). A name with a note after a comma ("Nadia Ferreira, business owner") uses the part before
+// it; "Ferreira, Nadia" keeps both parts.
+function initialsOf(name: string): string {
+  let base = name.includes('@') && !name.trim().includes(' ') ? name.slice(0, name.indexOf('@')) : name;
+  const beforeComma = base.split(',')[0].trim();
+  if (beforeComma.split(/\s+/).length >= 2) base = beforeComma;
+  const words = base.split(/[\s._-]+/).filter(w => /^[\p{L}\p{N}]/u.test(w));
+  if (!words.length) return '';
+  const first = Array.from(words[0])[0];
+  const last = words.length > 1 ? Array.from(words[words.length - 1])[0] : '';
+  return `${first}${last}`.toUpperCase();
+}
 
 function useAuthVersion(auth: AppAuth): number {
   const version = useRef(0);
@@ -156,7 +97,6 @@ const tabs: { value: Route['page']; label: string; short: string }[] = [
 ];
 
 function SignedIn({ auth, api, base }: { auth: AppAuth; api: ApiClient; base: string }) {
-  const s = useStyles();
   const narrow = useNarrow();
   const locationKey = useLocationKey();
   const route = useMemo<AppRoute>(() => {
@@ -237,48 +177,82 @@ function SignedIn({ auth, api, base }: { auth: AppAuth; api: ApiClient; base: st
 
   const selectedTab = route.page === 'overview' || route.page === 'timeline' || route.page === 'app' || route.page === 'map' ? route.page : null;
   const shownTabs = tabs.filter(t => appId || (t.value !== 'app' && t.value !== 'map'));
+  // Each tab is a real link to its page. A plain click becomes an in-app navigation (useLinkInterception); a modified
+  // click opens the page in a new tab. The App 360 and map tabs show only once an application is open.
+  const tabHref = (page: Route['page']): string | null => {
+    const next: Route | null = page === 'app' || page === 'map' ? (appId ? { page, id: appId } : null) : page === 'timeline' ? { page } : { page: 'overview' };
+    return next ? appHref(next, base) : null;
+  };
 
   return (
     <ToolClientContext.Provider value={client}>
       <HostContext.Provider value={host}>
-        <a className={s.skip} href="#main" onClick={e => { e.preventDefault(); mainRef.current?.focus({ preventScroll: true }); }}>Skip to content</a>
-        <header className={s.bar} ref={headerRef}>
-          <div className={s.accent} />
-          <div className={s.barInner}>
-            <a className={s.brand} href={appHref({ page: 'overview' }, base)} aria-label="Product, portfolio overview">
-              <span className={s.mark} aria-hidden>P</span>
-              <span className={s.name}>Product</span>
-            </a>
-            {auth.mode === 'development' && <span className={s.devTag}>{narrow ? 'Development sign-in' : 'Development sign-in, fictional persona'}</span>}
-            <nav className={s.tabs} aria-label="Main">
-              <TabList
-                selectedValue={selectedTab}
-                size={narrow ? 'small' : 'medium'}
-                aria-label="Pages"
-                onTabSelect={(_, d) => {
-                  const page = d.value as Route['page'];
-                  const next: Route | null = page === 'app' || page === 'map' ? (appId ? { page, id: appId } : null) : page === 'timeline' ? { page } : { page: 'overview' };
-                  if (next) navigate(appHref(next, base));
-                }}
+        <a
+          className="absolute -top-12 left-2 z-20 rounded-md border-2 border-primary bg-white px-3 py-2 text-sm font-medium text-navy focus:top-2"
+          href="#main"
+          onClick={e => { e.preventDefault(); mainRef.current?.focus({ preventScroll: true }); }}
+        >
+          Skip to content
+        </a>
+        <header className="sticky top-0 z-10 border-b border-line bg-card shadow-[0_1px_2px_rgba(10,42,74,0.04)]" ref={headerRef}>
+          <div className="h-[3px] bg-primary" />
+          <div className={cn(frame, 'flex min-h-[52px] items-center gap-x-5 narrow:min-h-0 narrow:flex-wrap narrow:gap-x-3 narrow:gap-y-1 narrow:pt-2')}>
+            <a
+              className="flex shrink-0 items-center gap-x-2.5 rounded-md text-navy no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              href={appHref({ page: 'overview' }, base)}
+              aria-label="Product, portfolio overview"
+            >
+              <span
+                className="relative grid size-7 shrink-0 place-items-center overflow-hidden rounded-[7px] bg-navy text-[15px] font-bold text-white after:absolute after:right-0 after:bottom-0 after:size-[9px] after:bg-gold"
+                aria-hidden
               >
-                {shownTabs.map(t => <Tab key={t.value} value={t.value}>{narrow ? t.short : t.label}</Tab>)}
-              </TabList>
+                P
+              </span>
+              <span className="text-base font-semibold text-navy">Product</span>
+            </a>
+            {auth.mode === 'development' && (
+              <Badge variant="warning" className="rounded-full px-2 font-medium">
+                {narrow ? 'Development sign-in' : 'Development sign-in, fictional persona'}
+              </Badge>
+            )}
+            <nav className="ml-auto narrow:order-3 narrow:-ml-2.5 narrow:w-[calc(100%+20px)]" aria-label="Main">
+              <ul className="m-0 flex list-none gap-1 p-0 narrow:gap-0" aria-label="Pages">
+                {shownTabs.map(t => {
+                  const href = tabHref(t.value);
+                  if (!href) return null;
+                  const current = selectedTab === t.value;
+                  return (
+                    <li key={t.value}>
+                      <a className={tabClass(current)} href={href} aria-current={current ? 'page' : undefined}>
+                        <TabText text={narrow ? t.short : t.label} />
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
             </nav>
-            <div className={s.user}>
-              <Button
-                appearance="subtle"
-                icon={<ArrowClockwise16Regular />}
-                aria-label="Read the data again"
-                title="Read the data again"
-                onClick={() => setGeneration(g => g + 1)}
-              />
+            <div className="flex items-center gap-x-1 narrow:ml-auto">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-navy-2 hover:text-navy"
+                    aria-label="Read the data again"
+                    onClick={() => setGeneration(g => g + 1)}
+                  >
+                    <RefreshCw aria-hidden />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Read the data again</TooltipContent>
+              </Tooltip>
               <UserCard auth={auth} me={me} narrow={narrow} />
             </div>
           </div>
         </header>
         <AuthBanner auth={auth} />
         <MeBanner me={me} />
-        <main className={s.main} id="main" ref={mainRef} tabIndex={-1}>
+        <main className={cn(frame, 'pt-6 pb-8 outline-none narrow:pt-4 narrow:pb-6')} id="main" ref={mainRef} tabIndex={-1}>
           {route.page === 'overview' && <Overview key={generation} />}
           {route.page === 'app' && <Application360 key={`${route.id}-${generation}`} applicationId={route.id} />}
           {route.page === 'map' && <DependencyMap key={`${route.id}-${generation}`} applicationId={route.id} />}
@@ -301,13 +275,13 @@ function actorText(kind: string | null): string | null {
 }
 
 function UserCard({ auth, me, narrow }: { auth: AppAuth; me: Answer<Me> | null; narrow: boolean }) {
-  const s = useStyles();
-  const personaId = useId('persona');
+  const personaId = useId();
   const user = auth.user();
   const name = (me?.ok ? me.value.name : null) ?? user?.name ?? user?.username ?? 'Signed in';
   const roles = me?.ok ? me.value.roles : [];
-  // The popover traps focus and hides the rest of the page from screen readers while it is open. Signing out or
-  // switching the persona replaces the page, so the popover closes first: otherwise the page stays hidden.
+  const initials = initialsOf(name);
+  // The popover is modal (Radix): it traps focus and hides the rest of the page from screen readers while it is open.
+  // Signing out or switching the persona replaces the page, so the popover closes first and the action runs after.
   const [open, setOpen] = useState(false);
   const pending = useRef<(() => void) | null>(null);
   useEffect(() => {
@@ -323,104 +297,136 @@ function UserCard({ auth, me, narrow }: { auth: AppAuth; me: Answer<Me> | null; 
     setOpen(false);
   };
   return (
-    <Popover open={open} onOpenChange={(_, d) => setOpen(d.open)} trapFocus positioning="below-end" withArrow>
-      <PopoverTrigger disableButtonEnhancement>
-        <Button appearance="subtle" icon={<Avatar size={24} name={name} color="colorful" aria-hidden />} aria-label={`Signed in as ${name}. Account and roles`}>
-          {narrow ? null : name}
+    <PopoverPrimitive.Root open={open} onOpenChange={setOpen} modal>
+      <PopoverPrimitive.Trigger asChild>
+        <Button
+          variant="ghost"
+          size={narrow ? 'icon-sm' : 'sm'}
+          className={cn('text-navy hover:text-navy', !narrow && 'max-w-[260px] pr-2.5 pl-1')}
+          aria-label={`Signed in as ${name}. Account and roles`}
+        >
+          <Avatar size="sm" aria-hidden>
+            <AvatarFallback className="bg-secondary text-[11px] font-semibold text-brand-dark ring-1 ring-info-line ring-inset">
+              {initials || <UserRound className="size-3.5" />}
+            </AvatarFallback>
+          </Avatar>
+          {narrow ? null : <span className="truncate">{name}</span>}
         </Button>
-      </PopoverTrigger>
-      <PopoverSurface aria-label="Account and roles">
-        <div className={s.card}>
-          <span className={s.cardName}>{name}</span>
-          {user?.username && user.username !== name && <span className={s.cardLine}>{user.username}</span>}
-          {me?.ok && actorText(me.value.actorKind) && <span className={s.cardLine}>{actorText(me.value.actorKind)}</span>}
-          <h2 className={s.cardHead}>Product roles</h2>
-          {me === null ? (
-            <span className={s.cardLine}>Reading your roles.</span>
-          ) : !me.ok ? (
-            <span className={s.cardLine}>{me.failure.error.message}</span>
-          ) : roles.length ? (
-            <ul className={s.roles}>
-              {roles.map(r => (
-                <li key={`${r.roleKey}-${r.viaGroup?.objectId ?? ''}`} className={s.role}>
-                  <span>{r.label}</span>
-                  {r.viaGroup && <span className={s.cardLine}>through the group {r.viaGroup.displayLabel || r.viaGroup.objectId}</span>}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <span className={s.cardLine}>No product role.</span>
-          )}
-          {auth.mode === 'development' && (
-            <>
-              <label htmlFor={personaId} className={s.cardHead}>Development persona</label>
-              <Select id={personaId} value={auth.persona()?.name ?? ''} onChange={(_, d) => { const persona = d.value; afterClose(() => auth.choose(persona)); }}>
-                {auth.personas.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
-              </Select>
-            </>
-          )}
-          <Button appearance="secondary" icon={<SignOut20Regular />} onClick={() => afterClose(() => { void auth.signOut(); })}>
-            Sign out
-          </Button>
-        </div>
-      </PopoverSurface>
-    </Popover>
+      </PopoverPrimitive.Trigger>
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          aria-label="Account and roles"
+          side="bottom"
+          align="end"
+          sideOffset={6}
+          collisionPadding={8}
+          className="z-50 w-80 max-w-[calc(100vw-16px)] origin-(--radix-popover-content-transform-origin) rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none data-[side=bottom]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+        >
+          <div className="flex flex-col gap-2.5 text-navy">
+            <span className="text-base font-semibold [overflow-wrap:anywhere]">{name}</span>
+            {user?.username && user.username !== name && <span className={cn(cardLine, '-mt-1.5')}>{user.username}</span>}
+            {me?.ok && actorText(me.value.actorKind) && <span className={cardLine}>{actorText(me.value.actorKind)}</span>}
+            <div className="my-0.5 h-px bg-border" />
+            <h2 className={cardHead}>Product roles</h2>
+            {me === null ? (
+              <span className={cardLine}>Reading your roles.</span>
+            ) : !me.ok ? (
+              <span className={cardLine}>{me.failure.error.message}</span>
+            ) : roles.length ? (
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                {roles.map(r => (
+                  <li key={`${r.roleKey}-${r.viaGroup?.objectId ?? ''}`} className="flex flex-col text-sm">
+                    <span className="font-medium">{r.label}</span>
+                    {r.viaGroup && <span className={cardLine}>through the group {r.viaGroup.displayLabel || r.viaGroup.objectId}</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className={cardLine}>No product role.</span>
+            )}
+            {auth.mode === 'development' && (
+              <>
+                <label htmlFor={personaId} className={cardHead}>Development persona</label>
+                {/* A native select, as before: the persona changes as soon as one is chosen. */}
+                <div className="relative">
+                  <select
+                    id={personaId}
+                    className="h-9 w-full cursor-pointer appearance-none rounded-md border border-input bg-card py-1 pr-9 pl-3 text-sm text-navy shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    value={auth.persona()?.name ?? ''}
+                    onChange={e => { const persona = e.target.value; afterClose(() => auth.choose(persona)); }}
+                  >
+                    {auth.personas.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-navy-3" aria-hidden />
+                </div>
+              </>
+            )}
+            <Button variant="outline" className="mt-1" onClick={() => afterClose(() => { void auth.signOut(); })}>
+              <LogOut aria-hidden />
+              Sign out
+            </Button>
+          </div>
+        </PopoverPrimitive.Content>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
   );
 }
 
 // A sign-in problem while signed in, such as a token the API keeps refusing: say so, and offer a fresh sign-in.
 function AuthBanner({ auth }: { auth: AppAuth }) {
-  const s = useStyles();
   const problem = auth.problem();
   if (!problem) return null;
   return (
-    <div className={s.banner} role="region" aria-label="Sign-in notice">
-      <MessageBar intent="warning" layout="multiline">
-        <MessageBarBody>
-          <MessageBarTitle>Sign-in needs another try</MessageBarTitle>
-          {problem}
-        </MessageBarBody>
+    <div className={cn(frame, 'mt-4')} role="region" aria-label="Sign-in notice">
+      <Alert variant="warning">
+        <TriangleAlert aria-hidden />
+        <AlertTitle>Sign-in needs another try</AlertTitle>
+        <AlertDescription>
+          <p>{problem}</p>
+        </AlertDescription>
         {auth.mode === 'entra' && (
-          <MessageBarActions>
-            <Button appearance="secondary" onClick={() => { void auth.signIn(); }}>Sign in again</Button>
-          </MessageBarActions>
+          <div className="col-start-2 mt-2">
+            <Button variant="outline" size="sm" onClick={() => { void auth.signIn(); }}>Sign in again</Button>
+          </div>
         )}
-      </MessageBar>
+      </Alert>
     </div>
   );
 }
 
 function MeBanner({ me }: { me: Answer<Me> | null }) {
-  const s = useStyles();
   if (!me) return null;
   if (me.ok && me.value.roles.length) return null;
   const code = me.ok ? null : me.failure.error.code;
   if (code === 'not_signed_in') return null;
+  const failed = !!code && code !== 'not_authorized';
   return (
-    <div className={s.banner} role="region" aria-label="Session notice">
-      <MessageBar intent={code && code !== 'not_authorized' ? 'error' : 'warning'} layout="multiline">
-        <MessageBarBody>
-          <MessageBarTitle>{code && code !== 'not_authorized' ? 'Your session could not be read' : 'You hold no product role'}</MessageBarTitle>
-          {code && code !== 'not_authorized'
-            ? `${me.ok ? '' : me.failure.error.message} Reference ${me.ok ? '' : me.failure.correlationId}.`
-            : 'You are signed in, but no group of yours grants a product role, so the pages show nothing. Ask your platform admin; roles come only from the groups your organization assigns.'}
-        </MessageBarBody>
-      </MessageBar>
+    <div className={cn(frame, 'mt-4')} role="region" aria-label="Session notice">
+      <Alert variant={failed ? 'error' : 'warning'}>
+        {failed ? <CircleAlert aria-hidden /> : <TriangleAlert aria-hidden />}
+        <AlertTitle>{failed ? 'Your session could not be read' : 'You hold no product role'}</AlertTitle>
+        <AlertDescription>
+          <p>
+            {failed
+              ? `${me.ok ? '' : me.failure.error.message} Reference ${me.ok ? '' : me.failure.correlationId}.`
+              : 'You are signed in, but no group of yours grants a product role, so the pages show nothing. Ask your platform admin; roles come only from the groups your organization assigns.'}
+          </p>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
 
 function Footer({ info }: { info: Answer<ServiceInfo> | null }) {
-  const s = useStyles();
   const parts: string[] = ['Read-only pages.', `Times in ${zoneLabel()}.`];
   if (info?.ok) {
     if (info.value.engineVersion) parts.push(`Engine ${info.value.engineVersion}.`);
     parts.push(info.value.configuration ? `Configuration ${info.value.configuration.configurationSetKey}, version ${info.value.configuration.versionNumber}.` : 'No configuration in force yet.');
   }
   return (
-    <footer className={s.footer}>
+    <footer className={cn(frame, 'pb-8 text-xs leading-relaxed text-navy-3 narrow:pb-6')}>
       {parts.join(' ')}
-      {info?.ok && info.value.mcpEndpoint && <> AI clients connect to the MCP endpoint at <code className={s.code}>{info.value.mcpEndpoint}</code>.</>}
+      {info?.ok && info.value.mcpEndpoint && <> AI clients connect to the MCP endpoint at <code className="font-mono [overflow-wrap:anywhere]">{info.value.mcpEndpoint}</code>.</>}
     </footer>
   );
 }

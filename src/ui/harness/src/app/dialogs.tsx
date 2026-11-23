@@ -4,38 +4,23 @@
 // an approval card.
 // Drill-down without a list: the web app lists applications; other lists are not in this release, and the dialog says
 // how to get them.
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogContent,
-  DialogSurface,
-  DialogTitle,
-  Field,
-  Textarea,
-  makeStyles,
-  tokens,
-} from '@fluentui/react-components';
-import { Copy16Regular } from '@fluentui/react-icons';
-import { useState } from 'react';
+// One modal dialog (Radix through components/ui/dialog): Escape, a click outside and Close all close it. It has no
+// trigger of its own; the shell puts the focus back on the control that opened it.
+import { Copy } from 'lucide-react';
+import { useId, useState } from 'react';
 import type { HandOff } from '../harness';
-import { palette } from '../theme';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 
 export type DialogRequest =
   | { kind: 'hand-off'; request: HandOff }
   | { kind: 'drill'; what: string };
 
-const useStyles = makeStyles({
-  body: { display: 'flex', flexDirection: 'column', rowGap: '12px', color: palette.navy },
-  note: { margin: 0, fontSize: tokens.fontSizeBase300, color: palette.navy2 },
-  prompt: { width: '100%' },
-  copied: { fontSize: tokens.fontSizeBase200, color: palette.navy3 },
-});
+const note = 'm-0 text-sm leading-relaxed text-navy-2';
 
 export function AppDialog({ request, onClose }: { request: DialogRequest | null; onClose: () => void }) {
-  const s = useStyles();
   const [copied, setCopied] = useState(false);
+  const promptId = useId();
   if (!request) return null;
 
   const title = request.kind === 'hand-off' ? request.request.title : 'This list is not in the web app yet';
@@ -50,34 +35,48 @@ export function AppDialog({ request, onClose }: { request: DialogRequest | null;
     }
   };
 
+  const close = () => {
+    setCopied(false);
+    onClose();
+  };
+
   return (
-    <Dialog open modalType="modal" onOpenChange={(_, d) => { if (!d.open) { setCopied(false); onClose(); } }}>
-      <DialogSurface aria-describedby="app-dialog-note">
-        <DialogBody>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogContent className={s.body}>
-            {request.kind === 'hand-off' ? (
-              <p className={s.note} id="app-dialog-note">
-                These pages are read-only. Give this request to your AI client. It calls <code>{request.request.tool}</code>,
-                the engine checks the write, and only a person decides on the approval card.
-              </p>
-            ) : (
-              <p className={s.note} id="app-dialog-note">
-                The web app lists applications. The list "{request.what}" is not here yet; your AI client can read it with
-                the same tools these pages use.
-              </p>
-            )}
-            <Field label="Request for your AI client">
-              <Textarea className={s.prompt} value={prompt} readOnly resize="vertical" />
-            </Field>
-            {copied && <span className={s.copied} role="status">Copied.</span>}
-          </DialogContent>
-          <DialogActions>
-            <Button appearance="primary" icon={<Copy16Regular />} onClick={copy}>Copy the request</Button>
-            <Button appearance="secondary" onClick={() => { setCopied(false); onClose(); }}>Close</Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
+    <Dialog open onOpenChange={open => { if (!open) close(); }}>
+      <DialogContent showCloseButton={false} className="gap-4 bg-card text-navy sm:max-w-xl">
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-lg leading-6 text-navy">{title}</DialogTitle>
+          {request.kind === 'hand-off' ? (
+            <DialogDescription className={note}>
+              These pages are read-only. Give this request to your AI client. It calls{' '}
+              <code className="rounded bg-muted px-1 py-px font-mono text-[0.92em] text-navy">{request.request.tool}</code>,
+              the engine checks the write, and only a person decides on the approval card.
+            </DialogDescription>
+          ) : (
+            <DialogDescription className={note}>
+              The web app lists applications. The list "{request.what}" is not here yet; your AI client can read it with
+              the same tools these pages use.
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={promptId} className="text-sm font-medium text-navy">Request for your AI client</label>
+          <textarea
+            id={promptId}
+            className="min-h-20 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed text-navy shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            value={prompt}
+            rows={4}
+            readOnly
+          />
+        </div>
+        {copied && <span className="text-xs text-navy-3" role="status">Copied.</span>}
+        <DialogFooter>
+          <Button onClick={copy}>
+            <Copy aria-hidden />
+            Copy the request
+          </Button>
+          <Button variant="outline" onClick={close}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

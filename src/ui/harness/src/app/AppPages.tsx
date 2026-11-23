@@ -2,25 +2,20 @@
 // - the applications list a drill-down opens (find_applications with the drill's filter), which leads to Application 360;
 // - a plain panel for a record link of another entity, which these pages do not show;
 // - a page for an address that does not exist.
-import { Button, Link, makeStyles, tokens } from '@fluentui/react-components';
-import { ArrowLeft16Regular, Warning16Filled } from '@fluentui/react-icons';
+import { ArrowLeft, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import type { FoundApplications } from '../data/contracts';
 import { humanizeKey, plural } from '../data/format';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost, type ApplicationFilter } from '../harness';
-import { palette } from '../theme';
 import { Row, RowList } from '../components/rows';
-import { DataStamp, Empty, PageHeader, Panel } from '../components/ui';
+import { DataStamp, Empty, PageHeader, Panel, TextLink } from '../components/blocks';
+import { Button } from '../components/ui/button';
 
 const PAGE_SIZE = 50;
 
-const useStyles = makeStyles({
-  more: { alignSelf: 'flex-start' },
-  ownerWarn: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', color: palette.goldDark, fontWeight: tokens.fontWeightSemibold },
-  plain: { margin: 0, fontSize: tokens.fontSizeBase300, color: palette.navy2, maxWidth: '720px' },
-  mono: { fontFamily: tokens.fontFamilyMonospace, fontSize: tokens.fontSizeBase200, overflowWrap: 'anywhere' },
-});
+const plain = 'm-0 max-w-[720px] text-sm leading-relaxed text-navy-2';
+const mono = 'font-mono text-xs [overflow-wrap:anywhere] text-navy';
 
 function describe(filter: ApplicationFilter, first: FoundApplications | null): string {
   const parts: string[] = [];
@@ -35,7 +30,6 @@ function describe(filter: ApplicationFilter, first: FoundApplications | null): s
 }
 
 export function ApplicationsList({ filter }: { filter: ApplicationFilter }) {
-  const s = useStyles();
   const host = useHost();
   // Each "Show more" adds the next page, read with the skip token the previous page returned.
   const [skipTokens, setSkipTokens] = useState<string[]>([]);
@@ -49,7 +43,14 @@ export function ApplicationsList({ filter }: { filter: ApplicationFilter }) {
         title="Applications"
         subtitle={describe(filter, firstData)}
         meta={<DataStamp envelope={first.status === 'done' ? first.envelope : undefined} />}
-        actions={<Button appearance="secondary" icon={<ArrowLeft16Regular />} as="a" href={host.href({ page: 'overview' })}>Overview</Button>}
+        actions={(
+          <Button variant="outline" asChild>
+            <a href={host.href({ page: 'overview' })}>
+              <ArrowLeft aria-hidden />
+              Overview
+            </a>
+          </Button>
+        )}
       />
       <Panel title="Matching applications" count={firstData?.totalCount} state={first} skeletonRows={6}>
         {data => (
@@ -59,11 +60,11 @@ export function ApplicationsList({ filter }: { filter: ApplicationFilter }) {
               <MorePage key={token} filter={filter} token={token} last={i === skipTokens.length - 1} onNext={next => setSkipTokens(t => (t.includes(next) ? t : [...t, next]))} />
             ))}
             {!skipTokens.length && data.skipToken && (
-              <Button className={s.more} appearance="secondary" onClick={() => setSkipTokens([data.skipToken!])}>
+              <Button className="self-start" variant="outline" onClick={() => setSkipTokens([data.skipToken!])}>
                 Show more
               </Button>
             )}
-            <span>{plural(data.totalCount, 'application matches', 'applications match')} in all.</span>
+            <span className="text-sm text-navy-2">{plural(data.totalCount, 'application matches', 'applications match')} in all.</span>
           </>
         )}
       </Panel>
@@ -72,7 +73,6 @@ export function ApplicationsList({ filter }: { filter: ApplicationFilter }) {
 }
 
 function MorePage({ filter, token, last, onNext }: { filter: ApplicationFilter; token: string; last: boolean; onNext: (token: string) => void }) {
-  const s = useStyles();
   const state = useTool('find_applications', { ...filter, top: PAGE_SIZE, skipToken: token });
   const data = dataOf(state);
   if (state.status === 'loading') return <Empty>Loading more.</Empty>;
@@ -81,7 +81,7 @@ function MorePage({ filter, token, last, onNext }: { filter: ApplicationFilter; 
     <>
       {data && <ApplicationRows data={data} />}
       {last && data?.skipToken && (
-        <Button className={s.more} appearance="secondary" onClick={() => onNext(data.skipToken!)}>
+        <Button className="self-start" variant="outline" onClick={() => onNext(data.skipToken!)}>
           Show more
         </Button>
       )}
@@ -90,19 +90,23 @@ function MorePage({ filter, token, last, onNext }: { filter: ApplicationFilter; 
 }
 
 function ApplicationRows({ data }: { data: FoundApplications }) {
-  const s = useStyles();
   const host = useHost();
   return (
     <RowList label="Applications">
       {data.items.map(a => (
         <Row
           key={a.businessApplicationId}
-          primary={<Link href={host.href({ page: 'app', id: a.businessApplicationId })}>{a.name}</Link>}
+          primary={<TextLink href={host.href({ page: 'app', id: a.businessApplicationId })}>{a.name}</TextLink>}
           secondary={[a.kind.label, a.tier?.label ?? 'No tier yet', a.stage?.label ?? 'No stage yet'].join('. ')}
           tertiary={a.businessOwner
             ? `Business owner ${a.businessOwner.displayLabel}`
-            : <span className={s.ownerWarn}><Warning16Filled aria-hidden />No business owner</span>}
-          end={<Link href={host.href({ page: 'map', id: a.businessApplicationId })}>Dependency map</Link>}
+            : (
+              <span className="inline-flex items-center gap-1 font-semibold text-gold-strong">
+                <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+                No business owner
+              </span>
+            )}
+          end={<TextLink className="text-sm" href={host.href({ page: 'map', id: a.businessApplicationId })}>Dependency map</TextLink>}
         />
       ))}
     </RowList>
@@ -110,32 +114,30 @@ function ApplicationRows({ data }: { data: FoundApplications }) {
 }
 
 export function OtherRecord({ entity, id }: { entity: string; id: string }) {
-  const s = useStyles();
   const host = useHost();
   return (
     <>
       <PageHeader eyebrow="Record" title={humanizeKey(entity)} />
       <Panel title="Not shown here">
-        <p className={s.plain}>
+        <p className={plain}>
           The web app shows applications, their dependencies and the timeline. A record of this kind is not shown here.
           Your AI client can read it with the product's tools; give it this ID.
         </p>
-        <span className={s.mono}>{id}</span>
-        <Link href={host.href({ page: 'overview' })}>Go to the overview</Link>
+        <span className={mono}>{id}</span>
+        <TextLink className="self-start text-sm" href={host.href({ page: 'overview' })}>Go to the overview</TextLink>
       </Panel>
     </>
   );
 }
 
 export function NotFound() {
-  const s = useStyles();
   const host = useHost();
   return (
     <>
       <PageHeader eyebrow="Not found" title="This page does not exist" />
       <Panel title="Where to go">
-        <p className={s.plain}>The address does not match a page of the web app. Check the link, or start from the overview.</p>
-        <Link href={host.href({ page: 'overview' })}>Go to the overview</Link>
+        <p className={plain}>The address does not match a page of the web app. Check the link, or start from the overview.</p>
+        <TextLink className="self-start text-sm" href={host.href({ page: 'overview' })}>Go to the overview</TextLink>
       </Panel>
     </>
   );

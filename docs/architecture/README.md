@@ -24,7 +24,7 @@ The next version is designed to run in your own Azure subscription.
 |---|---|
 | One service | The API, the product's MCP server and the rules engine in one Azure Functions app (Flex Consumption plan, .NET 10, isolated worker). Azure Container Apps is the fallback host if the sign-in or MCP tests fail on Functions |
 | Data | Azure SQL Database with three schemas: `config`, `ops` and `audit`. Ledger tables for records that must never change, temporal tables for the rest, and row-level security on every table |
-| Web app | React and Fluent UI, with four read-only pages |
+| Web app | React and shadcn/ui, with four read-only pages |
 | Sign-in | Microsoft Entra ID. People get product roles only through Entra groups, as app roles assigned to groups |
 | Approval cards | The approval runner: a small group of Power Automate flows that send approval cards in Outlook and Teams and write back each answer |
 | Pipelines | Your own Azure Pipelines, GitHub Actions or Power Platform Pipelines. A copy-paste step at the end of a pipeline records each deployment |
@@ -69,4 +69,4 @@ Some choices in the design are still open. Each page says "open design question"
 
 ---
 
-Microsoft, Azure, Entra, Fluent, Outlook, Power Automate, Power Platform and Teams are trademarks of the Microsoft group of companies. Claude and Claude Code are products of Anthropic. GitHub is a trademark of GitHub, Inc. Other names are trademarks of their owners.
+Microsoft, Azure, Entra, Outlook, Power Automate, Power Platform and Teams are trademarks of the Microsoft group of companies. Claude and Claude Code are products of Anthropic. GitHub is a trademark of GitHub, Inc. Other names are trademarks of their owners.
