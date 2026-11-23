@@ -1,6 +1,6 @@
 # Build log: Enterprise Applications Governance, the next version
 
-How the next version of Enterprise Applications Governance was designed, and how its first code core was built, over the weekend of Saturday 2026-11-21 and Sunday 2026-11-22. All times are US Eastern. Counts are as of about 8:45 PM on the Sunday, unless a row says otherwise.
+How the next version of Enterprise Applications Governance was designed, and how its first code core was built, over the weekend of Saturday 2026-11-21 and Sunday 2026-11-22, and how the technical work went public early on Monday 2026-11-23. All times are US Eastern. Counts are as of about 8:45 PM on the Sunday, unless a row says otherwise.
 
 AI sessions drafted, built and checked the work. The author made every decision.
 
@@ -12,7 +12,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 - **The technical work is open source under the MIT License** ([D-27][dec]): the [source](../../src/), the [overview](../overview.md), the [architecture pages](../architecture/), the [step 2 design documents](../design/step2/), the [decision records](../decisions/) and the [diagrams](../diagrams/).
 - **The 2021 release** is the only release that ships. It is a Microsoft Dataverse solution, open source under MIT since 2021 and no longer maintained. Its source is in [Solutions](../../Solutions/). It was the author's own work ([D-23][dec]).
 - **"The author"** below is the product's author and owner.
-- **Decision numbers** (D-01 to D-28) match the [decision records][dec]. D-21 is about internal coordination and is not published. Its number is kept so the sequence has no gaps.
+- **Decision numbers** (D-01 to D-30) match the [decision records][dec]. D-21 is about internal coordination and is not published. Its number is kept so the sequence has no gaps.
 
 ## 1. Timeline
 
@@ -83,9 +83,20 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | About 8:25 PM | [D-27][dec]: the technical work is public under the MIT License: the code after a public pass, design documents written for readers, the decision records, the diagrams and this log. Internal notes, goals and plans stay private. This supersedes D-24. |
 | About 8:28 PM | [D-28][dec]: the core idea is governing AI development of the apps. The product is designed to enable AI development, not to slow it down. One playbook has an organization track and an IT track, and it opens by naming the old ways of working to avoid. The product's own MCP server is designed so the AI builder can ask the governance questions while it builds. Application portfolio management stays as the record underneath. |
 | About 8:30 PM | The platform decision is carried into the design documents, each change marked, not rewritten. |
-| About 8:45 PM | The author confirms D-27. The public pass makes the technical files public-grade and writes one public decision record per decision, for the author to review and push. |
-| About 11:15 PM | The author decides that an AI session, not the author, commits and pushes this repository once the checks pass. There is never a force push, and history is never rewritten. |
+| About 8:45 PM | The author confirms D-27. The public pass makes the technical files public-grade and writes one public decision record per decision, for the author to review and push. [D-29][dec] changes who pushes at about 11:15 PM. |
+
+### Sunday 2026-11-22, late evening, and Monday 2026-11-23
+
+| Time | What happened |
+|---|---|
+| About 11:15 PM | [D-29][dec]: the author decides that an AI session, not the author, commits and pushes. The AI session working in the product's workspace pushes both repositories, the private backup and this one, and it pushes this one only after the final checks pass. There is never a force push, and history is never rewritten. The license line becomes "Copyright (c) 2021-2026 crmvet". |
 | By 11:17 PM | The two tracks of D-28 are written, as drafts: chapter 0 on governing AI development of the apps, chapter 17 on the old paradigms and how not to slide back, chapters 18 to 22, and guidelines G21 to G24. |
+| 11:17 PM | The working repository is committed and pushed to a private GitHub repository, as a backup. A check confirms that no sensitive files reached it. |
+| By 11:23 PM | [D-30][dec]: for about sixteen hours, an AI session builds and publishes within fixed limits: no sign-in as a person, so nothing is deployed to Azure; no release or version tag; nothing private in public. |
+| Monday 12:25 AM | Commit `4faba8f` changes 1,460 files in this repository. It adds 1,458 of them: the code, the playbook with 23 chapters and 24 numbered guidelines, the technical design, decision records D-01 to D-28, the architecture pages, the diagrams with their Visio source, this build log and the public CI. It also updates the license line and the README. |
+| Monday, about 12:26 AM | `4faba8f` is pushed after the final checks pass: the scan for private material is clean on the files and on the commit range, 1,734 of 1,734 tests pass on a fresh copy, 0 of 1,445 links are broken, a privacy search is clean, and an independent re-check agrees. The GitHub Actions CI run (45117742107) succeeds. |
+| Monday 12:30 AM | Commit `60a08bc` adds the decision records [D-29][dec] and [D-30][dec]. The CI run (45118242078) succeeds. |
+| In progress at the time of writing | Working software round 1, under [D-30][dec]: an Azure adapter, designed as a host with the MCP server and an API over the engine, with a local store and an Azure SQL store, and an azd template. It is not in this repository yet, and nothing is deployed. |
 
 ## 2. What the design produced
 
@@ -97,7 +108,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Step 2 logical design, seven documents | Glossary and entities, the configuration model, the logical data model, 11 processes, the MCP tool surface, the engine and the security model. Written for both possible data stores, so the platform choice did not mean redoing it. |
 | Step 2 working defaults | The 16 internal conflicts settled, the 17 questions adopted as working defaults, and the 6 open design questions. |
 | Technical reference for readers | The overview, the Microsoft fit, and the architecture pages: configuration and presets, the data model, one page per process, the MCP tools, sign-in and security, the rules engine and the screens. |
-| Decision records | One per decision, D-01 to D-28, each with its context, options, choice and reasons. D-21 is not published. |
+| Decision records | One per decision, D-01 to D-30, each with its context, options, choice and reasons. D-21 is not published. |
 | Research notes | 24 notes at the first commit (8:17 PM), on Microsoft's tools, MCP and Copilot options, a Microsoft news sweep and a foundation study. Two more followed that evening, on governing AI development and the playbook outline. They stay private as working files. Public documents cite Microsoft Learn directly. |
 
 ### 2.2 Diagrams
@@ -184,6 +195,7 @@ The author:
 - made every decision in the decision records, one question at a time;
 - set the two tests for the platform, running cost and admin effort, with security a must;
 - chose the platform ([D-26][dec]), opened the technical work under MIT ([D-27][dec]) and set the core idea, governing AI development of the apps ([D-28][dec]);
+- decided who pushes ([D-29][dec]) and set sixteen hours of independent work within fixed limits ([D-30][dec]);
 - keeps the final name, the six step 2 design questions and the change gate open for now;
 - decides what is published in this repository.
 
@@ -195,7 +207,8 @@ The AI sessions:
 - built the 128 Visio diagram pages from layout files;
 - wrote the offline code core and its tests, attacked it, fixed what broke, and kept two open points open instead of guessing;
 - ran the scrub gate, the claims checks, the critics and the adversarial checks;
-- compared the platforms and recommended one. They did not decide. AI never picked the platform or the name.
+- compared the platforms and recommended one. They did not decide. AI never picked the platform or the name;
+- under [D-29][dec], the AI session in the product's workspace pushed the private backup and, after the final checks passed, this repository (`4faba8f` and `60a08bc`), never by force.
 
 ### 5.2 The decision practice
 
@@ -209,13 +222,15 @@ A person decides. AI drafts the options and applies the answer.
 
 ### 5.3 Rules for unattended work
 
-While the author was away, the AI sessions worked under written rules:
+While the author was away on the Saturday night and the Sunday, the AI sessions worked under written rules:
 
 - no commit, no push and no branch;
 - no sign-in as a person, no interactive sign-in, no writes to any cloud tenant, and no outbound actions such as emails or posts;
 - nothing internal goes into the public repository;
 - no AI session can approve or decide anything for the author;
 - open questions go into one list for the author, each with background, options and a recommendation.
+
+For the second window, which [D-30][dec] set late on the Sunday, one rule changed: the AI session in the product's workspace commits and pushes, and it pushes this repository only after the final checks pass ([D-29][dec]). The other limits stand: no sign-in as a person, so nothing is deployed to Azure; no release or version tag; nothing private in public.
 
 ### 5.4 Workflows
 
