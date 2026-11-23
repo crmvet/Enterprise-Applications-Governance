@@ -77,6 +77,8 @@ Each record has the same parts:
 | D-26 | [The first release runs in the organization's own Azure subscription](D-26-first-release-runs-in-the-clients-azure.md) | Accepted. Answers D-22. Supersedes in part D-02, D-10, D-11, D-18 | Azure Functions, Azure SQL, a React web app and Entra sign-in, deployed as a template. It is designed so that no user needs a Power Platform license for the product. |
 | D-27 | [The technical work is public under the MIT License](D-27-technical-work-is-public-under-mit.md) | Accepted. Supersedes D-24 | The source, the technical design, the decision records, the diagrams, the playbook and the guidelines are public under the MIT License. |
 | D-28 | [Govern AI development of the apps, with a playbook for the organization and IT](D-28-govern-ai-development-of-the-apps.md) | Accepted | The product is about governing how an organization builds apps with AI. One playbook has an organization track and an IT track. |
+| D-29 | [Who pushes to GitHub, and the license line](D-29-who-pushes-and-the-license-line.md) | Accepted | The AI session in the product workspace pushes both repositories, only after the final checks pass, never by force. The license line reads 2021-2026 crmvet. |
+| D-30 | [Sixteen hours of independent work](D-30-sixteen-hours-of-independent-work.md) | Accepted | For about sixteen hours the AI session builds and publishes within fixed limits: no sign-in as a person, no Azure deployment, no release or tag, nothing private in public. |
 
 ## Related
 
