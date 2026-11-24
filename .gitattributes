@@ -1,3 +1,6 @@
 # SQL scripts keep LF line endings on every checkout, including Windows runners with core.autocrlf.
 # Tests and the drift check read them byte for byte.
 *.sql text eol=lf
+
+# Shell scripts keep LF line endings on every checkout: the azd hooks and the WSL check run them in bash on Linux.
+*.sh text eol=lf

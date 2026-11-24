@@ -12,7 +12,7 @@ AI sessions drafted, built and checked the work. The author made every decision.
 - **The technical work is open source under the MIT License** ([D-27][dec]): the [source](../../src/), the [overview](../overview.md), the [architecture pages](../architecture/), the [step 2 design documents](../design/step2/), the [decision records](../decisions/) and the [diagrams](../diagrams/).
 - **The 2021 release** is the only release that ships. It is a Microsoft Dataverse solution, open source under MIT since 2021 and no longer maintained. Its source is in [Solutions](../../Solutions/). It was the author's own work ([D-23][dec]).
 - **"The author"** below is the product's author and owner.
-- **Decision numbers** (D-01 to D-30) match the [decision records][dec]. D-21 is not about the technical design, so it is not published. Its number is kept so the sequence has no gaps.
+- **Decision numbers** (D-01 to D-35) match the [decision records][dec]. D-21 and D-34 are not about the technical design, so they are not published. Their numbers are kept so the sequence has no gaps.
 
 ## 1. Timeline
 
