@@ -1,8 +1,9 @@
-# D-36 The web app acts, and the engine checks every write
+# D-36 The web app acts, through the same engine as AI clients
 
 - **Status:** Accepted. Amends D-18 and D-26.
 - **Date:** 2026-11-23
 - **Decided by:** the product owner
+- **Title reworded:** 2026-11-27. The title was "The web app acts, and the engine checks every write". The tests show writes from the web app, an MCP client and a pipeline step reaching the same engine, not every write. The decision text below is kept as decided, and the file name stays.
 
 ## Context
 
@@ -23,7 +24,7 @@ After the first demo of a sandbox install, the product owner found that the web 
 
 The web app acts. A signed-in person files intakes, proposes and answers, records decisions, proposes owner changes, completes reviews, links documents, plans changes and approves, in the web app.
 
-- **The engine checks every write** from the web app the same way it checks an AI client's: the same operations, the same rules, the same separation of duties and the same ledger.
+- **The engine checks the web app's writes** the same way it checks an AI client's: the same operations, the same rules, the same separation of duties and the same ledger.
 - **A person decides every approval.** Nobody approves their own request where the rules say so. AI drafts, and a person accepts (D-28).
 - **Every use case of the eleven processes is designed to get screens,** plus owners, reviews, approvals, data, decisions, documents, configuration and the gap check. The browser tests play the 23 demo scenarios against the demo estate, with a guided demo story. The use cases that the [processes index](../architecture/processes/README.md) lists as not built are not played.
 - The applications register, with search, filters and sort, came first.

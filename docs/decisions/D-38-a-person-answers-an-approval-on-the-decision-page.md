@@ -50,7 +50,7 @@ The web page now, cards later.
 - [D-09 The product can have its own MCP server](D-09-the-product-has-its-own-mcp-server.md)
 - [D-16 No Copilot or Teams agent](D-16-no-copilot-or-teams-agent.md)
 - [D-26 The first release runs in the organization's own Azure subscription](D-26-first-release-runs-in-the-clients-azure.md)
-- [D-36 The web app acts, and the engine checks every write](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
+- [D-36 The web app acts, through the same engine as AI clients](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
 - [D-40 Self-approval stays as the Balanced preset has it](D-40-self-approval-stays-as-the-balanced-preset-has-it.md)
 - [Sign-in and security](../architecture/sign-in-and-security.md), sections "Approvals and the responder check" and "Step-up sign-in"
 - [Security model, design document 26](../design/step2/26-security-model.md)

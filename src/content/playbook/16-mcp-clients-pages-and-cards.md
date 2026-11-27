@@ -1,4 +1,4 @@
-# Chapter 16. Working with the product through MCP clients, pages and approval cards
+# Chapter 16. Working with the product through MCP clients, the web app and notices
 
 - **Version:** 0.2 draft, 2026-11-22
 - **Track:** IT
@@ -8,15 +8,16 @@
 
 ## Why this chapter exists
 
-Most people should never need a back office. A maker wants to register an app from the tool they already work in. An owner wants to answer one question and get on with the day. An approver wants a notice in Outlook or Teams that opens the page where they answer. AI clients need governance facts to act safely, and nothing tells them. This chapter shows the three ways people and AI clients are designed to reach the product, and the rules that keep each way safe.
+Most people should never need a back office. A maker wants to register an app from the tool they already work in. An owner wants to answer one question and get on with the day. An approver wants a notice in Outlook or Teams that opens the page where they answer. AI clients need governance facts to act safely, and nothing tells them. This chapter shows the two ways people and AI clients are designed to reach the product, the notices designed to point people to it, and the rules that keep each way safe.
 
-## The three ways in
+## The two ways in, and the notices
 
 | Way in | Who uses it | What for |
 |---|---|---|
-| MCP clients, such as Claude Code | Makers, owners, admins, and their AI clients | Ask questions, draft intakes, changes and decisions, record links and deployments, run the gap check, prepare configuration changes |
-| The product's pages | Anyone who prefers a screen | See an application, its dependencies, its timeline and what needs them. Approvers and owners approve or reject on the decision page. That is how a decision is made |
-| Approval notices in Outlook and Teams | Approvers and owners | Learn that a decision waits for them. The notices are designed to link to the decision page |
+| MCP clients (the product's demo uses Claude Code) | Makers, owners, admins, and their AI clients | Ask questions, draft intakes, changes and decisions, record links and deployments, run the gap check, prepare configuration changes |
+| The web app | Anyone who prefers a screen | See an application, its dependencies, its timeline and what needs them, and do the work there. Approvers and owners approve or reject on the decision page. That is how a decision is made |
+
+Notices in Outlook and Teams are not a way in. They are designed to tell approvers and owners that a decision waits for them, and to link to the decision page, where they answer.
 
 ## What good looks like
 

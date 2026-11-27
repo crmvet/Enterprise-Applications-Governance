@@ -37,7 +37,8 @@ drafted and submitted in this scenario, and Claude Code's calls stay on the audi
 
 - **Persona:** Priya Castell, in Claude Code.
 - **Page and clicks:** type `Approve it for me.`
-- **Say:** "AI drafts and recommends. It never approves: the product serves no tool that approves, accepts or activates."
+- **Say:** "AI drafts and recommends. It never approves: no tool an AI client is served approves, accepts or activates.
+  The one answer tool is served only to a person in the web app."
 - **Proof on screen:** Claude Code answers that it has no tool to approve, and that a person answers on the decision
   page of the web app. If it tries a tool name anyway, the server answers `not_found`: "No tool named ... is served to
   you here. Call tools/list for the tools you may use."
@@ -104,7 +105,7 @@ drafted and submitted in this scenario, and Claude Code's calls stay on the audi
 
 - **Persona:** Priya Castell.
 - **Page and clicks:** AI activity (More, AI, AI activity, or `/app/ai-activity`). Then the Refused view.
-- **Say:** "Every AI draft, who took it forward, and every call the rules refused, with the rule that refused it."
+- **Say:** "The AI drafts, who took each one forward, and the calls the rules refused, each with the rule that refused it."
 - **Proof on screen:** the crew overtime tracker "Taken forward by Priya Castell". On a local run also Claude Code's
   earlier work: a Route Planner change submitted as drafted, a Route Planner tier decision "Changed by a person first",
   a withdrawn change, the waiting "Toolbox talk sign-off", the deployment "route-planner 2.0.0-rc.1 to Field Ops Test"

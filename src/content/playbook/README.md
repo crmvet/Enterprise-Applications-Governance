@@ -1,7 +1,7 @@
 # The playbook
 
 - **Version:** 0.2 draft, 2026-11-22
-- **Status:** design. The product it describes is in design, so every product line says what the product **is designed to** do.
+- **Status:** playbook guidance. The product's status: built and tested; runs as a demo install with fictional data; no release yet. The chapters describe the product's design, so each product line says what the product **is designed to** do.
 
 **Govern AI development of your apps: the product is designed so people can build with AI while each app stays owned, tiered and decided by a person.**
 
@@ -72,7 +72,7 @@ Suggested order: start with chapter 20, then 21, 16, 13, 22, 8, 7 and 15. Then r
 | 8 | [Build paths: citizen, fusion, pro and AI-built, and graduation](08-build-paths-and-graduation.md) | G3, G7, G8, G17, G19, G21, G23 | P01, P02, P08, P10 |
 | 13 | [Data owners and access](13-data-owners-and-access.md) | G7, G8, G14, G19 | P02, P04, P09 |
 | 15 | [Evidence and audit](15-evidence-and-audit.md) | G4, G9, G15, G17 | P03, P05, P10, P11 |
-| 16 | [Working with the product through MCP clients, pages and approval cards](16-mcp-clients-pages-and-cards.md) | G8, G17, G22 | P05, P06, P10, P11 |
+| 16 | [Working with the product through MCP clients, the web app and notices](16-mcp-clients-pages-and-cards.md) | G8, G17, G22 | P05, P06, P10, P11 |
 | 20 | [The paved road for AI builders](20-the-paved-road-for-ai-builders.md) | G7, G9, G14, G19, G21 | P01, P04, P05 |
 | 21 | [Governance inside the AI build loop](21-governance-inside-the-ai-build-loop.md) | G6, G8, G17, G20, G22 | P01, P02, P05, P07, P10 |
 | 22 | [Which Microsoft tool does which job](22-which-microsoft-tool-does-which-job.md) | G1, G9, G15, G16 | P05, P06 |
@@ -93,7 +93,7 @@ Owned by both sides: one register, change and release, the AI rules, and operate
 Three diagrams go with the playbook. Each picture is in `img/`, and its Visio source is in `visio/`.
 
 - **Old paradigm, new practice.** The ten old paradigms on one page, each with its new practice and its slide-back signal (chapter 17).
-- **Two views, one record.** The organization's view and IT's view around one application record, with the ways in above it and Microsoft's tools below it (chapter 0).
+- **Two views, one record.** The organization's view and IT's view around one application record, with the two ways in above it, the notices beside them, and Microsoft's tools below it (chapter 0).
 - **The governed AI build loop.** One change from the ask to the record: where the AI drafts, where a person decides, where your own pipeline deploys, and where the product is designed to record the deployment (chapters 0 and 21).
 
 ## The processes

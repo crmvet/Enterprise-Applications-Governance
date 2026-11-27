@@ -216,3 +216,22 @@ PRODUCT_TEST_SQLSERVER="<connection string of an empty test database>" dotnet te
 - **What the browser did not see.** Wording edits made after this run started, such as those to the playbook and the
   guidelines, were not played in the browser.
 - **Not repeated here.** This section does not repeat the web app checks or the demo readiness check of section 2.
+
+## 7. 2026-11-27: the follow-up commit
+
+A second commit on 2026-11-27 changed wording people read in the web app (the in-app demo guide, the AI activity,
+Application 360, deployments, admin, configuration and intake pages), the playbook and its three pictures, the demo
+scripts and one end-to-end check label. It did not change what the engine decides.
+
+- **The check runner** passed on that tree with the same totals as section 6 (engine and MCP 1294 of 1294 on
+  net10.0; Azure host 256 passed, 1 skipped; stores 167 passed, 85 skipped; fixtures 871; replays 14). The CI run on
+  the follow-up commit repeats it on Windows, net48 included.
+- **The web app checks:** lint clean, 487 of 487 tests, both builds.
+- **The browser suite** ran again on that tree, on a fresh local demo store, and finished at 13:16 UTC:
+
+| Project | Steps passed | Failed | Skipped | Skipped writes | Side sheets performed |
+|---|---|---|---|---|---|
+| desktop-1280 | 201 of 201 | 0 | 0 | 0 | 74 of 74 |
+| phone-390 | 201 of 201 | 0 | 0 | 0 | 74 of 74 |
+
+- As in sections 3 and 6, S-07.6 and S-22.7 proved their refusal and passed in each project.

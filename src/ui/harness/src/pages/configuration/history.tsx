@@ -43,7 +43,7 @@ export function VersionsView({ health }: { health: ToolState<ConfigurationHealth
   const versions = state.status === 'done' && state.envelope.ok ? filterByText(state.envelope.data.versions, text, versionSearchFields) : null;
   return (
     <div className={twoColumnClass}>
-      <Panel title="Versions" state={state} count={versions?.length} subtitle="Newest first. A version comes into force only when a person accepts its decision.">
+      <Panel title="Versions" state={state} count={versions?.length} subtitle="Newest first. After the first version, a version comes into force only when a person accepts its decision.">
         {data => (
           <>
             <ListSearch label="Search the versions by number, person, decision or change" placeholder="Version, person, decision or change" />

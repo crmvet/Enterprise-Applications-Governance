@@ -263,8 +263,8 @@ function Wizard({ who, intakeRequestId, detail }: { who: WhoState; intakeRequest
         eyebrow={detail?.intake.recordNumber ? `Intake ${detail.intake.recordNumber}` : 'Intake'}
         title={title}
         subtitle={intakeRequestId
-          ? 'Finish the request, answer the tier questions, then submit it. The engine checks every save.'
-          : 'Say what the business needs. The engine checks every save, and nothing goes anywhere until you submit.'}
+          ? 'Finish the request, answer the tier questions, then submit it. The engine checks what you save.'
+          : 'Say what the business needs. The engine checks what you save, and nothing goes anywhere until you submit.'}
         meta={detail ? (
           <span className="flex flex-wrap items-center gap-2">
             <StatusBadge status={detail.intake.status} />

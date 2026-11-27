@@ -26,8 +26,8 @@ approves).
 
 ## Questions to expect
 
-- **"Can the AI just approve it?"** No. No tool approves, and the answer tool is served only to a person in the web
-  app. Show S-21.5 in Claude Code if asked.
+- **"Can the AI just approve it?"** No. No tool an AI client is served approves, and the one answer tool is served
+  only to a person in the web app. Show S-21.5 in Claude Code if asked.
 - **"Where does this run?"** In the organization's own Azure subscription, beside Power Platform and Entra ID. People
   hold product roles through their Entra groups.
 - **"What does it cost to adopt?"** Start with a preset such as Balanced; every rule is configuration that changes

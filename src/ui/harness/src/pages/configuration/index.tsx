@@ -106,7 +106,7 @@ function ConfigurationBody({ route }: { route: RouteOf<'configuration'> }) {
       <PageHeader
         eyebrow="Govern"
         title="Configuration"
-        subtitle="The rules in force, and how they change: a configuration admin proposes, another person accepts the exact change on the decision page, and nothing changes until then."
+        subtitle="The rules in force, and how they change: a configuration admin proposes, a configuration admin accepts the exact change on the decision page (a second admin where the rules ask for one), and nothing changes until then."
         meta={(
           <span className="flex flex-col gap-0.5">
             <span>

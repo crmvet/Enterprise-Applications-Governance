@@ -43,7 +43,7 @@ A demo-only persona switch.
 
 - [D-11 Roles come only through Entra groups](D-11-roles-only-through-entra-groups.md)
 - [D-33 A demo install shows the fictional estate](D-33-a-demo-install-shows-the-fictional-estate.md)
-- [D-36 The web app acts, and the engine checks every write](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
+- [D-36 The web app acts, through the same engine as AI clients](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
 - [D-38 A person answers an approval on the decision page](D-38-a-person-answers-an-approval-on-the-decision-page.md)
 - [Sign-in and security](../architecture/sign-in-and-security.md)
 - [Security model, design document 26](../design/step2/26-security-model.md)

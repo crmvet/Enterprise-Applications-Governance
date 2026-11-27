@@ -149,7 +149,7 @@ export function AiActivity({ route }: { route: RouteOf<'ai-activity'> }) {
         subtitle={(
           <>
             AI clients draft and people decide. What AI clients did{data ? (estate ? ' across the estate' : ' for you') : ''}, who took each
-            draft forward, and every call the rules refused.
+            draft forward, and the calls the rules refused.
           </>
         )}
         meta={(
@@ -832,8 +832,8 @@ function RulesPanel() {
   const rules: { icon: ReactNode; text: string }[] = [
     { icon: <Bot />, text: 'An AI client acts for a person, through that person\'s own sign-in. The engine stamps the client and the person on every row it writes.' },
     { icon: <Check />, text: 'It may draft, propose, report facts and add links. It submits only where the Tool Policy says so, and a submit is a request, never an approval.' },
-    { icon: <CircleSlash />, text: 'No tool approves, accepts or activates anything. An AI answer to an approval request is kept as a recommendation and never counts.' },
-    { icon: <ShieldCheck />, text: 'The engine checks every AI write exactly as it checks a person\'s. A refused call writes nothing and stays in the audit trail.' },
+    { icon: <CircleSlash />, text: 'No tool an AI client is served approves, accepts or activates anything; the one answer tool is served only to a person in the web app. An AI answer to an approval request is kept as a recommendation and never counts.' },
+    { icon: <ShieldCheck />, text: 'An AI client\'s writes go through the same engine and rules as a person\'s, and meet the AI rules too. A refused call writes nothing and stays in the audit trail.' },
   ];
   return (
     <Panel title="The rules AI clients work under" subtitle="The same in every install. Configuration can make them stricter, never looser.">

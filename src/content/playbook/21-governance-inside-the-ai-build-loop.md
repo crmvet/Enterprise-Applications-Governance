@@ -27,19 +27,19 @@
 - Every AI client call runs as the signed-in person, so the person's own access is the boundary.
 - Everything an AI client writes starts as a draft, a proposal, a link or a fact as reported, and shows the AI client and the person it acted for.
 - Every decision in the loop is made by a named person on the decision page, or under a pre-authorized rule a named person approved on record.
-- The organization's own pipeline deploys, and the deployment is recorded with its approval.
+- The organization's own pipeline deploys, and the deployment is recorded with its flags.
 
 ## The loop in seven steps
 
-The diagram "The governed AI build loop" shows these seven steps as one circle.
+The diagram "The governed AI build loop" shows these seven steps as one loop.
 
-1. **A person asks.** A builder asks an AI client for an app or a change. Claude Code is the reference client for examples and guides; the product is designed so GitHub Copilot and other MCP clients use the same contract.
+1. **A person asks.** A builder asks an AI client for an app or a change. The product's demo and guides use Claude Code; the product is designed so GitHub Copilot and other MCP clients use the same contract.
 2. **The AI client asks first.** Before it builds, the AI client calls the product's MCP server, as the signed-in person.
 3. **The product is designed to answer.** The proposed tier and why, what the tier needs, the owners and deputies, what depends on the app, which documents are missing, and what needs a person.
 4. **The AI drafts.** It writes the app or the change in your repository. It saves the intake, the registration or the change as a draft in the product. It writes the documents in your own wiki, repository or SharePoint, then records their links.
-5. **A person decides.** The AI client submits, and a submission is a request, never an approval. The decision goes to the accountable person, who answers on the decision page in the web app; Teams and Outlook notices are designed to link to it. The AI cannot answer it. A rejection sends the draft back for revision.
+5. **A person decides.** The AI client submits, and a submission is a request, never an approval. The decision goes to the accountable person, who answers on the decision page in the web app; Teams and Outlook notices are designed to link to it. The AI cannot answer it. After a rejection, a person can revise the work and propose it again.
 6. **Your pipeline deploys.** Power Platform Pipelines, Azure Pipelines or GitHub Actions. Build once, then promote the tested artifact. By design, the product never runs the pipeline.
-7. **The deployment is recorded.** The pipeline's last step is designed to record what, where, when, which pipeline and who approved, with the pipeline's own workload identity and not through MCP. A deployment that came another way, lacked its approval or landed outside its window is designed to be flagged.
+7. **The deployment is recorded.** The pipeline's last step is designed to record what, where, when and which pipeline, with the pipeline's own workload identity and not through MCP. A deployment that came another way, lacked its approval or landed outside its window is designed to be flagged.
 
 The next change starts with the builder asking "what needs me?", and the loop turns again.
 

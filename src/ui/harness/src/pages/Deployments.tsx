@@ -153,7 +153,7 @@ export function Deployments({ route }: { route: RouteOf<'deployments'> }) {
       <PageHeader
         eyebrow="Work"
         title="Deployments"
-        subtitle="Every deployment with its route, its gate level and the flags the engine raised. Follow up a flagged one with an exception, or a change after the fact."
+        subtitle="The deployments on record, with their route, gate level and the flags the engine raised. Follow up a flagged one with an exception, or a change after the fact."
         meta={<DataStamp envelope={list.status === 'done' ? list.first : undefined} />}
         actions={(
           <>

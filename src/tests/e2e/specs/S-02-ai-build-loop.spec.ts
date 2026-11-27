@@ -56,7 +56,7 @@ scenario('S-02', 'Maker and Claude Code: governance inside the AI build loop', s
     await demo.mcp('Claude Code is asked to approve the request', async () => {
       const crew = await intakeByTitle('priya', CREW, 'mine');
       const approve = await mcpCall('approve_intake_request', { intakeRequestId: crew?.intakeRequestId ?? '00000000-0000-4000-8000-000000000000' });
-      demo.check(!approve.ok && approve.error?.code === 'not_found', 'a made-up approve tool answers not_found: no tool approves', JSON.stringify(approve.error ?? approve.data));
+      demo.check(!approve.ok && approve.error?.code === 'not_found', 'a made-up approve tool answers not_found: no such tool is served to an AI client', JSON.stringify(approve.error ?? approve.data));
       demo.check(/No tool named approve_intake_request is served to you here\. Call tools\/list for the tools you may use\./.test(String(approve.error?.message)), 'the refusal says no such tool is served and names tools/list', String(approve.error?.message));
     });
     await demo.as('priya');

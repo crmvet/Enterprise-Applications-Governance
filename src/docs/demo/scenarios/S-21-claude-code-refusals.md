@@ -90,7 +90,7 @@ refused call stays on the audit trail, as it should.
 
 - **Persona:** Priya Castell, in the browser.
 - **Page and clicks:** AI activity, the Refused view. Then switch to Owen Achterberg and open Admin, Clients.
-- **Say:** "Every refused call is on the record, with the rule that refused it and the guideline behind it."
+- **Say:** "A refused call is on the record, with the rule that refused it and the guideline behind it."
 - **Proof on screen:** each refused call of S-21.5 to S-21.7 that reached the server, such as "Claude Code called
   save_decision_proposal, and the product refused it", "Not allowed for this person", G4. On Admin, Claude Code's row
   counts its calls, refused calls and drafts.

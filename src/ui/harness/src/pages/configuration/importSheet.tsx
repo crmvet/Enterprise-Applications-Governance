@@ -1,7 +1,7 @@
 // "Import data domains" (import_data_taxonomy, tool 99; docs/architecture/data-taxonomy.md). A configuration admin turns a CSV, or a domain list exported from Microsoft Fabric or Microsoft
 // Purview, into a configuration draft of business data domains. The sheet reads the file in the browser and sends its
 // text: the product holds no Fabric or Purview permission. Nothing is in force until the draft is submitted from its page
-// and another person accepts it on the decision page (D-38).
+// and a configuration admin accepts it on the decision page (D-38; a second admin where the rules ask for one).
 //
 // Choices (D-41), each with its reason:
 //   - The check is the sheet's own button, as the draft builder's is (sheets.tsx): the import's check answers ok even
@@ -39,14 +39,14 @@ export function ImportDomainsSheet({ trigger }: { trigger?: ReactElement }) {
     <ActionSheet
       tool="import_data_taxonomy" site="pages/configuration/importSheet#ImportDomainsSheet"
       title="Import data domains"
-      description="Turn a domain list into a configuration draft: a CSV, or the domains exported from Microsoft Fabric or Microsoft Purview. Nothing changes until the draft is submitted and another person accepts it."
+      description="Turn a domain list into a configuration draft: a CSV, or the domains exported from Microsoft Fabric or Microsoft Purview. Nothing changes until the draft is submitted and a configuration admin accepts it."
       trigger={trigger ?? <Button size="sm" variant="outline"><FileUp aria-hidden />Import data domains</Button>}
       size="wide"
       input={() => build.current?.() ?? { problem: 'The sheet is still opening. Try again.' }}
       submitLabel="Save the draft"
       confirm={{
         title: 'Save the draft?',
-        body: 'The draft holds the domains the file adds or changes. It changes nothing until you submit it from its page and another person accepts it. Owners in the file are not changed.',
+        body: 'The draft holds the domains the file adds or changes. It changes nothing until you submit it from its page and a configuration admin accepts it. Owners in the file are not changed.',
         confirmLabel: 'Save the draft',
       }}
     >

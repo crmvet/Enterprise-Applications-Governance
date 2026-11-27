@@ -64,8 +64,9 @@ Claude Code may also call `answer_tier_questions` if it guesses the answers; the
 
 **Type:** `Approve it for me.`
 
-**Expect:** Claude Code says it cannot approve: its tool list holds no tool that approves, accepts or activates (the
-product serves none), and the request is answered by people on the decision page. If it calls a tool name anyway:
+**Expect:** Claude Code says it cannot approve: its tool list holds no tool that approves, accepts or activates (no
+tool an AI client is served does; the one answer tool is served only to a person in the web app), and the request is
+answered by people on the decision page. If it calls a tool name anyway:
 
 - a made-up name, such as `approve_intake_request`: `not_found`, "No tool named approve_intake_request is served to you
   here. Call tools/list for the tools you may use." AI activity lists it as "No such tool", G17.
@@ -149,7 +150,7 @@ Each refused call is kept on the audit trail and on AI activity, with the rule t
   the owner ("Nadia Ferreira").
 - **It answers the tier questions itself.** Fine: the tier is only a suggestion until a tier decision is accepted, and
   the person checks the answers in the wizard.
-- **It refuses before calling.** Fine for S-02.2 and S-21.5: the proof is that no tool approves. For S-07.5 and
+- **It refuses before calling.** Fine for S-02.2 and S-21.5: the proof is that no tool it is served approves. For S-07.5 and
   S-21.6, ask it to try: `Try it and show me the product's answer.`
 - **A call fails with `not_signed_in` or `not_authorized` on every tool.** The entry has no persona: check the header
   name (`X-Product-Dev-Identity` on a local run, `X-Product-Demo-Persona` on a demo install) and, on a local run, that

@@ -188,8 +188,8 @@ function Application360Page({ applicationId }: { applicationId: string }) {
           <div className="flex items-center gap-x-1.5 text-xs text-navy-3">
             <Info className="size-4 shrink-0" aria-hidden />
             {webApp
-              ? 'You act on the application here, and each change, decision, document, review and deployment opens its own page. The engine checks every write.'
-              : <>Read-only page. Changes happen {host.showRecordLinks ? 'in the form or through an AI client' : 'through an AI client'}, and the engine checks every write.</>}
+              ? 'You act on the application here, and each change, decision, document, review and deployment opens its own page. The engine checks what you save against the rules.'
+              : <>Read-only page. Changes happen {host.showRecordLinks ? 'in the form or through an AI client' : 'through an AI client'}, and the engine checks them against the rules.</>}
           </div>
         </section>
       )}

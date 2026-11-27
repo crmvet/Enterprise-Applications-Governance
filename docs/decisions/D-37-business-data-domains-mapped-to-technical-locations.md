@@ -60,7 +60,7 @@ The details were to be designed before the build. D-41 answers them.
 - [D-10 Rules are configuration, the engine is code](D-10-rules-are-configuration-and-the-engine-is-code.md)
 - [D-15 An on-demand gap check instead of importing Microsoft's inventory](D-15-gap-check-instead-of-inventory-import.md)
 - [D-28 Govern AI development of the apps](D-28-govern-ai-development-of-the-apps.md)
-- [D-36 The web app acts, and the engine checks every write](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
+- [D-36 The web app acts, through the same engine as AI clients](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
 - [D-41 The data taxonomy details, and a never rule cannot be broken](D-41-the-data-taxonomy-details-and-a-never-rule-cannot-be-broken.md)
 - [Data taxonomy](../architecture/data-taxonomy.md)
 - [Data model](../architecture/data-model.md)

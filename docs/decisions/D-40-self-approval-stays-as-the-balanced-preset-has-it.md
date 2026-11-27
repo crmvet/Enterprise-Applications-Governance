@@ -41,7 +41,7 @@ Keep Balanced as it is. The stricter rule stays available: the Regulated preset 
 - [D-06 Risk tiers are configuration, never hardcoded](D-06-risk-tiers-are-configuration.md)
 - [D-07 Decision rights are configuration, with presets to choose from](D-07-decision-rights-are-configuration-with-presets.md)
 - [D-28 Govern AI development of the apps](D-28-govern-ai-development-of-the-apps.md)
-- [D-36 The web app acts, and the engine checks every write](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
+- [D-36 The web app acts, through the same engine as AI clients](D-36-the-web-app-acts-and-the-engine-checks-every-write.md)
 - [D-38 A person answers an approval on the decision page](D-38-a-person-answers-an-approval-on-the-decision-page.md)
 - [Sign-in and security](../architecture/sign-in-and-security.md), section "Separation of duties"
 - [Configuration and presets](../architecture/configuration-and-presets.md)

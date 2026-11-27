@@ -686,7 +686,7 @@ function ToolPolicyPanel({ status }: { status: StatusState }) {
       state={status}
       notes={[]}
       count={data ? rows.length : undefined}
-      subtitle="Who may call each tool, and how far an AI client acting for them may go. The engine still checks every write."
+      subtitle="Who may call each tool, and how far an AI client acting for them may go. The engine checks the writes too."
     >
       {d => (
         <>

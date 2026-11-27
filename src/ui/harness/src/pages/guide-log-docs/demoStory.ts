@@ -131,17 +131,17 @@ export const STORY_STEPS: StoryStep[] = [
     personas: [P.priya],
     aiClient: {
       prompt: 'I want a crew overtime tracker for my team.',
-      note: 'Claude Code calls check_duplicates (Crew Roster among the matches), get_tier_questions and save_intake_draft: "saved as a draft". Then type "Approve it for me.": no tool approves, and a tried name answers not_found.',
+      note: 'Claude Code calls check_duplicates (Crew Roster among the matches), get_tier_questions and save_intake_draft: "saved as a draft". Then type "Approve it for me.": no tool an AI client is served approves, and a tried name answers not_found. The one answer tool is served only to a person in the web app.',
     },
     points: [
       pt('S-02.1', 'In Claude Code, ask for the crew overtime tracker. It checks for reuse and the tier questions, then saves a draft.'),
-      pt('S-02.2', 'Ask it to approve. It cannot: the product serves no tool that approves.'),
+      pt('S-02.2', 'Ask it to approve. It cannot: no tool an AI client is served approves; the one answer tool is served only to a person in the web app.'),
       pt('S-02.3', 'My work: "Crew overtime tracker", drafted by Claude Code for Priya Castell, with Open in the wizard and Accept and submit.'),
       pt('S-02.4', 'Open in the wizard: the AI draft banner, then the reuse step with Crew Roster and Crew Shift Mobile.'),
       pt('S-02.5', 'Tier questions: the answers point to Tier 2, set by "Does it change data?" and "Does it touch sensitive data?". Save tier answers.'),
       pt('S-02.6', 'What Tier 2 needs: the Design and Go-live gates, the approvals, the runbook and wiki page, and the reviews.'),
       pt('S-02.7', 'Accept and submit, with Check first: who would be asked, nothing stored; then "1 approval is asked, and 3 people are consulted." Platform admin asked; architect, PMO and security reviewer advise.'),
-      pt('S-02.8', 'AI activity: the draft taken forward by Priya, and each refused call with its rule and guideline chip.'),
+      pt('S-02.8', 'AI activity: the draft taken forward by Priya, and the refused calls, with their rule and guideline chip.'),
     ],
     links: [
       { label: 'My work', to: () => ({ page: 'work' }) },
@@ -450,7 +450,7 @@ export const STORY_STEPS: StoryStep[] = [
       pt('S-15.1', 'The Invoice Matching evidence pack: decisions, answers, changes, deployments, reviews and documents.'),
       pt('S-15.2', 'The 1.12 decision: the Finance Approvals Agent\'s answer is a recommendation only; Clara Voss\'s counted.'),
       pt('S-15.3', 'Both deployments carry the AI-only code approval flag, each with the rules version it was checked under.'),
-      pt('S-15.4', 'The audit trail of AI calls: each refused call with the rule and the guideline.'),
+      pt('S-15.4', 'The audit trail of AI calls: the refused calls, with their rule and guideline.'),
     ],
     links: [
       { label: 'Invoice Matching evidence pack', app: 'Invoice Matching', to: ids => (ids.app ? { page: 'evidence', subjectKind: 'business-application', id: ids.app } : { page: 'applications', filter: { text: 'Invoice Matching' } }) },
@@ -586,7 +586,7 @@ export const STORY_STEPS: StoryStep[] = [
       pt('S-21.5', 'An approval: refused, AI never approves (G17).'),
       pt('S-21.6', 'A risk acceptance on an application she does not own: not_authorized (G4).'),
       pt('S-21.7', 'The bank details with AI: refused when saved, for everyone (G16).'),
-      pt('S-21.8', 'AI activity, Refused, and Admin, Clients: every refused call on the record.'),
+      pt('S-21.8', 'AI activity, Refused, and Admin, Clients: the refused calls on the record.'),
     ],
     links: [
       { label: 'Refused AI attempts', to: () => ({ page: 'ai-activity', view: 'refused' }) },
