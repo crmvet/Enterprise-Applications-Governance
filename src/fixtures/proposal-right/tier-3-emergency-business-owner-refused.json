@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "tier-3-emergency-business-owner-refused",
+  "description": "A tier 3 emergency has its own Decision Right group with only the change manager (document 28, issue 4), so the business owner, consulted on a tier 3 normal change, may not propose here.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-3",
+    "changeTypeKey": "emergency",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "application-owner"
+    ],
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "holders": [
+        {
+          "decisionRightKey": "change-auth-tier-3-emergency-a",
+          "letter": "accountable",
+          "roleKey": "change-manager"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "decision.propose-not-allowed",
+        "severity": "error",
+        "entity": "Decision Right",
+        "ref": "change-authorization"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

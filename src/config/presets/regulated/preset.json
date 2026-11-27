@@ -10,7 +10,7 @@
   "presetKind": "full",
   "extends": "balanced",
   "conflictsWith": ["small-team"],
-  "areas": ["gates", "rules", "people"],
+  "areas": ["gates", "rules", "people", "data"],
   "productRelease": "0.1.0",
   "contentVersion": "1.0.0",
   "checkedOn": "2026-11-22",

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-stage-never-moves-back-skipped",
+  "description": "An accepted go-live decision for an application already in the review stage leaves the stage as it is: a Next Lifecycle Stage moves an application forward only (document 25, B25-15). The skip is a warning.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-60"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "go-live",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "go"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "go-live",
+      "ready": true,
+      "requirements": []
+    },
+    "subject": {
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered",
+        "lifecycleStage": "review"
+      }
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "subject.change-skipped",
+        "severity": "warning",
+        "ref": "fixture-app-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

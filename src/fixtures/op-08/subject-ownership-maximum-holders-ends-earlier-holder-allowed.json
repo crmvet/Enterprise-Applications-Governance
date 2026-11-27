@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-ownership-maximum-holders-ends-earlier-holder-allowed",
+  "description": "The proposal adds a business owner on 2026-12-01 and ends nobody. Business owner allows one holder (Maximum Holders), so the current holder ends that day, and a new deputy covers the new holder.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-51"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "ownership",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "assign",
+      "proposedChangesJson": {
+        "owners": [
+          {
+            "ownerRoleKey": "business-owner",
+            "addObjectId": "fixture-person-3",
+            "startOn": "2026-12-01"
+          },
+          {
+            "ownerRoleKey": "business-owner",
+            "addObjectId": "fixture-person-4",
+            "isDeputy": true,
+            "startOn": "2026-12-01"
+          }
+        ]
+      }
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "subject": {
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered"
+      },
+      "owners": [
+        {
+          "id": "fixture-owner-1",
+          "businessApplication": "fixture-app-1",
+          "ownerRole": "business-owner",
+          "principal": "fixture-person-1",
+          "isDeputy": false,
+          "startOn": "2026-01-05"
+        },
+        {
+          "id": "fixture-owner-2",
+          "businessApplication": "fixture-app-1",
+          "ownerRole": "business-owner",
+          "principal": "fixture-person-2",
+          "isDeputy": true,
+          "deputyFor": "fixture-owner-1",
+          "startOn": "2026-01-05"
+        }
+      ],
+      "newRowIds": [
+        "fixture-owner-9",
+        "fixture-owner-10"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "update",
+          "rowId": "fixture-owner-1",
+          "columns": {
+            "endOn": "2026-12-01"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "create",
+          "rowId": "fixture-owner-9",
+          "columns": {
+            "isDeputy": false,
+            "principal": "fixture-person-3",
+            "startOn": "2026-12-01"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "create",
+          "rowId": "fixture-owner-10",
+          "columns": {
+            "deputyFor": "fixture-owner-9",
+            "isDeputy": true,
+            "principal": "fixture-person-4",
+            "startOn": "2026-12-01"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "update",
+          "rowId": "fixture-owner-2",
+          "columns": {
+            "deputyFor": "fixture-owner-9"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

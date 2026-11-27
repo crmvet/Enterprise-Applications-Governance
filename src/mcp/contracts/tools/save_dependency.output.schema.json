@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_dependency output",
+  "description": "The response envelope. On success, data is the write result for the dependency (O04), with both ends, the type, the criticality and the end date.",
+  "x-tool": "save_dependency",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the dependency.",
+      "required": [
+        "dependencyId",
+        "fromApplication",
+        "to",
+        "dependencyType",
+        "criticality",
+        "endedOn"
+      ],
+      "properties": {
+        "dependencyId": {
+          "description": "Null only for a validateOnly check of a new dependency.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O04 Dependency"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fromApplication": {
+          "type": "object",
+          "required": [
+            "businessApplicationId",
+            "name"
+          ],
+          "properties": {
+            "businessApplicationId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O02 Business Application"
+            },
+            "name": {
+              "type": "string",
+              "description": "The application name.",
+              "x-untrusted": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "to": {
+          "type": "object",
+          "required": [
+            "businessApplicationId",
+            "technicalComponentId",
+            "name"
+          ],
+          "properties": {
+            "businessApplicationId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O02 Business Application"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "technicalComponentId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O03 Technical Component"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "name": {
+              "type": "string",
+              "description": "The application or component name.",
+              "x-untrusted": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "dependencyType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "criticality": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "endedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The dependency is recorded, as reported: Field Inspections reads data from Asset Register.",
+      "data": {
+        "recordId": "b0000000-0000-4000-8000-000000000001",
+        "status": null,
+        "performedBy": {
+          "actorKind": "person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)",
+            "principalKind": "user"
+          },
+          "onBehalfOf": null,
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000009",
+            "label": "Web app"
+          }
+        },
+        "isAiCreated": false,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-24T09:00:00Z"
+        },
+        "created": true,
+        "dependencyId": "b0000000-0000-4000-8000-000000000001",
+        "fromApplication": {
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "name": "Field Inspections"
+        },
+        "to": {
+          "businessApplicationId": "10000000-0000-4000-8000-000000000002",
+          "technicalComponentId": null,
+          "name": "Asset Register"
+        },
+        "dependencyType": {
+          "key": "reads-data-from",
+          "label": "Reads data from"
+        },
+        "criticality": {
+          "key": "high",
+          "label": "High"
+        },
+        "endedOn": null
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

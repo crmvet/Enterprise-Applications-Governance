@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "role-key-is-not-an-owner-role-refused",
+  "description": "A product role spelled like an owner role grants nothing: the accountable letter for risk acceptance belongs to the business owner of the subject's application (an owner assignment), not to a role key.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "risk-acceptance",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "business-owner"
+    ],
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "decision.propose-not-allowed",
+        "severity": "error",
+        "entity": "Decision Right",
+        "ref": "risk-acceptance"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

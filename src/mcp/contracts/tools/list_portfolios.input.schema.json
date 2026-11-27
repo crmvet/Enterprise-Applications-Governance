@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_portfolios input",
+  "description": "The portfolios, in tree order, with the accountable person and counts: applications, applications with an owner gap, overdue reviews and open decisions, each including child portfolios. Writes nothing; no tool writes a portfolio yet.",
+  "x-tool": "list_portfolios",
+  "type": "object",
+  "properties": {
+    "parentPortfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only the direct children of this portfolio."
+    },
+    "includeInactive": {
+      "type": "boolean",
+      "description": "True also lists inactive portfolios."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "includeInactive": false
+    }
+  ]
+}

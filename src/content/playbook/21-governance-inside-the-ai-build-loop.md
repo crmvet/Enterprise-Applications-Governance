@@ -14,7 +14,7 @@
 
 - The builder is now a person plus an AI client. The AI client writes most of the code, the intake text and the documents.
 - So the AI client is where governance must speak. A rule the AI client cannot reach while it works is a rule it will not follow.
-- Speed does not move accountability. The AI client drafts and asks; a named person decides on an approval card.
+- Speed does not move accountability. The AI client drafts and asks; a named person decides on the decision page.
 
 ## Old paradigm to avoid
 
@@ -26,7 +26,7 @@
 - The tier is proposed when the idea arrives, and a person sets it before the build goes far.
 - Every AI client call runs as the signed-in person, so the person's own access is the boundary.
 - Everything an AI client writes starts as a draft, a proposal, a link or a fact as reported, and shows the AI client and the person it acted for.
-- Every decision in the loop is made by a named person on an approval card, or under a pre-authorized rule a named person approved on record.
+- Every decision in the loop is made by a named person on the decision page, or under a pre-authorized rule a named person approved on record.
 - The organization's own pipeline deploys, and the deployment is recorded with its approval.
 
 ## The loop in seven steps
@@ -37,7 +37,7 @@ The diagram "The governed AI build loop" shows these seven steps as one circle.
 2. **The AI client asks first.** Before it builds, the AI client calls the product's MCP server, as the signed-in person.
 3. **The product is designed to answer.** The proposed tier and why, what the tier needs, the owners and deputies, what depends on the app, which documents are missing, and what needs a person.
 4. **The AI drafts.** It writes the app or the change in your repository. It saves the intake, the registration or the change as a draft in the product. It writes the documents in your own wiki, repository or SharePoint, then records their links.
-5. **A person decides.** The AI client submits, and a submission is a request, never an approval. The decision goes to the accountable person as an approval card in Outlook or Teams. The AI cannot answer it. A rejection sends the draft back for revision.
+5. **A person decides.** The AI client submits, and a submission is a request, never an approval. The decision goes to the accountable person, who answers on the decision page in the web app; Teams and Outlook notices are designed to link to it. The AI cannot answer it. A rejection sends the draft back for revision.
 6. **Your pipeline deploys.** Power Platform Pipelines, Azure Pipelines or GitHub Actions. Build once, then promote the tested artifact. By design, the product never runs the pipeline.
 7. **The deployment is recorded.** The pipeline's last step is designed to record what, where, when, which pipeline and who approved, with the pipeline's own workload identity and not through MCP. A deployment that came another way, lacked its approval or landed outside its window is designed to be flagged.
 
@@ -59,26 +59,26 @@ Tool names are design names and may change before a release. The plain question 
 | What depends on it? | `get_dependency_impact` | The apps that depend on it, with their tier and owners | Nothing | Read only |
 | Which documents are missing or stale? | `get_documentation_status` | The required documents, with each link, status, owner and last check | Nothing | Read only |
 | Does my change fit a standard model? | `check_standard_change` | Yes with the model, or the conditions it failed | Nothing | Read only. A person sets the change type |
-| Start the intake, register an app already built, or start the change | `save_intake_draft`, `save_application_draft`, `save_change_request_draft` | The draft, what it needs next, and the suggested next tool | A draft. For a registration, its parts as links and proposed owners as a proposed ownership decision | Draft, or Proposed for ownership. A registration needs the business owner's confirmation card |
-| Here is the page I wrote | `record_document_link` | The link, its status and the date it goes stale | The link, and the status as reported | Link. A "current" on a gate-relevant document stays a draft until its owner confirms on a card |
+| Start the intake, register an app already built, or start the change | `save_intake_draft`, `save_application_draft`, `save_change_request_draft` | The draft, what it needs next, and the suggested next tool | A draft. For a registration, its parts as links and proposed owners as a proposed ownership decision | Draft, or Proposed for ownership. A registration needs the business owner's confirmation |
+| Here is the page I wrote | `record_document_link` | The link, its status and the date it goes stale | The link, and the status as reported | Link. A "current" on a gate-relevant document stays a draft until its owner confirms |
 | Please review this design | `request_architecture_review` | The review, now in the architect's queue | A request | Submitted: a request, never a decision |
-| Send it for approval | `submit_record` | The approval cards started, and who must answer each one | The submission, made for the person | Submitted: a request, never an approval. Only where your configuration allows AI submission for that kind of record |
+| Send it for approval | `submit_record` | The approval requests opened, and who must answer each one | The submission, made for the person | Submitted: a request, never an approval. Only where your configuration allows AI submission for that kind of record |
 | Who still has to approve? | `get_approval_status` | Who was asked, who answered, and what still counts. An AI recommendation shows but never counts | Nothing | Read only |
 | This version reached this target | `record_deployment` | The deployment record and its flags | A fact as reported, for example after a manual import | As reported. The flags are designed to be computed by the product, never set by the caller |
-| What needs me? | `get_my_queue` | Approvals, reviews, documents, claims and drafts waiting for the person | Nothing | Read only. Approvals point to the card; the tool is designed never to offer to answer it |
+| What needs me? | `get_my_queue` | Approvals, reviews, documents, claims and drafts waiting for the person | Nothing | Read only. Approvals point to the decision page; the tool is designed never to offer to answer them |
 
 ## What needs a person (default)
 
 | Act | What counts as a person's yes |
 |---|---|
-| Any decision: a tier, a stage, an ownership change, a design, a change authorization, a configuration change | An approval card to the holder of the accountable role. The AI cannot answer it, and no tool is designed to approve |
-| Registering an app the AI created | A confirmation card to the business owner. Until then it stays a draft registration |
-| Marking a gate-relevant document current | A confirmation card to the document owner. Until then the AI's "current" stays a draft |
-| Submitting an intake, a change, a decision or a review request | The same call, made for the person, where your configuration allows it. It starts the cards; it never approves |
+| Any decision: a tier, a stage, an ownership change, a design, a change authorization, a configuration change | An approval request to the holder of the accountable role, answered on the decision page. The AI cannot answer it, and no tool an AI client is served approves |
+| Registering an app the AI created | The business owner's confirmation. Until then it stays a draft registration |
+| Marking a gate-relevant document current | The document owner's confirmation. Until then the AI's "current" stays a draft |
+| Submitting an intake, a change, a decision or a review request | The same call, made for the person, where your configuration allows it. It opens the approval requests; it never approves |
 | Recording a link, a deployment or a change result, or running a check | No separate acceptance. The record shows the AI client and the person it acted for |
-| A pre-authorized decision, such as a standard change on an approved model or a lowest-tier intake | No new card. A person approved the rule once, on record, and the decision links that approval. Only a configuration change a person accepts can add or widen such a rule |
+| A pre-authorized decision, such as a standard change on an approved model or a lowest-tier intake | No new approval request. A person approved the rule once, on record, and the decision links that approval. Only a configuration change a person accepts can add or widen such a rule |
 
-**Why a card.** The product's MCP server is designed to act with the person's own sign-in, so it cannot prove that the person, and not the AI, pressed a button inside the AI client. An approval or confirmation card answered in Outlook or Teams is the one channel it is designed to trust. An AI stage in your own approval flow is designed to be recorded as a recommendation that never counts.
+**Why the decision page.** The product's MCP server is designed to act with the person's own sign-in, so it cannot prove that the person, and not the AI, pressed a button inside the AI client. So the one tool that records an answer is served only to a person signed in to the web app, never to an AI client, and the person's own sign-in proves who answered. The decision page is the channel it is designed to trust. An AI stage in your own approval flow is designed to be recorded as a recommendation that never counts.
 
 ## Tell the AI client to ask first
 
@@ -92,7 +92,7 @@ Governance: read before you build or change this app.
 4. Ask who owns it and what depends on it before you change a shared part.
 5. Save intakes, registrations and changes as drafts. Never mark anything approved.
 6. Write required documents in this repository or its wiki, then record their links.
-7. Tell me what needs a person's decision, and who gets the card.
+7. Tell me what needs a person's decision, and who is asked.
 ```
 
 This is practice, not a Microsoft rule. It is also not access control. A rules file reminds the AI client to ask; the product is designed to enforce rights in the service, whatever a prompt or a rules file says.
@@ -105,22 +105,22 @@ This is practice, not a Microsoft rule. It is also not access control. A rules f
 - **Every write says who.** Each record is designed to carry the actor kind, the AI client and the person it acted for, stamped from the token and never from a field the caller sends.
 - **Pipelines do not use MCP.** A pipeline has no model choosing tools. Its last step is designed to call a plain record endpoint with the pipeline's own workload identity, which holds the deployment recorder role through a recorded, expiring grant.
 - **Agent identities get no workload grant.** An agent that acts for a person is designed to use that person's delegated access. An agent's own identity is designed never to get a product workload role.
-- **AI never approves.** No tool is designed to approve, reject, accept, authorize, set a tier, move a stage, activate configuration or assign a role. The engine is designed to refuse those writes from an AI client whatever the tool or route, and configuration cannot loosen that lock. Only a person's answer on a card counts.
+- **AI never approves.** No tool an AI client is served approves, rejects, accepts, authorizes, sets a tier, moves a stage, activates configuration or assigns a role; the one answer tool is served only to a person in the web app. The engine is designed to refuse those writes from an AI client whatever the tool or route, and configuration cannot loosen that lock. Only a person's answer counts.
 
 ## Who decides (default decision rights)
 
 | Decision or task | Accountable | Does the work | Consulted | AI may |
 |---|---|---|---|---|
-| Open a tool to a role, or close it | Configuration admin | Configuration admin, through a configuration change accepted on a card | Platform owner, security reviewer, AI lead | Prepare the configuration change |
-| Allow AI submission for a kind of record | Configuration admin | Configuration admin, through a configuration change accepted on a card | AI lead, change manager | Prepare the configuration change |
-| Choose which document types need a confirmation card to count as current | Configuration admin | Configuration admin | Architect, AI lead | Prepare the configuration change |
+| Open a tool to a role, or close it | Configuration admin | Configuration admin, through a configuration change accepted on the decision page | Platform owner, security reviewer, AI lead | Prepare the configuration change |
+| Allow AI submission for a kind of record | Configuration admin | Configuration admin, through a configuration change accepted on the decision page | AI lead, change manager | Prepare the configuration change |
+| Choose which document types need a person's confirmation to count as current | Configuration admin | Configuration admin | Architect, AI lead | Prepare the configuration change |
 | Keep the rules file in each template repository | Architect | Platform admin | AI lead | Draft the file for a person to review |
-| Every decision the loop produces | The accountable role for that decision, on a card | The requester and their AI client | As the decision rights say | Draft and recommend; never decide |
+| Every decision the loop produces | The accountable role for that decision, on the decision page | The requester and their AI client | As the decision rights say | Draft and recommend; never decide |
 
 ## Guidelines this chapter applies
 
 - **G22 Let the AI builder ask before it builds.** The tier, what it needs, the owners, the dependants and the missing documents, asked before the build. The AI drafts what it learns; people decide.
-- **G17 Let AI draft and recommend; people approve.** The AI client drafts and submits; only a person on a card decides.
+- **G17 Let AI draft and recommend; people approve.** The AI client drafts and submits; only a person decides, on the decision page.
 - **G6 Map what each app depends on, before you release or retire it.** The AI client asks what depends on an app before it changes a shared part.
 - **G8 Decide how each app reaches Dataverse.** As the signed-in person by default. The product's own MCP tools follow the same rule.
 - **G20 Keep each app's required documents current.** The builder's AI client writes the documents in your own tools as part of each change, and records their links.
@@ -138,7 +138,7 @@ This is practice, not a Microsoft rule. It is also not access control. A rules f
 - It is designed to have its own MCP server, next to Microsoft's MCP servers, with governance tools grouped in toolsets such as session, portfolio, intake, decisions, change, deployment and documentation.
 - It is designed so a caller sees only the tools its roles allow, and can narrow the list to the toolsets it needs, so the AI client chooses from a short list.
 - It is designed so that which roles may call which tool, how far an AI client may move a record, and whether an AI client may submit each kind of record are configuration rows, changed only through a configuration change a person accepts.
-- It is designed to offer no tool that approves, and to refuse approval writes from an AI client on every route.
+- No tool an AI client is served approves; the one answer tool is served only to a person in the web app. It is designed to refuse approval writes from an AI client on every route.
 - It is designed to return, with every answer, the configuration version in force and a link to the record, and to mark text people typed as data, never as instructions.
 - It is designed to limit calls per person, so one runaway agent cannot flood the record.
 
@@ -147,7 +147,7 @@ This is practice, not a Microsoft rule. It is also not access control. A rules f
 - Which tools are open to which roles.
 - How far an AI client may move a record through each tool, inside the lock that AI never approves.
 - Which kinds of record an AI client may submit for a person.
-- Which document types need a confirmation card before they count as current.
+- Which document types need a person's confirmation before they count as current.
 - The wording of the rules file in each repository.
 
 ## Microsoft guidance it applies
@@ -163,5 +163,5 @@ This is practice, not a Microsoft rule. It is also not access control. A rules f
 
 - The organization's AI clients ask the product before they build or change an app.
 - Every AI-made record shows the AI client and the person it acted for.
-- Every decision in the loop was made by a person on a card, and no approval has an AI as its only approver.
+- Every decision in the loop was made by a person on the decision page, and no approval has an AI as its only approver.
 - Every production deployment in the loop came through the organization's own pipeline and is recorded.

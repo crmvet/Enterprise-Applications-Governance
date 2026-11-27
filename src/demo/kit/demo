@@ -1,0 +1,4 @@
+#!/bin/sh
+# The demo kit (README.md next to this file): demo local up, demo check --base http://127.0.0.1:5080, ...
+# Run it as "sh src/demo/kit/demo <command>", or make it executable once with chmod +x.
+exec node "$(dirname "$0")/demo.mjs" "$@"

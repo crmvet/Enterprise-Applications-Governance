@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_approval_status output",
-  "description": "The response envelope. On success, data lists the required approvals, every approval record with the approver kind, and what is missing. An answer counts only when a person who holds the required role gave it and no Separation Rule (C40) refuses it. A consulted role's answer is a recommendation and never counts. typedReason is text people typed.",
+  "description": "The response envelope. On success, data lists the required approvals, every approval record with the approver kind, and what is missing. An answer counts only when a person who holds the required role gave it and no Separation Rule (C40) refuses it. A consulted role's answer is a recommendation and never counts. typedReason is text people typed. A settled decision is not evaluated again: required and missing are empty, and settledBy says how it was settled.",
   "x-tool": "get_approval_status",
   "x-ai-write-states": [
     "read-only"
@@ -28,7 +28,8 @@
         "required",
         "records",
         "missing",
-        "ready"
+        "ready",
+        "settledBy"
       ],
       "properties": {
         "decisionId": {
@@ -67,6 +68,10 @@
                 "$ref": "../common.schema.json#/$defs/key",
                 "x-entity": "C28 Owner Role"
               },
+              "asksProposedOwners": {
+                "type": "boolean",
+                "description": "True when the requirement asks each person the decision proposes to make an owner, by name: the successor and any new deputy (C32 Approver Proposed Owners). requiredRoleKey and requiredOwnerRoleKey are then absent."
+              },
               "approvalMode": {
                 "$ref": "../common.schema.json#/$defs/approvalMode"
               },
@@ -95,6 +100,11 @@
               {
                 "required": [
                   "requiredOwnerRoleKey"
+                ]
+              },
+              {
+                "required": [
+                  "asksProposedOwners"
                 ]
               }
             ]
@@ -227,6 +237,10 @@
                 "$ref": "../common.schema.json#/$defs/key",
                 "x-entity": "C28 Owner Role"
               },
+              "asksProposedOwners": {
+                "type": "boolean",
+                "description": "True when the requirement asks each person the decision proposes to make an owner, by name: the successor and any new deputy (C32 Approver Proposed Owners). requiredRoleKey and requiredOwnerRoleKey are then absent."
+              },
               "stillNeeded": {
                 "type": "integer",
                 "minimum": 1,
@@ -244,6 +258,11 @@
                 "required": [
                   "requiredOwnerRoleKey"
                 ]
+              },
+              {
+                "required": [
+                  "asksProposedOwners"
+                ]
               }
             ]
           },
@@ -252,6 +271,22 @@
         "ready": {
           "type": "boolean",
           "description": "True when the counted approvals meet every rule. The engine then marks the decision accepted. This tool never does."
+        },
+        "settledBy": {
+          "description": "How a settled decision was settled: answers (it holds approval records), engine (the engine accepted it under the locked list, with no approval request), person (its proposer or decider withdrew it), or recorded (no approval record and no engine stamp: recorded as settled outside the engine, such as the seeded demo estate or an import). Null while the decision is proposed.",
+          "anyOf": [
+            {
+              "enum": [
+                "answers",
+                "engine",
+                "person",
+                "recorded"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -297,7 +332,8 @@
             "stillNeeded": 1
           }
         ],
-        "ready": false
+        "ready": false,
+        "settledBy": null
       },
       "links": {
         "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000011"

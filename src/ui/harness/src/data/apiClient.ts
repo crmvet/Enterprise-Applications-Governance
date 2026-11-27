@@ -1,24 +1,42 @@
 // The web app's tool client: the same ToolClient the pages use in the harness, over the product's REST API.
 //
-//   POST <apiBase>/<tool>   one read tool, the JSON body is the tool's input. The body of every answer is the tool's
-//                           envelope, on every status (200, 401, 403, 404, 429, 5xx).
-//   GET  <apiBase>/me       the signed-in caller: object ID, product roles and the group that grants each, and, once
-//                           the host has the web app's person entry, the name and the actor kind.
+//   POST <apiBase>/<tool>   one tool, the JSON body is the tool's input. The body of every answer is the tool's
+//                           envelope, on every status (200, 400, 401, 403, 404, 409, 422, 429, 5xx). The reads, and on
+//                           the web app's own person entry the writes too (D-36): the engine checks a person's write
+//                           exactly as it checks an AI client's, and a refused write writes nothing. answer_approval is
+//                           served only here, to a person (D-38).
+//   GET  <apiBase>/me       the signed-in caller: object ID, product roles and the group that grants each, the name, the
+//                           actor kind, and in a demo install the demo persona the request ran as (D-39).
 //   GET  <apiBase>/info     the service: engine version, MCP endpoint and protocol, configuration in force.
 //
 // Rules:
 // - Headers from the sign-in (the bearer token, or the development persona) go only to apiBase. No cookies are sent.
-// - 401 starts sign-in again (AuthSession.onUnauthorized) and still answers the panel with the envelope.
+// - The extra headers (the demo persona switch, X-Product-Demo-Persona) go only to apiBase too, and never replace a
+//   sign-in header.
+// - Every call carries the person's calendar day in the display zone (X-Product-Local-Day, B24-21), so a date-only
+//   value the server stamps by default (a review done today, a document checked today) is the person's day, not the
+//   UTC day. The server keeps it only within a day of its own UTC day.
+// - 401 starts sign-in again (AuthSession.onUnauthorized) and still answers the panel with the envelope; a 401 that is
+//   step_up_required does not: the action sheet offers the fresh sign-in (AuthSession.stepUp).
 // - A timeout, a network fault or an answer that is not an envelope becomes a failure envelope, so the panel shows it
 //   like any other failure and the rest of the page keeps working. Nothing here throws to a page.
 import { SignInUnavailable, type AuthSession } from '../auth/types';
 import type { Envelope, ErrorCode, Failure, IsoDateTime, ToolData, ToolName } from './contracts';
 import type { ToolClient } from './toolClient';
+import { todayInZone } from './format';
+
+export const LOCAL_DAY_HEADER = 'X-Product-Local-Day';
 
 export interface MeRole {
   roleKey: string;
   label: string;
   viaGroup: { objectId: string; displayLabel: string } | null;
+}
+
+// The demo persona a request ran as (D-39): only in a demo install, when the page sent X-Product-Demo-Persona.
+export interface DemoPersonaUse {
+  name: string;
+  label: string;
 }
 
 export interface Me {
@@ -27,6 +45,8 @@ export interface Me {
   // "person" through the web app's own entry; "ai-client-for-person" before the host has it.
   actorKind: string | null;
   roles: MeRole[];
+  // Null when no demo persona is in use. When set, every other field is the persona's.
+  demoPersona: DemoPersonaUse | null;
   configurationSetKey: string | null;
   configurationSetVersion: number | null;
   asOf: IsoDateTime | null;
@@ -55,6 +75,8 @@ export interface ApiClientOptions {
   auth: Pick<AuthSession, 'headers' | 'onUnauthorized'>;
   fetch: typeof fetch;
   timeoutMs?: number;
+  // Headers for every call to apiBase beside the sign-in's, such as the demo persona. Read on each call.
+  extraHeaders?: () => Record<string, string>;
 }
 
 export const CORRELATION_HEADER = 'X-Correlation-Id';
@@ -139,7 +161,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       controller.abort();
     }, timeoutMs);
     try {
-      const headers: Record<string, string> = { Accept: 'application/json', ...auth };
+      const headers: Record<string, string> = { Accept: 'application/json', [LOCAL_DAY_HEADER]: todayInZone(), ...(options.extraHeaders?.() ?? {}), ...auth };
       if (body !== undefined) headers['Content-Type'] = 'application/json';
       const response = await options.fetch(`${base}/${path}`, {
         method,
@@ -165,7 +187,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         correlationId: response.headers.get(CORRELATION_HEADER) ?? (isObject(parsed) ? str(parsed.correlationId) : null) ?? CLIENT_SIDE,
         retryAfter: retryAfterOf(response),
       };
-      if (response.status === 401) options.auth.onUnauthorized();
+      // A step-up refusal (D-38) is not a lost sign-in: the page offers a fresh sign-in itself, so the person keeps what
+      // they typed until they choose to go.
+      const stepUp = isObject(parsed) && isObject(parsed.error) && parsed.error.code === 'step_up_required';
+      if (response.status === 401 && !stepUp) options.auth.onUnauthorized();
       return raw;
     } catch {
       return timedOut
@@ -215,6 +240,9 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         name: str(body.name),
         actorKind: str(body.actorKind),
         roles,
+        demoPersona: isObject(body.demoPersona) && str(body.demoPersona.name)
+          ? { name: str(body.demoPersona.name)!, label: str(body.demoPersona.label) ?? str(body.demoPersona.name)! }
+          : null,
         configurationSetKey: str(body.configurationSetKey),
         configurationSetVersion: num(body.configurationSetVersion),
         asOf: str(body.asOf),

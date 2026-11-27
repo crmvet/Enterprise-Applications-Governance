@@ -63,7 +63,10 @@ public sealed class WriteCommand
 public sealed partial class EngineRuntime
 {
     // A caller's write: OP-08 with the facts the runtime fetches, the engine's computed values (PreOperation), the row
-    // write and every effect, as engine-nested writes, in one transaction (document 25, sections 5.10 and 11.3).
+    // write and every effect, as engine-nested writes, in one transaction (document 25, sections 5.10 and 11.3). A write
+    // can be what a held gate decision waited for (a done review, a document link, an owner, a decided data use), so the
+    // held decisions of the applications it touched settle at the end of the call, in the same transaction, as they do
+    // at the end of a composed call (wave 3 fix pass, remaining: a plain write left them for the daily refresh).
     public RuntimeOutcome Write(CallerIdentity caller, WriteCommand command)
     {
         if (command == null)
@@ -79,6 +82,11 @@ public sealed partial class EngineRuntime
                 After = command.After,
                 IdempotencyKey = command.IdempotencyKey,
             })!;
+            if (!step.IsReplay && !step.IsNoOp)
+            {
+                SettleHeldGateDecisions(call, GateFactApplications(call));
+            }
+
             return new CallAnswer(RuntimeOutcome.Allowed, step.RowId, step.Created, step.Plan?.ToJson(), step.IsReplay, step.IsNoOp);
         });
     }
@@ -111,7 +119,14 @@ public sealed partial class EngineRuntime
         // Plan and fetch the facts OP-08 needs (document 25, section 5.10: what the adapter fetches).
         string? bindingGroup = spec.Entity == "role-group-binding" ? RuntimeJson.Text(spec.After, "entraGroupObjectId") ?? before?.Text("entraGroupObjectId") : null;
         string? approver = spec.Entity == "approval-record" && spec.Operation == WriteOperation.Update && !spec.Nested ? RuntimeJson.Text(spec.After, "approver") : null;
-        FactSet facts = FactSet.Run(tx, f => WriteFactsPlan(f, spec, snapshot, configurationRow, bindingGroup, approver));
+
+        // A write that may set a review done: the decision the review names as its Outcome Decision (document 25, B25-12).
+        string? reviewOutcome = spec.Entity == "review" && spec.Operation != WriteOperation.Delete && spec.After != null && spec.After.TryGetMember("status", out _)
+            ? RuntimeJson.Text(spec.After, "outcomeDecision") ?? before?.Text("outcomeDecision")
+            : null;
+        string? reviewApp = reviewOutcome == null ? null : RuntimeJson.Text(spec.After, "businessApplication") ?? before?.Text("businessApplication");
+        string? reviewType = reviewOutcome == null ? null : RuntimeJson.Text(spec.After, "reviewType") ?? before?.Text("reviewType");
+        FactSet facts = FactSet.Run(tx, f => WriteFactsPlan(f, spec, snapshot, configurationRow, bindingGroup, approver, reviewOutcome, reviewApp, reviewType));
         call.FactRounds += facts.Rounds;
 
         ConfigurationSetKind? setKind = null;
@@ -129,6 +144,23 @@ public sealed partial class EngineRuntime
         PrincipalKind? bindingKind = EngineContract.PrincipalKinds.TryParse(facts.One("binding-principal")?.Text("principalKind"), out PrincipalKind kind) ? kind : null;
         StoredRow? prior = facts.One("prior-request");
         PrincipalReferenceFact? approverReference = approver == null ? null : ApproverReference(facts, approver);
+        StoredRow? outcomeRow = facts.One("review-outcome");
+        // Security review 2026-11-24 (document 25, B25-15): another done review that names the same decision, and the start
+        // of this review's cycle (the latest Done On of an earlier done review of the same type and application).
+        string? usedBy = facts.All("review-outcome-users").Where(r => !string.Equals(r.Id, rowId, StringComparison.OrdinalIgnoreCase)).Select(r => r.Id).OrderBy(r => r, StringComparer.Ordinal).FirstOrDefault();
+        // The cycle starts no earlier than the review itself was opened (wave 2 recheck: a decision accepted weeks before a
+        // review was requested closed it), so a first review takes no decision older than the request.
+        string? cycleStart = facts.All("review-cycle").Where(r => !string.Equals(r.Id, rowId, StringComparison.OrdinalIgnoreCase)).Select(r => r.Text("doneOn"))
+            .Concat(new[] { before?.Text("createdOn") })
+            .Where(d => d != null).Select(d => d!.Length >= 10 ? d.Substring(0, 10) : d).OrderBy(d => d, StringComparer.Ordinal).LastOrDefault();
+        ReviewOutcomeFact? reviewOutcomeFact = reviewOutcome == null ? null : new ReviewOutcomeFact(
+            reviewOutcome,
+            outcomeRow?.Text("statusMeaning"),
+            outcomeRow?.Text("decisionType"),
+            outcomeRow?.Text("subjectApplication"),
+            usedBy,
+            outcomeRow?.Text("decidedOn"),
+            cycleStart);
 
         // A caller's create names no row ID unless the caller gave one, so the Request Hash of a retry is the same request
         // (G-15). The engine's own creates name the ID the store gave, so their audit entries can point at the row.
@@ -146,7 +178,11 @@ public sealed partial class EngineRuntime
             spec.Acceptance,
             spec.GateReadiness,
             prior?.Text("requestHash"),
-            approverReference);
+            approverReference,
+            spec.Nested ? null : spec.ApprovalAnswer,
+            spec.Subject,
+            reviewOutcomeFact,
+            spec.Nested && spec.Entity != "decision" ? null : DataWriteFactsOf(call, spec, before));
 
         EvaluationContext context = call.Context(snapshot, spec.Nested);
         EvaluationResult<WritePlan?> result = WriteGuardOperation.Evaluate(snapshot.Snapshot, context, request);
@@ -170,6 +206,11 @@ public sealed partial class EngineRuntime
         if (!spec.Nested)
         {
             call.AddReasons(result.Reasons);
+        }
+        else
+        {
+            // A change the accepted decision proposed and the engine skipped is the caller's to see (document 25, B25-8).
+            call.AddReasons(result.Reasons.Where(r => r.Code == ReasonCodes.SubjectChangeSkipped));
         }
 
         WritePlan plan = result.Payload!;
@@ -196,6 +237,14 @@ public sealed partial class EngineRuntime
         {
             // The adapter fills Client App Verified: true only when the client came from a validated token claim.
             columns = RuntimeJson.With(columns, "clientAppVerified", JsonTreeNode.FromBoolean(call.Caller.ClientAppVerified && call.Caller.ClientApp != null));
+        }
+
+        // The record number of a new row of a numbered entity, the engine's own rows included (document 25, B25-9). OP-08
+        // dropped any number a caller gave (G-09), so the store's next number is the only one. A dry run takes none, so
+        // a check never uses up a number.
+        if (spec.Operation == WriteOperation.Create && !call.DryRun && RecordNumbers.TryGetPrefix(spec.Entity, out string prefix) && RuntimeJson.Text(columns, RecordNumbers.Column) == null)
+        {
+            columns = RuntimeJson.With(columns, RecordNumbers.Column, JsonTreeNode.FromString(RecordNumbers.Format(prefix, tx.NextRecordNumber(spec.Entity, prefix))));
         }
 
         switch (spec.Operation)
@@ -236,14 +285,17 @@ public sealed partial class EngineRuntime
         return new WriteStep(rowId, spec.Operation == WriteOperation.Create, false, false, plan);
     }
 
-    private static IEnumerable<FactPlan> WriteFactsPlan(FactSet facts, WriteSpec spec, CompiledSnapshot snapshot, bool configurationRow, string? bindingGroup, string? approver)
+    private static IEnumerable<FactPlan> WriteFactsPlan(FactSet facts, WriteSpec spec, CompiledSnapshot snapshot, bool configurationRow, string? bindingGroup, string? approver, string? reviewOutcome, string? reviewApp, string? reviewType)
     {
         bool needsSet = (configurationRow && spec.Entity != "configuration-set") || spec.Entity == "configuration-set-version";
         yield return FactPlan.Of(
             needsSet ? FactQuery.ByKey("set", "configuration-set", snapshot.ConfigurationSetKey) : null,
             bindingGroup == null ? null : FactQuery.Where("binding-principal", RowQuery.For("principal-reference").Where("entraObjectId", bindingGroup)),
             spec.IdempotencyKey == null || spec.Nested ? null : FactQuery.Where("prior-request", RowQuery.For("audit-entry").Where("requestKey", spec.IdempotencyKey)),
-            approver == null ? null : FactQuery.Where(ApproverFacts[0], RowQuery.For("principal-reference").Where("entraObjectId", approver)));
+            approver == null ? null : FactQuery.Where(ApproverFacts[0], RowQuery.For("principal-reference").Where("entraObjectId", approver)),
+            reviewOutcome == null ? null : FactQuery.ById("review-outcome", "decision", reviewOutcome),
+            reviewOutcome == null ? null : FactQuery.Where("review-outcome-users", RowQuery.For("review").Where("outcomeDecision", reviewOutcome).Where("statusMeaning", "done")),
+            reviewApp == null || reviewType == null ? null : FactQuery.Where("review-cycle", RowQuery.For("review").Where("businessApplication", reviewApp).Where("reviewType", reviewType).Where("statusMeaning", "done")));
 
         // An Entra object ID is a GUID, which the runner may send in another letter case than the store holds. When the
         // exact value finds no Principal Reference, the lower and upper case forms are read in one more round.

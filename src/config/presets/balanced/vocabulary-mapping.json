@@ -90,6 +90,46 @@
       "term": "Tier 3: High risk",
       "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk",
       "checkedOn": "2026-11-22"
+    },
+    {
+      "key": "public-sensitivity-label",
+      "label": "Public sensitivity label",
+      "sourceEntity": "data-classification",
+      "sourceKey": "public",
+      "vocabularyKey": "purview-sensitivity-label",
+      "term": "Public",
+      "sourceUrl": "https://learn.microsoft.com/purview/default-sensitivity-labels-policies",
+      "checkedOn": "2026-11-24"
+    },
+    {
+      "key": "internal-sensitivity-label",
+      "label": "Internal sensitivity label",
+      "sourceEntity": "data-classification",
+      "sourceKey": "internal",
+      "vocabularyKey": "purview-sensitivity-label",
+      "term": "General",
+      "sourceUrl": "https://learn.microsoft.com/purview/default-sensitivity-labels-policies",
+      "checkedOn": "2026-11-24"
+    },
+    {
+      "key": "confidential-sensitivity-label",
+      "label": "Confidential sensitivity label",
+      "sourceEntity": "data-classification",
+      "sourceKey": "confidential",
+      "vocabularyKey": "purview-sensitivity-label",
+      "term": "Confidential",
+      "sourceUrl": "https://learn.microsoft.com/purview/default-sensitivity-labels-policies",
+      "checkedOn": "2026-11-24"
+    },
+    {
+      "key": "restricted-sensitivity-label",
+      "label": "Restricted sensitivity label",
+      "sourceEntity": "data-classification",
+      "sourceKey": "restricted",
+      "vocabularyKey": "purview-sensitivity-label",
+      "term": "Highly Confidential",
+      "sourceUrl": "https://learn.microsoft.com/purview/default-sensitivity-labels-policies",
+      "checkedOn": "2026-11-24"
     }
   ]
 }

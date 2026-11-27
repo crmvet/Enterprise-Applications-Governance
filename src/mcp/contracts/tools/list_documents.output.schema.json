@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_documents output",
+  "description": "The response envelope. On success, data lists documents, missing first, then stale, draft and current, by application, with counts per state and paging.",
+  "x-tool": "list_documents",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "counts",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "applicationName",
+              "documentType",
+              "state",
+              "documentLinkId",
+              "url",
+              "owner",
+              "lastCheckedOn",
+              "staleOn",
+              "requirementKey",
+              "requiredFrom",
+              "isAiCreated",
+              "performedBy",
+              "recordUrl"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "applicationName": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "documentType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "state": {
+                "enum": [
+                  "missing",
+                  "stale",
+                  "draft",
+                  "current",
+                  "other"
+                ]
+              },
+              "documentLinkId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O19 Document Link"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "url": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "owner": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lastCheckedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "staleOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "requirementKey": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The documentation requirement (C23) that asks for it. Null for a link no requirement asks for."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "requiredFrom": {
+                "description": "The lifecycle stage the requirement applies from.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client recorded the link."
+              },
+              "performedBy": {
+                "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "The document link, or the application for a missing document."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "missing",
+            "stale",
+            "draft",
+            "current"
+          ],
+          "properties": {
+            "missing": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Missing."
+            },
+            "stale": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Stale."
+            },
+            "draft": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Draft, waiting for a person to confirm."
+            },
+            "current": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Current."
+            }
+          },
+          "additionalProperties": false
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many documents match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 document(s) across 1 application(s); 1 missing and 0 stale.",
+      "data": {
+        "items": [
+          {
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "applicationName": "Field Inspections",
+            "documentType": {
+              "key": "runbook",
+              "label": "Runbook"
+            },
+            "state": "missing",
+            "documentLinkId": null,
+            "url": null,
+            "owner": null,
+            "lastCheckedOn": null,
+            "staleOn": null,
+            "requirementKey": "runbook-tier-2",
+            "requiredFrom": {
+              "key": "change-and-release",
+              "label": "Change and release"
+            },
+            "isAiCreated": false,
+            "performedBy": null,
+            "recordUrl": "https://product.example.org/app/records/business-application/10000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "counts": {
+          "missing": 1,
+          "stale": 0,
+          "draft": 0,
+          "current": 0
+        },
+        "totalCount": 1
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 // /app/); in the harness it is App.tsx (hash routes). The pages only ever see this interface.
 import { createContext, useContext } from 'react';
 import type { IsoDate } from './data/contracts';
+import type { AppRoute } from './app/routes';
 
 export type Route =
   | { page: 'overview' }
@@ -12,13 +13,25 @@ export type Route =
 
 // A drill-down the applications list can serve: find_applications filters by configured keys.
 export interface ApplicationFilter {
+  // Words to match in the name or purpose (find_applications text).
+  text?: string;
+  portfolioIds?: string[];
   lifecycleStageKeys?: string[];
   tierKeys?: string[];
   applicationKindKeys?: string[];
+  // Applications this person holds an owner role on (find_applications ownerObjectId). The Owners page links here.
+  ownerObjectId?: string;
+  // Registration status meanings (find_applications registrationMeanings). Left out, the tool returns registered ones.
+  registrationMeanings?: ('draft' | 'registered' | 'archived')[];
+  // Wave 4 (document 24, B24-21): whether the record says the application uses AI (find_applications usesAi; an
+  // application with no answer matches neither), and its build paths (buildPathKeys, keys of the build-path list).
+  usesAi?: boolean;
+  buildPathKeys?: string[];
 }
 
-// A write the pages never make. The page hands the person a request to give to their AI client, which calls the tool;
-// the engine checks the write, and only a person decides on an approval card.
+// A write the four original pages do not make themselves (they also run in the harness, which never writes). The page
+// hands the person a request to give to their AI client, which calls the tool; the engine checks the write, and a
+// person decides every approval on the decision page. The work pages of the web app write through the action sheet.
 export interface HandOff {
   title: string;
   prompt: string;
@@ -33,6 +46,9 @@ export interface Host {
   // where the list lives.
   drill(what: string, filter?: ApplicationFilter): void;
   handOff(request: HandOff): void;
+  // Opens a list page of the web app, such as the owner gaps or the overdue reviews. The harness has no such pages and
+  // leaves it out, so a page falls back to drill.
+  open?(route: AppRoute): void;
   // True when links.recordUrl opens a form outside these pages (binding A). The web app's record links point at these
   // pages, so it shows none.
   showRecordLinks: boolean;

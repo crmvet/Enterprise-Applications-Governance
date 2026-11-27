@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "import_data_taxonomy output",
+  "description": "The response envelope. On success, data says what the import would change, the problems of the file, the draft it stored (unless validateOnly or a problem), the domains in force the file leaves out, the prepared owner changes and the catalog owner differences (DC-15).",
+  "x-tool": "import_data_taxonomy",
+  "x-ai-write-states": [
+    "candidate"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../envelope.schema.json#/$defs/writeResult"
+        }
+      ],
+      "required": [
+        "configurationDraftId",
+        "valid",
+        "rowsRead",
+        "counts",
+        "problems",
+        "errors",
+        "diffSummary",
+        "notInSource",
+        "preparedOwnerChanges",
+        "catalogOwnerDifferences"
+      ],
+      "properties": {
+        "configurationDraftId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "C46 Configuration Draft"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "rowsRead": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "domainsAdded",
+            "domainsChanged",
+            "domainsUnchanged",
+            "matchesAdded",
+            "notInSource"
+          ],
+          "properties": {
+            "domainsAdded": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "domainsChanged": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "domainsUnchanged": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "matchesAdded": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "notInSource": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "problems": {
+          "type": "array",
+          "description": "What is wrong with the file, by row and column. With any problem nothing is stored.",
+          "items": {
+            "type": "object",
+            "required": [
+              "row",
+              "column",
+              "message"
+            ],
+            "properties": {
+              "row": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "The configuration rules the draft would break (OP-09).",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "key",
+              "ruleKey",
+              "message"
+            ],
+            "properties": {
+              "entity": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/entityKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "key": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/keyPath"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ruleKey": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "diffSummary": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "notInSource": {
+          "type": "array",
+          "description": "Active domains in force that the file leaves out. None is retired.",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "path"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "preparedOwnerChanges": {
+          "type": "array",
+          "description": "The owners the file names, as propose_owner_change steps to send once the domain is in force. Never live owners.",
+          "items": {
+            "type": "object",
+            "required": [
+              "domainKey",
+              "ownerRoleKey",
+              "isDeputy",
+              "objectId",
+              "userPrincipalName",
+              "readyToSend",
+              "tool",
+              "input",
+              "note"
+            ],
+            "properties": {
+              "domainKey": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "isDeputy": {
+                "type": "boolean"
+              },
+              "objectId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/guid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "userPrincipalName": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "readyToSend": {
+                "type": "boolean"
+              },
+              "tool": {
+                "$ref": "../common.schema.json#/$defs/toolName"
+              },
+              "input": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "catalogOwnerDifferences": {
+          "type": "array",
+          "description": "DC-15: where the file names a data owner by object ID and the domain already has another. Computed for this import, never stored.",
+          "items": {
+            "type": "object",
+            "required": [
+              "check",
+              "domainKey",
+              "ownerRoleKey",
+              "catalogObjectId",
+              "currentHolder",
+              "message"
+            ],
+            "properties": {
+              "check": {
+                "const": "DC-15"
+              },
+              "domainKey": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "catalogObjectId": {
+                "$ref": "../common.schema.json#/$defs/guid"
+              },
+              "currentHolder": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

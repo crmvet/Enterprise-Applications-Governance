@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_portfolios output",
+  "description": "The response envelope. On success, data lists portfolios (O01) with their path, the accountable person and counts over their applications.",
+  "x-tool": "list_portfolios",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "portfolioId",
+              "name",
+              "level",
+              "parentPortfolioId",
+              "path",
+              "accountablePrincipal",
+              "isActive",
+              "counts",
+              "recordUrl"
+            ],
+            "properties": {
+              "portfolioId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O01 Portfolio"
+              },
+              "name": {
+                "type": "string",
+                "description": "The portfolio name."
+              },
+              "level": {
+                "description": "The portfolio level value, such as department.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "parentPortfolioId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O01 Portfolio"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "path": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "portfolioId",
+                    "name"
+                  ],
+                  "properties": {
+                    "portfolioId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O01 Portfolio"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The portfolio name."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "The portfolio and its parents, top first."
+              },
+              "accountablePrincipal": {
+                "description": "The person accountable for the portfolio.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isActive": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "required": [
+                  "applications",
+                  "applicationsWithOwnerGap",
+                  "ownerGaps",
+                  "reviewsOverdue",
+                  "openDecisions"
+                ],
+                "properties": {
+                  "applications": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Registered and draft applications in the portfolio and below it (archived left out)."
+                  },
+                  "applicationsWithOwnerGap": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Of the registered ones, applications with at least one owner gap (document 24, B24-17)."
+                  },
+                  "ownerGaps": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The one owner gap count of those applications (document 24, B24-17), as get_portfolio_summary gives it for the portfolio: owner roles with no holder, no deputy, or a holder whose account is off."
+                  },
+                  "reviewsOverdue": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Due reviews of those applications with a due date before today."
+                  },
+                  "openDecisions": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Proposed decisions about those applications."
+                  }
+                },
+                "additionalProperties": false
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many portfolios match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 portfolio(s). Counts include the applications of child portfolios. No tool writes a portfolio yet.",
+      "data": {
+        "items": [
+          {
+            "portfolioId": "50000000-0000-4000-8000-000000000001",
+            "name": "Field operations",
+            "level": {
+              "key": "department",
+              "label": "Department"
+            },
+            "parentPortfolioId": null,
+            "path": [
+              {
+                "portfolioId": "50000000-0000-4000-8000-000000000001",
+                "name": "Field operations"
+              }
+            ],
+            "accountablePrincipal": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Owner (sample)"
+            },
+            "isActive": true,
+            "counts": {
+              "applications": 6,
+              "applicationsWithOwnerGap": 2,
+              "ownerGaps": 2,
+              "reviewsOverdue": 1,
+              "openDecisions": 3
+            },
+            "recordUrl": "https://product.example.org/records/portfolio/50000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "totalCount": 1
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

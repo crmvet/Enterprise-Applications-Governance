@@ -1,8 +1,8 @@
 # Decision records
 
-This folder holds one short record for each design decision about the next version of Enterprise Applications Governance. Each record gives the context, the options that were considered, the choice and the reasons.
+This folder holds one short record for each design decision about the next version of Enterprise Applications Governance, from D-01 to D-42. Each record gives the context, the options that were considered, the choice and the reasons.
 
-The product is still in design. Where a record describes what the product does, read it as what the product is designed to do.
+The next version is built and tested. It runs as a demo install with fictional data, and there is no release yet. Many records were written while the product was in design. Where a record describes something that is not built and covered by a test, read it as what the product is designed to do. The newer records say what is built.
 
 ## How decisions are recorded
 
@@ -33,6 +33,8 @@ Each record has the same parts:
 | Accepted | The decision stands |
 | Open | Part of the question is still undecided. What is settled is listed in the record |
 | Answered by | The record held an open question, and the named decision answered it |
+| Amends | This decision changes a part of the named one, which otherwise stands |
+| Amended by | The named decision changed a part of this one. The record says which part, and the rest stands |
 | Superseded in part by | The named decision replaced part of this one. The record says which part still stands |
 | Superseded by | The named decision replaced this one |
 | Not published | The decision is not about the technical design, so only the number is kept |
@@ -43,6 +45,8 @@ Each record has the same parts:
 - [D-01](D-01-what-the-product-is.md) sets the operating model underneath it: a playbook, guidelines, processes and an engine.
 - [D-26](D-26-first-release-runs-in-the-clients-azure.md) sets where the first release runs: the organization's own Azure subscription.
 - [D-10](D-10-rules-are-configuration-and-the-engine-is-code.md) and [D-06](D-06-risk-tiers-are-configuration.md) set how rules work: configuration read by a code engine, with nothing hardcoded.
+- [D-36](D-36-the-web-app-acts-and-the-engine-checks-every-write.md) sets how people work: in the web app, with the engine checking every write as it checks an AI client's.
+- [D-37](D-37-business-data-domains-mapped-to-technical-locations.md) sets how the product knows about data: business data domains with owners, mapped to stores of any vendor.
 - [D-03](D-03-change-gate-record-or-stop.md) is the main question that is still open: whether a check should ever stop a deployment.
 
 ## Index
@@ -64,9 +68,9 @@ Each record has the same parts:
 | D-13 | [Change windows: record them, flag deployments outside them, show them on the timeline](D-13-change-windows-record-flag-timeline.md) | Accepted | Each change has a window, a deployment outside it is flagged, and planned changes show read-only on the timeline. |
 | D-14 | [Should the default configuration ship an AI lead role?](D-14-ai-lead-role-open-question.md) | Answered by D-20 | The open question of whether the AI lead is its own role or a duty of the platform admin. |
 | D-15 | [An on-demand gap check instead of importing Microsoft's inventory](D-15-gap-check-instead-of-inventory-import.md) | Accepted | No scheduled copy of Microsoft's inventory. An admin runs a live gap check, and only unregistered items go on a claim list. |
-| D-16 | [No Copilot or Teams agent: people use MCP clients, the app and approval cards](D-16-no-copilot-or-teams-agent.md) | Accepted. Supersedes in part D-02 | No dedicated agent for now. People use MCP clients, with Claude Code as the reference client, the app and approval cards. |
+| D-16 | [No Copilot or Teams agent: people use MCP clients, the app and approval cards](D-16-no-copilot-or-teams-agent.md) | Accepted. Supersedes in part D-02. Amended by D-38 | No dedicated agent for now. People use MCP clients, with Claude Code as the reference client, the app and approval cards. |
 | D-17 | [The product tracks documentation and does not write it](D-17-track-documentation-do-not-write-it.md) | Accepted. Supersedes in part D-02 | The product says which documents are required, and records their links and status. People's own AI tools write them. |
-| D-18 | [Modern pages are the core interface, and the first release is set](D-18-pages-are-the-core-interface.md) | Superseded in part by D-26. Amended by D-32 | Four pages are the core interface: Overview, Application 360, the dependency map and the timeline. The first release is the core plus the MCP server. |
+| D-18 | [Modern pages are the core interface, and the first release is set](D-18-pages-are-the-core-interface.md) | Superseded in part by D-26. Amended by D-32, D-36 | Four pages are the core interface: Overview, Application 360, the dependency map and the timeline. The first release is the core plus the MCP server. |
 | D-19 | [The product never builds pipelines: it maps them and records deployments](D-19-never-build-pipelines.md) | Accepted | Organizations keep their own pipelines. The product links to them, records every deployment and offers copy-paste step samples. |
 | D-20 | [The AI lead role ships in the default configuration, configurable for each organization](D-20-ai-lead-role-in-default-configuration.md) | Accepted. Answers D-14 | The default configuration ships an AI lead role with its own Entra group. Each organization can merge it, separate it, rename it or drop it. |
 | D-21 | [Not published](D-21-not-published.md) | Not published | Not about the technical design. The number is kept so the sequence has no gaps. |
@@ -74,7 +78,7 @@ Each record has the same parts:
 | D-23 | [The 2021 release and its name are the author's own work](D-23-2021-release-and-name-are-the-authors-own.md) | Accepted. Amended by D-31 | The 2021 release and its name were published under the MIT License in 2021. D-31 made the name final for the next version. |
 | D-24 | [Keep the code private until the main design choices are settled](D-24-keep-the-code-private-until-the-design-settles.md) | Superseded by D-27 | The code was to stay private until the data store, the name and the open questions were settled. |
 | D-25 | [The technical reference lives in this repository](D-25-technical-reference-lives-in-this-repository.md) | Accepted | `docs/` holds the technical reference for readers, with one home for each piece of text and one record per decision. |
-| D-26 | [The first release runs in the organization's own Azure subscription](D-26-first-release-runs-in-the-clients-azure.md) | Accepted. Answers D-22. Supersedes in part D-02, D-10, D-11, D-18. Amended by D-32 | Azure Functions, Azure SQL, a React web app and Entra sign-in, deployed as a template. It is designed so that no user needs a Power Platform license for the product. |
+| D-26 | [The first release runs in the organization's own Azure subscription](D-26-first-release-runs-in-the-clients-azure.md) | Accepted. Answers D-22. Supersedes in part D-02, D-10, D-11, D-18. Amended by D-32, D-36, D-38 | Azure Functions, Azure SQL, a React web app and Entra sign-in, deployed as a template. It is designed so that no user needs a Power Platform license for the product. |
 | D-27 | [The technical work is public under the MIT License](D-27-technical-work-is-public-under-mit.md) | Accepted. Supersedes D-24 | The source, the technical design, the decision records, the diagrams, the playbook and the guidelines are public under the MIT License. |
 | D-28 | [Govern AI development of the apps, with a playbook for the organization and IT](D-28-govern-ai-development-of-the-apps.md) | Accepted | The product is about governing how an organization builds apps with AI. One playbook has an organization track and an IT track. |
 | D-29 | [Who pushes to GitHub, and the license line](D-29-who-pushes-and-the-license-line.md) | Accepted | The AI session in the product workspace pushes both repositories, only after the final checks pass, never by force. The license line reads 2021-2026 crmvet. |
@@ -84,6 +88,13 @@ Each record has the same parts:
 | D-33 | [A demo install shows the fictional estate; the real bootstrap comes next](D-33-a-demo-install-shows-the-fictional-estate.md) | Accepted | A demo switch shows a "Demo, fictional data" badge on every page, and the seed command may load the fictional estate into an empty store in an environment named Demo. The real bootstrap route of version 1 is next. |
 | D-34 | [Not published](D-34-not-published.md) | Not published | About the author's own work setup, not the technical design. The number is kept so the sequence has no gaps. |
 | D-35 | [The web app looks like Fluent 2](D-35-the-web-app-looks-like-fluent-2.md) | Accepted. Amends D-32 | The theme follows Fluent 2: Microsoft's corners, shadows, neutral grays, brand blue and status colors, with navy text, on shadcn/ui. The product keeps its own name and mark. |
+| D-36 | [The web app acts, and the engine checks every write](D-36-the-web-app-acts-and-the-engine-checks-every-write.md) | Accepted. Amends D-18, D-26 | People do their work in the web app: intakes, decisions, owners, reviews, documents, changes and approvals. The engine checks each write the same way it checks an AI client's. |
+| D-37 | [Business data domains, configured per install and mapped to technical locations](D-37-business-data-domains-mapped-to-technical-locations.md) | Accepted. Answered by D-41 | Each install draws its own tree of business data domains, with an owner at any level, and maps them to stores of any vendor. Applications declare the data they use. |
+| D-38 | [A person answers an approval on the decision page; Teams and Outlook link to it](D-38-a-person-answers-an-approval-on-the-decision-page.md) | Accepted. Amends D-16, D-26 | The decision page is the default place to answer, and the person's sign-in proves who answered. Step-up sign-in is a setting. With it off, the approval runner's template can still send an answerable card; with it on, a card only links to the page. |
+| D-39 | [The demo switches roles with a demo-only persona switch](D-39-the-demo-switches-roles-with-a-demo-only-persona-switch.md) | Accepted | In a Demo install only, the signed-in operator may act as any fictional persona. Every write is stamped "demo operator", and a server outside Demo refuses the switch. |
+| D-40 | [Self-approval stays as the Balanced preset has it](D-40-self-approval-stays-as-the-balanced-preset-has-it.md) | Accepted | In Balanced, a proposer may approve their own decision at tiers 1 and 2, not at tier 3; a proposed owner's own consent to take the role is not covered. Regulated and the strict separation overlay refuse it at every tier. |
+| D-41 | [The data taxonomy details, and a "never" rule cannot be broken](D-41-the-data-taxonomy-details-and-a-never-rule-cannot-be-broken.md) | Accepted. Answers D-37 | A data use that a never rule forbids is refused when it is saved, for people and AI clients alike. The other details follow the design's recommendations. |
+| D-42 | [Not published](D-42-not-published.md) | Not published | About working arrangements and the website, not the technical design. The number is kept so the sequence has no gaps. |
 
 ## Related
 

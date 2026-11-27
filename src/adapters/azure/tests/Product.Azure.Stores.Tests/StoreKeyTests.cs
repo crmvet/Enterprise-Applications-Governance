@@ -29,7 +29,7 @@ public sealed class StoreKeyTests
     public void EveryLiveConfigurationEntityIsKeyedByItsKeyPath()
     {
         EntityInfo[] live = Catalog.Entities.Where(e => e.IsConfiguration && e.Key != "configuration-set" && e.Key != "configuration-set-version" && e.Key != "configuration-draft").ToArray();
-        Assert.Equal(42, live.Length);
+        Assert.Equal(46, live.Length);
         foreach (EntityInfo entity in live)
         {
             StoreKey key = entity.StoreKeys.Single(k => k.UsesKeyPath);
@@ -55,6 +55,10 @@ public sealed class StoreKeyTests
             ["gate-policy"] = ("Tier+Change Type+Target Stage+Portfolio", new[] { "tierKey", "changeTypeKey", "targetStageKey", "portfolioId" }),
             ["guideline"] = ("Number+Version", new[] { "number", "version" }),
             ["workload-grant"] = ("Principal+Workload Role", new[] { "principalObjectId", "workloadRoleKey" }),
+
+            // The data taxonomy (D-37): classification and level ranks are unique among active rows, as tier ranks are.
+            ["data-classification"] = ("Rank", new[] { "rank" }),
+            ["data-domain-level"] = ("Rank", new[] { "rank" }),
         };
 
         StoreKey[] active = Catalog.Entities.SelectMany(e => e.StoreKeys).Where(k => k.Scope == StoreKeyScope.ActiveRows).ToArray();
@@ -87,7 +91,14 @@ public sealed class StoreKeyTests
             ["pipeline-reference"] = new[] { "Link Kind+External Id:linkKind,externalId" },
             ["pipeline-map-entry"] = new[] { "Business Application+Pipeline Reference+Deployment Target:businessApplication,pipelineReference,deploymentTarget" },
             ["document-link"] = new[] { "Business Application+Documentation Requirement:businessApplication,documentationRequirement" },
+            ["review"] = new[] { "Record Number:recordNumber" },
             ["claim"] = new[] { "Claim Key:claimKey" },
+
+            // The data taxonomy (D-37; document 22, B22-14). A data use's other key (application, domain, location and AI)
+            // counts an empty location as a value, which a store key cannot hold, so the engine checks it.
+            ["data-location"] = new[] { "Data Platform+External Id:dataPlatform,externalId" },
+            ["data-mapping"] = new[] { "Data Domain+Data Location+Data Origin:dataDomain,dataLocation,dataOrigin" },
+            ["data-use"] = new[] { "Record Number:recordNumber" },
         };
 
         StoreKey[] keys = Catalog.Entities.SelectMany(e => e.StoreKeys).Where(k => !k.UsesKeyPath && k.Scope != StoreKeyScope.ActiveRows).ToArray();
@@ -98,14 +109,17 @@ public sealed class StoreKeyTests
         }
 
         Assert.Equal(StoreKeyScope.CurrentRows, Catalog.Get("technical-component").StoreKeys.Single().Scope);
-        Assert.All(keys.Where(k => k.EntityKey != "technical-component"), k => Assert.Equal(StoreKeyScope.AllRows, k.Scope));
+        Assert.Equal(StoreKeyScope.InServiceRows, Catalog.Get("data-location").StoreKeys.Single().Scope);
+        Assert.Equal(StoreKeyScope.OpenRows, Catalog.Get("data-mapping").StoreKeys.Single().Scope);
+        Assert.All(keys.Where(k => k.EntityKey != "technical-component" && k.EntityKey != "data-location" && k.EntityKey != "data-mapping"), k => Assert.Equal(StoreKeyScope.AllRows, k.Scope));
 
-        // The keys the promoted unique columns hold, and the keys held back, are not in the table.
+        // The keys the promoted unique columns hold, and the keys held back, are not in the table. A review keeps only its
+        // record number (document 25, B25-9): its application, type and due date key stays held back.
         Assert.Empty(Catalog.Get("audit-entry").StoreKeys);
         Assert.Empty(Catalog.Get("deployment-record").StoreKeys);
         Assert.Empty(Catalog.Get("configuration-set-version").StoreKeys);
         Assert.Empty(Catalog.Get("artifact-version").StoreKeys);
-        Assert.Empty(Catalog.Get("review").StoreKeys);
+        Assert.Equal(new[] { "Record Number" }, Catalog.Get("review").StoreKeys.Select(k => k.Name));
         Assert.Empty(Catalog.Get("approval-record").StoreKeys);
     }
 
@@ -151,6 +165,16 @@ public sealed class StoreKeyTests
         Assert.NotNull(component.ValueOf(null, J("{\"linkKind\":\"power-platform-resource\",\"externalId\":\"x\"}")));
         Assert.NotNull(component.ValueOf(null, J("{\"linkKind\":\"power-platform-resource\",\"externalId\":\"x\",\"retiredOn\":null}")));
         Assert.Null(component.ValueOf(null, J("{\"linkKind\":\"power-platform-resource\",\"externalId\":\"x\",\"retiredOn\":\"2026-11-20\"}")));
+
+        // A data location counts while in service: a retired one and a draft withdrawn (archived with no Retired On) hold
+        // no value (wave 4b, fix round 2). A component that is archived keeps its key, as before.
+        StoreKey location = Catalog.Get("data-location").StoreKeys.Single();
+        Assert.NotNull(location.ValueOf(null, J("{\"dataPlatform\":\"sharepoint\",\"externalId\":\"x\",\"statusMeaning\":\"draft\"}")));
+        Assert.NotNull(location.ValueOf(null, J("{\"dataPlatform\":\"sharepoint\",\"externalId\":\"x\",\"statusMeaning\":\"registered\",\"retiredOn\":null}")));
+        Assert.Null(location.ValueOf(null, J("{\"dataPlatform\":\"sharepoint\",\"externalId\":\"x\",\"statusMeaning\":\"archived\"}")));
+        Assert.Null(location.ValueOf(null, J("{\"dataPlatform\":\"sharepoint\",\"externalId\":\"x\",\"statusMeaning\":\"archived\",\"retiredOn\":\"2026-11-20\"}")));
+        Assert.Null(location.ValueOf(null, J("{\"dataPlatform\":\"sharepoint\",\"externalId\":\"x\",\"statusMeaning\":\"registered\",\"retiredOn\":\"2026-11-20\"}")));
+        Assert.NotNull(component.ValueOf(null, J("{\"linkKind\":\"power-platform-resource\",\"externalId\":\"x\",\"statusMeaning\":\"archived\"}")));
     }
 
     [Fact]
@@ -257,7 +281,8 @@ public sealed class StoreKeyTests
 
     // A value the engine writes while another row holds it: the commit fails on the store key, the engine runs the call
     // once more (document 25, section 8) and, when the value is still taken, the conflict reaches the caller. Nothing of
-    // either attempt is written.
+    // either attempt is written. The engine gives record numbers itself (document 25, B25-9), so the test's store hands
+    // out the same number twice, as a broken counter would, and the store key still refuses the second row.
     [Fact]
     public void AStoreKeyTakenWhileTheEngineWritesReachesTheCallerAfterTheEnginesOneRetry()
     {
@@ -265,9 +290,9 @@ public sealed class StoreKeyTests
         using RowStoreUnderTest store = Stores.NewSqlite();
         store.SeedVersion(World.Version(1));
         World.SeedDirectoryAndEstate(store);
-        var records = new CountingRecords(store.Records);
+        var records = new CountingRecords(store.Records) { FixedRecordNumber = 7 };
         var runtime = new Product.Engine.Runtime.EngineRuntime(records, store.Configuration, World.Catalog, clock: new Product.Engine.Testing.InMemory.ManualClock(World.AsOf));
-        string intake = "{\"requester\":\"" + World.Person1 + "\",\"title\":\"Fixture keyed intake\",\"need\":\"Fixture need\",\"recordNumber\":\"IR-0007\"}";
+        string intake = "{\"requester\":\"" + World.Person1 + "\",\"title\":\"Fixture keyed intake\",\"need\":\"Fixture need\"}";
 
         Product.Engine.Runtime.RuntimeOutcome first = runtime.Write(World.PersonOne, Product.Engine.Runtime.WriteCommand.Create("intake-request", intake));
         Assert.True(first.RowId != null, first.ToString());
@@ -290,6 +315,9 @@ public sealed class StoreKeyTests
 
         public int Begun { get; private set; }
 
+        // When set, every record number the engine asks for is this one.
+        public long? FixedRecordNumber { get; set; }
+
         public string StoreId => _inner.StoreId;
 
         public StoredRow? Get(string entity, string id)
@@ -310,8 +338,42 @@ public sealed class StoreKeyTests
         public IStoreTransaction Begin()
         {
             Begun++;
-            return _inner.Begin();
+            IStoreTransaction tx = _inner.Begin();
+            return FixedRecordNumber is long number ? new FixedNumbers(tx, number) : tx;
         }
+    }
+
+    // A transaction whose record numbers are always the same: a counter that gives a number twice.
+    private sealed class FixedNumbers : IStoreTransaction
+    {
+        private readonly IStoreTransaction _inner;
+        private readonly long _number;
+
+        public FixedNumbers(IStoreTransaction inner, long number)
+        {
+            _inner = inner;
+            _number = number;
+        }
+
+        public StoredRow? Get(string entity, string id) => _inner.Get(entity, id);
+
+        public StoredRow? GetByKey(string entity, string key) => _inner.GetByKey(entity, key);
+
+        public IReadOnlyList<StoredRow> Query(RowQuery query) => _inner.Query(query);
+
+        public string NewId(string entity) => _inner.NewId(entity);
+
+        public long NextRecordNumber(string entity, string prefix) => _number;
+
+        public void Create(string entity, string id, string? key, Product.Engine.Core.Canonical.JsonTreeNode columns) => _inner.Create(entity, id, key, columns);
+
+        public void Update(string entity, string id, Product.Engine.Core.Canonical.JsonTreeNode columns) => _inner.Update(entity, id, columns);
+
+        public void Delete(string entity, string id) => _inner.Delete(entity, id);
+
+        public void Commit() => _inner.Commit();
+
+        public void Dispose() => _inner.Dispose();
     }
 
     // ---- A SQLite file from an earlier build ----
@@ -339,6 +401,56 @@ public sealed class StoreKeyTests
                 Assert.Throws<StoreConflictException>(() => upgraded.Seed("business-application", "{\"recordNumber\":\"APP-0042\"}", Guid.NewGuid().ToString("D")));
                 upgraded.Seed("business-application", "{\"recordNumber\":\"APP-0043\"}", Guid.NewGuid().ToString("D"));
             }
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            Stores.TryDelete(folder);
+        }
+    }
+
+    // Wave 4b, fix round 2. A draft location that is withdrawn (archived, no Retired On) gives its External Id back in the
+    // same commit, so the location added again is stored; a location in service still holds it.
+    [Fact]
+    public void AWithdrawnDraftLocationFreesItsExternalIdAndOneInServiceHoldsIt()
+    {
+        using RowStoreUnderTest store = Stores.NewSqlite();
+        string draft = store.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"draft\"}");
+        Assert.Throws<StoreConflictException>(() => store.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"registered\"}"));
+
+        store.Replace("data-location", draft, "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"archived\"}");
+        store.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"registered\"}");
+        Assert.Throws<StoreConflictException>(() => store.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"draft\"}"));
+    }
+
+    // Version 4 builds the keys again, so a draft location withdrawn under version 3 (archived, its key row kept) frees
+    // its External Id on first use.
+    [Fact]
+    public void ASqliteFileFromVersionThreeFreesTheExternalIdOfAWithdrawnDraftLocation()
+    {
+        string folder = Paths.NewScratchFolder();
+        string file = Path.Combine(folder, "product.db");
+        try
+        {
+            using (RowStoreUnderTest store = Stores.NewSqlite(file))
+            {
+                store.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"draft\"}", "location-1");
+            }
+
+            // What version 3 left: the row archived, and its key row still there.
+            SqliteConnection.ClearAllPools();
+            Execute(file, "UPDATE \"Row\" SET \"Columns\" = '{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"archived\"}' WHERE \"Id\" = 'location-1'; DELETE FROM \"SchemaVersion\"; INSERT INTO \"SchemaVersion\" (\"Version\", \"AppliedOn\") VALUES (3, '2026-11-25T09:00:00.000Z');");
+            Assert.Equal(1L, Scalar(file, "SELECT COUNT(*) FROM \"RowKey\" WHERE \"Entity\" = 'data-location'"));
+            Assert.Equal(3L, Scalar(file, "SELECT MAX(\"Version\") FROM \"SchemaVersion\""));
+
+            using (RowStoreUnderTest upgraded = Stores.NewSqlite(file, "00000000-0000-4000-9002-"))
+            {
+                upgraded.Store.EnsureSchema();
+                upgraded.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"registered\"}", Guid.NewGuid().ToString("D"));
+                Assert.Throws<StoreConflictException>(() => upgraded.Seed("data-location", "{\"dataPlatform\":\"sharepoint\",\"externalId\":\"ext-0001\",\"statusMeaning\":\"draft\"}", Guid.NewGuid().ToString("D")));
+            }
+
+            Assert.Equal(4L, Scalar(file, "SELECT MAX(\"Version\") FROM \"SchemaVersion\""));
         }
         finally
         {

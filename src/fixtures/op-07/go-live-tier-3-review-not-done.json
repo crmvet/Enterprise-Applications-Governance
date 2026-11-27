@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-07",
   "case": "go-live-tier-3-review-not-done",
-  "description": "Without a done security review the tier 3 go-live gate is not ready.",
+  "description": "Without a done security review the tier 3 go-live gate is not ready. A data owner is named, as Balanced asks at tiers 2 and 3.",
   "workingDefaults": [
     9
   ],
@@ -30,7 +30,10 @@
           "documentLinkId": "fixture-link-r1"
         }
       ]
-    }
+    },
+    "assignedOwnerRoleKeys": [
+      "data-owner"
+    ]
   },
   "expected": {
     "outcome": "not-ready",
@@ -44,6 +47,14 @@
           "requiredDecisionTypeKey": "acceptance",
           "met": true,
           "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-data-owner-tier-3",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "data-owner",
+          "met": true,
+          "guidelineKey": "g2",
           "triggered": false
         },
         {

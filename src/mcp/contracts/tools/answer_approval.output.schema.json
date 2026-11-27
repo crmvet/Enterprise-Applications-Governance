@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "answer_approval output",
+  "description": "The response envelope. On success, data is the write result for the answered approval record, stamped as the person's own act, with whether the answer counts, the decision's status after the engine's recompute, and the approval records the recompute opened or cancelled in the same transaction. The decision moves only when the counted answers meet the rule; the engine accepts it, never the tool.",
+  "x-tool": "answer_approval",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the answered approval record (recordId is the approval record).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The approval record's outcome: approved or rejected, by meaning.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/statusMeaning",
+              "enum": [
+                "approved",
+                "rejected"
+              ]
+            }
+          }
+        },
+        "approvalRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O10 Approval Record"
+        },
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "answer": {
+          "enum": [
+            "approve",
+            "reject"
+          ]
+        },
+        "answeredAs": {
+          "type": "object",
+          "description": "The role, or the owner role on the decision's application, through which the person was asked.",
+          "required": [
+            "roleKey",
+            "ownerRoleKey"
+          ],
+          "properties": {
+            "roleKey": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C29 Role"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ownerRoleKey": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C28 Owner Role"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "isConsultation": {
+          "type": "boolean",
+          "description": "True for a consultation: the answer is shown as a recommendation and never counts."
+        },
+        "countsTowardRequirement": {
+          "type": "boolean",
+          "description": "Whether the engine counts the answer (OP-03), as it wrote Counts Toward Requirement in the same transaction."
+        },
+        "decisionStatus": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The decision's status after the engine's recompute: still proposed, or accepted or rejected when the counted answers meet the rule. The engine moves it, never the tool.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/decisionStatusMeaning"
+            }
+          }
+        },
+        "openedApprovalRecordIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O10 Approval Record"
+          },
+          "description": "Approval records the recompute opened: the next step of a sequential rule, or a new request for a requirement this answer did not meet."
+        },
+        "cancelledApprovalRecordIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O10 Approval Record"
+          },
+          "description": "Approval records still pending that the engine cancelled because the decision settled."
+        }
+      },
+      "required": [
+        "approvalRecordId",
+        "decisionId",
+        "answer",
+        "answeredAs",
+        "isConsultation",
+        "countsTowardRequirement",
+        "decisionStatus",
+        "openedApprovalRecordIds",
+        "cancelledApprovalRecordIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "Your approval is recorded and counts. The engine accepted the decision.",
+      "data": {
+        "recordId": "d1000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Approved",
+          "meaning": "approved"
+        },
+        "performedBy": {
+          "actorKind": "person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000002",
+            "displayLabel": "Business owner (sample)"
+          },
+          "onBehalfOf": null,
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000002",
+            "label": "Web app"
+          }
+        },
+        "isAiCreated": false,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-22T09:00:00Z"
+        },
+        "created": false,
+        "approvalRecordId": "d1000000-0000-4000-8000-000000000002",
+        "decisionId": "d2000000-0000-4000-8000-000000000001",
+        "answer": "approve",
+        "answeredAs": {
+          "roleKey": null,
+          "ownerRoleKey": "business-owner"
+        },
+        "isConsultation": false,
+        "countsTowardRequirement": true,
+        "decisionStatus": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        },
+        "openedApprovalRecordIds": [],
+        "cancelledApprovalRecordIds": []
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/decision/d2000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_data_domain input",
+  "description": "Everything about one data domain: its path and level, its effective classification and rules with where each is set, its owners up the tree with \"inherited from\", its mappings, the applications that use it with each use's decision state, the decisions about it, its matches to Fabric or Purview domains, and its findings. Writes nothing.",
+  "x-tool": "get_data_domain",
+  "type": "object",
+  "required": [
+    "domainKey"
+  ],
+  "properties": {
+    "domainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "The domain."
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "owners",
+          "mappings",
+          "uses",
+          "decisions",
+          "matches",
+          "gaps"
+        ]
+      },
+      "description": "Only these sections. Every section by default; a section left out is null."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "domainKey": "payroll"
+    }
+  ]
+}

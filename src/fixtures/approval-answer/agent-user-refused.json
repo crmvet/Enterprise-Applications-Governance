@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "agent-user-refused",
+  "description": "An agent user that reached the web app as a person tries to answer. Only a user principal answers an approval, so it is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-agent-1",
+      "principalKind": "agent-user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "decisionRightKey": "intake-a",
+      "requiredRoleKey": "platform-admin",
+      "expiresOnUtc": "2026-11-30T09:00:00Z"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "intake",
+      "tierKey": "tier-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-person-only",
+        "severity": "error",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

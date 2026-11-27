@@ -9,9 +9,32 @@
       "maximumHolders": 1
     },
     { "key": "sponsor", "label": "Sponsor", "partyKey": "business" },
-    { "key": "data-owner", "label": "Data owner", "partyKey": "business", "requiresDeputy": true },
+    {
+      "key": "data-owner",
+      "label": "Data owner",
+      "partyKey": "business",
+      "requiresDeputy": true,
+      "subjectKinds": ["business-application", "data-domain"],
+      "inheritsDown": true
+    },
+    {
+      "key": "data-steward",
+      "label": "Data steward",
+      "description": "Keeps a data domain's mappings and examples current. Consulted on data use decisions; approves nothing by default (data taxonomy, D-37).",
+      "partyKey": "business",
+      "requiresDeputy": false,
+      "subjectKinds": ["data-domain"],
+      "inheritsDown": true
+    },
     { "key": "process-owner", "label": "Process owner", "partyKey": "business", "requiresDeputy": true },
-    { "key": "technical-owner", "label": "Technical owner", "partyKey": "it", "requiresDeputy": true },
+    {
+      "key": "technical-owner",
+      "label": "Technical owner",
+      "partyKey": "it",
+      "requiresDeputy": true,
+      "subjectKinds": ["business-application", "data-location"],
+      "inheritsDown": false
+    },
     { "key": "support-owner", "label": "Support owner", "partyKey": "it", "requiresDeputy": true },
     { "key": "security-owner", "label": "Security owner", "partyKey": "it" },
     { "key": "builder", "label": "Builder", "partyKey": "citizen-developers" }

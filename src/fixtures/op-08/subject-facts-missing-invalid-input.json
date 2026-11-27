@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-facts-missing-invalid-input",
+  "description": "Accepting a tier decision changes the application, so the adapter must pass the subject facts. Without them the write is invalid input, and nothing is accepted half way.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-25"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "tier",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "confirm"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -73,7 +73,7 @@ Rename, merge or drop the role. In a small team the platform admin can hold it. 
 
 Access without training is a gamble. Training without access is theory. Microsoft's Cloud Adoption Framework says organizations "should pair access with training so employees understand how to use approved AI capabilities effectively and responsibly" ([AI adoption](https://learn.microsoft.com/azure/cloud-adoption-framework/ai/strategy)).
 
-- **Training by role.** A short basic course opens the personal path. A longer course, with a coach, opens the partnered path. Business owners learn to read a tier and answer an approval card. Approvers learn to read an AI draft before they say yes.
+- **Training by role.** A short basic course opens the personal path. A longer course, with a coach, opens the partnered path. Business owners learn to read a tier and answer an approval request on the decision page. Approvers learn to read an AI draft before they say yes.
 - **Champions.** Find the early builders who go further than the training asks. Give them early access, connect them to each other, and let them answer questions where people work.
 - **Office hours.** Hold recurring sessions where builders bring an app, or an AI client that is stuck, and get unblocked live.
 - **Leaders who build in the open.** Sponsors and managers use AI for some of their own work and say so.

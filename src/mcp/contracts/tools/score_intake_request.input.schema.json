@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "score_intake_request input",
+  "description": "Records the PMO's demand fields on an intake request that is on the table (submitted, in progress or completed): the score, the size band, the horizon and the expected benefit, as reported. The request keeps its status. Priority is a decision: propose it with save_decision_proposal (decision type priority), and its accountable holder answers it on the decision page. A draft is the requester's to edit with save_intake_draft.",
+  "x-tool": "score_intake_request",
+  "type": "object",
+  "required": [
+    "intakeRequestId"
+  ],
+  "properties": {
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "The request to score."
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "The PMO score, 0 to 100. Higher comes first in the demand list."
+    },
+    "clearScore": {
+      "type": "boolean",
+      "description": "True clears a score recorded earlier. Leave score out then."
+    },
+    "sizeBandKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "A rough size, from the size-band value list."
+    },
+    "horizonKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "Now, next or later, from the horizon value list."
+    },
+    "expectedBenefit": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "The benefit, as the PMO records it."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "not": {
+    "required": [
+      "score",
+      "clearScore"
+    ],
+    "properties": {
+      "clearScore": {
+        "const": true
+      }
+    }
+  },
+  "examples": [
+    {
+      "intakeRequestId": "70000000-0000-4000-8000-000000000001",
+      "score": 72,
+      "sizeBandKey": "medium",
+      "horizonKey": "now",
+      "clientRequestId": "req-0060"
+    }
+  ]
+}

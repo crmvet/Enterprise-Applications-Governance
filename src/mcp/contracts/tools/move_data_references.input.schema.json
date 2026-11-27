@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "move_data_references input",
+  "description": "Moves the open mappings and data uses of one domain to another, for a split, a merge or before a domain is retired. When both domains answer to the same data owner, each row keeps its identity, so its decisions stay with it and its state is computed again: a use whose new domain is stricter shows re-decide. When the data owner changes, the decisions do not move: a decided row is ended and declared again in the new domain, a waiting decision is asked again of the new data owner, one someone already answered is withdrawn, and the engine opens and sends a new decision for each row that needs one. Owners move only through propose_owner_change. An AI client may preview the move with validateOnly, and its preview runs every rule the person's move runs; a person makes it.",
+  "x-tool": "move_data_references",
+  "type": "object",
+  "required": [
+    "fromDomainKey",
+    "toDomainKey",
+    "include",
+    "reason"
+  ],
+  "properties": {
+    "fromDomainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "The domain the rows leave."
+    },
+    "toDomainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "An active domain at a declarable level."
+    },
+    "include": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "mappings",
+          "uses"
+        ]
+      },
+      "description": "What to move."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why, such as the split it serves.",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "fromDomainKey": "timesheets",
+      "toDomainKey": "workplace-time",
+      "include": [
+        "mappings",
+        "uses"
+      ],
+      "reason": "Timesheets moves under Workplace.",
+      "validateOnly": true
+    }
+  ]
+}

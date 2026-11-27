@@ -29,6 +29,9 @@ public static class DirectoryRegistration
     /// <c>upstream_unavailable</c>. The mode comes from <c>Product:Directory:Mode</c> when the service provider is built:
     /// <list type="bullet">
     /// <item>Off (the default): no reader is bound, and the four tools answer as before.</item>
+    /// <item>Demo (Development or Demo only): the people come from the demo personas (<see cref="DemoDirectoryReader"/>)
+    /// and the inventory from the demo's fictional inventory (<see cref="DemoInventoryReader"/>). A Demo install reads both
+    /// whatever the mode.</item>
     /// <item>Live: <see cref="GraphDirectoryReader"/> and <see cref="PowerPlatformInventoryReader"/> over
     /// <see cref="DirectoryHttp"/>, with tokens from <see cref="OnBehalfOfTokenSource"/>. Microsoft.Identity.Web token
     /// acquisition and its in-memory token cache are registered for the product's Entra scheme, with the API app's
@@ -110,8 +113,18 @@ public static class DirectoryRegistration
         services.TryAddSingleton<PowerPlatformInventoryReader>();
 
         // With the mode Off the factories answer null, so the in-process backend binds no reader (GetService).
-        services.AddSingleton<IDirectoryReader>(sp => Mode(sp) == DirectoryReadMode.Off ? null! : sp.GetRequiredService<GraphDirectoryReader>());
-        services.AddSingleton<IInventoryReader>(sp => Mode(sp) == DirectoryReadMode.Off ? null! : sp.GetRequiredService<PowerPlatformInventoryReader>());
+        // A demo install with personas reads its people from them, whatever the mode (an operator acting as a persona has
+        // no token for Graph); a local run reads them with the mode Demo and the development identity on (product review,
+        // story step 11). Off binds no reader, as before.
+        services.AddSingleton<IDirectoryReader>(sp =>
+            ProductDemo.IsDemo(sp.GetRequiredService<IHostEnvironment>()) && DemoDirectoryReader.From(sp) is DemoDirectoryReader demo ? demo
+            : Mode(sp) == DirectoryReadMode.Demo ? DemoDirectoryReader.From(sp)!
+            : Mode(sp) == DirectoryReadMode.Off ? null! : sp.GetRequiredService<GraphDirectoryReader>());
+        // The inventory follows the same rule (wave 4b review): a demo install, and a local run with the mode Demo, read the
+        // demo's fictional inventory (DemoInventoryReader), so the gap check runs in a demo. Off binds no reader.
+        services.AddSingleton<IInventoryReader>(sp =>
+            ProductDemo.IsDemo(sp.GetRequiredService<IHostEnvironment>()) || Mode(sp) == DirectoryReadMode.Demo ? DemoInventoryReader.From(sp)
+            : Mode(sp) == DirectoryReadMode.Off ? null! : sp.GetRequiredService<PowerPlatformInventoryReader>());
         return services;
     }
 

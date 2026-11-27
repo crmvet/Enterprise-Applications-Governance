@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "deployer-answer-is-flagged-allowed",
+  "description": "The business owner who deployed a production change answers its change authorization. Balanced flags a deployer (deployer-not-sole-approver, enforcement flag), so the answer goes through and counts, with a warning.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "change-auth-owner",
+      "requiredOwnerRoleKey": "business-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "change-authorization",
+      "tierKey": "tier-2",
+      "targetStageKey": "production"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9",
+      "deployerPrincipalIds": [
+        "fixture-person-1"
+      ]
+    },
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "flagged": true
+    },
+    "reasons": [
+      {
+        "code": "approval.separation-flagged",
+        "severity": "warning",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

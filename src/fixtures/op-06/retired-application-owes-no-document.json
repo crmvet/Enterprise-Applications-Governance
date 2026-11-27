@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "retired-application-owes-no-document",
+  "description": "The same application with its registration retired (wave 4b): no documentation requirement applies, and its stale wiki page stays as history, so the documentation is complete and nothing is listed to fix.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build",
+    "isRetired": true
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2024-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "complete",
+    "payload": {
+      "complete": true,
+      "items": [],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0,
+      "staleOnByLink": {}
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

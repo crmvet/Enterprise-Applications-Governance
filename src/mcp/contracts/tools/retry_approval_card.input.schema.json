@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "retry_approval_card input",
+  "description": "Send a stuck approval card again, from the Admin page: a card that failed, or one sent more than two days ago with no answer, goes back to the approval runner. A request that was answered, expired or canceled meanwhile closes its card instead. Only a platform admin, in the web app. The audit trail records who asked.",
+  "x-tool": "retry_approval_card",
+  "type": "object",
+  "required": [
+    "approvalRecordId"
+  ],
+  "properties": {
+    "approvalRecordId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O10 Approval Record",
+      "description": "The request whose card to send again, as the Admin page lists it."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "approvalRecordId": "00000000-0000-4000-8000-000000000701"
+    }
+  ]
+}

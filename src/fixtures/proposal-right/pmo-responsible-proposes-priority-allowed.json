@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "pmo-responsible-proposes-priority-allowed",
+  "description": "The PMO holds the responsible letter for priority (Balanced priority-r). The responsible row grants before the sponsor's accountable row, and both are listed.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "priority",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "pmo"
+    ],
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "grantedBy": {
+        "decisionRightKey": "priority-r",
+        "letter": "responsible",
+        "roleKey": "pmo"
+      },
+      "holders": [
+        {
+          "decisionRightKey": "priority-r",
+          "letter": "responsible",
+          "roleKey": "pmo"
+        },
+        {
+          "decisionRightKey": "priority-a",
+          "letter": "accountable",
+          "ownerRoleKey": "sponsor"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

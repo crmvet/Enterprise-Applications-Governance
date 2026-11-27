@@ -1,10 +1,10 @@
 # P08 Owner leaves
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-03](../../../src/docs/demo/scenarios/S-03-triage-gap-check-places-leavers.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Its reads of Entra have run only over recorded or demo responses, not in a real tenant. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
-This process is designed to make sure no application is left without an owner who can answer for it. A deputy acts at once. A successor is named before access goes. Open approvals move to someone who can answer them. Agents flagged by Microsoft get a business decision.
+This process is designed to make sure no application is left without an owner who can answer for it. A deputy is designed to act for the owner until a successor starts; today a deputy holds the owner role all along, so they may answer its requests, and unanswered reminders escalate to them. A successor is named before access goes. Open approvals are designed to move to someone who can answer them; today reminders escalate to the deputy. Agents flagged by Microsoft are designed to get a business decision; no reader of Microsoft's agent registry is built yet.
 
 The product never removes anyone's access. That is done in Microsoft Entra and in the deployment tools.
 
@@ -15,7 +15,7 @@ The product never removes anyone's access. That is done in Microsoft Entra and i
   - an **owner check** that an admin runs on demand, like the gap check. The product's MCP server reads the owners' accounts from Microsoft Entra with the admin's own delegated sign-in. This is part of the product;
   - an optional **leaver workflow sample** for organizations that have Microsoft Entra ID Governance: a Lifecycle Workflows custom task calls an Azure Logic App, which calls the product's API.
   - The design does not use an unattended read with an application permission over all users.
-- **An agent signal:** Microsoft's agent registry shows agents without owners.
+- **An agent signal (designed, not built):** Microsoft's agent registry shows agents without owners.
 - **Review:** the owner check review comes due.
 
 ## Who does what (default configuration)
@@ -33,9 +33,9 @@ When the business owner is the one leaving, the default configuration passes the
 ## Steps
 
 1. **Detect.** The leave arrives through one of the triggers. The engine records the leave date and the account state on the person's reference, and opens an owner check review, due now, for every application where that person holds an owner role.
-2. **Deputy acts.** Until a successor is accepted, reminders, cards and escalations for that owner role go to the deputy. Each owner role that requires a deputy must have one.
-3. **Move open approvals.** The engine finds the leaver's pending approvals. It cancels each card and sends a new one to the deputy or another holder of the required role. The canceled approval record stays, marked canceled.
-4. **Name a successor.** The engine proposes an ownership decision: the deputy becomes the owner, or a named successor does. The successor must accept on a card. A new deputy is then required.
+2. **Deputy acts (designed).** Until a successor is accepted, reminders, approval requests and escalations for that owner role are designed to go to the deputy. Today the deputy holds the owner role all along, so they may answer its requests, and escalated reminders go to them. Each owner role that requires a deputy must have one.
+3. **Move open approvals (designed).** The engine is designed to find the leaver's pending approvals, cancel each request and ask the deputy or another holder of the required role instead. The canceled approval record stays, marked canceled. No test checks yet that open approvals move.
+4. **Name a successor.** The engine proposes an ownership decision: the deputy becomes the owner, or a named successor does. The successor must accept, on the decision page by default. A new deputy is then required.
 5. **End the old assignment.** On acceptance, the leaver's owner assignments end and new ones start. The leaver's name stays on past decisions, held only as an Entra ID and a display label.
 6. **Access is Entra's job.** Removing the leaver's access happens in Microsoft Entra and the deployment tools, not in the product. For an urgent removal, disable the user's account in Entra.
 7. **Agents.** For an agent owned by the leaver, or shown as ownerless by Microsoft, the AI lead records keep, reassign, consolidate or retire, with the reason and a link to Microsoft's evidence. Reassigning the owner happens in the Microsoft 365 admin center, not in the product.
@@ -47,12 +47,12 @@ When the business owner is the one leaving, the default configuration passes the
 | Person reference | The account state, the leave date, and the date they were read |
 | Owner assignment | The old assignment ends; new ones start |
 | Decision | Ownership; decisions on agents |
-| Approval record | Canceled cards stay on record; new cards are created |
+| Approval record | Canceled requests stay on record; new requests are created (designed) |
 | Review | Owner check reviews |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
 | Ownership (successor) | The successor accepts, and the business owner approves (the sponsor when the business owner is leaving) | Everyone must approve |
 | Decision on a flagged agent | AI lead | First to respond |
@@ -66,7 +66,7 @@ When the business owner is the one leaving, the default configuration passes the
 - Whether to use the optional leaver workflow sample.
 - The AI lead role: rename it, map it to another group, or drop it.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v52-implied-answer-unknown",
+  "description": "A classification that implies an answer its question does not have is refused.",
+  "ruleIds": [
+    "V52"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-classification",
+        "key": "internal",
+        "values": {
+          "impliedAnswerKey": "secret"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "data.classification",
+        "severity": "error",
+        "ruleId": "V52",
+        "ref": "internal"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

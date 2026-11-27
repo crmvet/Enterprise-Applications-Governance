@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_tier_assessment input",
+  "description": "The latest tier assessment of an application or an intake request, or one assessment by ID: every answer with the tier it implies and whether it drives the result, the reviews and gate requirements the answers trigger, the tier decision, the tier the application holds now, the Microsoft vocabulary for the computed tier (support tier, Copilot Studio zone, agent risk tier) and what the tier needs. Name exactly one of the three IDs. Writes nothing.",
+  "x-tool": "get_tier_assessment",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application. Its own latest assessment, else the one on the intake request it was registered from."
+    },
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "The intake request."
+    },
+    "tierAssessmentId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O08 Tier Assessment",
+      "description": "One assessment."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

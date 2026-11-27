@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v56-owner-subjects-valid",
+  "description": "Balanced's owner subjects fit their roles.",
+  "ruleIds": [
+    "V56"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    }
+  }
+}

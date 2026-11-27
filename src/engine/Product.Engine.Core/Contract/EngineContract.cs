@@ -145,7 +145,8 @@ public static class EngineContract
         P(LinkCategory.Document, "document"),
         P(LinkCategory.Evidence, "evidence"),
         P(LinkCategory.MicrosoftResource, "microsoft-resource"),
-        P(LinkCategory.ExternalChange, "external-change"));
+        P(LinkCategory.ExternalChange, "external-change"),
+        P(LinkCategory.DataLocation, "data-location"));
 
     public static readonly ContractList<ChangeManagementMode> ChangeManagementModes = new(
         "change-management-mode", "Change management mode", ContractGroup.EngineMeaning, Doc20,
@@ -163,7 +164,9 @@ public static class EngineContract
         P(RequirementKind.DecisionAccepted, "decision-accepted"),
         P(RequirementKind.DocumentCurrent, "document-current"),
         P(RequirementKind.ReviewDone, "review-done"),
-        P(RequirementKind.OwnerAssigned, "owner-assigned"));
+        P(RequirementKind.OwnerAssigned, "owner-assigned"),
+        P(RequirementKind.DataUsesDeclared, "data-uses-declared"),
+        P(RequirementKind.DataUsesDecided, "data-uses-decided"));
 
     public static readonly ContractList<ConfigurationSetKind> ConfigurationSetKinds = new(
         "configuration-set-kind", "Configuration set kind", ContractGroup.EngineMeaning, Doc20,
@@ -249,6 +252,68 @@ public static class EngineContract
         "record-access-mode", "Record access mode", ContractGroup.ConfigurationModel, Doc21 + "; owned by document 26",
         P(RecordAccessMode.OpenRead, "open-read"),
         P(RecordAccessMode.PortfolioRead, "portfolio-read"));
+
+    // The data taxonomy (D-37, settled by D-41; docs/architecture/data-taxonomy.md, Levels and the mode): the setting data-taxonomy-mode.
+    public static readonly ContractList<DataTaxonomyMode> DataTaxonomyModes = new(
+        "data-taxonomy-mode", "Data taxonomy mode", ContractGroup.ConfigurationModel, "Data taxonomy page, Levels and the mode; owned by document 21",
+        P(DataTaxonomyMode.Off, "off"),
+        P(DataTaxonomyMode.DomainsOptional, "domains-optional"),
+        P(DataTaxonomyMode.DomainsRequired, "domains-required"));
+
+    // The data taxonomy's engine contract additions (docs/architecture/data-taxonomy.md, The main fields). They ship in a product release.
+    private const string DataTaxonomy = "Data taxonomy page, The main fields; owned by document 21";
+
+    public static readonly ContractList<DataHandlingRule> DataHandlingRules = new(
+        "data-handling-rule", "Data handling rule", ContractGroup.ConfigurationModel, DataTaxonomy,
+        P(DataHandlingRule.Allowed, "allowed"),
+        P(DataHandlingRule.Decision, "decision"),
+        P(DataHandlingRule.MaskedOnly, "masked-only"),
+        P(DataHandlingRule.Never, "never"));
+
+    public static readonly ContractList<DataOrigin> DataOrigins = new(
+        "data-origin", "Data origin", ContractGroup.ConfigurationModel, DataTaxonomy,
+        P(DataOrigin.SystemOfRecord, "system-of-record"),
+        P(DataOrigin.Replica, "replica"),
+        P(DataOrigin.ProductionCopy, "production-copy"),
+        P(DataOrigin.MaskedCopy, "masked-copy"),
+        P(DataOrigin.Synthetic, "synthetic"));
+
+    public static readonly ContractList<DataAccess> DataAccesses = new(
+        "data-access", "Data access", ContractGroup.ConfigurationModel, DataTaxonomy,
+        P(DataAccess.Read, "read"),
+        P(DataAccess.Write, "write"),
+        P(DataAccess.ReadWrite, "read-write"));
+
+    public static readonly ContractList<OwnerSubjectKind> OwnerSubjectKinds = new(
+        "owner-subject-kind", "Owner subject kind", ContractGroup.ConfigurationModel, DataTaxonomy,
+        P(OwnerSubjectKind.BusinessApplication, "business-application"),
+        P(OwnerSubjectKind.DataDomain, "data-domain"),
+        P(OwnerSubjectKind.DataLocation, "data-location"));
+
+    public static readonly ContractList<OwnerSubject> OwnerSubjects = new(
+        "owner-subject", "Owner subject", ContractGroup.ConfigurationModel, DataTaxonomy,
+        P(OwnerSubject.BusinessApplication, "business-application"),
+        P(OwnerSubject.DataDomain, "data-domain"),
+        P(OwnerSubject.ParentDataDomain, "parent-data-domain"),
+        P(OwnerSubject.DataLocation, "data-location"),
+        P(OwnerSubject.TouchedDataDomains, "touched-data-domains"));
+
+    public static readonly ContractList<DataTaxonomyChange> DataTaxonomyChanges = new(
+        "data-taxonomy-change", "Data taxonomy change", ContractGroup.ConfigurationModel, DataTaxonomy,
+        P(DataTaxonomyChange.Touches, "touches"),
+        P(DataTaxonomyChange.Loosens, "loosens"));
+
+    // OP-16: the state of a data use or a copy mapping, computed when read and never stored (docs/architecture/data-taxonomy.md, The decision state).
+    public static readonly ContractList<DataUseState> DataUseStates = new(
+        "data-use-state", "Data use state", ContractGroup.OperationVocabulary, "Data taxonomy page, The decision state; OP-16",
+        P(DataUseState.NotNeeded, "not-needed"),
+        P(DataUseState.Needed, "needed"),
+        P(DataUseState.Proposed, "proposed"),
+        P(DataUseState.Allowed, "allowed"),
+        P(DataUseState.Denied, "denied"),
+        P(DataUseState.ReDecide, "re-decide"),
+        P(DataUseState.BreaksRule, "breaks-rule"),
+        P(DataUseState.NoOneToAsk, "no-one-to-ask"));
 
     // ---- Document 25, section 15: lists the engine design asks document 20 to add ----
 
@@ -379,6 +444,11 @@ public static class EngineContract
             { "claim", ClaimStatusMeanings },
             { "deployment-record", DeploymentResultMeanings },
             { "review", ReviewStatusMeanings },
+
+            // The data taxonomy's records (docs/architecture/data-taxonomy.md, Entities): drafted, registered or archived.
+            { "data-location", RegistrationStatusMeanings },
+            { "data-mapping", RegistrationStatusMeanings },
+            { "data-use", RegistrationStatusMeanings },
         });
 
     // Configuration entities other than C05 whose rows carry an engine meaning (document 21, section 3.1).
@@ -421,11 +491,12 @@ public static class EngineContract
             PrincipalKinds, DeploymentRouteMeanings, LinkCategories, ChangeManagementModes, FindingKinds,
             RequirementKinds, ConfigurationSetKinds, PresetKinds, DraftStatusMeanings, PatchOperations,
             SeparationRuleKinds, SeparationSubjects, SeparationEnforcements, AiOnlyCodeApprovalHandlings, Origins,
-            EngineAcceptanceConditions, SettingValueTypes, IntakeVisibilities, ClaimVisibilities, RecordAccessModes,
+            EngineAcceptanceConditions, SettingValueTypes, IntakeVisibilities, ClaimVisibilities, RecordAccessModes, DataTaxonomyModes,
+            DataHandlingRules, DataOrigins, DataAccesses, OwnerSubjectKinds, OwnerSubjects, DataTaxonomyChanges,
             ConditionKinds, AuthorizationFactSourceKinds,
             ReasonSeverities, RuleTraceRoles, WriteOperations, GateModes, GateVerdicts, WindowStates,
             CodeApprovalKinds, ApprovalRequirementSources, EffectKinds, ApprovalOveralls, AuthorizationStates,
-            AuthorizationBases, ImpactDirections, ReminderActions,
+            AuthorizationBases, ImpactDirections, ReminderActions, DataUseStates,
         };
 
         IContractList[] sorted = lists.OrderBy(list => list.Name, StringComparer.Ordinal).ToArray();

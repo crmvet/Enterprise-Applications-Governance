@@ -10,7 +10,7 @@
   "presetKind": "full",
   "extends": "balanced",
   "conflictsWith": [],
-  "areas": ["gates", "people"],
+  "areas": ["gates", "people", "data"],
   "productRelease": "0.1.0",
   "contentVersion": "1.0.0",
   "checkedOn": "2026-11-22",

@@ -1,7 +1,35 @@
 // The display zone: UTC in the harness, the viewer's zone in the web app. Calendar dates never move.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addDays, configureDisplayZone, dayKey, dayStartMs, externalHref, fmtDate, fmtDateTime, fmtWindow, inDays, inWindowDays, todayInZone, utcDayRange, zoneLabel } from './format';
+import { addDays, configureDisplayZone, dayKey, dayStartMs, externalHref, fmtDate, fmtDateTime, fmtDayMonth, fmtMonth, fmtWeekday, fmtWindow, forSomeoneElse, humanizeDates, inDays, inWindowDays, todayInZone, utcDayRange, zoneLabel } from './format';
+
+test('on whose behalf: only someone other than who acted', () => {
+  const nadia = { objectId: '00000000-0000-4000-8000-000000000212', displayLabel: 'Nadia Ferreira' };
+  assert.equal(forSomeoneElse(nadia, nadia), null);
+  assert.equal(forSomeoneElse({ objectId: nadia.objectId.toUpperCase() }, nadia), null);
+  assert.equal(forSomeoneElse({ objectId: '00000000-0000-4000-8000-0000000000ac' }, nadia), nadia);
+  assert.equal(forSomeoneElse(null, nadia), nadia);
+  assert.equal(forSomeoneElse(nadia, null), null);
+});
+
+test('engine dates read as the page shows dates; IDs and addresses stay as they are', () => {
+  configureDisplayZone('utc');
+  assert.equal(humanizeDates('The leave on 2027-01-15 is recorded.'), `The leave on ${fmtDate('2027-01-15')} is recorded.`);
+  assert.equal(humanizeDates('Due (2027-05-23).'), `Due (${fmtDate('2027-05-23')}).`);
+  assert.equal(humanizeDates('Run 2027-01-15T09:00:00Z and /docs/2027-01-15/x stay.'), 'Run 2027-01-15T09:00:00Z and /docs/2027-01-15/x stay.');
+  assert.equal(humanizeDates('Not a date 2027-13-45.'), 'Not a date 2027-13-45.');
+});
+
+test('September reads in three letters, like every other month (QA, fix round 2)', () => {
+  configureDisplayZone('utc');
+  assert.equal(fmtDate('2026-09-07'), '7 Sep 2026');
+  assert.equal(fmtDate('2026-09-30T10:00:00Z'), '30 Sep 2026');
+  assert.equal(fmtDayMonth('2026-09-15'), '15 Sep');
+  assert.equal(fmtMonth('2026-09-15'), 'Sep');
+  assert.ok(!fmtWeekday('2026-09-15').includes('Sept'));
+  assert.equal(fmtDateTime('2026-09-01T09:00:00Z'), '1 Sep 2026, 09:00 UTC');
+  assert.equal(fmtDate('2026-10-03'), '3 Oct 2026');
+});
 
 test('UTC display: times carry the zone name and day boundaries are UTC midnights', () => {
   configureDisplayZone('utc');

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-intake-completed-as-effect-allowed",
+  "description": "The update-subject effect of an accepted intake completes the request and names the decision as its Triage Decision. Allowed.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "update",
+    "rowId": "fixture-intake-1",
+    "nestedEffect": "update-subject",
+    "after": {
+      "status": "intake-completed",
+      "triageDecision": "fixture-decision-20"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "submitted",
+      "requester": "fixture-person-1",
+      "title": "Field inspections"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "completed",
+        "performedByActorKind": "engine"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "complete_change input",
+  "description": "Closes a change with its result, as the signed-in person: the change moves to completed (Balanced labels it Closed) and leaves the open part of the schedule. Served only to a person in the product's web app, because closing a change is a person's act and an AI client never completes a record (OP-08, G-08). Only an authorized change closes: one in progress (Balanced: Scheduled), or a submitted change whose type allows authorization after, such as an emergency. A failed, rolled back or partly succeeded result, or any result of a change type that requires a review after, opens the post-change review once.",
+  "x-tool": "complete_change",
+  "type": "object",
+  "required": [
+    "changeRequestId"
+  ],
+  "properties": {
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "The change."
+    },
+    "resultKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "From the change result value list, such as succeeded or rolled back. Leave out to keep the result already recorded with record_change_result."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/evidenceInput"
+      },
+      "description": "Links to proof, such as a test result. Each becomes an Evidence Link (O20)."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "changeRequestId": "d0000000-0000-4000-8000-000000000002",
+      "resultKey": "succeeded",
+      "clientRequestId": "req-0640"
+    }
+  ]
+}

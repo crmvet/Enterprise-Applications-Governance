@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
 using Product.Engine.Core.Reasons;
 using Product.Engine.Core.Snapshots;
@@ -70,8 +71,19 @@ internal static class ScopeGroups
     public const string PortfolioColumn = "portfolioId";
 
     // Optional scope columns of C32 and C31 (document 21, section 3.5).
-    public static readonly string[] ApprovalRuleScope = { "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey", "targetStageKey", PortfolioColumn };
-    public static readonly string[] DecisionRightScope = { "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey", PortfolioColumn };
+    // The data taxonomy adds five (docs/architecture/data-taxonomy.md, Approval rules): subjectKind, classificationKey, aiUse (a boolean, matched as "true" or
+    // "false"), dataDomainLevelKey and dataTaxonomyChange. They count for specificity like the others.
+    public static readonly string[] ApprovalRuleScope =
+    {
+        "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey", "targetStageKey",
+        "subjectKind", "classificationKey", "aiUse", "dataDomainLevelKey", "dataTaxonomyChange", PortfolioColumn,
+    };
+
+    public static readonly string[] DecisionRightScope =
+    {
+        "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey",
+        "subjectKind", "classificationKey", "aiUse", "dataDomainLevelKey", "dataTaxonomyChange", PortfolioColumn,
+    };
 
     // Groups the active rows of one decision type by scope, in the order the groups first appear (row key order).
     public static List<ScopeGroup> Build(ConfigurationSnapshot snapshot, string entityKey, string decisionTypeKey, string[] scopeColumns)
@@ -88,7 +100,7 @@ internal static class ScopeGroups
             var scope = new List<KeyValuePair<string, string>>();
             foreach (string column in scopeColumns)
             {
-                string? value = SnapshotRead.Text(row, column);
+                string? value = ScopeValue(row, column);
                 if (value != null)
                 {
                     scope.Add(new KeyValuePair<string, string>(column, value));
@@ -107,6 +119,27 @@ internal static class ScopeGroups
         }
 
         return groups;
+    }
+
+    // A scope column's value as text. A boolean scope (aiUse) reads as "true" or "false".
+    public static string? ScopeValue(SnapshotRow row, string column)
+    {
+        if (!row.TryGetColumn(column, out JsonTreeNode? value))
+        {
+            return null;
+        }
+
+        switch (value.Kind)
+        {
+            case JsonTreeKind.String:
+                return value.GetString();
+            case JsonTreeKind.True:
+                return "true";
+            case JsonTreeKind.False:
+                return "false";
+            default:
+                return null;
+        }
     }
 
     // Finds the single most specific group whose set scope columns all match the request.

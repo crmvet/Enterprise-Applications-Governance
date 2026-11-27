@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "dependency-create-allowed",
+  "description": "An application owner records that the application reads data from another application: one target, not itself (document 22, O04 rules; document 25, B25-13). Allowed.",
+  "tags": [
+    "dependency-shape"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "dependency",
+    "operation": "create",
+    "after": {
+      "fromApplication": "fixture-app-1",
+      "toApplication": "fixture-app-2",
+      "dependencyType": "reads-data-from",
+      "criticality": "high",
+      "notes": "Reads the asset list nightly."
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "performedByActorKind": "person",
+        "isAiCreated": false
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

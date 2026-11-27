@@ -187,7 +187,9 @@ public sealed class PolicyTests
     {
         McpHarness h = McpHarness.Create();
         List<string> portfolio = ListTools(h, McpHarness.TokenOwner, "portfolio");
-        Assert.Equal(6, portfolio.Count);
+        // save_portfolio is served only to a person in the web app, so the MCP endpoint never lists it.
+        Assert.Equal(ContractSet.Embedded.Tools.Count(c => c.ToolsetKey == "portfolio" && !c.IsPersonOnly), portfolio.Count);
+        Assert.Equal(13, portfolio.Count);
         Assert.All(portfolio, t => Assert.Equal("portfolio", ContractSet.Embedded.Tools.Single(c => c.Name == t).ToolsetKey));
         Assert.Contains("get_documentation_status", ListTools(h, McpHarness.TokenOwner, "portfolio, documentation"));
 

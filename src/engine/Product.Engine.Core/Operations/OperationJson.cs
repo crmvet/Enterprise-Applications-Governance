@@ -27,6 +27,9 @@ public static class OperationJson
             case EngineOperation.EvaluateStandardChange:
             case EngineOperation.CompareGapCheckResult:
             case EngineOperation.EvaluateLinkedAuthorization:
+            case EngineOperation.ResolveDataDomain:
+            case EngineOperation.EvaluateDataUse:
+            case EngineOperation.RunDataChecks:
                 return true;
             default:
                 return false;
@@ -79,6 +82,12 @@ public static class OperationJson
                 return ToJson(GapCompareOperation.Evaluate(snapshot!, context, input));
             case EngineOperation.EvaluateLinkedAuthorization:
                 return ToJson(LinkedAuthorizationOperation.Evaluate(snapshot!, context, input));
+            case EngineOperation.ResolveDataDomain:
+                return ToJson(DataDomainOperation.Evaluate(snapshot!, context, input));
+            case EngineOperation.EvaluateDataUse:
+                return ToJson(DataUseOperation.Evaluate(snapshot!, context, input));
+            case EngineOperation.RunDataChecks:
+                return ToJson(DataChecksOperation.Evaluate(snapshot!, context, input));
             default:
                 throw new NotSupportedException(OperationCatalog.Get(operation).Id + " is not built yet.");
         }

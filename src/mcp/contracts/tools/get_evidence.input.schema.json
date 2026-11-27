@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_evidence input",
+  "description": "An evidence pack (guideline G15) for one application or one decision: the decisions with every approval request and answer (who, as what kind of actor, counted or not), the changes, the deployments with their flags, the reviews, the documents and the evidence links, each with the configuration version stamped on it, and the version in force now. Name exactly one of businessApplicationId and decisionId. Writes nothing.",
+  "x-tool": "get_evidence",
+  "type": "object",
+  "properties": {
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The pack of this application."
+    },
+    "decisionId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O09 Decision",
+      "description": "The pack of this decision: its approvals and evidence, the change it authorizes and that change's deployments, the review it records."
+    },
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Only rows dated on or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Only rows dated on or before this date."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "businessApplicationId": "10000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

@@ -9,11 +9,16 @@ Early work, not a release: nobody has imported this template into a tenant yet, 
 tests check the template's files, and a stand-in plays the runner in the local steps. "Not verified yet" at the end
 lists what a first test import must confirm.
 
+The runner is optional: a person can answer every approval on the product's decision page, where Teams and Outlook
+messages link. The setup steps are guide [S5](../../../docs/setup/S5-connect-the-approval-runner.md), the day to day is
+guide [A4](../../../docs/admin/A4-approval-runner-operations.md), and the Admin page's outbox and "Send again" are in
+[`admin.md`](../../../docs/admin.md#the-admin-page).
+
 | File | What it is |
 |---|---|
-| `approval-runner/solution.json` | The solution manifest: its name, the six environment variables, the four connection references and the two flows. `{{prefix}}` stands for the client's publisher prefix |
+| `approval-runner/solution.json` | The solution manifest: its name, the six environment variables, the five connection references and the two flows. `{{prefix}}` stands for the client's publisher prefix |
 | `approval-runner/workflows/pull-approval-requests.json` | The parent flow. Every five minutes it claims waiting requests from the product's API and starts the child flow once for each |
-| `approval-runner/workflows/send-card-and-wait.json` | The child flow. It sends one approval card for one request, reports the card as sent, waits for the first answer and posts it to the product |
+| `approval-runner/workflows/send-card-and-wait.json` | The child flow. It sends one approval card for one request, reports the card as sent, waits for the first answer and posts it to the product. With step-up sign-in on it sends a link-only email instead, reports it as sent and stops |
 | `build-solution.mjs` | Writes the unpacked solution for one prefix, outside the repository, for `pac solution pack`. Node 20 or later, no packages |
 
 Nothing generated is kept here: no solution XML, no zip, no tenant ID, client ID, certificate or URL of a real tenant.
@@ -31,6 +36,7 @@ Workload Grant for the `approval-writer` role in the configuration in force.
 |---|---|---|
 | 1. Claim | Parent, every five minutes | `POST /engine/v1/approval-runner/claims` with `{"max": 10, "leaseSeconds": 900}`. Before it leases anything, the product has the engine expire the requests past their Expires On, open their restarts and cancel what settled decisions still hold open, as the runner. The answer lists each leased request: the Approval Record and Decision IDs, a claim ID, the card's title and Markdown details (text a person or an AI client wrote is escaped), an https record link, Requested On and Expires On, whether a typed reason is required, whether it is a consultation, the channel, who to ask, and the configuration keys to answer with |
 | 2. Start the child | Parent | One child run per request, up to five at a time |
+| 3a. Link only? | Child | With step-up sign-in on (`Product:WebApp:StepUp`), the claim says `"delivery": "link-only"`, on the claim and on every item. The child then sends each person an email (Office 365 Outlook, **Send an email (V2)**) whose subject is the product's title and whose body holds only fixed words and the record link, reports it as sent with the card reference `link-only:<recordId>`, and stops. It creates no approval and waits for nothing: the person answers on the product's decision page, where the fresh sign-in is checked (D-38). A failed email gives the request back (`send-failed`). With step-up off the claim says `"delivery": "card"` and the steps below run |
 | 3. Resolve who to ask | Child | For an owner role, the current holders the product lists (users only). For a product role, the members of each Entra group bound to it, through the Office 365 Groups connector, keeping only members whose type is `#microsoft.graph.user`. No one to ask: the child gives the request back (`release`, reason `no-approvers`) |
 | 4. Send the card | Child | Approvals, **Create an approval**, type Basic (first to respond), assigned to the resolved users by object ID, reassignment off, with the product's title, details and record link |
 | 5. Report it | Child | `POST /engine/v1/approval-runner/items/{id}/sent` with the claim ID, the approval's name as the card reference and the run's link. The child then answers the parent, so the parent's run ends |
@@ -97,8 +103,8 @@ minutes by default) and the Power Platform requests of the polls. This is a prop
    [Secure access and data for workflows in Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/set-up-security-permissions#access-for-outbound-calls-to-other-services-and-systems)).
    Give the Power Platform environment read access to them as Microsoft describes in
    [Use environment variables for Azure Key Vault secrets](https://learn.microsoft.com/power-apps/maker/data-platform/environmentvariables-azure-key-vault-secrets).
-4. **Connections.** One connection each for Approvals, Office 365 Users, Office 365 Groups and Microsoft Dataverse,
-   owned by the account that owns the flows. Microsoft notes for the Approvals connector
+4. **Connections.** One connection each for Approvals, Office 365 Users, Office 365 Groups, Office 365 Outlook (the
+   link-only email when step-up sign-in is on) and Microsoft Dataverse, owned by the account that owns the flows. Microsoft notes for the Approvals connector
    ([Standard approvals connector](https://learn.microsoft.com/connectors/approvals/)): "The creator of the flow will
    always be shown in the Approval details (email content and all clients)."
 5. **The product.** Set `Product:ApprovalRunner:Enabled` to `true` on the API (on Azure,
@@ -223,3 +229,6 @@ These need a test import in an approvals environment, which nobody has done for 
 - That **Run a Child Flow** ends when the child answers with **Respond to a PowerApp or flow**, not when the child's
   run ends.
 - That a cloud flow's HTTP action can sign in with a federated credential instead of a certificate.
+- That **Send an email (V2)** from the flow owner's mailbox reaches each person asked, and that **Get user profile (V2)**
+  gives a mail address for every user the product asks; a user with no mailbox makes the email fail and the request is
+  given back.

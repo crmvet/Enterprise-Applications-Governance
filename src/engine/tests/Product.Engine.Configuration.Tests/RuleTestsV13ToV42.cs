@@ -315,7 +315,7 @@ public sealed class RuleTestsV13ToV42
         ValidationOutcome outcome = Draft("[" + Binding("config-admins", "configuration-admin", Group1) + "]");
         Assert.Equal("valid", outcome.Outcome);
         ValidationIssue[] hits = Hits(outcome, "V37");
-        Assert.Equal(new[] { "architect", "change-board", "change-manager", "security-reviewer" }, hits.Select(h => h.Ref).OrderBy(r => r, StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "ai-lead", "architect", "change-board", "change-manager", "data-governance-lead", "platform-admin", "pmo", "security-reviewer" }, hits.Select(h => h.Ref).OrderBy(r => r, StringComparer.Ordinal).ToArray());
         Assert.All(hits, h => Assert.Equal(ReasonSeverity.Warning, h.Severity));
 
         // Presets never hold bindings, so V37 never runs there.

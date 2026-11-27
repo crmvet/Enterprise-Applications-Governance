@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v38-review-request-due-days-absent-valid",
+  "description": "A draft on a set without review-request-due-days, as a set seeded before wave 4b has none. The runtime reads its default of 14 days, so V38 passes (wave 4b review).",
+  "ruleIds": [
+    "V38"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "setting",
+        "key": "review-request-due-days"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

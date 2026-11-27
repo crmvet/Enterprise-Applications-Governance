@@ -10,7 +10,7 @@ namespace Product.Engine.Core.Operations;
 // What kind of row a guarded write touches (document 22, section 2.3 history classes; document 25, G-01 to G-17).
 internal enum GuardEntityKind
 {
-    // Live configuration rows C01 and C03 to C45. Written only inside activation (G-01).
+    // Live configuration rows C01, C03 to C45 and C47 to C50. Written only inside activation (G-01).
     Configuration,
 
     // C02 Configuration Set Version. Created only inside activation, never changed (G-01, G-07).
@@ -22,7 +22,7 @@ internal enum GuardEntityKind
     // O24 Audit Entry. Append-only (G-07).
     AuditEntry,
 
-    // O01 to O23.
+    // O01 to O23 and O25 to O27.
     Operational,
 }
 
@@ -170,7 +170,7 @@ internal static class WriteGuardEntities
     public static readonly IReadOnlyList<string> StampColumns = new ReadOnlyCollection<string>(new[]
     {
         "createdByPrincipal", "performedByPrincipal", "performedByActorKind", "onBehalfOf", "clientApp", "isAiCreated",
-        "configurationSetVersion", "engineVersion", "engineCheckedOn",
+        "configurationSetVersion", "engineVersion", "engineCheckedOn", "draftedByClientApp", "draftedForPrincipal",
     });
 
     // A common column the adapter fills (verified only when it came from a validated token claim, document 22,
@@ -185,7 +185,8 @@ internal static class WriteGuardEntities
         "id", "createdOn", "createdBy", "modifiedOn", "modifiedBy",
     });
 
-    // O10 columns only the approval runner writes (G-06; document 26, section 6.2; model rule of O10).
+    // O10 columns only the approval runner writes, or the person answering their own request after the approval answer
+    // check (G-06; document 26, section 6.2 and AN-02 as D-38 rewrites it; model rule of O10).
     public static readonly IReadOnlyList<string> ApprovalOutcomeColumns = new ReadOnlyCollection<string>(new[]
     {
         "outcome", "approver", "approverActorKind", "approverPrincipalKind", "typedReason", "respondedOn", "channel", "flowRunUrl",
@@ -225,6 +226,10 @@ internal static class WriteGuardEntities
 
     private static readonly EffectKind[] UpdateSubject = { EffectKind.UpdateSubject };
 
+    // The record number the engine gives a new row (RecordNumbers; document 25, B25-9). A caller's value is dropped on
+    // every write, so a number is set once, by the engine, and never changes.
+    private static readonly string[] RecordNumberOnly = { RecordNumbers.Column };
+
     private static readonly Dictionary<string, GuardEntity> ByKey = Build().ToDictionary(e => e.Key, StringComparer.Ordinal);
 
     public static bool TryGet(string key, [NotNullWhen(true)] out GuardEntity? entity)
@@ -236,7 +241,7 @@ internal static class WriteGuardEntities
 
     private static IEnumerable<GuardEntity> Build()
     {
-        // ---- Configuration (C01 to C46) ----
+        // ---- Configuration (C01 to C50) ----
         string[] configuration =
         {
             "configuration-set:C01", "preset:C03", "setting:C04", "status:C05", "value-list:C06", "list-value:C07", "tier:C08",
@@ -247,7 +252,7 @@ internal static class WriteGuardEntities
             "owner-role:C28", "role:C29", "role-group-binding:C30", "decision-right:C31", "approval-rule:C32", "gate-policy:C33",
             "target-stage:C34", "change-path:C35", "deployment-route:C36", "link-kind:C37", "actor-kind:C38", "guideline:C39",
             "separation-rule:C40", "tool-policy:C41", "workload-grant:C42", "column-protection-rule:C43", "portfolio-access:C44",
-            "known-client:C45",
+            "known-client:C45", "data-classification:C47", "data-domain-level:C48", "data-domain:C49", "data-platform:C50",
         };
         foreach (string pair in configuration)
         {
@@ -263,7 +268,7 @@ internal static class WriteGuardEntities
             effectOnly: DraftEngineColumns.ToDictionary(c => c, c => (EffectKind[]?)null),
             finalWhen: FinalWhen.DraftStatus);
 
-        // ---- Operational (O01 to O24) ----
+        // ---- Operational (O01 to O27) ----
         yield return new GuardEntity("portfolio", "O01", GuardEntityKind.Operational);
         yield return new GuardEntity(
             "business-application",
@@ -272,6 +277,7 @@ internal static class WriteGuardEntities
             GuardDeletePolicy.DraftOnly,
             statusColumn: "status",
             draftMeaning: "draft",
+            engineComputed: RecordNumberOnly,
             effectOnly: new Dictionary<string, EffectKind[]?> { { "agreedAutonomyLevel", UpdateSubject }, { "autonomyDecision", UpdateSubject } });
         yield return new GuardEntity("technical-component", "O03", GuardEntityKind.Operational, linkCategory: Contract.LinkCategory.MicrosoftResource);
         yield return new GuardEntity("dependency", "O04", GuardEntityKind.Operational);
@@ -282,7 +288,7 @@ internal static class WriteGuardEntities
             effectOnly: PrincipalIdentityColumns.ToDictionary(c => c, c => (EffectKind[]?)null),
             effectOnlyRows: Array.Empty<EffectKind>());
         yield return new GuardEntity("owner-assignment", "O06", GuardEntityKind.Operational, effectOnlyRows: UpdateSubject);
-        yield return new GuardEntity("intake-request", "O07", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft");
+        yield return new GuardEntity("intake-request", "O07", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft", engineComputed: RecordNumberOnly);
 
         // Class F: frozen when Tier Decision is set (model note of O08).
         yield return new GuardEntity("tier-assessment", "O08", GuardEntityKind.Operational, engineComputed: new[] { "computedTier" }, finalWhen: FinalWhen.ColumnSet, finalColumn: "tierDecision");
@@ -292,6 +298,7 @@ internal static class WriteGuardEntities
             GuardEntityKind.Operational,
             statusColumn: "status",
             draftMeaning: "proposed",
+            engineComputed: RecordNumberOnly,
             effectOnly: new Dictionary<string, EffectKind[]?>
             {
                 { "decidedOn", new[] { EffectKind.AcceptDecision, EffectKind.RecomputeApprovals } },
@@ -305,7 +312,7 @@ internal static class WriteGuardEntities
             statusColumn: "outcome",
             engineComputed: new[] { "countsTowardRequirement", "approverActorMeaning" },
             finalWhen: FinalWhen.MeaningFinal);
-        yield return new GuardEntity("change-request", "O11", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft");
+        yield return new GuardEntity("change-request", "O11", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft", engineComputed: RecordNumberOnly);
         yield return new GuardEntity("affected-application", "O12", GuardEntityKind.Operational);
 
         // Class F with fill-once columns: final at insert, apart from the columns the model marks fill-once.
@@ -317,7 +324,7 @@ internal static class WriteGuardEntities
             "O14",
             GuardEntityKind.Operational,
             statusColumn: "result",
-            engineComputed: new[] { "gateLevelApplied", "isOutsideWindow", "isOtherPath", "isMissingApproval" });
+            engineComputed: new[] { "gateLevelApplied", "isOutsideWindow", "isOtherPath", "isMissingApproval", "isAiOnlyCodeApproval" });
         yield return new GuardEntity("deployment-target", "O15", GuardEntityKind.Operational, linkCategory: Contract.LinkCategory.MicrosoftResource);
         yield return new GuardEntity("pipeline-reference", "O16", GuardEntityKind.Operational, linkCategory: Contract.LinkCategory.Pipeline);
         yield return new GuardEntity("pipeline-map-entry", "O17", GuardEntityKind.Operational);
@@ -334,11 +341,18 @@ internal static class WriteGuardEntities
 
         // Class A in the model: inserted once, never updated, never deleted.
         yield return new GuardEntity("evidence-link", "O20", GuardEntityKind.Operational, linkCategory: Contract.LinkCategory.Evidence);
-        yield return new GuardEntity("review", "O21", GuardEntityKind.Operational, statusColumn: "status");
+        yield return new GuardEntity("review", "O21", GuardEntityKind.Operational, statusColumn: "status", engineComputed: RecordNumberOnly);
 
         // Class F: frozen when Finished On is set (model note of O22).
         yield return new GuardEntity("gap-check-run", "O22", GuardEntityKind.Operational, finalWhen: FinalWhen.ColumnSet, finalColumn: "finishedOn");
         yield return new GuardEntity("claim", "O23", GuardEntityKind.Operational, statusColumn: "status");
         yield return new GuardEntity("audit-entry", "O24", GuardEntityKind.AuditEntry);
+
+        // The data taxonomy (D-37, settled by D-41; document 22, B22-14). Class E: retired or ended with a date, never
+        // deleted once registered; a draft row may be deleted by its creator. An AI client's row starts as draft (G-08,
+        // the data taxonomy's G-21). The guard rules G-18 to G-24 come with data taxonomy slice 2.
+        yield return new GuardEntity("data-location", "O25", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft", linkCategory: Contract.LinkCategory.DataLocation);
+        yield return new GuardEntity("data-mapping", "O26", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft");
+        yield return new GuardEntity("data-use", "O27", GuardEntityKind.Operational, GuardDeletePolicy.DraftOnly, statusColumn: "status", draftMeaning: "draft", engineComputed: RecordNumberOnly);
     }
 }

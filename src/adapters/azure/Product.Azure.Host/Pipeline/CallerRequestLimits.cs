@@ -48,6 +48,15 @@ public sealed class ProductLimitsOptions
     /// </summary>
     public int ApprovalPerMinute { get; set; } = 600;
 
+    /// <summary>
+    /// Requests a minute the operator of a demo install may send to the REST API and the MCP endpoint while a demo persona
+    /// acts (D-39). The persona switch counts the operator, never the persona, and counts these requests apart from the
+    /// operator's own. Default 1200: one person presenting fifteen personas reloads every page with each switch, and the
+    /// demo director (refresh, check) sends its story as the operator in one burst; four times the per-person API limit
+    /// covers both and still stops a page stuck in a loop within the minute. 0 keeps the group's own limit.
+    /// </summary>
+    public int DemoOperatorPerMinute { get; set; } = 1200;
+
     /// <summary>The limit of a route group after the switch: null when the group is not limited.</summary>
     public int? LimitOf(RequestLimitGroup group)
     {
@@ -105,6 +114,7 @@ public sealed class ProductLimitsOptionsValidator : IValidateOptions<ProductLimi
             ("ApiPerMinute", options.ApiPerMinute),
             ("RecordPerMinute", options.RecordPerMinute),
             ("ApprovalPerMinute", options.ApprovalPerMinute),
+            ("DemoOperatorPerMinute", options.DemoOperatorPerMinute),
         })
         {
             if (value < 0)
@@ -161,7 +171,18 @@ public sealed class CallerRequestLimitMiddleware
 
         DateTime now = Utc(services.GetRequiredService<IEngineClock>().UtcNow);
         DateTime windowStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, DateTimeKind.Utc);
-        long count = services.GetRequiredService<ICounterStore>().Increment(CounterKey(group, caller.ObjectId), windowStart, Window);
+        // While a demo persona acts (D-39), the person who signed in is counted, so switching personas never resets the
+        // limit. Those requests have their own count and the demo operator's limit (DemoOperatorPerMinute) on the REST API
+        // and the MCP endpoint, so presenting many personas does not run into the per-person limit, and the operator's
+        // own requests keep theirs.
+        bool demoActs = caller.DemoPersona is DemoPersonaUse demo && demo.OperatorObjectId.Length > 0;
+        string counted = demoActs ? caller.DemoPersona!.OperatorObjectId : caller.ObjectId;
+        if (demoActs && (group == RequestLimitGroup.Api || group == RequestLimitGroup.Mcp) && limits.DemoOperatorPerMinute > 0)
+        {
+            limit = limits.DemoOperatorPerMinute;
+        }
+
+        long count = services.GetRequiredService<ICounterStore>().Increment(demoActs ? DemoCounterKey(group, counted) : CounterKey(group, counted), windowStart, Window);
         if (count <= limit.Value)
         {
             await _next(context).ConfigureAwait(false);
@@ -206,6 +227,12 @@ public sealed class CallerRequestLimitMiddleware
     public static string CounterKey(RequestLimitGroup group, string objectId)
     {
         return "http-requests|" + GroupLabel(group) + "|" + TelemetryEvent.HashCaller(objectId, KeySalt);
+    }
+
+    /// <summary>The store counter key of a demo operator's requests as the demo personas, in one group.</summary>
+    public static string DemoCounterKey(RequestLimitGroup group, string operatorObjectId)
+    {
+        return "http-requests|" + GroupLabel(group) + "-demo|" + TelemetryEvent.HashCaller(operatorObjectId, KeySalt);
     }
 
     // A caller from another tenant is refused further on and never counted, so it cannot use up the count of a person

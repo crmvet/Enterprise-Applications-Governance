@@ -39,12 +39,12 @@ The product owner asked who would really write them. In practice, an application
 ## Consequences
 
 - Documentation tracking is designed as process P07. Missing documents are worked out from the requirements for the app's kind, tier and stage. A document record exists only once a link has been recorded.
-- For a document a gate needs, "current" set by an AI client stays a claim until the document owner confirms it on a card. AI drafts and people decide.
+- For a document a gate needs, "current" set by an AI client stays a claim until the document owner confirms it on a card. AI drafts and people decide. Later, [D-38](D-38-a-person-answers-an-approval-on-the-decision-page.md) moved the default place a person answers to the decision page in the web app.
 - At the time, the first release was set as the core, with the gap check and documentation tracking, plus the product's own MCP server. D-18 settles what the first release contains.
 
 ## Related
 
-- [D-02](D-02-how-people-and-ai-clients-use-the-product.md), [D-06](D-06-risk-tiers-are-configuration.md), [D-10](D-10-rules-are-configuration-and-the-engine-is-code.md), [D-15](D-15-gap-check-instead-of-inventory-import.md), [D-16](D-16-no-copilot-or-teams-agent.md), [D-18](D-18-pages-are-the-core-interface.md)
+- [D-02](D-02-how-people-and-ai-clients-use-the-product.md), [D-06](D-06-risk-tiers-are-configuration.md), [D-10](D-10-rules-are-configuration-and-the-engine-is-code.md), [D-15](D-15-gap-check-instead-of-inventory-import.md), [D-16](D-16-no-copilot-or-teams-agent.md), [D-18](D-18-pages-are-the-core-interface.md), [D-38](D-38-a-person-answers-an-approval-on-the-decision-page.md)
 - [P07 Documentation tracking](../architecture/processes/p07-documentation-tracking.md)
 - [P10 AI draft and human accept](../architecture/processes/p10-ai-draft-and-human-accept.md)
 - [MCP tools](../architecture/mcp-tools.md)

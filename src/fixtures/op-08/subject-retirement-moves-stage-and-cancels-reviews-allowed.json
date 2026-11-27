@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-retirement-moves-stage-and-cancels-reviews-allowed",
+  "description": "An accepted retirement decision with outcome complete moves the application to the retired stage and cancels the reviews still due.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-62"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "retirement",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "complete"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "subject": {
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered",
+        "lifecycleStage": "review"
+      },
+      "dueReviewIds": [
+        "fixture-review-2",
+        "fixture-review-1"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Business Application",
+          "operation": "update",
+          "rowId": "fixture-app-1",
+          "columns": {
+            "lifecycleStage": "retire",
+            "stageDecision": "fixture-decision-62"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Review",
+          "operation": "update",
+          "rowId": "fixture-review-1",
+          "columns": {
+            "status": "review-cancelled"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Review",
+          "operation": "update",
+          "rowId": "fixture-review-2",
+          "columns": {
+            "status": "review-cancelled"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

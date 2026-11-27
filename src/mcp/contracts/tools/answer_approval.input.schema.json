@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "answer_approval input",
+  "description": "Records the signed-in person's own answer to an approval request they were asked: approve or reject, with a typed reason to reject and where the approval rule asks for one. Served only to a person in the product's web app (D-38); an AI client is never served it, because AI never approves. The token proves who answered: the input names no responder. The engine checks that the person holds the role, or the owner role on the decision's application, that the request asks for, now; that no separation rule keeps the answer from counting; that the person's approval does not already count for the same requirement; and that the request is still pending and not expired. It then counts the answer as it counts an answer from a card, and accepts or rejects the decision when the rule is met. A refused answer writes nothing.",
+  "x-tool": "answer_approval",
+  "type": "object",
+  "required": [
+    "approvalRecordId",
+    "answer"
+  ],
+  "properties": {
+    "approvalRecordId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O10 Approval Record",
+      "description": "The approval request to answer, from get_approval_status or the decision page."
+    },
+    "answer": {
+      "enum": [
+        "approve",
+        "reject"
+      ],
+      "description": "approve or reject. A consultation answer is recorded and shown, and never counts."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "The typed reason. Required to reject, and to approve where the approval rule asks for one (document 26, AN-08). Stored on the approval record as the person typed it."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly",
+      "description": "True runs every check and the recompute and returns what would be written, without writing. The decision page can use it to show the buttons only to a person who may answer."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "answer": {
+            "const": "reject"
+          }
+        },
+        "required": [
+          "answer"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "approvalRecordId": "d1000000-0000-4000-8000-000000000002",
+      "answer": "approve"
+    },
+    {
+      "approvalRecordId": "d1000000-0000-4000-8000-000000000003",
+      "answer": "reject",
+      "reason": "The data use goes beyond what the privacy notice covers.",
+      "clientRequestId": "req-0210"
+    }
+  ]
+}

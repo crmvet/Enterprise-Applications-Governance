@@ -79,6 +79,13 @@ param webAppApiScope string = ''
 ])
 param demo string = 'false'
 
+@description('The demo persona switch (D-39), for a demo install with the web app on: the app runs in the environment named Demo and reads the fictional personas of seed/demo-personas.json from its package, so the person signed in to the web app may act as any of them, every write stamped "Web app, demo operator". Ignored unless demo is true and webAppClientId is set. Never true for a real install.')
+@allowed([
+  'true'
+  'false'
+])
+param demoPersonas string = 'false'
+
 @description('Serve the approval runner\'s routes (the Power Automate runner pulls approval requests). Turn it on once the runner flows, the runner\'s app registration and its Workload Grant exist.')
 @allowed([
   'true'
@@ -325,6 +332,7 @@ module appSettings 'modules/function-app-settings.bicep' = {
     webAppClientId: webAppClientId
     webAppApiScope: webAppApiScope
     demo: demo
+    demoPersonas: demoPersonas
     approvalRunnerEnabled: approvalRunnerEnabled
     directoryReads: directoryReads
     directoryIdentityClientId: directoryReads == 'Live' ? directoryIdentity!.outputs.clientId : ''

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Package check for the UI harness. Reads files only: no install and no network.
+// Package check for the UI harness (and, with --package, another Node package of src/). Reads files only: no install
+// and no network.
 // 1. Every direct dependency in package.json is an exact version.
 // 2. Every package in package-lock.json comes from the public npm registry with a sha512 integrity hash (a package
 //    bundled inside its parent's tarball is covered by the parent's).
@@ -7,14 +8,26 @@
 //    platform binaries).
 // 4. src/THIRD-PARTY.md lists every package of the lock file, with the same version and license, and nothing more.
 //
-// Usage: node scripts/check-packages.mjs     Exit code: 0 clean, 1 problems found, 2 setup error.
+// --package <folder> checks another Node package of src/ by the same rules. The end-to-end suite is one:
+// "--package tests/e2e" reads src/tests/e2e/package.json, its lock file and its own section of THIRD-PARTY.md,
+// "## Node: tests/e2e only". Without the option the check reads ui/harness, as before.
+//
+// Usage: node scripts/check-packages.mjs [--package <folder under src>]
+// Exit code: 0 clean, 1 problems found, 2 setup error.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const HARNESS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const THIRD_PARTY = path.resolve(HARNESS, '..', '..', 'THIRD-PARTY.md');
-const SECTION = '## Node: ui/harness only';
+const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+const packageAt = process.argv.indexOf('--package');
+const PACKAGE = packageAt >= 0 ? String(process.argv[packageAt + 1] ?? '').replace(/\\/g, '/').replace(/\/+$/, '') : 'ui/harness';
+if (!PACKAGE || PACKAGE.startsWith('/') || /^[A-Za-z]:/.test(PACKAGE) || PACKAGE.split('/').includes('..')) {
+  console.error('Package check: --package names a folder under src/, such as tests/e2e.');
+  process.exit(2);
+}
+const HARNESS = path.join(SRC, ...PACKAGE.split('/'));
+const THIRD_PARTY = path.join(SRC, 'THIRD-PARTY.md');
+const SECTION = `## Node: ${PACKAGE} only`;
 const ALLOWED = new Set(['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', '0BSD']);
 // Exceptions need a reason here and a row in THIRD-PARTY.md that says so.
 const EXCEPTIONS = new Map([
@@ -98,9 +111,9 @@ if (start < 0) {
 for (const n of notes) console.log(`  note: ${n}`);
 const summary = `${Object.keys(pkg.dependencies ?? {}).length + Object.keys(pkg.devDependencies ?? {}).length} direct, ${locked.size} in the lock file`;
 if (!problems.length) {
-  console.log(`Package check: clean. ${summary}, every one listed in THIRD-PARTY.md.`);
+  console.log(`Package check (${PACKAGE}): clean. ${summary}, every one listed in THIRD-PARTY.md.`);
   process.exit(0);
 }
-console.log(`Package check: ${problems.length} problem(s). ${summary}.`);
+console.log(`Package check (${PACKAGE}): ${problems.length} problem(s). ${summary}.`);
 for (const p of problems) console.log(`  ${p}`);
 process.exit(1);

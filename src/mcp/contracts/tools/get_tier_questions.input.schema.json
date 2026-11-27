@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_tier_questions input",
-  "description": "The plain tier questions for a kind of application, with their answers. Writes nothing.",
+  "description": "The plain tier questions for a kind of application, with their answers. For an application, or an intake linked to one, the answer its declared data implies comes back as a hint before the person answers. Writes nothing.",
   "x-tool": "get_tier_questions",
   "type": "object",
   "properties": {
@@ -9,6 +9,16 @@
       "$ref": "../common.schema.json#/$defs/key",
       "x-entity": "C15 Application Kind",
       "description": "Only the questions for this application kind."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application the answers are for: the answer its declared data implies comes back as a hint before anyone answers."
+    },
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "An intake linked to an application: the hint comes from that application's declared data."
     }
   },
   "additionalProperties": false,

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-change-authorize-schedules-change-allowed",
+  "description": "An accepted change authorization with outcome authorize moves the change request to in progress (Balanced labels it Scheduled). Its Authorization Decision already names the decision.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-30"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "change-authorization",
+      "subjectKind": "change-request",
+      "subjectChangeRequest": "fixture-change-1",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "authorize"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "subject": {
+      "changeRequest": {
+        "id": "fixture-change-1",
+        "statusMeaning": "submitted",
+        "authorizationDecision": "fixture-decision-30"
+      },
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered",
+        "lifecycleStage": "operate"
+      }
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Change Request",
+          "operation": "update",
+          "rowId": "fixture-change-1",
+          "columns": {
+            "status": "change-in-progress"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

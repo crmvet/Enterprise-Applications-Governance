@@ -35,11 +35,19 @@ Exit code: 0 clean, 1 problems, 2 setup error (ajv missing, a file does not pars
 
 ## What is in the model
 
-- 75 entities. 65 come from document 22 for the first release: 41 configuration and 24 operational.
+- 81 entities. 72 come from document 22 for the first release: 45 configuration and 27 operational.
 - C40 Separation Rule is adopted as a working default. Its columns come from documents 20 and 21. With C40, the first
-  release has 66: 42 configuration and 24 operational.
+  release has 73: 46 configuration and 27 operational.
+- The data taxonomy (D-37, settled by D-41; document 22, B22-14) adds C47 Data Classification, C48 Data Domain Level,
+  C49 Data Domain, C50 Data Platform, O25 Data Location, O26 Data Mapping and O27 Data Use, gives O06 Owner Assignment
+  and O09 Decision their data subjects, and withdraws L01 Data Area. The C31 and C32 data scope columns are proposals
+  until the engine reads them (data taxonomy slice 2).
+- The operational column set gains Drafted By Client App and Drafted For Principal (proposals, document 22, B22-15): the
+  AI client that created a row and the person it acted for, set once on create and never changed (relationship R00f).
+- O15 Deployment Target gains Retired On and Retired Reason (proposals, document 22, B22-16): a person retires a target
+  instead of deleting it, and the record step refuses a new deployment to it.
 - C41 Tool Policy (document 24) and C43 Column Protection Rule, C44 Portfolio Access and C45 Known Client (document 26) are proposals, marked `"status": "proposal"`.
-- L01 to L05 are later entities, marked `"status": "later"`.
+- L02 to L05 are later entities, marked `"status": "later"`. L01 Data Area was withdrawn by the data taxonomy (D-37).
 - C03 Preset has no table. It is stored as a C01 row (`"storedIn": "C01"`).
 - Column proposals from documents 21 and 26 that document 22 does not list carry `"status": "proposal"` and a `source`.
 - `openPoints` lists where the design documents disagree and which one the model follows.
@@ -86,7 +94,7 @@ node model/check-generated.mjs                the determinism check (tools/ci.mj
 | `check-generated.mjs` | Runs `write` twice and `names` twice as separate processes, compares the bytes, compares `generated/` with a fresh run (line endings aside, because git may check out CRLF), and checks the draft marker, ASCII text and the working default markers |
 
 What the generators decide, and where:
-- Proposals (C41, C43 to C45) get tables, marked as proposals. Later entities (L01 to L05) get names in the column map and
+- Proposals (C41, C43 to C45) get tables, marked as proposals. Later entities (L02 to L05) get names in the column map and
   the printout, but no table. C03 Preset is rows of C01.
 - A derived column that is never stored (C02 Version Status) has no physical column. O09 Superseded By is stored on
   Dataverse and computed in the view `ops.DecisionCurrent` on Azure (document 22, section 8.1).

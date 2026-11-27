@@ -44,6 +44,11 @@
       "x-entity": "O02 Business Application",
       "description": "Only changes for this application."
     },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only the applications in this portfolio, child portfolios included."
+    },
     "statusMeanings": {
       "type": "array",
       "minItems": 1,

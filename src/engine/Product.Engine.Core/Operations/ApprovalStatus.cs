@@ -565,8 +565,24 @@ public static class ApprovalStatusOperation
             codes.Add(ReasonCodes.ApprovalExpired);
         }
 
+        // A proposed owner's own yes is consent to take the role, not a check on the proposal, so no separation rule
+        // applies to it; the group's other rules carry the check (document 25, B25-14).
+        bool flagged = !requirement.ApproverProposedOwners && JudgeSeparation(separation, request, record.ResponderPrincipalId!, codes, null);
+        if (codes.Count > 0)
+        {
+            return new Judgement(false, false, codes, false, lateAnswer, record.Outcome);
+        }
+
+        return new Judgement(true, false, new List<string>(), flagged, false, record.Outcome);
+    }
+
+    // Every separation row in force that names the responder: a refusing row adds approval.separation-refused, an
+    // exception row without its accepted exception decision adds approval.separation-exception-missing, and a flagging row
+    // returns true. rows, when given, collects the key of each row that refuses (for the approval answer check's message).
+    private static bool JudgeSeparation(List<SeparationCheck> separation, ApprovalStatusRequest request, string responderPrincipalId, List<string> codes, List<string>? rows)
+    {
         bool flagged = false;
-        string responder = PrincipalKey(record.ResponderPrincipalId!);
+        string responder = PrincipalKey(responderPrincipalId);
         foreach (SeparationCheck check in separation)
         {
             if (!check.People(request.Parties).Any(p => !string.IsNullOrEmpty(p) && string.Equals(PrincipalKey(p), responder, StringComparison.Ordinal)))
@@ -578,11 +594,13 @@ public static class ApprovalStatusOperation
             {
                 case SeparationEnforcement.Refuse:
                     AddOnce(codes, ReasonCodes.ApprovalSeparationRefused);
+                    rows?.Add(check.Row.KeyPath);
                     break;
                 case SeparationEnforcement.ExceptionDecision:
                     if (check.ExceptionDecisionTypeKey == null || !request.AcceptedExceptionDecisionTypeKeys.Contains(check.ExceptionDecisionTypeKey, StringComparer.Ordinal))
                     {
                         AddOnce(codes, ReasonCodes.ApprovalSeparationExceptionMissing);
+                        rows?.Add(check.Row.KeyPath);
                     }
 
                     break;
@@ -592,12 +610,22 @@ public static class ApprovalStatusOperation
             }
         }
 
-        if (codes.Count > 0)
-        {
-            return new Judgement(false, false, codes, false, lateAnswer, record.Outcome);
-        }
+        return flagged;
+    }
 
-        return new Judgement(true, false, new List<string>(), flagged, false, record.Outcome);
+    // The separation rules (C40) in force for one responder of a decision, exactly as OP-03 judges a counting answer: the
+    // codes of the rules that keep the answer from counting, the keys of those rows, and whether a rule flags the
+    // responder. The approval answer check (D-38) asks this before a person answers, so it refuses what OP-03 would not
+    // count. request carries the scope, the parties and the accepted exception decision types; its requirements and
+    // records are not read.
+    internal static SeparationVerdict Separation(ConfigurationSnapshot snapshot, ApprovalStatusRequest request, string responderPrincipalId, List<RuleTrace> trace)
+    {
+        SnapshotRow decisionType = SnapshotRead.RequireExisting(snapshot, "decision-type", request.DecisionTypeKey, "input.scope.decisionTypeKey");
+        List<SeparationCheck> checks = SeparationChecks(snapshot, request, decisionType, trace);
+        var codes = new List<string>();
+        var rows = new List<string>();
+        bool flagged = JudgeSeparation(checks, request, responderPrincipalId, codes, rows);
+        return new SeparationVerdict(codes, rows, flagged);
     }
 
     // One person counts once within a requirement, so a Minimum Count of 2 always means two different people. In time
@@ -881,4 +909,26 @@ public static class ApprovalStatusOperation
             return new Judgement(false, false, new List<string> { ReasonCodes.ApprovalSequenceWaiting }, false, false, null);
         }
     }
+}
+
+// What the separation rules in force say about one responder (ApprovalStatusOperation.Separation).
+internal sealed class SeparationVerdict
+{
+    public SeparationVerdict(IEnumerable<string> codes, IEnumerable<string> ruleKeys, bool flagged)
+    {
+        Codes = new ReadOnlyCollection<string>(codes.ToList());
+        RuleKeys = new ReadOnlyCollection<string>(ruleKeys.Distinct(StringComparer.Ordinal).ToList());
+        Flagged = flagged;
+    }
+
+    // approval.separation-refused and approval.separation-exception-missing, when a rule keeps the answer from counting.
+    public IReadOnlyList<string> Codes { get; }
+
+    // The keys of the rows that keep the answer from counting.
+    public IReadOnlyList<string> RuleKeys { get; }
+
+    // True when an "allow and flag" row names the responder: the answer counts, with a warning.
+    public bool Flagged { get; }
+
+    public bool Refuses => Codes.Count > 0;
 }

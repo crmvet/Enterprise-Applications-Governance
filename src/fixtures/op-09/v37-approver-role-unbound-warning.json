@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-09",
   "case": "v37-approver-role-unbound-warning",
-  "description": "A client binding draft binds only the configuration admin. Four roles that approval rules name have no binding, so nobody can answer their cards. V37 warns, and the set stays valid. The ID is fictional.",
+  "description": "A client binding draft binds only the configuration admin. Seven roles that approval rules name have no binding, so nobody can answer their cards. V37 warns, and the set stays valid. The ID is fictional.",
   "ruleIds": [
     "V37"
   ],
@@ -44,6 +44,13 @@
         "severity": "warning",
         "ruleId": "V37",
         "entity": "Role",
+        "ref": "ai-lead"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
         "ref": "architect"
       },
       {
@@ -59,6 +66,27 @@
         "ruleId": "V37",
         "entity": "Role",
         "ref": "change-manager"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "data-governance-lead"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "platform-admin"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "pmo"
       },
       {
         "code": "role.unbound",

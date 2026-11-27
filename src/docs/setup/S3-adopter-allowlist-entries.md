@@ -2,12 +2,12 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant or a device.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 24, sections 4.3, 11 and 12; document 26, sections 10.3 and 11.
+- **See also:** [mcp.md](../mcp.md), [install.md](../install.md).
 - **Open design questions that touch this guide:** 12 (marker below).
 
 ## Purpose
 
-Tell an adopter's administrators where to allow the product's MCP server, and what to enter in each place. Document 24, section 12 lists up to eight places. This guide covers the four an adopter sets on devices and the network (Claude Code managed settings, GitHub Copilot managed settings, the Entra Global Secure Access MCP firewall, Defender AI agent runtime protection in audit mode) and points to the others.
+Tell an adopter's administrators where to allow the product's MCP server, and what to enter in each place. There are up to eight such places. This guide covers the four an adopter sets on devices and the network (Claude Code managed settings, GitHub Copilot managed settings, the Entra Global Secure Access MCP firewall, Defender AI agent runtime protection in audit mode) and points to the others.
 
 None of these places is a security control of the product. The engine enforces every rule on every write, whatever an allowlist says. An allowlist decides which clients may reach the server and which servers people may reach.
 
@@ -22,7 +22,7 @@ None of these places is a security control of the product. The engine enforces e
 
 ## Prerequisites
 
-The values the product publishes for each install (document 24, section 12):
+The values the product publishes for each install:
 
 | Value | Example form |
 |---|---|
@@ -31,7 +31,7 @@ The values the product publishes for each install (document 24, section 12):
 | Application ID URI | `https://<host>/mcp` |
 | Delegated scopes | `mcp.access` for MCP clients; `api.access` for the product's web app only (guide [S4](S4-prepare-entra-and-deploy.md)) |
 | App roles (app-only callers only) | `Deployment.Record` for pipeline record steps and `Approval.Write` for the approval runner, each assigned directly to one workload identity and recorded as a Workload Grant. WORKING DEFAULT (open design question 12) |
-| Tool names | The 51 names in document 24, section 6.1 (for tool-level network rules) |
+| Tool names | The names in [mcp.md](../mcp.md#the-tools), "The tools" (for tool-level network rules) |
 | Claude Code CIMD URL | `https://claude.ai/oauth/claude-code-client-metadata` (pilots only, guide [S2](S2-connect-claude-code.md)) |
 
 ## Steps
@@ -117,8 +117,8 @@ Caution: with Prompt Evidence Collection on, Defender sends prompt data and tool
 ### 5. The other places (pointers only)
 
 - **Entra consent** for the server's app registration and scope, and the CIMD pre-add for pilots: guide [S2](S2-connect-claude-code.md).
-- **Agent 365 bring-your-own MCP server** (optional, preview) and an **Azure API Center** entry (optional): document 24, section 12. Not covered in this guide.
-- [branch: Dataverse] **Dataverse MCP allowed clients**, for route C only: turn on the Dataverse MCP server for the environment and enable the client. The allow list applies only to the `/api/mcp` entry point and never restricts the product's custom APIs (document 24, section 12). Not needed for route A, the product's own server.
+- **Agent 365 bring-your-own MCP server** (optional, preview) and an **Azure API Center** entry (optional). Not covered in this guide.
+- [branch: Dataverse] **Dataverse MCP allowed clients**, for route C only: turn on the Dataverse MCP server for the environment and enable the client. The allow list applies only to the `/api/mcp` entry point and never restricts the product's custom APIs. Not needed for route A, the product's own server.
 - [branch: Azure] No extra place: the only route is the product's own server. Inside the product, the Known Client list of the configuration in force decides which client apps may call it at all (guide S2, path 1, step 4); unlike the places above, that list is enforced by the product on every call.
 
 ## Checks
@@ -131,8 +131,8 @@ Caution: with Prompt Evidence Collection on, Defender sends prompt data and tool
 
 ## Open points
 
-1. TLS inspection for the MCP firewall means the edge decrypts the product's MCP traffic, bearer tokens included. Document 26, section 11 should mention it for adopters' security reviews.
-2. Defender's prompt evidence collection is new data that leaves through the AI client path. Document 26, section 10.3 should list it.
+1. TLS inspection for the MCP firewall means the edge decrypts the product's MCP traffic, bearer tokens included. The product's security design should mention it for adopters' security reviews.
+2. Defender's prompt evidence collection is new data that leaves through the AI client path. The product's security design should list it with the other data that leaves.
 
 ## Microsoft and vendor facts used
 

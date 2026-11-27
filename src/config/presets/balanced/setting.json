@@ -47,6 +47,13 @@
       "value": 180
     },
     {
+      "key": "review-request-due-days",
+      "label": "Days before a requested review is due",
+      "valueType": "number",
+      "value": 14,
+      "description": "When a person requests an architecture or a security review and gives no due date, it falls due this many days later."
+    },
+    {
       "key": "default-flag-notify",
       "label": "Who hears about a flag",
       "valueType": "json",
@@ -106,7 +113,8 @@
       "key": "forbidden-url-patterns",
       "label": "URL parts a link may not carry",
       "valueType": "json",
-      "value": ["[?&]sig=", "[?&]token=", "[?&]code=", "^[a-z]+://[^/]*@"]
+      "value": ["[?&]sig=", "[?&]token=", "[?&]code=", "^[a-z]+://[^/]*@", "Password\\s*=", "AccountKey\\s*=", "SharedAccessSignature\\s*=", "User ID\\s*="],
+      "description": "Matched without regard to case. The last four are connection string markers, with optional spaces before the equals sign, so a data location never carries a connection string (data taxonomy, D-37, G-22)."
     },
     {
       "key": "audit-retention-days",
@@ -140,6 +148,38 @@
       "label": "Working days",
       "valueType": "json",
       "value": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    },
+    {
+      "key": "data-taxonomy-mode",
+      "label": "Data domains",
+      "valueType": "contract:data-taxonomy-mode",
+      "value": "domains-optional",
+      "description": "Data taxonomy (D-37). Off keeps data use decisions about whole applications. Domains-optional lets data uses name domains and keeps the application's data owner for applications that declare none. Domains-required makes every data use decision about a declared use."
+    },
+    {
+      "key": "data-location-stale-days",
+      "label": "Days before a data location counts as stale",
+      "valueType": "number",
+      "value": 180,
+      "description": "Data taxonomy (D-37): a location nobody has confirmed for this long is flagged (data check DC-12)."
+    },
+    {
+      "key": "measure-targets",
+      "label": "Measure targets",
+      "valueType": "json",
+      "value": {},
+      "description": "Playbook chapter 19: the target the sponsor agrees for each measure, by measure key, such as {\"owner-coverage\": 95}. Empty until agreed: measure first, then agree a target. A measure with no target shows its trend and baseline only."
+    },
+    {
+      "key": "signal-thresholds",
+      "label": "Slide-back signal thresholds",
+      "valueType": "json",
+      "value": {
+        "changes-wait-for-a-meeting": { "emergencySharePercent": 20, "standardShareDropPoints": 10 },
+        "gap-check-stale": { "days": 30 },
+        "documents-slipping": { "percent": 20 }
+      },
+      "description": "Playbook chapter 17: the numbers of the slide-back signals that have one. The other signals fire on any row they find, and the configuration signal reads configuration-review-days."
     }
   ]
 }

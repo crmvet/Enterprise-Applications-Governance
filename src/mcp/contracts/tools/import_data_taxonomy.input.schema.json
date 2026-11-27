@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "import_data_taxonomy input",
+  "description": "Turns a CSV, or the rows of a Fabric or Purview domain list, into a configuration draft of business data domains (docs/architecture/data-taxonomy.md). The caller passes the content: the product holds no Fabric or Purview permission. Owners in the file become prepared owner changes, never live owners. Nothing is in force until a person accepts the draft.",
+  "x-tool": "import_data_taxonomy",
+  "type": "object",
+  "required": [
+    "proposalRationale"
+  ],
+  "properties": {
+    "csv": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500000,
+      "description": "The CSV text: a header row with the columns key, label, parent, level, classification, description, examples, use_rule, ai_rule, copy_rule, retention, match_vocabulary, match_term, match_url, owner, deputy, steward, then one domain per row. label is required."
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "description": "The same rows as objects, such as an AI client builds from a Fabric or Purview domain list.",
+      "items": {
+        "type": "object",
+        "propertyNames": {
+          "enum": [
+            "key",
+            "label",
+            "parent",
+            "level",
+            "classification",
+            "description",
+            "examples",
+            "use_rule",
+            "ai_rule",
+            "copy_rule",
+            "retention",
+            "match_vocabulary",
+            "match_term",
+            "match_url",
+            "owner",
+            "deputy",
+            "steward"
+          ]
+        },
+        "additionalProperties": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "source": {
+      "enum": [
+        "csv",
+        "fabric",
+        "purview"
+      ],
+      "default": "csv",
+      "description": "Where the list came from. It names the outside vocabulary a match_term without match_vocabulary belongs to."
+    },
+    "baseVersionNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The configuration version the import is read against. Defaults to the version in force."
+    },
+    "proposalRationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Why the import is proposed."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "csv"
+      ]
+    },
+    {
+      "required": [
+        "rows"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "csv": "key,label,parent,level,classification,ai_rule,retention\npeople,People,,domain,confidential,,keep-7-years\npayroll,Payroll,people,subdomain,restricted,never,keep-10-years\n",
+      "proposalRationale": "Load the HR domain list agreed with the data governance lead",
+      "validateOnly": true
+    }
+  ]
+}

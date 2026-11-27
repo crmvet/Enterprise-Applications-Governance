@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "consultation-answer-allowed",
+  "description": "The change manager is consulted on a gate policy change. A consultation answer is recorded and shown as a recommendation, and never counts; separation does not apply to it.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "change-manager"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "gate-policy-change-change-manager",
+      "requiredRoleKey": "change-manager",
+      "isConsultation": true
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "gate-policy-change"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isConsultation": true,
+      "heldRoleKey": "change-manager"
+    },
+    "reasons": [
+      {
+        "code": "approval.consultation-not-counted",
+        "severity": "info",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

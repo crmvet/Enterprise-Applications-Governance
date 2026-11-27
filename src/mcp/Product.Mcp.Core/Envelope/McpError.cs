@@ -7,10 +7,10 @@ using Product.Mcp.Core.Json;
 namespace Product.Mcp.Core.Envelope;
 
 // The error object of the envelope (document 24, section 3.5): { code, message, field?, ruleKey?, guideline? }, plus
-// retryAfterSeconds for rate_limited. The code is always one of the 11 fixed codes.
+// retryAfterSeconds for rate_limited and claimsChallenge for step_up_required. The code is always one of the 12 fixed codes.
 public sealed class McpError
 {
-    public McpError(string code, string message, string? field = null, string? ruleKey = null, string? guideline = null, int? retryAfterSeconds = null)
+    public McpError(string code, string message, string? field = null, string? ruleKey = null, string? guideline = null, int? retryAfterSeconds = null, string? claimsChallenge = null, string? recordUrl = null)
     {
         if (!McpErrorCodes.All.Contains(code, StringComparer.Ordinal))
         {
@@ -26,8 +26,12 @@ public sealed class McpError
         Message = Clip(string.IsNullOrWhiteSpace(message) ? "The call failed." : message, 1000);
         Field = field == null ? null : Clip(field, 200);
         RuleKey = ruleKey != null && IsKey(ruleKey) ? ruleKey : null;
+        // Every ai_cannot_do_this answer applies G17 unless a more specific guideline is given (document 24, B24-18).
+        guideline ??= GuidelineRefs.ForErrorCode(code);
         Guideline = guideline != null && IsGuideline(guideline) ? guideline : null;
         RetryAfterSeconds = retryAfterSeconds;
+        ClaimsChallenge = code == McpErrorCodes.StepUpRequired && !string.IsNullOrEmpty(claimsChallenge) ? Clip(claimsChallenge!, 2000) : null;
+        RecordUrl = string.IsNullOrEmpty(recordUrl) ? null : Clip(recordUrl!, 2048);
     }
 
     public string Code { get; }
@@ -42,6 +46,13 @@ public sealed class McpError
 
     public int? RetryAfterSeconds { get; }
 
+    // For step_up_required: the claims challenge to sign in again with (base64 JSON, as Microsoft Entra ID reads it).
+    public string? ClaimsChallenge { get; }
+
+    // The record a refusal points to, such as the document link to update instead of linking a second one (wave 4b,
+    // QA walk): a person's page offers it as a link, and an AI client reads the record from it.
+    public string? RecordUrl { get; }
+
     public JsonTreeNode ToJson()
     {
         return Js.Obj(
@@ -50,7 +61,9 @@ public sealed class McpError
             ("field", Js.OptStr(Field)),
             ("ruleKey", Js.OptStr(RuleKey)),
             ("guideline", Js.OptStr(Guideline)),
-            ("retryAfterSeconds", RetryAfterSeconds.HasValue ? JsonTreeNode.FromInt64(RetryAfterSeconds.Value) : null));
+            ("retryAfterSeconds", RetryAfterSeconds.HasValue ? JsonTreeNode.FromInt64(RetryAfterSeconds.Value) : null),
+            ("claimsChallenge", Js.OptStr(ClaimsChallenge)),
+            ("recordUrl", Js.OptStr(RecordUrl)));
     }
 
     public override string ToString()

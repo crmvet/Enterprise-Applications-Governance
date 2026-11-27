@@ -1,6 +1,6 @@
 # P09 Retirement
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-09](../../../src/docs/demo/scenarios/S-09-demand-portfolio-retirement.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -24,7 +24,7 @@ This process is designed to take an application out of use on purpose. It has a 
 
 ## Steps
 
-1. **Decide.** A portfolio decision with the outcome retire is accepted on a card. The PMO prepares the facts. The business owner decides.
+1. **Decide.** A portfolio decision with the outcome retire is accepted. The PMO prepares the facts. The business owner decides, on the decision page by default.
 2. **Check what depends on it.** The product walks the dependencies in both directions. Owners of dependent apps are told. A dependent app that needs a replacement gets its own change or intake.
 3. **Settle the data.** The data owner decides what happens to the data: a data-use decision about retention, with evidence links to where the data went.
 4. **Schedule the removal.** A change request ([P03](p03-change-management.md), normal by default) carries the window and the targets. Who authorizes it follows the tier.
@@ -43,9 +43,9 @@ This process is designed to take an application out of use on purpose. It has a 
 | Business application | Moves to the retired stage; registration archived where configured |
 | Review | Due reviews canceled |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
 | Portfolio (retire) | Business owner | First to respond |
 | Data use (retention) | Data owner | First to respond |
@@ -60,7 +60,7 @@ This process is designed to take an application out of use on purpose. It has a 
 - Which dependency types count when the dependencies are walked.
 - Who decides and who approves.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 

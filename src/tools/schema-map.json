@@ -59,7 +59,7 @@
       "schema": "mcp/contracts/tools.schema.json",
       "include": ["mcp/contracts/tools.json"],
       "exclude": [],
-      "note": "The MCP tool catalog: 51 tools, annotations and default roles (document 24)."
+      "note": "The MCP tool catalog: 61 tools, the entries that serve each, annotations and default roles (document 24)."
     },
     {
       "schema": "mcp/contracts/errors.schema.json",
@@ -180,6 +180,48 @@
       "include": ["ui/harness/fixtures/get_configuration/*.output.json"],
       "exclude": [],
       "note": "UI harness fixture outputs for get_configuration. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/list_approvals.input.schema.json",
+      "include": ["ui/harness/fixtures/list_approvals/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for list_approvals. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/list_approvals.output.schema.json",
+      "include": ["ui/harness/fixtures/list_approvals/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for list_approvals. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_ai_activity.input.schema.json",
+      "include": ["ui/harness/fixtures/get_ai_activity/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_ai_activity. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_ai_activity.output.schema.json",
+      "include": ["ui/harness/fixtures/get_ai_activity/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_ai_activity. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_decision_log.input.schema.json",
+      "include": ["ui/harness/fixtures/get_decision_log/*.input.json"],
+      "exclude": [],
+      "note": "UI harness fixture inputs for get_decision_log. Fictional data."
+    },
+    {
+      "schema": "mcp/contracts/tools/get_decision_log.output.schema.json",
+      "include": ["ui/harness/fixtures/get_decision_log/*.output.json"],
+      "exclude": [],
+      "note": "UI harness fixture outputs for get_decision_log. Fictional data."
+    },
+    {
+      "schema": "demo/kit/scenarios.schema.json",
+      "include": ["demo/kit/scenarios.json"],
+      "exclude": [],
+      "note": "The demo kit's scenario catalog: each scenario and the preconditions demo check proves before a demo. Fictional data."
     }
   ]
 }

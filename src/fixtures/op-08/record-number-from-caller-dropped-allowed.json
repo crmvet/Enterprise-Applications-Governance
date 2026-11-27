@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "record-number-from-caller-dropped-allowed",
+  "description": "A caller never writes a record number: the engine gives it (document 25, B25-9; G-09). The number a caller sends on a new intake request is dropped with an info reason, and the write goes on.",
+  "tags": [
+    "record-number"
+  ],
+  "ruleIds": [
+    "G-09"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "intake-request",
+    "operation": "create",
+    "after": {
+      "requester": "fixture-person-1",
+      "title": "Visit planner",
+      "need": "Plan store visits",
+      "recordNumber": "IR-9999",
+      "status": "intake-draft"
+    }
+  },
+  "facts": {},
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "removedColumns": [
+        "recordNumber"
+      ]
+    },
+    "reasons": [
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "recordNumber"
+      }
+    ]
+  }
+}

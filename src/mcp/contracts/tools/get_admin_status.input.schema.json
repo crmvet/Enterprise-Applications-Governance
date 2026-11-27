@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_admin_status input",
+  "description": "Run the product: the host settings that are safe to show (environment, demo, step-up sign-in, the daily refresh, the store and its schema version), the configuration in force, the Tool Policy as a list, the sanctioned clients and what each did recently, the reminders and notices the daily refresh sent, the approval outbox, and the run-now action of the refresh. The platform admin, the configuration admin and the auditor read it; only the platform admin and the auditor see the notices listed.",
+  "x-tool": "get_admin_status",
+  "type": "object",
+  "properties": {
+    "days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 90,
+      "default": 7,
+      "description": "The window for recent client calls and notices."
+    },
+    "includeToolPolicy": {
+      "type": "boolean",
+      "default": true,
+      "description": "False leaves the Tool Policy rows out."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "days": 30
+    }
+  ]
+}

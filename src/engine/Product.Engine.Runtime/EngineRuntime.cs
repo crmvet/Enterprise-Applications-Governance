@@ -64,6 +64,12 @@ public sealed partial class EngineRuntime
 
     public IEngineClock Clock { get; }
 
+    // True (the default): a read call reads through a cache of its own (CallReadCache, document 25, B25-23), so it asks the
+    // store about each row once and a composed read can load many rows in one store call (ComposedCall.Prefetch). The
+    // answers are the same either way; false reads every row from the store each time it is asked for, which the tests
+    // use to show that.
+    public bool BatchReads { get; set; } = true;
+
     // ---- The call edge ----
 
     // Runs one call: probe and load the snapshot, resolve the caller, open the transaction, run the body, and commit
@@ -106,7 +112,8 @@ public sealed partial class EngineRuntime
             return new RuntimeOutcome(OperationOutcomes.Refused, new[] { resolution.Refusal! }, snapshot.VersionNumber, snapshot.ContentHash);
         }
 
-        using IStoreTransaction tx = _records.Begin();
+        // A read call never commits, so its reads may be kept for the call (CallReadCache).
+        using IStoreTransaction tx = purpose == SnapshotPurpose.Read && BatchReads ? new CallReadCache(_records.Begin()) : _records.Begin();
         var call = new RuntimeCall(tx, snapshot, resolution.Actor, caller, now, string.IsNullOrEmpty(correlationId) ? _correlationIds() : correlationId!);
         try
         {
@@ -115,6 +122,10 @@ public sealed partial class EngineRuntime
             if (purpose == SnapshotPurpose.Write && answer.Outcome == RuntimeOutcome.Allowed && !answer.IsReplay && !answer.DryRun && call.Writes.Count > 0)
             {
                 tx.Commit();
+                foreach (Action after in call.AfterCommit)
+                {
+                    after();
+                }
             }
 
             return new RuntimeOutcome(

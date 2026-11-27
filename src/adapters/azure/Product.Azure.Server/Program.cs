@@ -17,6 +17,8 @@ switch (command)
         return ServerCommands.Migrate(rest, Console.Out);
     case "schema-script":
         return ServerCommands.SchemaScript(rest, Console.Out);
+    case "refresh-due-states":
+        return ServerCommands.RefreshDueStates(rest, Console.Out);
     case "help":
         Console.WriteLine(ServerCommands.Usage);
         return 0;

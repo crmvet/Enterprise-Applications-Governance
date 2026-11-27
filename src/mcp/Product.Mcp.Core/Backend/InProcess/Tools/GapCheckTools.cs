@@ -67,7 +67,7 @@ internal static partial class ToolHandlers
         }
 
         bool finalPage = page.Value.NextSkipToken == null;
-        var items = page.Value.Items.Select(i => new InventoryItem(i.ExternalId, i.SourceType, i.LabelAsSeen, i.TargetAsSeen, i.ComponentKindKey, i.SuggestedClaimantObjectId)).ToList();
+        var items = page.Value.Items.Select(i => new InventoryItem(i.ExternalId, i.SourceType, i.LabelAsSeen, i.TargetAsSeen, i.ComponentKindKey, i.SuggestedClaimantObjectId, i.Url)).ToList();
         bool compareOnly = s.Flag("compareOnly") ?? false;
         bool includeVanished = s.Flag("includeVanished") ?? true;
         JsonTreeNode data = GapCheck(s, estates, estateKey, items, finalPage && includeVanished, isLiveQuery: true, writeClaims: !compareOnly, page.Value.AdminRoleUsed, sourceNote: null);
@@ -90,15 +90,32 @@ internal static partial class ToolHandlers
             Js.Text(i, "labelAsSeen")!,
             Js.Text(i, "targetAsSeen"),
             Js.Text(i, "componentKindKey"),
-            Js.Text(i, "suggestedClaimantObjectId"))).ToList();
+            Js.Text(i, "suggestedClaimantObjectId"),
+            ItemUrl(s, Js.Text(i, "url")))).ToList();
         JsonTreeNode data = GapCheck(s, new List<string> { estate }, estate, items, s.Flag("isFinalPage") ?? false, isLiveQuery: false, writeClaims: true, adminRoleUsed: null, sourceNote: s.RequireText("sourceNote"));
         data = Js.With(data, ("more", JsonTreeNode.False));
         return s.Answer(data, GapSummary(data) + " The list came from your own tool, so the run is marked as reported.");
     }
 
+    // The link an inventory item carries (O23 Url): an https link only, as every link the product shows.
+    private static string? ItemUrl(ToolScope s, string? url)
+    {
+        if (url == null)
+        {
+            return null;
+        }
+
+        if (!url.StartsWith("https://", StringComparison.Ordinal))
+        {
+            throw s.Invalid("items.url", "An item's url is an https link that opens the item in its tool.");
+        }
+
+        return url;
+    }
+
     private static string GapSummary(JsonTreeNode data)
     {
-        return (Js.Number(data, "itemsSeen") ?? 0) + " items seen, " + Js.Items(data, "newClaims").Count + " new claim(s), " + Js.Items(data, "vanished").Count + " vanished.";
+        return Count((int)(Js.Number(data, "itemsSeen") ?? 0), "item", "items") + " seen, " + Count(Js.Items(data, "newClaims").Count, "new claim", "new claims") + ", " + Js.Items(data, "vanished").Count + " vanished.";
     }
 
     // One page of a gap check run: the O22 row, OP-13 over the page, and the claim writes OP-13 plans.
@@ -125,8 +142,11 @@ internal static partial class ToolHandlers
         var covered = new HashSet<string>(s.ActiveRows("component-kind").Where(k => Js.Flag(k.Columns, "isGapCheckCovered") == true).Select(k => k.KeyPath), StringComparer.Ordinal);
         var components = s.Rows.Query(RowQuery.For("technical-component")).Where(c => c.Text("externalId") != null && covered.Contains(c.Text("componentKind") ?? string.Empty)).ToList();
         var claims = s.Rows.Query(RowQuery.For("claim")).ToList();
-        var seen = components.Where(c => (Js.ParseMoment(c.Text("lastSeenOn")) ?? DateTime.MinValue) >= started && run != null).Select(c => c.Text("externalId")!)
-            .Concat(claims.Where(c => Same(c.Text("lastSeenRun"), runId) && run != null).Select(c => c.Text("externalId")).Where(e => e != null).Select(e => e!))
+
+        // The components an earlier page of this run stamped, by row ID: OP-13's seenThisRun holds Technical Component IDs
+        // (wave 4b review: it held External Ids, so on a run of more than one page every component of an earlier page raised a
+        // vanished claim on the last page). A claim needs none: its Last Seen Run already keeps Times Seen to one a run.
+        var seen = components.Where(c => (Js.ParseMoment(c.Text("lastSeenOn")) ?? DateTime.MinValue) >= started && run != null).Select(c => c.Id)
             .Distinct(StringComparer.Ordinal).ToList();
         JsonTreeNode input = Js.Obj(
             ("gapCheckRunId", JsonTreeNode.FromString(runId)),
@@ -163,6 +183,15 @@ internal static partial class ToolHandlers
         }
 
         JsonTreeNode plan = compared.Payload;
+
+        // The item's link (O23 Url, document 23, B23-10): OP-13 compares IDs and never reads links, so the link rides
+        // beside the comparison, by External Id, onto the claim it creates or updates.
+        var urls = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (InventoryItem item in items.Where(i => i.Url != null))
+        {
+            urls[item.ExternalId] = item.Url!;
+        }
+
         var newClaims = new List<JsonTreeNode>();
         var vanished = new List<JsonTreeNode>();
         int lastSeen = 0;
@@ -176,10 +205,13 @@ internal static partial class ToolHandlers
 
             foreach (JsonTreeNode claim in Js.Items(plan, "updatedClaims").Concat(Js.Items(plan, "vanishedClaims").Where(c => Js.Text(c, "claimId") != null)))
             {
+                StoredRow? stored = s.Rows.Get("claim", Js.Text(claim, "claimId")!);
+                string? link = stored?.Text("externalId") is string seenId && urls.TryGetValue(seenId, out string? found) && !Same(found, stored.Text("url")) ? found : null;
                 s.Update("claim", Js.Text(claim, "claimId")!, Js.Obj(
                     ("lastSeenRun", JsonTreeNode.FromString(runId)),
                     ("lastSeenOn", Js.Utc(s.Now)),
-                    ("timesSeen", JsonTreeNode.FromInt64(Js.Number(claim, "timesSeen") ?? 1))));
+                    ("timesSeen", JsonTreeNode.FromInt64(Js.Number(claim, "timesSeen") ?? 1)),
+                    ("url", Js.OptStr(link))));
                 if (Js.Text(claim, "technicalComponentId") is string vanishedComponent)
                 {
                     vanished.Add(Js.Obj(("claimId", JsonTreeNode.FromString(Js.Text(claim, "claimId")!)), ("technicalComponentId", JsonTreeNode.FromString(vanishedComponent))));
@@ -207,6 +239,7 @@ internal static partial class ToolHandlers
                     ("componentKind", Js.OptStr(Js.Text(claim, "componentKindKey"))),
                     ("sourceTypeAsSeen", JsonTreeNode.FromString(Js.Text(claim, "sourceType") ?? "unknown")),
                     ("externalId", JsonTreeNode.FromString(Js.Text(claim, "externalId")!)),
+                    ("url", Js.OptStr(urls.TryGetValue(Js.Text(claim, "externalId")!, out string? claimUrl) ? claimUrl : component?.Text("url"))),
                     ("labelAsSeen", JsonTreeNode.FromString(label)),
                     ("targetAsSeen", Js.OptStr(Js.Text(claim, "targetAsSeen"))),
                     ("suggestedClaimant", Js.OptStr(Js.Text(claim, "suggestedClaimantObjectId"))),
@@ -234,6 +267,14 @@ internal static partial class ToolHandlers
 
         JsonTreeNode? counts = Js.Member(plan, "counts");
         long itemsSeen = Js.Number(counts, "itemsSeen") ?? items.Count;
+
+        // Items the comparison left out (OP-13, rule 5: another estate, or a kind the gap check does not cover) are named,
+        // so a list that reads "0 items seen" says why (fix round 2).
+        long left = Js.Number(counts, "ignored") ?? 0;
+        if (left > 0)
+        {
+            s.Call.Warn("gap-check.items-left-out", Count((int)left, "item was", "items were") + " left out: the gap check covers only the estate it reads and the component kinds marked for it. Give each item its kind, such as cloud-flow.", "Gap Check Run", runId);
+        }
         StoredRow runRow = s.Rows.Get("gap-check-run", runId)!;
         ComposedWrite update = s.Update("gap-check-run", runId, Js.Obj(
             ("itemsSeen", JsonTreeNode.FromInt64((runRow.Number("itemsSeen") ?? 0) + itemsSeen)),
@@ -258,7 +299,10 @@ internal static partial class ToolHandlers
     private static JsonTreeNode RunOwnerCheck(ToolScope s)
     {
         s.RequireAiState("as-reported");
-        IDirectoryReader directory = s.Options.Directory ?? throw s.Upstream("Microsoft Graph", "no Graph client is bound to this server");
+        IDirectoryReader directory = s.Options.Directory ?? throw s.Upstream("Microsoft Graph", "this install has no connection to the directory");
+        // A demo's fictional directory (wave 4b QA): the run says so, in its admin role used and its summary, as a gap check
+        // over the demo's fictional inventory does. It never claims a live read of Entra.
+        bool demoDirectory = directory is IDemoDirectory;
         IReadOnlyList<string> appFilter = s.Strings("businessApplicationIds");
         IReadOnlyList<string> principalFilter = s.Strings("principalObjectIds");
         var assignments = s.Rows.Query(RowQuery.For("owner-assignment"))
@@ -273,7 +317,7 @@ internal static partial class ToolHandlers
         ComposedWrite run = runId == null
             ? s.Create("gap-check-run", Js.Obj(
                 ("runBy", JsonTreeNode.FromString(s.PersonId)),
-                ("adminRoleUsed", JsonTreeNode.FromString(s.Session.Caller.DirectoryRoleIds.FirstOrDefault() ?? "unknown")),
+                ("adminRoleUsed", JsonTreeNode.FromString(demoDirectory ? DemoDirectoryMarker : s.Session.Caller.DirectoryRoleIds.FirstOrDefault() ?? "unknown")),
                 ("estatesCovered", Js.Strs(new[] { "entra-owners" })),
                 ("startedOn", Js.Utc(s.Now)),
                 ("itemsSeen", JsonTreeNode.FromInt64(0))))
@@ -317,7 +361,7 @@ internal static partial class ToolHandlers
                     ("reviewType", JsonTreeNode.FromString(reviewType)),
                     ("status", JsonTreeNode.FromString(s.StatusFor("review", "due"))),
                     ("trigger", JsonTreeNode.FromString("owner-check")),
-                    ("dueOn", JsonTreeNode.FromString(leavesOn ?? s.Today)))).RowId;
+                    ("dueOn", JsonTreeNode.FromString(s.PersonToday)))).RowId;
                 if (!s.Call.IsDryRun)
                 {
                     reviews.Add(reviewId);
@@ -329,6 +373,7 @@ internal static partial class ToolHandlers
                 ("directoryState", JsonTreeNode.FromString(directoryState)),
                 ("leavesOn", Js.Str(leavesOn)),
                 ("applications", Arr(apps)),
+                ("dataSubjects", Arr(AffectedDataSubjects(s, assignments.Where(a => Same(a.Text("principal"), principal))))),
                 ("ownerCheckReviewIds", Ids(reviews))));
         }
 
@@ -342,8 +387,11 @@ internal static partial class ToolHandlers
             ("findings", Arr(findings)),
             ("more", JsonTreeNode.FromBoolean(next != null)),
             ("skipToken", Js.OptStr(next)));
-        return s.Answer(data, page.Count + " owner(s) checked live in Entra, " + findings.Count + " finding(s).");
+        return s.Answer(data, Count(page.Count, "owner", "owners") + (demoDirectory ? " checked in the demo's fictional directory, " : " checked live in Entra, ") + Count(findings.Count, "finding", "findings") + ".");
     }
+
+    // The admin role an owner check over a demo's fictional directory records (DemoDirectoryReader.AdminRoleUsedMarker).
+    private const string DemoDirectoryMarker = "demo: the demo's fictional directory";
 
     // ---- 37. list_claims ----
 
@@ -386,9 +434,15 @@ internal static partial class ToolHandlers
             ("targetAsSeen", Js.Str(c.Text("targetAsSeen"))),
             ("url", c.Text("url") is string url && url.StartsWith("https://", StringComparison.Ordinal) ? JsonTreeNode.FromString(url) : JsonTreeNode.Null),
             ("suggestedClaimant", s.PrincipalRef(c.Text("suggestedClaimant"))),
+            ("claimedBy", s.PrincipalRef(c.Text("claimedBy"))),
+            ("claimedOn", ToolScope.MomentOrNull(c.Text("claimedOn"))),
+            ("resultingComponentId", Js.Str(c.Text("resultingComponent"))),
+            ("businessApplicationId", Js.Str(c.Text("resultingComponent") is string comp ? s.Rows.Get("technical-component", comp)?.Text("businessApplication") : null)),
+            ("ownershipDecisionId", Js.Str(s.Query("decision", ("subjectClaim", c.Id)).OrderByDescending(d => d.Text("engineCheckedOn") ?? string.Empty, StringComparer.Ordinal).Select(d => d.Id).FirstOrDefault())),
+            ("intakeRequestId", Js.Str(ClaimIntake(s, c)?.Id)),
             ("foundOn", Js.Utc(Js.ParseMoment(s.Rows.Get("gap-check-run", c.Text("gapCheckRun") ?? string.Empty)?.Text("startedOn")) ?? Js.ParseMoment(c.Text("engineCheckedOn")) ?? s.Now)),
             ("lastSeenOn", ToolScope.MomentOrNull(c.Text("lastSeenOn"))))));
-        return s.Answer(Js.Obj(("items", items), ("skipToken", Js.OptStr(next))), ordered.Count + " claim(s) match" + (hidden > 0 ? "; " + hidden + " are not visible to you." : "."));
+        return s.Answer(Js.Obj(("items", items), ("skipToken", Js.OptStr(next))), Count(ordered.Count, "claim matches", "claims match") + (hidden > 0 ? "; " + hidden + " are not visible to you." : "."));
     }
 
     // ---- 38. claim_resource ----
@@ -411,48 +465,80 @@ internal static partial class ToolHandlers
             throw s.Refused(McpErrorCodes.RuleViolation, "The claim is " + claim.Text("statusMeaning") + ", so it cannot be claimed.");
         }
 
+        // P06 step 6 (document 23, B23-10). For a new application the claim starts an intake (P01) with the component
+        // pre-filled: a draft application holds the component, and a draft intake request names it as its application and
+        // the claimant, or the person given, as business owner. The intake's triage decides; its acceptance registers the
+        // draft and makes the named person its business owner (the update-subject effect), so no ownership decision is
+        // opened. For an existing application the component is added; when the claimant holds no owner role on it, an
+        // ownership decision about the claim asks the people the rules name to confirm it, and a person's claim submits
+        // it at once. An AI client's claim leaves that decision proposed for the person to submit, unless the Tool Policy
+        // lets it submit.
         JsonTreeNode? fresh = Js.Member(s.Args, "newApplication");
         string appId;
         bool created = false;
         string? decisionId = null;
+        string? intakeId = null;
+        bool submitted = false;
+        JsonTreeNode requested = Js.EmptyObject;
+        JsonTreeNode? engineAccepted = null;
         if (fresh != null)
         {
-            s.RequireAiState("proposed");
-            s.RequireKey("application-kind", Js.Text(fresh, "applicationKindKey"), "newApplication.applicationKindKey");
+            s.RequireAiState("draft");
+            string kindKey = s.RequireKey("application-kind", Js.Text(fresh, "applicationKindKey"), "newApplication.applicationKindKey").KeyPath;
             if (Js.Text(fresh, "portfolioId") is string portfolio)
             {
                 s.RequireRow("portfolio", portfolio, "newApplication.portfolioId");
             }
 
+            string? owner = Js.Text(fresh, "businessOwnerObjectId") is string named ? KnownBusinessOwner(s, named, "newApplication.businessOwnerObjectId") : ClaimantAsOwner(s);
+            string name = Js.Text(fresh, "name")!;
             appId = s.Create("business-application", Js.Obj(
-                ("name", JsonTreeNode.FromString(Js.Text(fresh, "name")!)),
+                ("name", JsonTreeNode.FromString(name)),
                 ("purpose", JsonTreeNode.FromString(Js.Text(fresh, "purpose")!)),
-                ("applicationKind", JsonTreeNode.FromString(Js.Text(fresh, "applicationKindKey")!)),
+                ("applicationKind", JsonTreeNode.FromString(kindKey)),
                 ("portfolio", Js.OptStr(Js.Text(fresh, "portfolioId"))),
                 ("status", JsonTreeNode.FromString(s.StatusFor("business-application", "draft"))))).RowId;
             created = true;
+            string where = claim.Text("targetAsSeen") is string target ? " in " + target : string.Empty;
+            intakeId = s.Create("intake-request", Js.Obj(
+                ("requester", JsonTreeNode.FromString(s.PersonId)),
+                ("title", JsonTreeNode.FromString(name)),
+                ("need", JsonTreeNode.FromString(Js.Text(fresh, "purpose")! + " The gap check found it running unregistered: " + (claim.Text("labelAsSeen") ?? claim.Id) + where + ".")),
+                ("proposedKind", JsonTreeNode.FromString(kindKey)),
+                ("businessApplication", JsonTreeNode.FromString(appId)),
+                ("businessOwner", Js.OptStr(owner)),
+                ("status", JsonTreeNode.FromString(s.StatusFor("intake-request", "draft"))))).RowId;
         }
         else
         {
             appId = RequireApplication(s).Id;
-        }
-
-        // Claiming for an application the caller does not own proposes an ownership decision instead of a silent change.
-        if (created || !s.OwnsApplication(appId))
-        {
-            s.RequireAiState("proposed");
-            decisionId = s.Create("decision", Js.Obj(
-                ("decisionType", JsonTreeNode.FromString("ownership")),
-                ("subjectKind", JsonTreeNode.FromString("claim")),
-                ("subjectClaim", JsonTreeNode.FromString(claim.Id)),
-                ("subjectApplication", JsonTreeNode.FromString(appId)),
-                ("statement", JsonTreeNode.FromString("Confirm that " + (claim.Text("labelAsSeen") ?? claim.Id) + " belongs to the application, owned by the claimant.")),
-                ("context", JsonTreeNode.FromString("Claimed by " + s.PersonId + " from gap check claim " + claim.Id + ".")),
-                ("status", JsonTreeNode.FromString(s.StatusFor("decision", "proposed"))))).RowId;
-        }
-        else
-        {
-            s.RequireAiState("link");
+            if (!s.OwnsApplication(appId))
+            {
+                s.RequireAiState("proposed");
+                StoredRow target = s.Rows.Get("business-application", appId)!;
+                decisionId = s.Create("decision", Js.Obj(
+                    ("decisionType", JsonTreeNode.FromString(EngineKeys.OwnershipDecisionType)),
+                    ("subjectKind", JsonTreeNode.FromString("claim")),
+                    ("subjectClaim", JsonTreeNode.FromString(claim.Id)),
+                    ("subjectApplication", JsonTreeNode.FromString(appId)),
+                    ("statement", JsonTreeNode.FromString("Confirm that " + (claim.Text("labelAsSeen") ?? claim.Id) + " is part of " + AppName(target) + ".")),
+                    ("context", JsonTreeNode.FromString(s.DisplayLabel(s.PersonId) + " claimed it from the gap check and holds no owner role on " + AppName(target) + ", so an owner confirms it belongs there.")),
+                    ("status", JsonTreeNode.FromString(s.StatusFor("decision", "proposed"))))).RowId;
+                if (!s.IsAiCaller || (s.Session.ToolPolicy.AiMayReach(s.Tool, "submitted") && s.Session.ToolPolicy.AiMaySubmit(s.Tool, "decision")))
+                {
+                    engineAccepted = EngineAcceptance(s, decisionId, out _);
+                    requested = s.Call.RequestApprovals(decisionId);
+                    submitted = true;
+                }
+                else
+                {
+                    s.Call.Warn("claim.decision-not-submitted", "An AI client claimed this for the person, so the ownership decision stays proposed until the person submits it.", "Decision", decisionId);
+                }
+            }
+            else
+            {
+                s.RequireAiState("link");
+            }
         }
 
         string kind = claim.Text("componentKind") ?? throw s.Invalid("claimId", "The claim names no component kind, so it cannot become a component.");
@@ -472,15 +558,59 @@ internal static partial class ToolHandlers
             ("claimedOn", Js.Utc(s.Now)),
             ("resultingComponent", JsonTreeNode.FromString(componentId))));
         StoredRow app = s.Rows.Get("business-application", appId)!;
+        var approvals = Js.Strings(requested, "approvalRecordIds").Select(r => s.Rows.Get("approval-record", r)).Where(r => r != null).Select(r => ApprovalRequested(s, r!)).ToList();
         JsonTreeNode data = ToolScope.Merge(
             s.WriteResult("claim", write),
             ("technicalComponentId", s.Call.IsDryRun ? JsonTreeNode.Null : JsonTreeNode.FromString(componentId)),
             ("businessApplicationId", s.Call.IsDryRun && created ? JsonTreeNode.Null : JsonTreeNode.FromString(appId)),
             ("applicationCreated", JsonTreeNode.FromBoolean(created)),
             ("applicationStatus", s.StatusValue(app)),
+            ("intakeRequestId", intakeId == null || s.Call.IsDryRun ? JsonTreeNode.Null : JsonTreeNode.FromString(intakeId)),
             ("ownershipDecisionId", decisionId == null || s.Call.IsDryRun ? JsonTreeNode.Null : JsonTreeNode.FromString(decisionId)),
-            ("approvalsNeeded", decisionId == null ? Js.EmptyArray : Arr(ApprovalsNeeded(s, decisionId, "ownership"))));
-        return s.Answer(data, "The item is claimed" + (created ? " for a new draft application" : string.Empty) + (decisionId == null ? "." : ", with a proposed ownership decision."), s.RecordUrl("claim", claim.Id));
+            ("decisionSubmitted", JsonTreeNode.FromBoolean(submitted)),
+            ("approvalsRequested", Arr(s.Call.IsDryRun ? Array.Empty<JsonTreeNode>() : approvals)),
+            ("engineAccepted", engineAccepted ?? JsonTreeNode.Null),
+            ("approvalsNeeded", decisionId == null ? Js.EmptyArray : Arr(ApprovalsNeeded(s, decisionId, EngineKeys.OwnershipDecisionType))));
+        string summary = intakeId != null
+            ? "The item is claimed for a new draft application, and its intake request is started as a draft. Answer the tier questions and submit it for triage."
+            : decisionId == null ? "The item is claimed and added to " + AppName(app) + "."
+            : submitted ? "The item is claimed and added to " + AppName(app) + ". " + Count(approvals.Count, "owner is", "owners are") + " asked to confirm it on the decision page."
+            : "The item is claimed and added to " + AppName(app) + ", with a proposed ownership decision for the person to submit.";
+        var next = new List<NextStep>();
+        if (intakeId != null && !s.Call.IsDryRun)
+        {
+            next.Add(ToolScope.Next("answer_tier_questions", ("intakeRequestId", JsonTreeNode.FromString(intakeId))));
+            next.Add(ToolScope.Next("submit_record", ("subjectKind", JsonTreeNode.FromString("intake-request")), ("subjectId", JsonTreeNode.FromString(intakeId))));
+        }
+        else if (decisionId != null && !submitted && !s.Call.IsDryRun)
+        {
+            next.Add(ToolScope.Next("submit_record", ("subjectKind", JsonTreeNode.FromString("decision")), ("subjectId", JsonTreeNode.FromString(decisionId))));
+        }
+
+        return s.Answer(data, summary, intakeId != null && !s.Call.IsDryRun ? s.RecordUrl("intake-request", intakeId) : s.RecordUrl("claim", claim.Id), next.ToArray());
+    }
+
+    // The claimant as the business owner a new application's intake names, when the store knows them as a person who can
+    // own it; null otherwise (the requester then names one in the wizard).
+    private static string? ClaimantAsOwner(ToolScope s)
+    {
+        StoredRow? person = s.Principal(s.PersonId);
+        string? state = person?.Text("directoryState");
+        if (person == null || person.Text("principalKind") != "user" || person.Flag("isErased") || state == "disabled" || state == "deleted"
+            || (person.Text("leavesOn") is string leaves && string.CompareOrdinal(leaves, s.Today) <= 0))
+        {
+            return null;
+        }
+
+        return person.Text("entraObjectId") ?? s.PersonId;
+    }
+
+    // The intake request a claim started for a new application: the intake that names the draft application holding the
+    // claim's component.
+    private static StoredRow? ClaimIntake(ToolScope s, StoredRow claim)
+    {
+        string? app = claim.Text("resultingComponent") is string comp ? s.Rows.Get("technical-component", comp)?.Text("businessApplication") : null;
+        return app == null ? null : s.Query("intake-request", ("businessApplication", app)).OrderBy(i => i.Id, StringComparer.Ordinal).FirstOrDefault();
     }
 
     // ---- 39. dismiss_claim ----
@@ -506,6 +636,6 @@ internal static partial class ToolHandlers
             ("status", JsonTreeNode.FromString(s.StatusFor("claim", meaning))),
             ("dismissReason", undo ? JsonTreeNode.Null : JsonTreeNode.FromString((reasonKey == null ? string.Empty : reasonKey + ": ") + s.RequireText("reason")))));
         JsonTreeNode data = Js.Obj(s.WriteResult("claim", write).ToArray());
-        return s.Answer(data, undo ? "The claim is open again." : "The claim is dismissed. It can be reopened with undo.", s.RecordUrl("claim", claim.Id));
+        return s.Answer(data, undo ? "The claim is open again." : "The claim is dismissed. Reopen brings it back.", s.RecordUrl("claim", claim.Id));
     }
 }

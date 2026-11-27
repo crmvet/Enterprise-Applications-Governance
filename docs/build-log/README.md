@@ -1,18 +1,35 @@
 # Build log: Enterprise Applications Governance, the next version
 
-How the next version of Enterprise Applications Governance was designed, and how its first code core was built, over the weekend of Saturday 2026-11-21 and Sunday 2026-11-22, and how the technical work went public early on Monday 2026-11-23, with the first working software after it. All times are US Eastern. Counts are as of about 8:45 PM on the Sunday, unless a row says otherwise.
+How the next version of Enterprise Applications Governance was designed, and how its first code core was built, over the weekend of Saturday 2026-11-21 and Sunday 2026-11-22. How the technical work went public early on Monday 2026-11-23, with the first working software after it. And how, from that Monday to Thursday 2026-11-26, it was built in waves into a web app, an MCP server and an engine that run as a demo install with fictional data. All times are US Eastern. Counts are as of about 8:45 PM on the Sunday, unless a row or a heading says otherwise. "How it is tested" gives the counts of Thursday 2026-11-26 and Friday 2026-11-27.
 
-AI sessions drafted, built and checked the work. The author made every decision.
+AI sessions drafted, built and checked the work. The author made every decision in the decision records.
 
 ## Read this first
 
-- **The product is in design.** Every capability of the next version is something it is designed to do. Nothing in this log says it is released, running or available.
-- **The platform.** The first release is designed to run in the client's own Azure subscription ([D-26][dec]).
-- **The code is early work, not the product and not a release.** It runs on a developer machine with fictional data: the engine and the MCP server core on an in-memory store with a mock sign-in, and, from the Monday, an early Azure adapter over a SQLite file with a development identity. Its Azure SQL store has not run against a real database, and its Azure template has never been deployed. It runs in no cloud and for no client.
-- **The technical work is open source under the MIT License** ([D-27][dec]): the [source](../../src/), the [overview](../overview.md), the [architecture pages](../architecture/), the [step 2 design documents](../design/step2/), the [decision records](../decisions/) and the [diagrams](../diagrams/).
-- **The 2021 release** is the only release that ships. It is a Microsoft Dataverse solution, open source under MIT since 2021 and no longer maintained. Its source is in [Solutions](../../Solutions/). It was the author's own work ([D-23][dec]).
+- **Built and tested, with no release yet.** The next version is built and tested. It runs as a demo install with fictional data, on a local machine and in a sandbox in the author's own Azure subscription. There is no release yet. The rows from the weekend were written while the product was in design, so they say what it is designed to do. Anything that is not built and covered by a test is still only something the product is designed to do.
+- **The platform.** The first release is designed to run in the client's own Azure subscription ([D-26][dec]). The demo install runs on Azure Functions (Flex Consumption) and Azure SQL, with Entra sign-in.
+- **What runs today.** A web app (React 19 on shadcn/ui), an MCP server, and a portable engine built for .NET Framework 4.8 and .NET 10. On a local machine it runs over SQLite with a development identity. No real install exists yet, because the first configuration version of a real install cannot be set up through the API yet. The Azure SQL cases of the store tests need a SQL Server; they are opt-in and have not yet run against a real database.
+- **The technical work is open source under the MIT License** ([D-27][dec]): the [source](../../src/), the [product documentation](../../src/docs/), the [overview](../overview.md), the [architecture pages](../architecture/), the [step 2 design documents](../design/step2/), the [decision records](../decisions/) and the [diagrams](../diagrams/).
+- **The 2021 release** is still the only release. It is a Microsoft Dataverse solution, open source under MIT since 2021 and no longer maintained. Its source is in [Solutions](../../Solutions/). It was the author's own work ([D-23][dec]).
 - **"The author"** below is the product's author and owner.
-- **Decision numbers** (D-01 to D-35) match the [decision records][dec]. D-21 and D-34 are not about the technical design, so they are not published. Their numbers are kept so the sequence has no gaps.
+- **Decision numbers** (D-01 to D-42) match the [decision records][dec]. D-21, D-34 and D-42 are not about the technical design, so they are not published. Their numbers are kept so the sequence has no gaps.
+
+## How it is tested
+
+These counts are from Thursday 2026-11-26. The browser suite ran on the code of the waves 4 and 4b commit. Later that day a privacy pass went over the code, with its review fixes. It edited comments, descriptions, test titles and notes, one docs check and one field name in the demo kit's scenario list, and wrote the walkthrough transcript and a generated field list again. Then the check runner and the web app checks ran again, ending at about 11:46 PM and 11:47 PM, and their counts did not move. On Friday 2026-11-27 a public pass changed wording that people and MCP clients read, not what the engine decides. The check runner ran again on the code published in this commit, with the same totals, and the browser suite ran again on the changed code, with the same result. The [test report](test-report-2026-11-26.md) in this folder gives the details, and its section 6 covers 2026-11-27.
+
+| Check | What it covers | Result |
+|---|---|---|
+| The full check run | One command, `node tools/ci.mjs --no-scrub` from `src/`, run in Linux under WSL2: the build, the tests, the presets, the fixtures, the replays, the dash, JSON, model and content checks, the package checks, the demo kit's tests, the browser suite's checks without a browser, the docs check and the generated files | All checks passed; the scrub gate is skipped here and runs separately before the push |
+| Engine and MCP tests | The engine and the MCP server core, on .NET 10 | 1,294 of 1,294 passed |
+| Azure host tests | The host: sign-in, the REST API, the MCP endpoint and the demo install | 256 passed, 1 skipped |
+| Store tests | The SQLite and Azure SQL stores | 167 passed, 85 skipped: the Azure SQL cases, which need an empty test database and are opt-in, and the row store cases that the in-memory store skips |
+| Engine fixtures and replays | Test cases with expected answers, and recorded engine calls replayed | 871 fixtures and 14 replays passed |
+| The web app | `src/ui/harness`: lint, unit tests and both builds | Lint clean, 487 of 487 tests passed, both builds passed |
+| The browser suite | Playwright, in `src/tests/e2e`, on a fresh local demo store: 23 scenario specs, one test per presenter step | 201 of 201 steps on a desktop at 1280 px and 201 of 201 on a phone at 390 px. None failed, none was skipped, and no write was skipped. All 74 side sheets of the web app and all 40 write tools were performed for real |
+| The demo check | `demo check`: the preconditions of every scenario | GO for all 23 scenarios |
+
+This repository's CI runs the same full check run on every push, on Windows, where the .NET Framework 4.8 tests run too. It skips the scrub gate and the content check's working default anchors, whose files are not public. The browser suite needs a running demo server and a browser, so it does not run there. Its results are in the test report.
 
 ## 1. Timeline
 
@@ -78,14 +95,14 @@ AI sessions drafted, built and checked the work. The author made every decision.
 |---|---|
 | About 5:50 PM | [D-24][dec]: the code stays private until the main design choices are settled. D-27 replaces this at 8:25 PM. |
 | About 6:00 PM | [D-25][dec]: the technical reference lives in this repository: an overview, the Microsoft fit, the architecture pages and one decision record per decision. |
-| About 6:10 PM | [D-26][dec]: the first release is designed to run in the client's own Azure subscription. Most users are owners and reviewers, not builders, and the product is designed so they need no Power Platform license for it. It is designed so that nothing locks it to one platform and the data stays in the client's subscription. The engine stays a portable library, so a Dataverse edition could come later without a rewrite. |
+| About 6:10 PM | [D-26][dec]: the first release is designed to run in the client's own Azure subscription. Most of the people it is designed for are owners and reviewers, not builders, and the product is designed so they need no Power Platform license for it. It is designed so that nothing locks it to one platform and the data stays in the client's subscription. The engine stays a portable library, so a Dataverse edition could come later without a rewrite. |
 | 8:17 PM | First commit of the working repository: 1,894 files. |
 | About 8:25 PM | [D-27][dec]: the technical work is public under the MIT License: the code after a public pass, design documents written for readers, the decision records, the diagrams and this log. Internal notes, goals and plans stay private. This supersedes D-24. |
 | About 8:28 PM | [D-28][dec]: the core idea is governing AI development of the apps. The product is designed to enable AI development, not to slow it down. One playbook has an organization track and an IT track, and it opens by naming the old ways of working to avoid. The product's own MCP server is designed so the AI builder can ask the governance questions while it builds. Application portfolio management stays as the record underneath. |
 | About 8:30 PM | The platform decision is carried into the design documents, each change marked, not rewritten. |
 | About 8:45 PM | The author confirms D-27. The public pass makes the technical files public-grade and writes one public decision record per decision, for the author to review and push. [D-29][dec] changes who pushes at about 11:15 PM. |
 
-### Sunday 2026-11-22, late evening, and Monday 2026-11-23
+### Sunday 2026-11-22, late evening, and Monday 2026-11-23, early morning
 
 | Time | What happened |
 |---|---|
@@ -100,9 +117,53 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Monday 1:00 AM | Commit `79a1b22` publishes seven more systems map pages, rebuilt, with their Visio source. The other pages in their three sets now carry the platform line of [D-26][dec]. |
 | Monday 2:12 to 2:22 AM | Working software under [D-30][dec]. Commit `2c5c227` adds an early Azure adapter: a host with the MCP endpoint and a read API over the engine, SQLite and Azure SQL stores, an Azure Functions wrapper and an azd template. Commits `629a35d` and `055d445` fix two details of the CI build. Nothing is deployed. |
 | Monday 5:06 AM | Commit `cffb7da` adds the web app with its four read-only pages on the product's own API, the approval runner's routes with a Power Automate flow template, and directory reads on behalf of the signed-in admin, tested against recorded, fictional responses. It runs end to end on one machine over SQLite with a development identity. Tests: engine and MCP core 1,782 of 1,782, Azure host 141 of 141, Azure stores 102 passed and 48 skipped (39 Azure SQL cases that need a test database, and 9 cases that only the row stores support), web app 49 of 49. Nothing is deployed. |
-| Monday evening | [D-32][dec]: the author asks whether the interface was designed and what it is built on, and chooses shadcn/ui if nothing is better. The four pages move from Fluent UI to shadcn/ui (React 19, Radix primitives, Tailwind CSS 4, lucide icons) on the same Academy palette, light only. Three AI agents port the pages and the shell in parallel on a shared foundation. The type check, the 49 unit tests, the package check, the accessibility check at 1280 px and 390 px and the screenshots pass. |
-| Monday evening | [D-33][dec]: to see the product in a sandbox subscription before the bootstrap route exists, the author chooses a demo install now and the real bootstrap next. The web app gets a demo switch and badge, and the seed command an environment named Demo. The local checks move into Linux under WSL2, where every check passes. |
-| Monday evening | [D-35][dec]: the author asks whether the pages can look close to Microsoft's own screens. Three looks of the same pages are rendered side by side, and the author chooses Fluent 2's shape and colors, with navy text. The header now shows the product's name. The accessibility check passes on every page at both widths. |
+
+### Monday 2026-11-23, afternoon and evening
+
+| Time | What happened |
+|---|---|
+| 1:52 PM | Commit `746c2ef` adds [D-31][dec]: the product's name is Enterprise Applications Governance. Public text always uses the full name, and "EAGov" is only for technical keys. The code keeps its placeholder names until a rename of its own. |
+| 2:21 PM | Commit `48d8a06` brings the reader documents' status lines, screenshots and counts up to date. |
+| 3:01 PM | Commit `74376c7`. The engine gains approvals that need several answers, and approval expiry. The Azure adapter gains store keys that the database enforces, request limits per signed-in caller, security headers, structured logging, and retries for transient Azure SQL failures. The setup and admin guides grow to seven and four. Tests: engine and MCP core 1,813 passed, Azure adapter 194 of 194, stores 138 passed and 72 skipped, engine fixtures 617, replays 14. Nothing is deployed. |
+| By 3:07 PM | The sixteen-hour window of [D-30][dec] closes. |
+| 6:07 PM | Commit `856edc2`, [D-32][dec]: the author asks whether the interface was designed and what it is built on, and chooses shadcn/ui if nothing is better. The four pages move from Fluent UI to shadcn/ui (React 19, Radix primitives, Tailwind CSS 4, lucide icons) on the same Academy palette, light only. Three AI agents port the pages and the shell in parallel on a shared foundation. The type check, the 49 unit tests, the package check, the accessibility check at 1280 px and 390 px and the screenshots pass. |
+| 6:31 PM | Commit `44ee6e0`, [D-33][dec]: to see the product in a sandbox subscription before the bootstrap route exists, the author chooses a demo install now and the real bootstrap next. The web app gets a demo switch and badge, and the seed command an environment named Demo. The local checks move into Linux under WSL2, where every check passes. |
+| 6:44 PM | Commit `74b335d`, [D-35][dec]: the author asks whether the pages can look close to Microsoft's own screens. Three looks of the same pages are rendered side by side, and the author chooses Fluent 2's shape and colors, with navy text. The header now shows the product's name. The accessibility check passes on every page at both widths. |
+| 7:13 PM | Commit `0ab5d42` adds the stub of D-34, which is not published, and keeps LF line endings for shell scripts. |
+| 8:39 PM | A fix for the first demo install, in a sandbox in the author's own Azure subscription. Its first deployment to a real Azure SQL database had stopped in the row-level security script, because Azure SQL refuses two enabled security policies on one table. The fix makes one policy with every filter and block predicate, and a new test checks that the scripts create exactly one. |
+| 9:22 PM | The applications list becomes a register: search by name or purpose, filters for stage, tier, kind and portfolio with counts, sort, and the filters kept in the address. The fictional demo estate grows to 696 rows. |
+| By 10:16 PM | After the first demo of the sandbox install, the author finds that the web app does not show the use cases the design describes. [D-36][dec]: the web app acts. People do their work in it, and the engine checks every write from it as it checks an AI client's. [D-37][dec]: data places become business data domains, configured per install and mapped to technical locations of any vendor. [D-38][dec]: a person answers an approval on the decision page, and Teams and Outlook messages are designed to link to it. [D-39][dec]: a demo install switches roles with a demo-only persona switch. [D-40][dec]: self-approval stays as the Balanced preset has it. A map of every use case to the screens it needs, and a screen design, are written down. |
+
+### Tuesday 2026-11-24
+
+From here the build runs in waves. Each wave is a set of use cases, built across the engine, the tools and the screens, then checked, reviewed and fixed before it is committed to the private working repository. Waves 1 to 4b reach this repository together, in one public pass on the Thursday.
+
+| Time | What happened |
+|---|---|
+| 1:31 AM | The data taxonomy design of D-37 is written down, with nine detail questions. [D-41][dec] settles them: a data use that a "never" rule forbids is refused when it is saved, for people and AI clients alike, and the other details follow the design's recommendations. |
+| 5:33 AM | Wave 1 is committed: the web app acts ([D-36][dec]). A signed-in person proposes, answers and records through the same operations an AI client uses. A person answers an approval on the decision page ([D-38][dec]), through a tool served only to a person, never to an AI client. A demo-only persona switch covers 14 fictional personas ([D-39][dec]). Self-approval follows the Balanced preset as it stands ([D-40][dec]). New pages: My work, Approvals, the decision page, the intake wizard, Owners, Reviews, Changes and the record pages, each acting through a side sheet that shows the engine's answer. A security review's findings are fixed before the commit. Checks: every check passes in Linux under WSL2, and the web app's 144 tests pass. |
+| By 6:38 AM | The sandbox's demo install is rebuilt on wave 1, with the persona switch. A read-only browser walk over its data passes My work for all 14 personas, and Approvals, a decision page, intake, owners, reviews and changes, at 1280 px and 390 px. The walk shows that some pages make hundreds of database round trips, which is slow over a long network path. Wave 4 batches those reads. |
+| 2:31 PM | Wave 2 is committed: accepted decisions take effect. When a decision is accepted, the engine changes its record in the same transaction, with one audit entry: owners, tier, autonomy and stage change, an accepted intake registers the application, and an authorized change is scheduled. Reviews complete and changes close, both served only to a person. Records get numbers. Before a person answers, the page asks the engine who may answer and which rule refuses. New screens: the Application 360 panels, Deployments, Places, AI activity, Audit, Agents, the Demo guide, the decision log, Documents, Portfolios, Demand, Retirement, the gap check and Search. On a demo install, Claude Code may act for a persona on the MCP endpoint, under every AI rule, stamped "Claude Code, demo operator". Checks: every check passes, with 734 engine fixtures and 14 replays, and the web app's 276 tests pass. |
+| 4:34 PM | The sandbox's demo install is rebuilt on wave 2. |
+
+### Wednesday 2026-11-25
+
+| Time | What happened |
+|---|---|
+| 3:59 AM | Wave 3 is committed: the data taxonomy ([D-37][dec], [D-41][dec]). Business data domains sit in a tree with owners at any level, with classifications, technical locations from any vendor, mappings, and the data uses of each application, on a new Azure SQL migration. Ten data tools, among them `check_data_use`, which tells an AI builder before it builds whether a use needs a decision or breaks a never rule. New screens: Data (domains, locations, mapping, uses and gaps), four data record pages, the Data panel of Application 360, Configuration with a draft builder, Roles and access, Guidelines, Measures and Admin. The daily due-state refresh is built: a timer in the Functions app, and Run now for a platform admin. The demo gains the data rows, a data governance lead and a second configuration admin. QA, three reviews and two fix rounds come before the commit. Checks: every check passes, with 863 engine fixtures; the web app's 400 tests pass; the scrub and dash checks are clean. |
+| During the day | The sandbox's demo install is rebuilt on wave 3. Wave 4 starts with teams and committees: two new reads, a Teams page and a page per team. Each shows who is in the team, which product role it holds, which decisions it answers, which applications it supports and what waits on it now. Committees and support teams are worked out from the groups the install already knows, and membership stays in Entra. |
+| During the day | Wave 4 batches the heaviest reads by key set. On a generated estate of 2,000 fictional applications, the overview's summary makes 22 database reads instead of 27,099, and tests hold each heavy read under a ceiling. |
+| During the day | Wave 4 adds the demo kit, one command each: `demo local up` starts a local demo on a fresh store, `demo refresh` asks expired story approvals again, `demo check` gives go or no-go for every scenario, and `demo play` plays a scenario in a visible browser with captions and can record it. `demo sandbox rebuild` is designed to rebuild a demo install on Azure step by step; its dry run, which prints every step and runs nothing, is tested. It adds the scenarios and presenter scripts: a catalog, one script per scenario with an ID for every step, runs of 5, 15 and 45 minutes, seven role tracks, the exact Claude Code prompts and a one-page cheat sheet. It adds the Playwright browser suite: one spec per scenario and one test per presenter step with the same ID, on a desktop at 1280 px and a phone at 390 px, with a screenshot per step and a read-only mode. It drives the installed Chrome and downloads no browser. And it adds the product documentation in `src/docs`: concepts, a guide per role, the admin and install guides, Claude Code and MCP, the REST API and testing, checked against the code. |
+| Later in the day | Wave 4's QA walks, its product, security and docs claims reviews, and two fix rounds. A new scenario plays the everyday records that no scenario showed yet, and the bugs it finds are fixed. |
+| Late in the day | Wave 4b starts. The author asks for the web app's actions that no scenario shows to be demoed and tested too, and the goal becomes every write action the web app offers. A new scenario plays every other action: drafts, answers, rules and records. A seventeenth fictional persona joins, so an approval shown on stage is not a self-approval. The gap check runs in a demo, over a fictional inventory. The new steps find product bugs, which are fixed: a data move whose mapping would collide is refused instead of failing, and withdrawing a draft application withdraws its ownership decision. |
+
+### Thursday 2026-11-26
+
+| Time | What happened |
+|---|---|
+| Early morning | Wave 4b's two fix rounds. Coverage is now counted per side sheet: a check holds each of the web app's 74 side sheets to a presenter step whose test performs it, and at run time a write counts only when the page sent it for real and it was answered. A withdrawn draft location now frees its external ID, with Azure SQL migration 0009 (schema version 9). |
+| 6:04 AM | Waves 4 and 4b are committed to the private working repository, after a second verify round on a fresh store. Every check passes, and the browser suite passes 201 of 201 steps at each width ("How it is tested"). The public decision records D-36 to D-41 are written, with a stub for D-42, which is not published. |
+| After the commit | The public pass of waves 1 to 4b for this repository: the decision records, this log, the test report, the reader documents, a privacy pass of the source, and the final checks (scrub, privacy, build, license and links) before the push. There is no release and no version tag. |
 
 ## 2. What the design produced
 
@@ -114,7 +175,9 @@ AI sessions drafted, built and checked the work. The author made every decision.
 | Step 2 logical design, seven documents | Glossary and entities, the configuration model, the logical data model, 11 processes, the MCP tool surface, the engine and the security model. Written for both possible data stores, so the platform choice did not mean redoing it. |
 | Step 2 working defaults | The 16 internal conflicts settled, the 17 questions adopted as working defaults, and the 6 open design questions. |
 | Technical reference for readers | The overview, the Microsoft fit, and the architecture pages: configuration and presets, the data model, one page per process, the MCP tools, sign-in and security, the rules engine and the screens. |
-| Decision records | One per decision, D-01 to D-35, each with its context, options, choice and reasons. D-21 and D-34 are not published. |
+| Use case map and screen design | Written on the Monday night, after D-36: every use case of the 11 processes mapped to the screens it needs. They stay private as working files. The [screens page](../architecture/screens.md) describes the screens for readers. |
+| Data taxonomy design | Written overnight into the Tuesday, for D-37: three approaches weighed, and nine detail questions, each with options and a recommendation. D-41 answered them. It stays private as a working file. The records [D-37][dec] and [D-41][dec] give its choices, and the [data taxonomy page](../architecture/data-taxonomy.md) describes the design as built. |
+| Decision records | One per decision, D-01 to D-42, each with its context, options, choice and reasons. D-21, D-34 and D-42 are not published. |
 | Research notes | 24 notes at the first commit (8:17 PM), on Microsoft's tools, MCP and Copilot options, a Microsoft news sweep and a foundation study. Two more followed that evening, on governing AI development and the playbook outline. They stay private as working files. Public documents cite Microsoft Learn directly. |
 
 ### 2.2 Diagrams
@@ -141,7 +204,7 @@ The public diagrams, with their Visio source, are in [docs/diagrams](../diagrams
 
 ## 3. The code
 
-This section describes the code as of the Sunday evening: an offline core on a developer machine, with fictional data. The Monday rows in section 1 add the Azure adapter and the web app. The pass counts below come only from runs that happened, with their times. The names still use the placeholder "Product" until the product has a name ([D-05][dec]).
+This section first describes the code as of the Sunday evening: an offline core on a developer machine, with fictional data. The Monday rows in section 1 add the Azure adapter and the web app, and the rows from the Tuesday to the Thursday add the waves. The table at the end of this section says what the code holds on Thursday 2026-11-26. The pass counts come only from runs that happened, with their times. The names in the code still use the placeholder "Product". [D-31][dec] chose the name on the Monday, and the rename is planned as a change of its own.
 
 | Module or asset | Status | What it is | Size or tests |
 |---|---|---|---|
@@ -160,7 +223,7 @@ This section describes the code as of the Sunday evening: an offline core on a d
 | Playbook and guidelines | exists | 16 playbook chapters, 11 processes, 20 numbered guidelines (2 retired) | Drafts. The two tracks of D-28 were not written yet at 8:45 PM. By 11:17 PM there were 23 chapters (0 to 22) and 24 numbered guidelines (2 retired), all drafts |
 | Pipeline record step samples | exists | Azure DevOps, GitHub Actions and a Power Platform Pipelines extension flow | 33 of 33 tests (run 11:57 AM) |
 | Setup and admin guides | exists | Five skeletons, 40 Microsoft Learn links, each with its check date | Skeletons |
-| The registration effect | designed | Not built. The walkthrough marks it as a stand-in | None |
+| The registration effect | designed | Not built on the Sunday. The walkthrough marks it as a stand-in. Wave 2 built it on the Tuesday: an accepted intake decision registers the application (section 1) | None on the Sunday |
 | The record endpoint host, the approval runner | designed | Not built on the Sunday. Both came as early work in the Azure adapter on the Monday (section 1) | None |
 
 At the first commit the code had 11 .NET projects, 228 C# files and 1,227 files in all.
@@ -180,7 +243,20 @@ On the Monday, the early Azure adapter added a record endpoint host and the appr
 | 7 | Run 2:13 to 2:14 PM | 11 invariants as generated tests over all 22 preset choices; the replay tool | 15 of 15 (samples skipped) | 1,733 of 1,733 | 611, plus 14 of 14 replays |
 | 8 | About 2:30 to 3:00 PM | The scripted walkthrough, run as a test | 15 of 15 (samples skipped) | 1,734 of 1,734 | 611 |
 
-Note on local builds: in build 1 and later, Windows Smart App Control on the build machine sometimes refused to load newly built, unsigned files. Nobody tried to get around it. The same tests ran on .NET Framework 4.8 instead, and later builds loaded.
+Note on local builds: in build 1 and later, Windows Smart App Control on the build machine sometimes refused to load newly built, unsigned files. Nobody tried to get around it. The same tests ran on .NET Framework 4.8 instead, and later builds loaded. From the Monday evening, the local checks run in Linux under WSL2.
+
+**The code on Thursday 2026-11-26:**
+
+| Part | What it is | Where |
+|---|---|---|
+| The engine | The rules engine: configuration and presets, the operations, the write guard every write passes, and the runtime. Built for .NET Framework 4.8 and .NET 10 | [src/engine](../../src/engine/) |
+| The MCP server | 102 tools: 62 read and 40 write. 8 of them are served only to a person in the web app, among them answering an approval, completing a review and closing a change | [src/mcp](../../src/mcp/) |
+| The Azure host | Azure Functions with the MCP endpoint, the REST API and Entra sign-in; the SQLite and Azure SQL stores, with Azure SQL at schema version 9; the azd template; the approval runner's flow templates | [src/adapters/azure](../../src/adapters/azure/), with its [status page](../../src/adapters/azure/STATUS.md) |
+| The web app | React 19 on shadcn/ui, with the Fluent 2 look of [D-35][dec]. People do their work in it ([D-36][dec]) through 74 side sheets | [src/ui](../../src/ui/) |
+| The demo kit | One command each: start a local demo, ask a demo's expired approvals again, check every scenario, and play one in a visible browser. A fifth command is designed to rebuild a demo install on Azure; only its dry run is tested | [src/demo/kit](../../src/demo/kit/) |
+| Demo scenarios | 23 scenarios with 201 presenter steps, runs of 5, 15 and 45 minutes, seven role tracks, the Claude Code prompts and a cheat sheet. Fictional data and people only | [src/docs/demo](../../src/docs/demo/) |
+| The browser suite | Playwright Test: 23 specs, one test per presenter step, at 1280 px and 390 px | [src/tests/e2e](../../src/tests/e2e/) |
+| Product documentation | Concepts, a guide per role, the admin and install guides, Claude Code and MCP, the REST API and testing | [src/docs](../../src/docs/) |
 
 ## 4. Verification practice
 
@@ -194,6 +270,14 @@ Note on local builds: in build 1 and later, Windows Smart App Control on the bui
 | Microsoft Learn re-checks | Microsoft facts are checked against Microsoft Learn, with the check date | A news sweep with 12 corrections. Licensing facts checked on Learn when the question came up. 40 Learn links in the guides, each dated |
 | Code checks | One command runs every check: build, tests, presets, fixtures, replays, dashes, scrub, JSON, model, content, pages, samples and generated files | 15 of 15 on the last runs |
 
+From the Tuesday on, every wave ran the same practices, with more:
+
+- QA walks of the scenarios in a browser, and an accessibility check over every route at 1280 px and 390 px;
+- independent product and security reviews of each wave, and from wave 4 a review of the documentation's claims against the code;
+- fix rounds before each commit, and for waves 4 and 4b a verify round on a fresh store;
+- the claims check now counts a capability as built only when the code has it and a test covers it. Anything else stays "designed to";
+- the browser suite and the demo kit's check ("How it is tested").
+
 ## 5. How it was made with AI
 
 ### 5.1 Who did what
@@ -205,8 +289,11 @@ The author:
 - set the two tests for the platform, running cost and admin effort, with security a must;
 - chose the platform ([D-26][dec]), opened the technical work under MIT ([D-27][dec]) and set the core idea, governing AI development of the apps ([D-28][dec]);
 - decided who pushes ([D-29][dec]) and set sixteen hours of independent work within fixed limits ([D-30][dec]);
-- keeps the final name, the six step 2 design questions and the change gate open for now;
-- decides what is published in this repository.
+- chose the name ([D-31][dec]), and keeps the six step 2 design questions and the change gate open for now;
+- after the first demo of the sandbox install, asked for a web app that acts ([D-36][dec]), set the shape of the data taxonomy ([D-37][dec]), and chose where a person answers an approval ([D-38][dec]), the demo persona switch ([D-39][dec]) and the self-approval rule ([D-40][dec]);
+- ruled that a "never" rule cannot be broken by anyone, and let the design's recommendations settle the data taxonomy's other details ([D-41][dec]);
+- asked for every write action of the web app to be demoed and tested;
+- decides what is published in this repository, and when there is a release.
 
 The AI sessions:
 
@@ -215,9 +302,10 @@ The AI sessions:
 - wrote the step 2 logical design for both possible data stores;
 - built the 128 Visio diagram pages from layout files;
 - wrote the offline code core and its tests, attacked it, fixed what broke, and kept two open points open instead of guessing;
+- built waves 1 to 4b: the screens, the engine and tool changes behind them, the demo kit, the scenarios and presenter scripts, the browser suite and the product documentation, and ran QA, reviews and fix rounds on each wave;
 - ran the scrub gate, the claims checks, the critics and the adversarial checks;
 - compared the platforms and recommended one. They did not decide. AI never picked the platform or the name;
-- under [D-29][dec], the AI session in the product's workspace pushed the private backup and, after the final checks passed, this repository (`4faba8f` and `60a08bc` first, then each later commit on the Monday), never by force.
+- under [D-29][dec], the AI session in the product's workspace pushed the private backup and, after the final checks passed, this repository (`4faba8f` and `60a08bc` first, then each later commit on the Monday), never by force. Waves 1 to 4b reach this repository in one public pass, after the same final checks.
 
 ### 5.2 The decision practice
 
@@ -225,9 +313,10 @@ A person decides. AI drafts the options and applies the answer.
 
 - Each question came with background, an example, options with pros and cons, a recommendation, and what the answer changes.
 - Each answer was recorded with its date, time and reason, and with what it means for the design. Agents read the decisions before they write.
-- When a later answer changes an earlier one, the record says what it supersedes. For example, D-26 superseded the Dataverse back end of D-02, and D-27 superseded D-24.
+- When a later answer changes an earlier one, the record says what it supersedes or amends. For example, D-26 superseded the Dataverse back end of D-02, D-27 superseded D-24, and D-36 amended the read-only pages of D-18.
 - Nothing settled is asked again.
 - Two decisions recorded questions left open at the time (D-03 and D-14).
+- From [D-41][dec] on, the author left the detail questions of a design to its recommendations. The AI session applies the recommended option, records it with its reason, and shows the result. Questions that only the author can answer, such as a release, wait for the author.
 
 ### 5.3 Rules for unattended work
 
@@ -241,8 +330,12 @@ While the author was away on the Saturday night and the Sunday, the AI sessions 
 
 For the second window, which [D-30][dec] set late on the Sunday, one rule changed: the AI session in the product's workspace commits and pushes, and it pushes this repository only after the final checks pass ([D-29][dec]). The other limits stand: no sign-in as a person, so nothing is deployed to Azure; no release or version tag; nothing private in public.
 
+Later windows without the author, from the Tuesday to the Thursday, kept the core limits: no release or version tag without the author, nothing private in public, and this repository is pushed only after the final checks pass.
+
 ### 5.4 Workflows
 
 The work ran in Claude Code sessions. Inside a session, larger jobs ran as workflows: one agent builds, another integrates, and a critic checks the result before it counts as done.
+
+Each wave ran the same way. The backend slices came first, each leaving the full check run green. Then came the screens, then the demo kit, the scenarios and the documentation in parallel, then the browser suite. QA, the reviews, the fix rounds and a verify round came last.
 
 [dec]: ../decisions/

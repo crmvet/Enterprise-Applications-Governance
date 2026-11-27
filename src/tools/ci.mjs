@@ -3,12 +3,12 @@
 // (.github/workflows/ci.yml runs "node tools/ci.mjs --no-scrub" from src/).
 // Checks, in order: tool packages, restore, build, offline tests, test, Azure adapter, preset build, fixtures, replay,
 // dash check, scrub gate, JSON check, model check, content check, UI harness packages, pipeline record step samples,
-// model generators.
+// demo kit, end-to-end suite (packages and specs, no browser), product docs, model generators.
 // Every check runs. Then a summary prints, and the exit code is 1 if any check failed.
 //
 // Usage: node tools/ci.mjs [--configuration Release] [--skip <name,name>] [--no-scrub]
 //   --skip       skip checks by name: packages, restore, build, offline, test, azure, presets, fixtures, replay, dash,
-//                scrub, json, model, content, ui, samples, generated
+//                scrub, json, model, content, ui, samples, kit, e2e, docs, generated
 //   --no-scrub   for a copy of src/ without the workspace scrub script, such as the public repository. The content
 //                check then also runs with --no-sources, because content/SOURCES.md is not published either
 //
@@ -194,6 +194,29 @@ check('ui', 'UI harness packages',
 check('samples', 'Pipeline record step samples',
   () => ({ code: run(process.execPath, [path.join(SRC, 'samples', 'pipeline-steps', 'test', 'record-steps.test.mjs')], SRC) }),
   ['packages']);
+// The demo kit (demo/kit/README.md): its own tests, offline, against a small fake server on 127.0.0.1. No packages, no
+// product server, no WSL and no Azure: the sandbox rebuild runs only as a dry run there.
+check('kit', 'Demo kit tests',
+  () => ({ code: run(process.execPath, ['--test', path.join('demo', 'kit', 'test', 'kit.test.mjs')], SRC) }));
+// The end-to-end suite (tests/e2e/README.md), without a browser or a server: its packages by the same rules as the web
+// app's (exact versions, registry sources, licenses, THIRD-PARTY.md), its specs against the presenter scripts (one
+// test per step, same IDs, titles and order), and every count a script's proof names checked by its step's test
+// (check-scripts.mjs, product review, fix round 2), and every write tool the web app calls played in a presenter step whose
+// test performs it, with its row in the catalog's table of write actions (check-actions.mjs, wave 4b). It reads files
+// only. Running the suite needs a browser and a server: on
+// Windows, "node run.mjs" in tests/e2e (docs/testing.md, "The end-to-end tests").
+check('e2e', 'End-to-end suite (packages, specs against the scripts, counts, write actions)', () => {
+  const packages = run(process.execPath, [path.join(SRC, 'ui', 'harness', 'scripts', 'check-packages.mjs'), '--package', 'tests/e2e'], SRC);
+  const suite = run(process.execPath, [path.join(SRC, 'tests', 'e2e', 'tools', 'check-suite.mjs')], SRC);
+  const counts = run(process.execPath, [path.join(SRC, 'tests', 'e2e', 'tools', 'check-scripts.mjs')], SRC);
+  const actions = run(process.execPath, [path.join(SRC, 'tests', 'e2e', 'tools', 'check-actions.mjs')], SRC);
+  return { code: packages || suite || counts || actions };
+});
+// The product documentation (docs/README.md): its generated parts (the tool list, the error codes, the roles and what
+// each may call) match a fresh run from the contracts and the shipped configuration, and every link in docs/ resolves
+// inside src/. It reads files only; "node tools/docs-gen.mjs" writes the generated parts.
+check('docs', 'Product docs (generated parts, links)',
+  () => ({ code: run(process.execPath, [path.join(TOOLS, 'docs-gen.mjs'), '--check'], SRC) }));
 // The model generators: two runs give the same bytes, and model/generated/ matches a fresh run. The outputs are
 // drafts (not applied; D-26 chose Azure SQL for the first release). Nothing is applied to any database or environment.
 // No packages.

@@ -61,7 +61,7 @@ public sealed class ContractSet
 
     public IReadOnlyDictionary<string, ErrorCodeInfo> Errors { get; }
 
-    // The 51 Tool Policy seed rows (proposed C41) of tool-policy.seed.json.
+    // The 52 Tool Policy seed rows (proposed C41) of tool-policy.seed.json.
     public IReadOnlyList<JsonTreeNode> SeedPolicyRows { get; }
 
     // The 14 human role keys of document 21's seed.
@@ -167,7 +167,8 @@ public sealed class ContractSet
                 Js.Member(row, "annotations") ?? Js.EmptyObject,
                 input,
                 output,
-                UntrustedPaths(schemas, output)));
+                UntrustedPaths(schemas, output),
+                Js.Strings(row, "entries").ToList()));
         }
 
         var toolsets = Js.Items(toolsIndex, "toolsets").Select(t => new ToolsetInfo(Js.Text(t, "key")!, Js.Text(t, "label") ?? Js.Text(t, "key")!)).ToList();
@@ -181,7 +182,7 @@ public sealed class ContractSet
 
         if (errors.Count != McpErrorCodes.All.Count || McpErrorCodes.All.Any(c => !errors.ContainsKey(c)))
         {
-            throw new InvalidOperationException("errors.json does not hold exactly the 11 fixed error codes of document 24, section 3.5.");
+            throw new InvalidOperationException("errors.json does not hold exactly the " + McpErrorCodes.All.Count + " fixed error codes of document 24, section 3.5.");
         }
 
         var resources = new List<ResourceContract>();

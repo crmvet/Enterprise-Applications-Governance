@@ -1,12 +1,12 @@
 # P10 AI draft and human accept
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenarios [S-02](../../../src/docs/demo/scenarios/S-02-ai-build-loop.md) and [S-21](../../../src/docs/demo/scenarios/S-21-claude-code-refusals.md) play it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
-This process is designed to let AI clients do most of the typing while a person decides everything that matters. The data shows which is which. Records an AI creates start as Draft or Proposed, with a flag. Only people approve, on approval cards in Outlook and Teams. Every record shows who performed it, including "performed by AI, on behalf of" a named person.
+This process is designed to let AI clients do most of the typing while a person decides everything that matters. The data shows which is which. Records an AI creates start as Draft or Proposed, with a flag. Only people approve: by default on the decision page in the web app, where the person's own sign-in proves who answered ([D-38](../../decisions/D-38-a-person-answers-an-approval-on-the-decision-page.md)), or, where an install keeps the approval runner's cards with step-up sign-in off, in a card in Outlook or Teams. Every record shows who performed it, including "performed by AI, on behalf of" a named person.
 
-![Deployment records and flags, and who accepts an AI draft. The AI client drafts, the approval runner sends the card, and only a person's answer counts.](../img/s2-process-4-deploy-ai.png)
+![Deployment records and flags, and who accepts an AI draft, drawn before D-38 moved the default answer to the decision page. The AI client drafts, the approval runner sends the card, and only a person's answer counts.](../img/s2-process-4-deploy-ai.png)
 
 ## Trigger
 
@@ -17,7 +17,7 @@ Any write made by an AI client acting for a person, or by an agent identity ([th
 | Role | Part in this process |
 |---|---|
 | The person the AI acts for | Does the work and accepts their own drafts |
-| The role that answers for the decision type | Decides every decision, on a card |
+| The role that answers for the decision type | Decides every decision, on the decision page by default |
 | The AI client | Supports only: it drafts, proposes and checks. It never holds a role and never decides |
 
 ## What AI may and may not do
@@ -38,38 +38,38 @@ Any write made by an AI client acting for a person, or by an agent identity ([th
 
 | What is accepted | Channel for acceptance in the current design | Why |
 |---|---|---|
-| A decision, of any type | An approval card only. The engine accepts with no card only for the locked list | Only the approval runner writes answers. This is "AI never approves" |
-| Registering an application the AI created | A confirmation card to the named business owner | An application must not enter the register on an AI's word |
-| Setting a document that a gate needs to current | A confirmation card to the document owner | Gates read it ([P07](p07-documentation-tracking.md)) |
-| Submitting an intake, a change request or a decision | The same MCP call, on the person's behalf, where the tool policy allows it. Allowed by default | A submission is a request, not a decision. The decision that follows needs a card |
+| A decision, of any type | A person's answer to an approval request: on the decision page by default, or in a card where an install keeps them. The engine accepts with no person's answer only for the locked list | Only the person the request asks writes an answer, or the approval runner relays one from a card. This is "AI never approves" |
+| Registering an application the AI created | A confirmation request to the named business owner | An application must not enter the register on an AI's word |
+| Setting a document that a gate needs to current | A confirmation request to the document owner | Gates read it ([P07](p07-documentation-tracking.md)) |
+| Submitting an intake, a change request or a decision | The same MCP call, on the person's behalf, where the tool policy allows it. Allowed by default | A submission is a request, not a decision. The decision that follows needs a person's answer |
 | Links, deployment records and checks | No separate acceptance | They record facts the person reports. The record shows the AI as the performer |
 
-This table is held as a setting, per kind of record, so an organization can move toward more cards. Which act counts as a person's for these drafts is an open design question. The locked list (the decisions the engine may accept with no card) is also an open design question.
+This table is held as a setting, per kind of record, so an organization can ask for more confirmations. Which act counts as a person's for these drafts is an open design question. The locked list (the decisions the engine may accept with no person's answer) is also an open design question.
 
 4. **Recommendations.** If an organization's own approval flow has an AI step, the product records its result as a recommendation only. It never counts as an approval.
 5. **Show it.** Every page and every tool answer marks AI-created records and shows "performed by AI client X for person Y".
 
 ## Why an MCP call is never a person's confirmation
 
-The product's MCP server acts with the person's delegated token. So the engine cannot prove that a person, and not the AI, pressed the button. An approval or confirmation card answered in Outlook or Teams, and written back only by the approval runner, is the one channel the engine can trust.
+The product's MCP server acts with the person's delegated token. So the engine cannot prove that a person, and not the AI, pressed the button. An answer comes only through a channel that proves the person. By default that is the decision page in the web app, where the engine checks the signed-in person's own token before anything is written ([D-38](../../decisions/D-38-a-person-answers-an-approval-on-the-decision-page.md)). Where an install keeps cards, a card answered in Outlook or Teams and relayed by the approval runner is the other channel. An AI client is never served `answer_approval`, and an AI answer the runner relays is stored as a recommendation only that never counts.
 
-A confirmation card is a Power Automate approval with two custom answers, "Confirm" and "Discard". It asks a person to accept an AI draft that is not a decision. It is stored as an approval record against the drafted record.
+Where an install keeps cards, a confirmation card is a Power Automate approval with two custom answers, "Confirm" and "Discard". It asks a person to accept an AI draft that is not a decision. It is stored as an approval record against the drafted record.
 
 ## What is recorded
 
 | Record | What happens |
 |---|---|
 | Any operational record | Marked AI-created where an AI wrote it, with who performed it, for whom, and through which client app |
-| Approval record | One per confirmation card |
+| Approval record | One per confirmation request |
 | Audit entry | Each write, in the product's own audit log |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| What | Approver in the default configuration | Card mode |
+| What | Approver in the default configuration | Approval mode |
 |---|---|---|
-| Any decision | The approvers set by the decision type's approval rule ([approval cards](README.md#approval-cards)) | Set by the rule |
-| Registering an AI-created application | The named business owner, on a confirmation card | First to respond |
-| A document a gate needs, set to current | The document owner, on a confirmation card | First to respond |
+| Any decision | The approvers set by the decision type's approval rule ([the approval path](README.md#approval-cards)) | Set by the rule |
+| Registering an AI-created application | The named business owner, through a confirmation request | First to respond |
+| A document a gate needs, set to current | The document owner, through a confirmation request | First to respond |
 
 ## What an organization can configure
 
@@ -79,26 +79,26 @@ A confirmation card is a Power Automate approval with two custom answers, "Confi
 
 The "AI never approves" lock itself is on and locked. An organization cannot turn it off.
 
-## Designed MCP tools
+## MCP tools
 
 All write tools follow this process. No tool accepts a decision or confirms a draft.
 
 ## Microsoft tools linked, never rebuilt
 
-- [Power Automate approvals](https://learn.microsoft.com/power-automate/get-started-approvals), which send the approval and confirmation cards.
+- [Power Automate approvals](https://learn.microsoft.com/power-automate/get-started-approvals), which send the approval runner's notices and, where an install keeps them, the approval and confirmation cards.
 
 ## Where it runs on Azure (in design)
 
 | Concern | Designed to run on |
 |---|---|
 | Downgrade and stamp | The rules engine in the one Azure Functions app, on every write |
-| Telling the web app from an MCP client | The calling application's ID in the validated token. That is still not proof of a person, so cards stay the default |
-| Confirmation cards | The approval runner ([approval cards](README.md#approval-cards)) |
-| Who may write an answer | Only the approval runner's workload role. The API refuses an answer from any other caller, the approver's own AI client included |
+| Telling the web app from an MCP client | The calling application's ID in the validated token. That alone is not proof of a person, so `answer_approval` is served only to a person in the web app: the MCP endpoint never lists it, and an AI client that calls it is refused |
+| Confirmation notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
+| Who may write an answer | The person the request asks, on the decision page, or, for an answer given in a card, the approval runner's workload role. The API refuses an answer from any other caller, the approver's own AI client included |
 
 ## Example (fictional people and apps)
 
-Priya Castell tells Claude Code: "Nadia said yes in the hallway. Approve the go-live for her so we keep Thursday." In the design, there is no approve tool, so the MCP server would answer that the tool does not exist. If the same AI client tried to write the card's answer or the accepted decision directly, the engine would refuse both: only the approval runner writes an answer, and only the engine accepts a decision once the counted approvals meet the rule. Nothing would change. Nadia would answer the card in Teams herself.
+Priya Castell tells Claude Code: "Nadia said yes in the hallway. Approve the go-live for her so we keep Thursday." In the design, there is no approve tool, so the MCP server would answer that the tool does not exist. If the same AI client tried to write an answer or the accepted decision directly, the engine would refuse both: an AI client is never served `answer_approval`, and only the engine accepts a decision once the counted approvals meet the rule. Nothing would change. Nadia would answer on the decision page herself.
 
 ## Microsoft sources
 

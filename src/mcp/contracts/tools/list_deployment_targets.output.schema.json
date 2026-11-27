@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_deployment_targets output",
+  "description": "The response envelope. On success, data lists deployment targets by stage, with paging.",
+  "x-tool": "list_deployment_targets",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/target"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many targets match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "description": "One deployment target.",
+      "required": [
+        "deploymentTargetId",
+        "label",
+        "targetKind",
+        "targetStage",
+        "changePath",
+        "linkKind",
+        "externalId",
+        "url",
+        "lastSeenOn",
+        "retiredOn",
+        "retiredReason",
+        "applications",
+        "pipelines",
+        "deploymentCount",
+        "flaggedCount",
+        "dataLocations",
+        "isAiCreated",
+        "performedBy",
+        "recordUrl"
+      ],
+      "properties": {
+        "deploymentTargetId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O15 Deployment Target"
+        },
+        "label": {
+          "type": "string",
+          "description": "The target's name when last seen.",
+          "x-untrusted": true
+        },
+        "targetKind": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetStage": {
+          "type": "object",
+          "required": [
+            "key",
+            "label",
+            "rank"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C34 Target Stage"
+            },
+            "label": {
+              "type": "string",
+              "description": "The stage label."
+            },
+            "rank": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The stage rank: production is highest."
+            }
+          },
+          "additionalProperties": false
+        },
+        "changePath": {
+          "type": "object",
+          "required": [
+            "key",
+            "label",
+            "allowedRoutes"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C35 Change Path"
+            },
+            "label": {
+              "type": "string",
+              "description": "The change path label."
+            },
+            "allowedRoutes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The routes this path expects; another route is flagged other path."
+            }
+          },
+          "additionalProperties": false
+        },
+        "linkKind": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "externalId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The tool's ID, such as a Power Platform environment ID. Null for a caller who holds only the reader role."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "description": "A link that opens the target. Null for a caller who holds only the reader role.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastSeenOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "artifactName",
+              "artifactVersion",
+              "result",
+              "finishedOn",
+              "deploymentRecordId"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "artifactName": {
+                "type": "string",
+                "description": "The artifact's name.",
+                "x-untrusted": true
+              },
+              "artifactVersion": {
+                "type": "string",
+                "description": "The version running there."
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/statusValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "finishedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deploymentRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O14 Deployment Record"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The latest deployment of each application to this target: what runs where."
+        },
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "pipelineReferenceId",
+              "label",
+              "url"
+            ],
+            "properties": {
+              "pipelineReferenceId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O16 Pipeline Reference"
+              },
+              "label": {
+                "type": "string",
+                "description": "The pipeline name.",
+                "x-untrusted": true
+              },
+              "url": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Pipelines mapped to this target."
+        },
+        "deploymentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Deployment records to this target."
+        },
+        "flaggedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Of them, records with a flag."
+        },
+        "dataLocations": {
+          "type": "array",
+          "description": "The data locations in service at this target (O25 Deployment Target), so Places links to the Data page.",
+          "items": {
+            "type": "object",
+            "required": [
+              "dataLocationId",
+              "label",
+              "platform",
+              "recordUrl"
+            ],
+            "properties": {
+              "dataLocationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O25 Data Location"
+              },
+              "label": {
+                "type": "string",
+                "x-untrusted": true
+              },
+              "platform": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client registered it."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The record page in the product."
+        },
+        "retiredOn": {
+          "description": "The day a person retired the target. Null while it is in service. A retired target keeps its records and takes no new deployment.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retiredReason": {
+          "description": "Why it was retired.",
+          "x-untrusted": true,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 deployment target(s), by stage.",
+      "data": {
+        "items": [
+          {
+            "deploymentTargetId": "30000000-0000-4000-8000-000000000003",
+            "label": "Operations production",
+            "targetKind": {
+              "key": "power-platform-environment",
+              "label": "Power Platform environment"
+            },
+            "targetStage": {
+              "key": "production",
+              "label": "Production",
+              "rank": 3
+            },
+            "changePath": {
+              "key": "pipeline-only",
+              "label": "Pipeline only",
+              "allowedRoutes": [
+                "pipeline"
+              ]
+            },
+            "linkKind": {
+              "key": "power-platform-resource",
+              "label": "Power Platform resource"
+            },
+            "externalId": "00000000-0000-0000-0000-00000000e003",
+            "url": null,
+            "lastSeenOn": "2026-11-24T09:00:00Z",
+            "retiredOn": null,
+            "retiredReason": null,
+            "applications": [
+              {
+                "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+                "name": "Field Inspections",
+                "artifactName": "FieldInspections",
+                "artifactVersion": "1.0.0",
+                "result": {
+                  "label": "Succeeded",
+                  "meaning": "succeeded"
+                },
+                "finishedOn": "2026-11-24T06:40:00Z",
+                "deploymentRecordId": "60000000-0000-4000-8000-000000000001"
+              }
+            ],
+            "pipelines": [],
+            "deploymentCount": 1,
+            "flaggedCount": 0,
+            "dataLocations": [],
+            "isAiCreated": false,
+            "performedBy": null,
+            "recordUrl": "https://product.example.org/app/records/deployment-target/30000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "totalCount": 1
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

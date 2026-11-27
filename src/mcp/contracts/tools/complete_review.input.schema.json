@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "complete_review input",
+  "description": "Marks a due review done, as the signed-in person: Done On, the person as Reviewer, and the review's accepted outcome decision; the engine sets Next Due On from the cadence of the review type at the application's tier. Served only to a person in the product's web app, because the reviewer attests the review, and an AI client never marks a review done (OP-08, G-08). The person is someone whose review it is: its lead owner, a person who decides the decision it records, or a person whose role approves it. The engine refuses the write unless the outcome decision is accepted, of the type the review type records, about the review's application. Evidence links are added to the review in the same call.",
+  "x-tool": "complete_review",
+  "type": "object",
+  "required": [
+    "reviewId"
+  ],
+  "properties": {
+    "reviewId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O21 Review",
+      "description": "The due review."
+    },
+    "outcomeDecisionId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O09 Decision",
+      "description": "The accepted decision the review ends with. Leave out to use the outcome decision the review already names."
+    },
+    "doneOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "When the review was done. Leave out for today. Never later than today."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/evidenceInput"
+      },
+      "description": "Links to what the review looked at. Each becomes an Evidence Link (O20) on the review."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "reviewId": "60000000-0000-4000-8000-000000000001",
+      "clientRequestId": "req-0620"
+    }
+  ]
+}

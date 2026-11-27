@@ -1,4 +1,7 @@
 {
+  "$comment": [
+    "An answer that changes data under the app's own identity, touches restricted data, reaches the whole organization or outside users, or lets an agent act on its own triggers an architecture review (P04; document 21, B21-9). An agent that acts on its own also triggers the security review."
+  ],
   "entity": "tier-question",
   "rows": [
     {
@@ -23,7 +26,8 @@
           "key": "own-identity",
           "label": "Own identity",
           "answerText": "Changes data under its own identity, or in a system of record",
-          "impliedTierKey": "tier-3"
+          "impliedTierKey": "tier-3",
+          "triggers": { "reviewTypeKeys": ["architecture"] }
         }
       ]
     },
@@ -37,8 +41,9 @@
         {
           "key": "restricted",
           "label": "Restricted",
-          "answerText": "Personal, financial, regulated or otherwise restricted data",
-          "impliedTierKey": "tier-3"
+          "answerText": "Personal, financial, regulated or otherwise restricted data (Confidential or Highly Confidential, Restricted in the data classification)",
+          "impliedTierKey": "tier-3",
+          "triggers": { "reviewTypeKeys": ["architecture"] }
         }
       ]
     },
@@ -63,7 +68,8 @@
           "key": "organization",
           "label": "Organization or outside",
           "answerText": "The whole organization, or anyone outside it",
-          "impliedTierKey": "tier-3"
+          "impliedTierKey": "tier-3",
+          "triggers": { "reviewTypeKeys": ["architecture"] }
         }
       ]
     },
@@ -90,7 +96,7 @@
           "label": "Executes",
           "answerText": "It executes changes in systems",
           "impliedTierKey": "tier-3",
-          "triggers": { "reviewTypeKeys": ["security-review"] }
+          "triggers": { "reviewTypeKeys": ["security-review", "architecture"] }
         }
       ]
     },

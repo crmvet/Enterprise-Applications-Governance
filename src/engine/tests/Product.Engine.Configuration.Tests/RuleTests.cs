@@ -53,12 +53,13 @@ public sealed class RuleTests
     [Fact]
     public void EveryRuleUsesItsCatalogCodeAndRuleId()
     {
-        // Every rule of document 21, section 9, in rule ID order.
+        // Every rule of document 21, section 9, and the data taxonomy's V49 to V60 (docs/architecture/data-taxonomy.md,
+        // Validation rules), in rule ID order. V45 to V48 are engine checks with no rule class.
         string[] ids = ConfigurationValidator.Rules.Select(r => r.RuleId).ToArray();
-        Assert.Equal(Enumerable.Range(1, 44).Select(n => "V" + n.ToString("00", System.Globalization.CultureInfo.InvariantCulture)).ToArray(), ids);
+        Assert.Equal(Enumerable.Range(1, 44).Concat(Enumerable.Range(49, 12)).Select(n => "V" + n.ToString("00", System.Globalization.CultureInfo.InvariantCulture)).ToArray(), ids);
 
-        // V29 and V37 are warnings. V24 and V41 are errors that can also warn.
-        string[] warnings = { "V29", "V37" };
+        // V29, V37, V53 and V59 are warnings. V24, V41 and V50 are errors that can also warn.
+        string[] warnings = { "V29", "V37", "V53", "V59" };
         foreach (ValidationRule rule in ConfigurationValidator.Rules)
         {
             Assert.Contains(rule.RuleId, ReasonCatalog.Get(rule.Code).RuleIds);

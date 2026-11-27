@@ -1,0 +1,72 @@
+{
+  "ok": true,
+  "summary": "Seven approval requests are open across the register. Each is answered on its decision page.",
+  "data": {
+    "items": [
+      {
+        "approvalRecordId": "80000000-0000-4000-8000-000000000001",
+        "decision": {
+          "decisionId": "60000000-0000-4000-8000-000000000013",
+          "decisionType": {
+            "key": "tier",
+            "label": "Tier"
+          },
+          "statement": "Inspection Scheduler is tier 2.",
+          "status": {
+            "label": "Proposed",
+            "meaning": "proposed"
+          },
+          "proposedBy": {
+            "objectId": "20000000-0000-4000-8000-000000000003",
+            "displayLabel": "Requester (sample)"
+          },
+          "isAiCreated": false
+        },
+        "subject": {
+          "subjectKind": "business-application",
+          "subjectId": "10000000-0000-4000-8000-000000000001",
+          "label": "Inspection Scheduler",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "applicationName": "Inspection Scheduler"
+        },
+        "approvalRuleKey": "tier-a",
+        "isConsultation": false,
+        "askedRole": {
+          "key": "platform-admin",
+          "label": "Platform admin"
+        },
+        "askedOwnerRole": null,
+        "askedPrincipal": null,
+        "outcome": {
+          "label": "Pending",
+          "meaning": "pending"
+        },
+        "approver": null,
+        "typedReason": null,
+        "countsTowardRequirement": false,
+        "requestedOn": "2026-11-21T10:05:00Z",
+        "respondedOn": null,
+        "expiresOn": "2026-11-28T10:05:00Z",
+        "otherPendingCount": 0,
+        "isOwnProposal": false,
+        "recordUrl": "https://product.example.org/records/decision/60000000-0000-4000-8000-000000000013",
+        "canAnswer": true,
+        "cannotAnswer": null,
+        "nextTool": "answer_approval"
+      }
+    ],
+    "totalCount": 7,
+    "skipToken": "harness-open-approvals-page-2"
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 3,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "items[].decision.statement",
+    "items[].subject.label",
+    "items[].typedReason"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-open-approvals"
+}

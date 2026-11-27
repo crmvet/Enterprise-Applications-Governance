@@ -148,6 +148,7 @@ internal static class Personas
     public static readonly Persona NadiaWeb = new("t-nadia-web", NadiaId, groups: new[] { OwnerGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
     public static readonly Persona OwenWeb = new("t-owen-web", OwenId, groups: new[] { PlatformAdminGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
     public static readonly Persona PriyaWeb = new("t-priya-web", PriyaId, groups: new[] { RequesterGroup, MakerGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
+    public static readonly Persona MateoWeb = new("t-mateo-web", MateoId, groups: new[] { ReaderGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
 
     // The agent user with a token the web app asked for: an agent identity holds no role on any entry.
     public static readonly Persona AgentWeb = new("t-agent-web", AgentUserId, "agent-user", groups: new[] { OwnerGroup }, scopes: new[] { "api.access" }, clientAppId: WebApp);
@@ -167,7 +168,7 @@ internal static class Personas
     // The release pipeline's identity given the Approval.Write app role too: its Workload Grant is for deployment-recorder only.
     public static readonly Persona PipelineAsRunner = new("t-pipeline-as-runner", PipelineId, "service-principal", appOnly: true, appRoles: new[] { "Approval.Write" }, scopes: Array.Empty<string>());
 
-    public static readonly Persona[] All = { Priya, Nadia, Owen, Mateo, Pipeline, Runner, AllRoles, Agent, OtherTenantPriya, NoScope, UnknownWorkload, PipelineAsRunner, NadiaWeb, OwenWeb, PriyaWeb, AgentWeb, PriyaOtherClient };
+    public static readonly Persona[] All = { Priya, Nadia, Owen, Mateo, Pipeline, Runner, AllRoles, Agent, OtherTenantPriya, NoScope, UnknownWorkload, PipelineAsRunner, NadiaWeb, OwenWeb, PriyaWeb, MateoWeb, AgentWeb, PriyaOtherClient };
 
     // The persona that signs a transcript token in.
     public static Persona ForMockToken(string token)

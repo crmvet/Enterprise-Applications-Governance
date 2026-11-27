@@ -52,6 +52,55 @@ public abstract class StoreConformanceTests
         Assert.Equal(id, store.Records.GetByKey("portfolio", key)!.Id);
     }
 
+    // ---- Key set reads (document 25, B25-23) ----
+
+    // GetMany and QueryIn answer, in one store call, what one read per key answers: the same rows, each once, by ID; an ID
+    // with no row and a value no row holds are left out; values compare exactly (a GUID in other case is another value);
+    // a transaction's own writes stand over the committed rows, as its other reads see them.
+    [Fact]
+    public void KeySetReadsAnswerWhatOneReadPerKeyAnswers()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        using IDisposable caller = TestCaller.Enter();
+        string marker = Marker();
+        string a = Id();
+        string b = Id();
+        string c = Id();
+        string gone = Id();
+        string group = "group-" + marker;
+        store.Seed("portfolio", "{\"level\":\"team\",\"marker\":\"" + marker + "\",\"group\":\"" + group + "\"}", a);
+        store.Seed("portfolio", "{\"level\":\"team\",\"marker\":\"" + marker + "\",\"group\":\"" + group + "-other\"}", b);
+        store.Seed("portfolio", "{\"level\":\"division\",\"marker\":\"" + marker + "\",\"group\":\"" + group.ToUpperInvariant() + "\"}", c);
+        store.Seed("portfolio", "{\"level\":\"team\",\"marker\":\"" + marker + "\"}", gone);
+        Assert.IsAssignableFrom<IKeySetReader>(store.Records);
+
+        string Ids(IEnumerable<StoredRow> rows) => string.Join(",", rows.Select(r => r.Id));
+        string[] values = { group, group + "-other", "no-such-" + marker, group };
+        string[] ids = { b, a, Id(), a };
+
+        Assert.Equal(Ids(new[] { a, b }.OrderBy(i => i, StringComparer.Ordinal).Select(i => store.Records.Get("portfolio", i)!)), Ids(store.Records.GetMany("portfolio", ids)));
+        Assert.Equal(Ids(values.Distinct().SelectMany(v => store.Records.Query(RowQuery.For("portfolio").Where("group", v))).OrderBy(r => r.Id, StringComparer.Ordinal)), Ids(store.Records.QueryIn("portfolio", "group", values)));
+        Assert.DoesNotContain(store.Records.QueryIn("portfolio", "group", values), r => r.Id == c);
+        Assert.Empty(store.Records.QueryIn("portfolio", "group", new[] { "no-such-" + marker }));
+        Assert.Empty(store.Records.GetMany("no-such-entity", ids));
+
+        using IStoreTransaction tx = store.Records.Begin();
+        Assert.IsAssignableFrom<IKeySetReader>(tx);
+        string added = Id();
+        tx.Create("portfolio", added, null, J("{\"level\":\"team\",\"marker\":\"" + marker + "\",\"group\":\"" + group + "\"}"));
+        tx.Update("portfolio", b, J("{\"group\":\"" + group + "\"}"));
+        tx.Update("portfolio", a, J("{\"group\":\"moved-" + marker + "\"}"));
+        tx.Delete("portfolio", gone);
+
+        Assert.Equal(Ids(new[] { added, b }.OrderBy(i => i, StringComparer.Ordinal).Select(i => tx.Get("portfolio", i)!)), Ids(tx.QueryIn("portfolio", "group", new[] { group })));
+        Assert.Equal(Ids(tx.Query(RowQuery.For("portfolio").Where("group", group))), Ids(tx.QueryIn("portfolio", "group", new[] { group })));
+        Assert.Equal(group, tx.GetMany("portfolio", new[] { b }).Single().Text("group"));
+        Assert.Equal(Ids(new[] { a, added }.OrderBy(i => i, StringComparer.Ordinal).Select(i => tx.Get("portfolio", i)!)), Ids(tx.GetMany("portfolio", new[] { added, a, gone })));
+
+        // Committed reads do not see the transaction's writes.
+        Assert.Equal(a, Assert.Single(store.Records.QueryIn("portfolio", "group", new[] { group })).Id);
+    }
+
     [Fact]
     public void DisposingWithoutCommitDiscardsEveryWrite()
     {
@@ -573,9 +622,132 @@ public abstract class StoreConformanceTests
         Assert.Contains("widget", Assert.Throws<InvalidOperationException>(() => tx.Create("widget", Id(), null, J("{}"))).Message);
         Assert.Throws<InvalidOperationException>(() => store.Seed("widget", "{}"));
 
-        // C03 Preset lives inside C01, and later entities have no table yet.
+        // C03 Preset lives inside C01, and later entities have no table yet. L01 Data Area left the model when the data
+        // taxonomy replaced it (D-37; document 22, B22-14).
         Assert.Throws<InvalidOperationException>(() => tx.Create("preset", Id(), null, J("{}")));
+        Assert.Throws<InvalidOperationException>(() => tx.Create("checklist-result", Id(), null, J("{}")));
         Assert.Throws<InvalidOperationException>(() => tx.Create("data-area", Id(), null, J("{}")));
+    }
+
+    // ---- The data taxonomy (D-37; document 22, B22-14) ----
+
+    // Every new entity is created, read by ID, queried by a column and changed, on every store. The configuration rows
+    // are live rows named by their key path; the operational rows carry their links by ID and their domain by key.
+    [Theory]
+    [InlineData("data-classification", "restricted-", "{\"label\":\"Highly Confidential\",\"rank\":RANK,\"defaultUseRule\":\"decision\",\"defaultAiUseRule\":\"decision\",\"defaultCopyToTestRule\":\"never\"}")]
+    [InlineData("data-domain-level", "subdomain-", "{\"label\":\"Subdomain\",\"rank\":RANK,\"ownerRequired\":false,\"declarable\":true}")]
+    [InlineData("data-domain", "payroll-", "{\"label\":\"Payroll\",\"parentKey\":\"people\",\"levelKey\":\"subdomain\",\"aiUseRule\":\"never\",\"examples\":\"salary, deductions\"}")]
+    [InlineData("data-platform", "azure-sql-", "{\"label\":\"Azure SQL\",\"locationKindKey\":\"relational-database\",\"vendorKey\":\"microsoft\",\"containerLabel\":\"schema.table\",\"defaultLinkKindKey\":\"azure-data-resource\"}")]
+    [InlineData("data-location", null, "{\"dataPlatform\":\"azure-sql\",\"targetStage\":\"production\",\"linkKind\":\"azure-data-resource\",\"externalId\":\"/subscriptions/00000000-0000-4000-8000-000000000001/sql-MARK\",\"labelAsSeen\":\"Fixture server\",\"status\":\"registered\",\"statusMeaning\":\"registered\"}")]
+    [InlineData("data-mapping", null, "{\"dataDomain\":\"payroll-MARK\",\"dataLocation\":\"00000000-0000-4000-8000-000000000901\",\"containers\":[\"dbo.payslip\"],\"dataOrigin\":\"system-of-record\",\"status\":\"draft\",\"statusMeaning\":\"draft\",\"startOn\":\"2026-11-24\"}")]
+    [InlineData("data-use", null, "{\"recordNumber\":\"DU-MARK\",\"businessApplication\":\"00000000-0000-4000-8000-000000000902\",\"dataDomain\":\"payroll\",\"access\":\"read\",\"purpose\":\"Shows payslips.\",\"reachesAi\":false,\"isDeidentified\":false,\"status\":\"draft\",\"statusMeaning\":\"draft\",\"startOn\":\"2026-11-24\"}")]
+    public void EveryDataTaxonomyEntityIsCreatedReadQueriedAndChanged(string entity, string? keyPrefix, string json)
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        using IDisposable caller = TestCaller.Enter();
+        string marker = Marker();
+        string id = Id();
+        string? key = keyPrefix == null ? null : keyPrefix + marker;
+        string rank = (Kind == StoreKind.SqlServer ? 1000 + (Math.Abs(Guid.NewGuid().GetHashCode()) % 1_000_000) : 7).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        JsonTreeNode columns = J(json.Replace("MARK", marker).Replace("RANK", rank).TrimEnd('}') + ",\"marker\":\"" + marker + "\"}");
+        Commit(store, tx => tx.Create(entity, id, key, columns));
+
+        StoredRow row = store.Records.Get(entity, id)!;
+        Assert.Equal(columns, row.Columns);
+        Assert.Equal(key, row.Key);
+        Assert.Equal(entity, row.Entity);
+        if (key != null)
+        {
+            Assert.Equal(id, store.Records.GetByKey(entity, key)!.Id);
+        }
+
+        Assert.Equal(id, Assert.Single(store.Records.Query(RowQuery.For(entity).Where("marker", marker))).Id);
+        Commit(store, tx => tx.Update(entity, id, J("{\"description\":\"Changed\"}")));
+        Assert.Equal("Changed", store.Records.Get(entity, id)!.Text("description"));
+    }
+
+    // An owner assignment names exactly one subject: an application (every row before the data taxonomy), a data domain or
+    // a data location, with Subject Kind naming it. The row stores refuse anything else before the database does.
+    [Fact]
+    public void RowStoresKeepAnOwnerAssignmentToExactlyOneSubjectOfItsKind()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store leaves the subject rule to the engine's guard.");
+        using IDisposable caller = TestCaller.Enter();
+        string application = Id();
+        Commit(store, tx => tx.Create("owner-assignment", Id(), null, J("{\"businessApplication\":\"" + application + "\",\"ownerRole\":\"business-owner\",\"principal\":\"p\",\"isDeputy\":false,\"startOn\":\"2026-11-24\"}")));
+        string domainOwner = Id();
+        Commit(store, tx => tx.Create("owner-assignment", domainOwner, null, J("{\"subjectKind\":\"data-domain\",\"subjectDataDomain\":\"payroll\",\"ownerRole\":\"data-owner\",\"principal\":\"p\",\"isDeputy\":false,\"startOn\":\"2026-11-24\"}")));
+        store.Seed("owner-assignment", "{\"subjectKind\":\"data-location\",\"subjectDataLocation\":\"" + Id() + "\",\"ownerRole\":\"technical-owner\"}", Id());
+
+        using (IStoreTransaction tx = store.Records.Begin())
+        {
+            Assert.Contains("exactly one must hold a value", Assert.Throws<InvalidOperationException>(() =>
+            {
+                tx.Create("owner-assignment", Id(), null, J("{\"businessApplication\":\"" + application + "\",\"subjectDataDomain\":\"payroll\",\"subjectKind\":\"data-domain\"}"));
+                tx.Commit();
+            }).Message);
+        }
+
+        using (IStoreTransaction tx = store.Records.Begin())
+        {
+            Assert.Contains("sets subjectDataDomain instead of businessApplication", Assert.Throws<InvalidOperationException>(() =>
+            {
+                tx.Create("owner-assignment", Id(), null, J("{\"subjectDataDomain\":\"payroll\"}"));
+                tx.Commit();
+            }).Message);
+        }
+
+        // A change that clears the domain without naming another subject is refused too, and the row stays as it was.
+        using (IStoreTransaction tx = store.Records.Begin())
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                tx.Update("owner-assignment", domainOwner, J("{\"subjectDataDomain\":null}"));
+                tx.Commit();
+            });
+        }
+
+        Assert.Equal("payroll", store.Records.Get("owner-assignment", domainOwner)!.Text("subjectDataDomain"));
+        Assert.Throws<InvalidOperationException>(() => store.Seed("owner-assignment", "{\"ownerRole\":\"business-owner\"}", Id()));
+    }
+
+    // The data taxonomy's store keys: a location by platform and External Id among rows in service, a mapping by domain,
+    // location and origin among rows not ended, and a data use by its record number.
+    [Fact]
+    public void RowStoresHoldTheDataTaxonomyKeysOnTheRowsTheyCover()
+    {
+        using IStoreUnderTest store = Stores.Create(Kind);
+        Assert.SkipUnless(store.IsRowStore, "The in-memory store holds no store key.");
+        using IDisposable caller = TestCaller.Enter();
+        string marker = Marker();
+        string location = "{\"dataPlatform\":\"azure-sql\",\"externalId\":\"sql-" + marker + "\",\"labelAsSeen\":\"Fixture\"}";
+        string first = Id();
+        Commit(store, tx => tx.Create("data-location", first, null, J(location)));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("data-location", Id(), null, J(location))));
+        Commit(store, tx => tx.Create("data-location", Id(), null, J(location.Replace("azure-sql", "sql-server"))));
+        Commit(store, tx => tx.Update("data-location", first, J("{\"retiredOn\":\"2026-11-24\"}")));
+        Commit(store, tx => tx.Create("data-location", Id(), null, J(location)));
+
+        // A draft that is withdrawn is archived with no Retired On, and gives its External Id back (wave 4b, fix round 2).
+        string drafted = location.Replace("sql-" + marker, "draft-" + marker);
+        string draft = Id();
+        Commit(store, tx => tx.Create("data-location", draft, null, J(drafted)));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("data-location", Id(), null, J(drafted))));
+        Commit(store, tx => tx.Update("data-location", draft, J("{\"statusMeaning\":\"archived\"}")));
+        Commit(store, tx => tx.Create("data-location", Id(), null, J(drafted)));
+
+        string mapping = "{\"dataDomain\":\"payroll-" + marker + "\",\"dataLocation\":\"" + first + "\",\"dataOrigin\":\"system-of-record\"}";
+        string open = Id();
+        Commit(store, tx => tx.Create("data-mapping", open, null, J(mapping)));
+        Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("data-mapping", Id(), null, J(mapping))));
+        Commit(store, tx => tx.Create("data-mapping", Id(), null, J(mapping.Replace("system-of-record", "replica"))));
+        Commit(store, tx => tx.Update("data-mapping", open, J("{\"endedOn\":\"2026-11-24\"}")));
+        Commit(store, tx => tx.Create("data-mapping", Id(), null, J(mapping)));
+
+        string number = "{\"recordNumber\":\"DU-" + marker + "\"}";
+        Commit(store, tx => tx.Create("data-use", Id(), null, J(number)));
+        Assert.Contains("is taken by another row", Assert.Throws<StoreConflictException>(() => Commit(store, tx => tx.Create("data-use", Id(), null, J(number)))).Message);
     }
 
     [Fact]

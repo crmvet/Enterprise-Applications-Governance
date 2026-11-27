@@ -11,7 +11,7 @@
   "presetKind": "full",
   "extends": "balanced",
   "conflictsWith": [],
-  "areas": ["taxonomy", "people", "rules", "gates", "documentation"],
+  "areas": ["taxonomy", "people", "rules", "gates", "documentation", "data"],
   "productRelease": "0.1.0",
   "contentVersion": "1.0.0",
   "checkedOn": "2026-11-22",

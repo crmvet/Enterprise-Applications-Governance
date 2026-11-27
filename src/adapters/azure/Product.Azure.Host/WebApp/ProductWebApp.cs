@@ -66,15 +66,62 @@ public sealed class ProductWebAppOptions
     public string ClientLabel { get; set; } = "Web app";
 
     /// <summary>
+    /// The step-up sign-in a person's approval answer needs (D-38; document 26, B26-9): Off by default and in the
+    /// demo; FreshSignIn or AuthenticationContext on an install that wants it. Read by <c>answer_approval</c> only.
+    /// </summary>
+    public ProductStepUpOptions StepUp { get; set; } = new();
+
+    /// <summary>
     /// The fictional personas the page offers when the local server's development identity is on (Development only).
     /// Each names a development identity persona whose client app ID is one of <see cref="ClientIds"/>.
     /// </summary>
     public List<ProductWebAppPersona> DevelopmentPersonas { get; set; } = new();
 
+    /// <summary>
+    /// The fictional personas a demo operator may act as (D-39), in the Demo environment only: the person signed in to
+    /// the web app sends <see cref="ProductDemo.PersonaHeader"/> with a persona's name, and the request runs as that
+    /// persona, stamped "demo operator". A host that names any outside the Demo environment refuses to start.
+    /// </summary>
+    public List<ProductDemoPersona> DemoPersonas { get; set; } = new();
+
+    /// <summary>
+    /// A JSON file that lists the demo personas instead (<c>{ "personas": [ ... ] }</c>), such as the fictional
+    /// <c>seed/demo-personas.json</c> both hosts carry. Relative to the content root when the file is there, else to the
+    /// application base directory. Read in the Demo environment only; refused anywhere else, as the inline list is.
+    /// </summary>
+    public string DemoPersonasFile { get; set; } = string.Empty;
+
+    /// <summary>The personas read from <see cref="DemoPersonasFile"/> when the host started in the Demo environment.</summary>
+    internal List<ProductDemoPersona> FileDemoPersonas { get; } = new();
+
+    /// <summary>Why <see cref="DemoPersonasFile"/> could not be read, or null.</summary>
+    internal string? DemoPersonasFileProblem { get; set; }
+
+    /// <summary>Every demo persona: the inline list and the file's.</summary>
+    public IReadOnlyList<ProductDemoPersona> AllDemoPersonas => DemoPersonas.Concat(FileDemoPersonas).ToList();
+
+    /// <summary>The Client App label stamped on the rows a demo persona writes: the web app's label and "demo operator".</summary>
+    public string DemoOperatorLabel => ClientLabel + ProductDemo.OperatorLabelSuffix;
+
     /// <summary>True when the client ID is one of the web app's own.</summary>
     public bool IsWebAppClient(string? clientAppId)
     {
         return !string.IsNullOrWhiteSpace(clientAppId) && ClientIds.Any(id => string.Equals(id?.Trim(), clientAppId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The demo persona with the name, compared without case, or null.</summary>
+    public ProductDemoPersona? FindDemoPersona(string? name)
+    {
+        return string.IsNullOrWhiteSpace(name) ? null : AllDemoPersonas.FirstOrDefault(p => string.Equals(p.Name, name!.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The Client App label of a person's request through the web app: <see cref="DemoOperatorLabel"/> when a demo persona
+    /// acts (D-39), else <see cref="ClientLabel"/>.
+    /// </summary>
+    public string PersonLabel(CallerClaims? caller)
+    {
+        return caller?.DemoPersona != null ? DemoOperatorLabel : ClientLabel;
     }
 }
 
@@ -86,6 +133,12 @@ public sealed class ProductWebAppPersona
 
     /// <summary>What the page shows.</summary>
     public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// A login of the test harnesses (a11y.mjs, screenshots.mjs), not a demo persona. The sign-in page lists it only with
+    /// <c>?all=1</c>, so a presenter sees exactly the seventeen demo personas (product review, fix round 1; wave 4b). It still signs in.
+    /// </summary>
+    public bool Harness { get; set; }
 }
 
 /// <summary>Startup checks of <see cref="ProductWebAppOptions"/>.</summary>
@@ -105,6 +158,7 @@ public sealed class ProductWebAppOptionsValidator : IValidateOptions<ProductWebA
     public ValidateOptionsResult Validate(string? name, ProductWebAppOptions options)
     {
         var failures = new List<string>();
+        failures.AddRange((options.StepUp ?? new ProductStepUpOptions()).Problems());
         if (options.ClientIds.Any(id => !Guid.TryParse(id, out _)))
         {
             failures.Add("Product:WebApp:ClientIds holds the web app registration's client IDs, each a GUID.");
@@ -148,6 +202,10 @@ public sealed class ProductWebAppOptionsValidator : IValidateOptions<ProductWebA
             }
         }
 
+        // The demo persona switch (D-39) works on the API whether or not this host serves the page, so its settings are
+        // checked either way.
+        failures.AddRange(ProductDemo.Problems(options, _environment));
+
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
     }
 }
@@ -184,7 +242,12 @@ public static class ProductWebApp
             throw new ArgumentNullException(nameof(configuration));
         }
 
-        services.AddOptions<ProductWebAppOptions>().Bind(configuration.GetSection(ProductWebAppOptions.SectionName)).ValidateOnStart();
+        // The demo persona file is read once the configuration is final (a test host may add settings until the service
+        // provider is built), and only in the Demo environment.
+        services.AddOptions<ProductWebAppOptions>()
+            .Bind(configuration.GetSection(ProductWebAppOptions.SectionName))
+            .PostConfigure<IHostEnvironment>(ProductDemo.LoadFile)
+            .ValidateOnStart();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<ProductWebAppOptions>, ProductWebAppOptionsValidator>());
         return services;
     }
@@ -222,7 +285,8 @@ public static class ProductWebApp
     /// <summary>
     /// The page's runtime configuration (<c>src/ui/harness/src/app/config.ts</c>, schema version 1): the API on this
     /// origin, and Microsoft Entra sign-in with the web app's client ID and the API scope. In a local Development run with
-    /// the development identity switched on and personas named, the development sign-in instead.
+    /// the development identity switched on and personas named, the development sign-in instead. In the Demo environment,
+    /// <c>demoPersonas</c> lists the personas a demo operator may act as (D-39); everywhere else the list is empty.
     /// </summary>
     public static JsonTreeNode Config(ProductWebAppOptions options, ProductAuthOptions auth, IHostEnvironment environment, IConfiguration configuration)
     {
@@ -245,6 +309,10 @@ public static class ProductWebApp
                 ("clientId", JsonTreeNode.FromString(options.ClientIds.FirstOrDefault()?.Trim() ?? string.Empty)),
                 ("apiScope", JsonTreeNode.FromString(ApiScope(options, auth))));
         IEnumerable<ProductWebAppPersona> personas = development ? options.DevelopmentPersonas : Enumerable.Empty<ProductWebAppPersona>();
+
+        // The demo personas (D-39) only in the Demo environment, by name and label: the page sends the name in
+        // X-Product-Demo-Persona. Their fictional IDs stay on the server.
+        IEnumerable<ProductDemoPersona> demoPersonas = ProductDemo.IsDemo(environment) ? options.AllDemoPersonas : Enumerable.Empty<ProductDemoPersona>();
         return Js.Obj(
             ("schemaVersion", JsonTreeNode.FromInt64(1)),
             ("apiBase", JsonTreeNode.FromString("/api")),
@@ -252,7 +320,11 @@ public static class ProductWebApp
             ("demo", JsonTreeNode.FromBoolean(options.Demo)),
             ("development", Js.Obj(("personas", Js.Arr(personas.Select(p => Js.Obj(
                 ("name", JsonTreeNode.FromString(p.Name)),
-                ("label", JsonTreeNode.FromString(p.Label)))))))));
+                ("label", JsonTreeNode.FromString(p.Label)),
+                ("harness", p.Harness ? JsonTreeNode.True : null))))))),
+            ("demoPersonas", Js.Arr(demoPersonas.Select(p => Js.Obj(
+                ("name", JsonTreeNode.FromString(p.Name)),
+                ("label", JsonTreeNode.FromString(p.Label)))))));
     }
 
     /// <summary>The sign-in authority: the Entra instance and the tenant.</summary>

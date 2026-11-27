@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "score_intake_request output",
+  "description": "The response envelope. On success, data is the write result with the demand fields as recorded and the request's priority decision. nextSteps point to save_decision_proposal for a priority decision.",
+  "x-tool": "score_intake_request",
+  "x-ai-write-states": [
+    "as-reported"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the intake request (O07), with its demand fields.",
+      "required": [
+        "score",
+        "sizeBand",
+        "horizon",
+        "priority"
+      ],
+      "properties": {
+        "score": {
+          "description": "The score now recorded.",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sizeBand": {
+          "description": "The size band now recorded.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "horizon": {
+          "description": "The horizon now recorded.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "priority": {
+          "description": "The request's priority decision, or null when none was proposed.",
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "The latest priority decision on the request that is not withdrawn: its outcome and status. The outcome is the priority only once the decision is accepted.",
+              "required": [
+                "decisionId",
+                "outcome",
+                "status",
+                "recordUrl"
+              ],
+              "properties": {
+                "decisionId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision"
+                },
+                "outcome": {
+                  "description": "The proposed or accepted outcome (C19), such as fund, defer or stop.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "status": {
+                  "$ref": "../common.schema.json#/$defs/statusValue",
+                  "description": "The decision status by meaning."
+                },
+                "recordUrl": {
+                  "$ref": "../common.schema.json#/$defs/recordUrl"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The demand fields of Field visit planner are recorded, as reported.",
+      "data": {
+        "recordId": "70000000-0000-4000-8000-000000000001",
+        "status": {
+          "label": "Submitted",
+          "meaning": "submitted"
+        },
+        "performedBy": {
+          "actorKind": "person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000009",
+            "displayLabel": "PMO lead (sample)"
+          },
+          "onBehalfOf": null,
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000009",
+            "label": "Web app"
+          }
+        },
+        "isAiCreated": false,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-24T09:00:00Z"
+        },
+        "created": false,
+        "score": 72,
+        "sizeBand": {
+          "key": "medium",
+          "label": "Medium"
+        },
+        "horizon": {
+          "key": "now",
+          "label": "Now"
+        },
+        "priority": null
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/70000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "save_decision_proposal",
+          "inputs": {
+            "decisionTypeKey": "priority",
+            "subjectKind": "intake-request",
+            "subjectId": "70000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "correlationId": "corr-0060"
+    }
+  ]
+}

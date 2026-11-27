@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "data-use-tier-3-data-owner-and-security",
+  "description": "Balanced aligned with P02: data use at tier 3, where restricted data lands, needs the data owner and the security reviewer, everyone must approve, each with a typed reason. Below tier 3 the data owner alone approves.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-use",
+    "tierKey": "tier-3",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "data-use-tier-3-data-owner",
+          "approverOwnerRoleKey": "data-owner",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": true
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "data-use-tier-3-security",
+          "approverRoleKey": "security-reviewer",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": true
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "data-use-tier-3-data-owner",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "data-use-tier-3-security",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "data-use-approval",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

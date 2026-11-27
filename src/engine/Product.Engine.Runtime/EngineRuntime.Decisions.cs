@@ -101,8 +101,10 @@ public sealed partial class EngineRuntime
         }
     }
 
-    // The request, inside a call: also used by the submit of a configuration draft.
-    private JsonTreeNode RequestApprovalsIn(RuntimeCall call, string decisionId)
+    // The request, inside a call: also used by the submit of a configuration draft. again asks a requested decision once
+    // more, from the start (ReaskApprovals): its pending records are cancelled first, and a decision with an answer on
+    // record is refused, since that answer was given to the question as it stood before.
+    private JsonTreeNode RequestApprovalsIn(RuntimeCall call, string decisionId, bool again = false)
     {
         DecisionScope scope = Scope(call, decisionId);
         string? meaning = scope.Decision.Text("statusMeaning");
@@ -113,7 +115,17 @@ public sealed partial class EngineRuntime
 
         // Effects check the target's state before writing (document 25, section 8): a decision with records is requested.
         IReadOnlyList<StoredRow> existing = Records(call, decisionId);
-        if (existing.Count > 0)
+        if (again)
+        {
+            if (existing.Any(r => r.Text("outcomeMeaning") is string outcome && outcome != "pending" && outcome != "cancelled" && outcome != "expired"))
+            {
+                throw CallFailure.Of(OperationOutcomes.Refused, ReasonCodes.ApprovalOutcomeFinal, "A request on this Decision is answered already, so it is not asked again from the start. Withdraw the decision and propose a new one.", "Decision", decisionId);
+            }
+
+            CancelPendingRecords(call, decisionId, null);
+            scope = Scope(call, decisionId);
+        }
+        else if (existing.Count > 0)
         {
             return RuntimeJson.Object(
                 ("outcome", JsonTreeNode.FromString("already-requested")),
@@ -126,9 +138,21 @@ public sealed partial class EngineRuntime
         JsonTreeNode op02 = required.Payload!;
         if (required.Outcome == "engine-accept")
         {
-            JsonTreeNode basis = op02.TryGetMember("acceptanceBasis", out JsonTreeNode? b) ? b : RuntimeJson.Empty;
-            EngineAcceptanceCondition condition = EngineContract.EngineAcceptanceConditions.Parse(RuntimeJson.Text(basis, "condition") ?? string.Empty);
-            bool accepted = AcceptDecision(call, scope, new WriteAcceptance(WriteAcceptance.EngineAccept, requiredApprovalsOutcome: "engine-accept", condition: condition));
+            if (Items(op02, "requirements").Any())
+            {
+                // Document 25, B25-18: the engine accepts with no card only once the person it would make an owner consents
+                // (the business owner an intake names). Their request opens now; the engine accepts when it counts.
+                IReadOnlyList<string> consents = OpenApprovalRecords(call, decisionId, ConsentsOnly(op02), null, null);
+                call.AddReasons(new[] { ReasonCatalog.Create(ReasonCodes.DecisionConsentWaiting, "Decision", decisionId) });
+                return RuntimeJson.Object(
+                    ("outcome", JsonTreeNode.FromString(required.Outcome)),
+                    ("requestedCount", JsonTreeNode.FromInt64(consents.Count)),
+                    ("approvalRecordIds", RuntimeJson.Strings(consents)),
+                    ("accepted", JsonTreeNode.False),
+                    ("waitingForConsent", JsonTreeNode.True));
+            }
+
+            bool accepted = AcceptDecision(call, scope, EngineAcceptance(op02));
             return RuntimeJson.Object(
                 ("outcome", JsonTreeNode.FromString(required.Outcome)),
                 ("requestedCount", JsonTreeNode.FromInt64(0)),
@@ -159,13 +183,17 @@ public sealed partial class EngineRuntime
 
         CompiledSnapshot stamped = StampedSnapshot(call, scope.Decision);
         EvaluationResult<JsonTreeNode?> required = RequiredApprovals(call, scope, stamped);
-        if (required.Outcome == "engine-accept")
+        bool engineAccept = required.Outcome == "engine-accept";
+        if (engineAccept && !Items(required.Payload!, "requirements").Any())
         {
             return;
         }
 
+        // An engine-accepted decision that waits for a consent (B25-18) counts only the consents; the engine accepts it on
+        // its own basis once they are given.
+        JsonTreeNode requiredPayload = engineAccept ? ConsentsOnly(required.Payload!) : required.Payload!;
         ExpireDueRecords(call, Records(call, decisionId));
-        EvaluationResult<JsonTreeNode?> status = ApprovalStatus(call, scope, stamped, required.Payload!, out IReadOnlyList<StoredRow> records);
+        EvaluationResult<JsonTreeNode?> status = ApprovalStatus(call, scope, stamped, requiredPayload, out IReadOnlyList<StoredRow> records);
         JsonTreeNode counts = status.Payload != null && status.Payload.TryGetMember("countsByRecord", out JsonTreeNode? c) ? c : RuntimeJson.Empty;
         foreach (StoredRow record in records)
         {
@@ -185,7 +213,7 @@ public sealed partial class EngineRuntime
         switch (status.Outcome)
         {
             case "satisfied":
-                if (AcceptDecision(call, scope, new WriteAcceptance(WriteAcceptance.ApprovalsSatisfied, approvalStatusOutcome: "satisfied")))
+                if (AcceptDecision(call, scope, engineAccept ? EngineAcceptance(required.Payload!) : new WriteAcceptance(WriteAcceptance.ApprovalsSatisfied, approvalStatusOutcome: "satisfied")))
                 {
                     CancelPendingRecords(call, decisionId, EffectKind.RecomputeApprovals);
                 }
@@ -206,9 +234,24 @@ public sealed partial class EngineRuntime
                 CancelPendingRecords(call, decisionId, EffectKind.RecomputeApprovals);
                 break;
             default:
-                OpenApprovalRecords(call, decisionId, required.Payload!, status.Payload, EffectKind.RecomputeApprovals);
+                OpenApprovalRecords(call, decisionId, requiredPayload, status.Payload, EffectKind.RecomputeApprovals);
                 break;
         }
+    }
+
+    // The engine's own acceptance for an entry of the locked list, from OP-02's acceptance basis.
+    private static WriteAcceptance EngineAcceptance(JsonTreeNode op02)
+    {
+        JsonTreeNode basis = op02.TryGetMember("acceptanceBasis", out JsonTreeNode? b) ? b : RuntimeJson.Empty;
+        EngineAcceptanceCondition condition = EngineContract.EngineAcceptanceConditions.Parse(RuntimeJson.Text(basis, "condition") ?? string.Empty);
+        return new WriteAcceptance(WriteAcceptance.EngineAccept, requiredApprovalsOutcome: "engine-accept", condition: condition);
+    }
+
+    // OP-02's payload with its consultations left out: an engine-accepted decision that waits for a consent opens and
+    // counts only the consent (B25-18), as the engine's fast path opens no consultation.
+    private static JsonTreeNode ConsentsOnly(JsonTreeNode op02)
+    {
+        return RuntimeJson.With(op02, "consultations", JsonTreeNode.CreateArray());
     }
 
     // The accept-decision write (G-17), with the OP-07 payload when the decision type is a gate's (G-14). While the gate
@@ -223,6 +266,9 @@ public sealed partial class EngineRuntime
             readiness = GateReadiness(call, subject, gate).Payload;
         }
 
+        // The subject's facts for the update-subject effect, only when the gate lets the decision through: the new row IDs
+        // are taken from the store, and a decision that stays proposed takes none.
+        bool gateHolds = readiness != null && readiness.TryGetMember("ready", out JsonTreeNode? ready) && ready.Kind == JsonTreeKind.False;
         WriteStep? step = GuardedWrite(call, new WriteSpec("decision", WriteOperation.Update)
         {
             RowId = scope.DecisionId,
@@ -231,17 +277,370 @@ public sealed partial class EngineRuntime
             Effect = EffectKind.AcceptDecision,
             Acceptance = acceptance,
             GateReadiness = readiness,
+            Subject = gateHolds ? null : SubjectFactsOf(call, scope),
             Tolerated = new[] { ReasonCodes.GateNotReady },
         });
+
+        // An accepted decision can be what another decision's gate waited for, such as the data-use decision a design
+        // gate needs: the application's held gate decisions settle now, in the same call.
+        if (step != null && scope.Application != null)
+        {
+            SettleHeldGateDecisions(call, new[] { scope.Application.Id });
+        }
+
         return step != null;
+    }
+
+    // A gate's decision whose approvals are all in stays proposed while its gate is not ready (G-14). It settles once the
+    // gate turns ready (wave 3 verification, major: a held design decision stayed proposed after the data-use decision
+    // its gate waited for was accepted). The engine looks again at an application's held gate decisions when another
+    // decision of the application is accepted, at the end of each write call that touched the application's rows, and in
+    // the daily due-state refresh. A decision that was requested (it holds an Approval Record), whose approvals OP-03
+    // finds satisfied and whose gate OP-07 finds ready, is accepted by the recompute, exactly as the last answer would
+    // have accepted it. A decision nobody requested yet is left for its proposer to submit.
+    private void SettleHeldGateDecisions(RuntimeCall call, IEnumerable<string> applicationIds)
+    {
+        if (call.SettlingGates)
+        {
+            return;
+        }
+
+        call.SettlingGates = true;
+        try
+        {
+            foreach (string appId in applicationIds.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(id => id, StringComparer.Ordinal).ToList())
+            {
+                // Accepting one can make the next one's gate ready, so the step runs until a round accepts nothing.
+                for (int round = 0; round < 8; round++)
+                {
+                    List<string> settles = HeldGateCandidates(call, appId).Where(d => HeldGateDecisionSettles(call, d)).Select(d => d.Id).ToList();
+                    if (settles.Count == 0)
+                    {
+                        break;
+                    }
+
+                    foreach (string decisionId in settles)
+                    {
+                        RecomputeApprovals(call, decisionId);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            call.SettlingGates = false;
+        }
+    }
+
+    // The proposed decisions of a gate's decision type: of one application, or of every application when applicationId is
+    // null. In ID order.
+    private static List<StoredRow> HeldGateCandidates(RuntimeCall call, string? applicationId)
+    {
+        RowQuery query = RowQuery.For("decision").Where("statusMeaning", "proposed");
+        if (applicationId != null)
+        {
+            query = query.Where("subjectApplication", applicationId);
+        }
+
+        return call.Tx.Query(query)
+            .Where(d => d.Text("subjectApplication") != null && d.Text("decisionType") is string type && GateOf(call.Snapshot, type) != null)
+            .OrderBy(d => d.Id, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    // True when a proposed gate decision would be accepted now: it was requested, OP-03 finds its approvals satisfied and
+    // OP-07 finds its gate ready. A read: the reasons these operations gather are dropped, so a call that settles nothing
+    // says nothing about it.
+    private bool HeldGateDecisionSettles(RuntimeCall call, StoredRow decision)
+    {
+        if (Records(call, decision.Id).Count == 0)
+        {
+            return false;
+        }
+
+        int mark = call.Reasons.Count;
+        try
+        {
+            DecisionScope scope = Scope(call, decision.Id);
+            string? gate = GateOf(call.Snapshot, scope.DecisionTypeKey);
+            if (gate == null || scope.ApplicationKindKey == null)
+            {
+                return false;
+            }
+
+            CompiledSnapshot stamped = StampedSnapshot(call, scope.Decision);
+            EvaluationResult<JsonTreeNode?> required = RequiredApprovals(call, scope, stamped);
+            bool engineAccept = required.Outcome == "engine-accept";
+            if (engineAccept && !Items(required.Payload!, "requirements").Any())
+            {
+                return false;
+            }
+
+            EvaluationResult<JsonTreeNode?> status = ApprovalStatus(call, scope, stamped, engineAccept ? ConsentsOnly(required.Payload!) : required.Payload!, out _);
+            if (status.Outcome != "satisfied")
+            {
+                return false;
+            }
+
+            var subject = new GateSubject(scope.Application, scope.Intake, scope.ApplicationKindKey, scope.TierKey, scope.Owners, scope.LatestAssessment);
+            JsonTreeNode? readiness = GateReadiness(call, subject, gate).Payload;
+            return readiness != null && readiness.TryGetMember("ready", out JsonTreeNode? ready) && ready.Kind == JsonTreeKind.True;
+        }
+        catch (CallFailure)
+        {
+            return false;
+        }
+        finally
+        {
+            if (call.Reasons.Count > mark)
+            {
+                call.Reasons.RemoveRange(mark, call.Reasons.Count - mark);
+            }
+        }
+    }
+
+    // The applications whose rows a call wrote, for the settle step at the end of a write call: the rows a gate reads
+    // (decisions, reviews, document links, owner assignments, tier assessments, data uses and the application itself).
+    private static IReadOnlyList<string> GateFactApplications(RuntimeCall call)
+    {
+        var ids = new List<string>();
+        foreach (AppliedWrite write in call.Writes.ToList())
+        {
+            if (write.Operation == WriteOperation.Delete || Array.IndexOf(GateFactEntities, write.Entity) < 0)
+            {
+                continue;
+            }
+
+            StoredRow? row = call.Tx.Get(write.Entity, write.RowId);
+            string? appId = write.Entity == "business-application" ? write.RowId : row?.Text("businessApplication") ?? row?.Text("subjectApplication");
+            if (appId != null && !ids.Contains(appId, StringComparer.OrdinalIgnoreCase))
+            {
+                ids.Add(appId);
+            }
+        }
+
+        return ids;
+    }
+
+    private static readonly string[] GateFactEntities = { "business-application", "data-use", "decision", "document-link", "owner-assignment", "review", "tier-assessment" };
+
+    // What the update-subject effect reads (document 25, B25-8): the decision's subject and its application as the store
+    // holds them, the application's current owners, the latest tier assessment for a tier decision, the due reviews for
+    // a move to a retired stage, and the IDs the rows it creates take.
+    private static SubjectFacts? SubjectFactsOf(RuntimeCall call, DecisionScope scope)
+    {
+        StoredRow decision = scope.Decision;
+        string type = scope.DecisionTypeKey;
+        string? outcome = decision.Text("outcome");
+        if (outcome == null || scope.SubjectKind == "configuration-draft")
+        {
+            return null;
+        }
+
+        StoredRow? app = scope.Application;
+        bool tier = type == EngineKeys.TierDecisionType && app != null && scope.SubjectKind != "intake-request";
+        bool retiring = app != null && RetiringOutcome(call.Snapshot, type, outcome);
+        FactSet facts = FactSet.Run(call.Tx, f => SubjectFactsPlan(f, app, tier, retiring));
+        call.FactRounds += facts.Rounds;
+
+        StoredRow? assessment = scope.SubjectKind == "intake-request" ? scope.LatestAssessment
+            : !tier ? null
+            : LatestAssessment(facts);
+
+        // New rows, in the order the effect takes their IDs: the application an accepted intake creates, then the business
+        // owner assignment of the person the intake names; each owner assignment an ownership decision starts.
+        var newRows = new List<string>();
+        bool consented = false;
+        if (type == EngineKeys.IntakeDecisionType && outcome == EngineKeys.IntakeAcceptOutcome && scope.Intake != null)
+        {
+            if (scope.Intake.Text("businessApplication") == null)
+            {
+                newRows.Add("business-application");
+            }
+
+            if (scope.Intake.Text("businessOwner") is string named)
+            {
+                consented = IntakeOwnerConsented(call, scope.Intake, named);
+                if (consented)
+                {
+                    newRows.Add("owner-assignment");
+                }
+            }
+        }
+        else if (type == EngineKeys.OwnershipDecisionType && decision.Column("proposedChangesJson") is JsonTreeNode proposal
+            && proposal.Kind == JsonTreeKind.Object && proposal.TryGetMember("owners", out JsonTreeNode? owners) && owners.Kind == JsonTreeKind.Array)
+        {
+            newRows.AddRange(owners.Items.Where(o => RuntimeJson.Text(o, "addObjectId") != null).Select(_ => "owner-assignment"));
+        }
+
+        List<string> ids = newRows.Select(entity => call.Tx.NewId(entity)).ToList();
+
+        return new SubjectFacts(
+            RowFact(app),
+            RowFact(scope.Intake),
+            RowFact(scope.Change),
+            RowFact(assessment),
+            (type == EngineKeys.OwnershipDecisionType && (scope.SubjectKind == EngineKeys.DataDomainSubjectKind || scope.SubjectKind == EngineKeys.DataLocationSubjectKind)
+                ? scope.DataSubjectOwners
+                : scope.Owners).Select(o => RowFact(o)!),
+            facts.All("due-reviews").Select(r => r.Id).OrderBy(r => r, StringComparer.Ordinal),
+            ids,
+            consented);
+    }
+
+    // True when the business owner an intake names accepted the role (document 25, B25-18): an Approval Record on a
+    // decision about the intake asks them by name for the business owner role, holds approved, and counts. The Accept gate
+    // counts them, and the update-subject effect assigns them, only then.
+    private static bool IntakeOwnerConsented(RuntimeCall call, StoredRow intake, string named)
+    {
+        FactSet facts = FactSet.Run(call.Tx, f => IntakeConsentPlan(f, intake.Id));
+        call.FactRounds += facts.Rounds;
+        int decisions = facts.All("intake-all-decisions").Count;
+        return Enumerable.Range(0, decisions).SelectMany(i => facts.All("intake-consent-" + i)).Any(r =>
+            string.Equals(r.Text("askedPrincipal"), named, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(r.Text("requiredOwnerRole"), EngineKeys.BusinessOwnerRole, StringComparison.Ordinal)
+            && r.Text("outcomeMeaning") == "approved"
+            && r.Flag("countsTowardRequirement"));
+    }
+
+    private static IEnumerable<FactPlan> IntakeConsentPlan(FactSet facts, string intakeId)
+    {
+        yield return FactPlan.Of(FactQuery.Where("intake-all-decisions", RowQuery.For("decision").Where("subjectIntakeRequest", intakeId)));
+        IReadOnlyList<StoredRow> decisions = facts.All("intake-all-decisions");
+        if (decisions.Count > 0)
+        {
+            yield return FactPlan.Of(decisions.Select((d, i) => FactQuery.Where("intake-consent-" + i, RowQuery.For("approval-record").Where("decision", d.Id))).ToArray());
+        }
+    }
+
+    private static IEnumerable<FactPlan> SubjectFactsPlan(FactSet facts, StoredRow? app, bool tier, bool retiring)
+    {
+        yield return FactPlan.Of(
+            tier ? FactQuery.Where("app-assessments", RowQuery.For("tier-assessment").Where("businessApplication", app!.Id)) : null,
+            tier ? FactQuery.Where("app-intakes", RowQuery.For("intake-request").Where("businessApplication", app!.Id)) : null,
+            retiring ? FactQuery.Where("due-reviews", RowQuery.For("review").Where("businessApplication", app!.Id).Where("statusMeaning", "due")) : null);
+        IReadOnlyList<StoredRow> intakes = facts.All("app-intakes");
+        if (intakes.Count > 0)
+        {
+            yield return FactPlan.Of(intakes.Select((intake, i) => FactQuery.Where("intake-assessments-" + i, RowQuery.For("tier-assessment").Where("intakeRequest", intake.Id))).ToArray());
+        }
+    }
+
+    // True when the outcome's C19 Next Lifecycle Stage means retired (document 23, P09 step 7).
+    private static bool RetiringOutcome(CompiledSnapshot snapshot, string type, string outcome)
+    {
+        if (!snapshot.Snapshot.TryGetEntity("decision-outcome", out Core.Snapshots.SnapshotEntity? outcomes)
+            || !snapshot.Snapshot.TryGetEntity("lifecycle-stage", out Core.Snapshots.SnapshotEntity? stages))
+        {
+            return false;
+        }
+
+        Core.Snapshots.SnapshotRow? row = outcomes.Rows.FirstOrDefault(r => r.KeyPath == type + "/" + outcome);
+        string? next = row != null && row.TryGetColumn("nextLifecycleStageKey", out JsonTreeNode? value) && value.Kind == JsonTreeKind.String ? value.GetString() : null;
+        return next != null && stages.Rows.Any(s => s.KeyPath == next && s.EngineMeaning == "retired");
+    }
+
+    // A stored row as the core reads it: its columns with its ID.
+    private static JsonTreeNode? RowFact(StoredRow? row)
+    {
+        return row == null ? null : RuntimeJson.With(row.Columns, "id", JsonTreeNode.FromString(row.Id));
     }
 
     private DecisionScope Scope(RuntimeCall call, string decisionId)
     {
         FactSet facts = FactSet.Run(call.Tx, f => DecisionScope.Plan(decisionId, f));
         call.FactRounds += facts.Rounds;
-        return DecisionScope.Build(facts, call.AsOfUtc)
+        DecisionScope scope = DecisionScope.Build(facts, call.AsOfUtc)
             ?? throw CallFailure.Of(RuntimeOutcome.NotFound, ReasonCodes.RefNotFound, "Decision " + decisionId + " does not exist.", "Decision", decisionId);
+        if (scope.Application != null && scope.SubjectKind != "configuration-draft")
+        {
+            if (scope.DecisionTypeKey == EngineKeys.TierDecisionType)
+            {
+                scope.UseTier(TierAtStake(call, scope));
+            }
+            else if (scope.SubjectKind == "intake-request")
+            {
+                scope.UseTier(Highest(call.Snapshot, scope.Application.Text("tier"), scope.LatestAssessment?.Text("computedTier")));
+            }
+        }
+
+        // The data taxonomy's scope fields and owner facts (EngineRuntime.Data; docs/architecture/data-taxonomy.md, Who answers and Approval rules).
+        ApplyDataScope(call, scope);
+        return scope;
+    }
+
+    // The tier at stake for a tier decision about an application (document 25, B25-14; P02 steps 4 and 5): the highest
+    // ranked of the tier the application has, the tier the decision names (Proposed Changes Json tierKey) and the tier its
+    // latest answers computed. So raising an application to tier 3, confirming a computed tier 3, and lowering it from
+    // tier 3 all take the tier 3 approvals and separation rules, never the lower tier's.
+    private static string? TierAtStake(RuntimeCall call, DecisionScope scope)
+    {
+        StoredRow app = scope.Application!;
+        var candidates = new List<string>();
+        if (app.Text("tier") is string current)
+        {
+            candidates.Add(current);
+        }
+
+        if (scope.Decision.Column("proposedChangesJson") is JsonTreeNode proposal && proposal.Kind == JsonTreeKind.Object && RuntimeJson.Text(proposal, "tierKey") is string named)
+        {
+            candidates.Add(named);
+        }
+
+        FactSet facts = FactSet.Run(call.Tx, f => SubjectFactsPlan(f, app, true, false));
+        call.FactRounds += facts.Rounds;
+        if (LatestAssessment(facts)?.Text("computedTier") is string computed)
+        {
+            candidates.Add(computed);
+        }
+
+        return Highest(call.Snapshot, candidates.ToArray());
+    }
+
+    // The highest ranked of the tiers given (nulls skipped), or null when none is given.
+    private static string? Highest(CompiledSnapshot snapshot, params string?[] tiers)
+    {
+        string? best = null;
+        long bestRank = long.MinValue;
+        foreach (string? key in tiers)
+        {
+            if (key == null)
+            {
+                continue;
+            }
+
+            long rank = TierRank(snapshot, key) ?? long.MinValue;
+            if (best == null || rank > bestRank)
+            {
+                best = key;
+                bestRank = rank;
+            }
+        }
+
+        return best;
+    }
+
+    // C08 Rank of an active tier, or null.
+    private static long? TierRank(CompiledSnapshot snapshot, string tierKey)
+    {
+        if (!snapshot.Snapshot.TryGetEntity("tier", out Core.Snapshots.SnapshotEntity? tiers))
+        {
+            return null;
+        }
+
+        Core.Snapshots.SnapshotRow? row = tiers.ActiveRows.FirstOrDefault(r => r.KeyPath == tierKey);
+        return row != null && row.TryGetColumn("rank", out JsonTreeNode? rank) && rank.TryGetInt64(out long value) ? value : null;
+    }
+
+    // The latest computed tier assessment among the application's own and its intake requests' (as SubjectFactsPlan fetched
+    // them).
+    private static StoredRow? LatestAssessment(FactSet facts)
+    {
+        return facts.All("app-assessments").Concat(Enumerable.Range(0, facts.All("app-intakes").Count).SelectMany(i => facts.All("intake-assessments-" + i)))
+            .Where(a => a.Text("computedTier") != null)
+            .OrderBy(a => a.Text("engineCheckedOn") ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(a => a.Id, StringComparer.Ordinal)
+            .LastOrDefault();
     }
 
     // The version a row was stamped with (Configuration Set Version on create). OP-03 recomputes OP-02 with the
@@ -260,14 +659,133 @@ public sealed partial class EngineRuntime
 
     private static EvaluationResult<JsonTreeNode?> RequiredApprovals(RuntimeCall call, DecisionScope scope, CompiledSnapshot snapshot)
     {
-        EvaluationResult<JsonTreeNode?> result = Evaluate(call, EngineOperation.ResolveRequiredApprovals, snapshot, scope.RequiredApprovalsInput());
+        JsonTreeNode input = scope.RequiredApprovalsInput();
+
+        // A decision stamped with a version that lacks a data scope key (one from before the data taxonomy's rows) is
+        // matched without it, so its approvals stay those of the version it was proposed under.
+        foreach ((string field, string entity) in new[] { ("classificationKey", "data-classification"), ("dataDomainLevelKey", "data-domain-level") })
+        {
+            string? key = RuntimeJson.Text(input, field);
+            if (key != null && !snapshot.Snapshot.TryGetRow(entity, key, out _))
+            {
+                input = RuntimeJson.Without(input, new[] { field });
+            }
+        }
+
+        JsonTreeNode? standardChange = StandardChangeFact(call, scope, snapshot);
+        if (standardChange != null)
+        {
+            input = RuntimeJson.With(input, "standardChange", standardChange);
+        }
+
+        EvaluationResult<JsonTreeNode?> result = Evaluate(call, EngineOperation.ResolveRequiredApprovals, snapshot, input);
         if (!IsAnswer(EngineOperation.ResolveRequiredApprovals, result.Outcome))
         {
             throw CallFailure.From(result);
         }
 
         call.AddReasons(result.Reasons);
-        return result;
+        return WithProposedOwners(result, scope);
+    }
+
+    // OP-12 for a change authorization whose change type requires a standard change model (document 25, sections 5.4 and
+    // 5.13; B25-14): the facts the model conditions test (the application's tier rank, the planned target's stage, the
+    // main application plus its affected applications, the component kinds it holds, the window), and each active model
+    // of the type with the status of the decision that approved it. OP-02 then accepts the change through the model, or
+    // refuses it as not standard. Null for any other decision.
+    private static JsonTreeNode? StandardChangeFact(RuntimeCall call, DecisionScope scope, CompiledSnapshot snapshot)
+    {
+        StoredRow? change = scope.Change;
+        string? changeType = scope.ChangeTypeKey;
+        if (change == null || changeType == null || !snapshot.Snapshot.TryGetEntity("change-type", out Core.Snapshots.SnapshotEntity? types))
+        {
+            return null;
+        }
+
+        Core.Snapshots.SnapshotRow? type = types.ActiveRows.FirstOrDefault(r => r.KeyPath == changeType);
+        if (type == null || !type.TryGetColumn("requiresStandardModel", out JsonTreeNode? flag) || flag.Kind != JsonTreeKind.True)
+        {
+            return null;
+        }
+
+        List<Core.Snapshots.SnapshotRow> models = snapshot.Snapshot.TryGetEntity("standard-change-model", out Core.Snapshots.SnapshotEntity? modelEntity)
+            ? modelEntity.ActiveRows.Where(m => m.TryGetColumn("changeTypeKey", out JsonTreeNode? k) && k.Kind == JsonTreeKind.String && k.GetString() == changeType).OrderBy(m => m.KeyPath, StringComparer.Ordinal).ToList()
+            : new List<Core.Snapshots.SnapshotRow>();
+        string? Approving(Core.Snapshots.SnapshotRow model) => model.TryGetColumn("approvedByDecisionId", out JsonTreeNode? d) && d.Kind == JsonTreeKind.String ? d.GetString() : null;
+
+        string? appId = scope.Application?.Id;
+        FactSet facts = FactSet.Run(call.Tx, f => new[]
+        {
+            FactPlan.Of(new[]
+            {
+                FactQuery.Where("affected", RowQuery.For("affected-application").Where("changeRequest", change.Id)),
+                appId == null ? null : FactQuery.Where("components", RowQuery.For("technical-component").Where("businessApplication", appId)),
+            }.Concat(models.Select(m => Approving(m)).Where(d => d != null).Distinct(StringComparer.Ordinal).Select(d => FactQuery.ById("approving " + d, "decision", d!))).ToArray()),
+        });
+        call.FactRounds += facts.Rounds;
+
+        int affected = 1 + facts.All("affected").Count(a => !string.Equals(a.Text("businessApplication"), appId, StringComparison.OrdinalIgnoreCase));
+        string[] kinds = facts.All("components").Where(c => c.Text("retiredOn") == null).Select(c => c.Text("componentKind")).Where(k => k != null).Select(k => k!)
+            .Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal).ToArray();
+        DateTime? start = RuntimeJson.Utc(change.Columns, "windowStart");
+        DateTime? end = RuntimeJson.Utc(change.Columns, "windowEnd");
+        long? rank = scope.TierKey == null ? null : TierRank(snapshot, scope.TierKey);
+        JsonTreeNode input = RuntimeJson.Object(
+            ("changeTypeKey", JsonTreeNode.FromString(changeType)),
+            ("standardChangeModelKey", RuntimeJson.OptionalText(change.Text("standardChangeModel"))),
+            ("change", RuntimeJson.Object(
+                ("tierRank", rank.HasValue ? JsonTreeNode.FromInt64(rank.Value) : null),
+                ("targetStageKeys", scope.TargetStageKey == null ? null : RuntimeJson.Strings(new[] { scope.TargetStageKey })),
+                ("affectedApplicationCount", JsonTreeNode.FromInt64(affected)),
+                ("componentKindKeys", kinds.Length == 0 ? null : RuntimeJson.Strings(kinds)),
+                ("windowMinutes", start.HasValue && end.HasValue ? JsonTreeNode.FromInt64((long)Math.Max(0, (end.Value - start.Value).TotalMinutes)) : null))),
+            ("models", JsonTreeNode.CreateArray(models.Select(m => RuntimeJson.Object(
+                ("modelKey", JsonTreeNode.FromString(m.KeyPath)),
+                ("approvedByDecisionStatus", JsonTreeNode.FromString(Approving(m) is string d ? facts.One("approving " + d)?.Text("statusMeaning") ?? "proposed" : "proposed")))))));
+        EvaluationResult<JsonTreeNode?> result = Evaluate(call, EngineOperation.EvaluateStandardChange, snapshot, input);
+        if (!IsAnswer(EngineOperation.EvaluateStandardChange, result.Outcome) || result.Payload == null)
+        {
+            throw CallFailure.From(result);
+        }
+
+        call.AddReasons(result.Reasons.Where(r => r.Severity != ReasonSeverity.Error));
+        return result.Payload;
+    }
+
+    // A requirement that asks the proposed owners (C32 Approver Proposed Owners; document 25, B25-14) needs one approval
+    // from each person the decision proposes to make an owner, so its Minimum Count becomes that number, and one person
+    // counts once (OP-03). A decision that names nobody new skips the requirement.
+    private static EvaluationResult<JsonTreeNode?> WithProposedOwners(EvaluationResult<JsonTreeNode?> result, DecisionScope scope)
+    {
+        JsonTreeNode? payload = result.Payload;
+        bool touched(JsonTreeNode r) => RuntimeJson.Text(r, "ownerSubject") == "touched-data-domains";
+        if (payload == null || !Items(payload, "requirements").Any(r => RuntimeJson.Flag(r, "approverProposedOwners") || touched(r)))
+        {
+            return result;
+        }
+
+        int named = scope.ProposedOwnerPrincipals().Count;
+        var requirements = new List<JsonTreeNode>();
+        foreach (JsonTreeNode requirement in Items(payload, "requirements"))
+        {
+            if (touched(requirement))
+            {
+                // One approval from each acting data owner of the domains the draft touches (docs/architecture/data-taxonomy.md, Approval rules).
+                int owners = TouchedOwners(scope, RuntimeJson.Text(requirement, "approverOwnerRoleKey") ?? EngineKeys.DataOwnerRole).Count;
+                requirements.Add(RuntimeJson.With(requirement, "minimumCount", JsonTreeNode.FromInt64(Math.Max(1, owners))));
+            }
+            else if (!RuntimeJson.Flag(requirement, "approverProposedOwners"))
+            {
+                requirements.Add(requirement);
+            }
+            else if (named > 0)
+            {
+                requirements.Add(RuntimeJson.With(requirement, "minimumCount", JsonTreeNode.FromInt64(named)));
+            }
+        }
+
+        JsonTreeNode adjusted = RuntimeJson.With(payload, "requirements", JsonTreeNode.CreateArray(requirements));
+        return new EvaluationResult<JsonTreeNode?>(result.Outcome, adjusted, result.Reasons, result.Trace, result.ConfigurationVersion, result.SnapshotHash, result.EngineVersion);
     }
 
     private static EvaluationResult<JsonTreeNode?> ApprovalStatus(RuntimeCall call, DecisionScope scope, CompiledSnapshot snapshot, JsonTreeNode requiredPayload, out IReadOnlyList<StoredRow> records)
@@ -341,7 +859,7 @@ public sealed partial class EngineRuntime
 
     // OP-07 for a subject (document 25, section 5.9), with its facts: accepted decision types of the application and the
     // intake, done review types, current owner roles, the OP-06 result and the tier answers' triggered requirements.
-    private static EvaluationResult<JsonTreeNode?> GateReadiness(RuntimeCall call, GateSubject subject, string gateKey)
+    private EvaluationResult<JsonTreeNode?> GateReadiness(RuntimeCall call, GateSubject subject, string gateKey)
     {
         if (subject.ApplicationKindKey == null)
         {
@@ -372,8 +890,9 @@ public sealed partial class EngineRuntime
             ("acceptedDecisionTypeKeys", RuntimeJson.Strings(accepted.Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal))),
             ("documentation", documentation),
             ("doneReviewTypeKeys", RuntimeJson.Strings(reviews.Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal))),
-            ("assignedOwnerRoleKeys", RuntimeJson.Strings(subject.Owners.Select(o => o.Text("ownerRole")).Where(k => k != null).Select(k => k!).Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal))),
-            ("triggeredGateRequirementKeys", RuntimeJson.Strings(triggered)));
+            ("assignedOwnerRoleKeys", RuntimeJson.Strings(AssignedOwnerRoles(call, subject))),
+            ("triggeredGateRequirementKeys", RuntimeJson.Strings(triggered)),
+            ("dataUses", DataUseCounts(call, subject.Application)));
         EvaluationResult<JsonTreeNode?> result = Evaluate(call, EngineOperation.EvaluateGateReadiness, call.Snapshot, input);
         if (!IsAnswer(EngineOperation.EvaluateGateReadiness, result.Outcome))
         {
@@ -382,6 +901,23 @@ public sealed partial class EngineRuntime
 
         call.AddReasons(result.Reasons.Where(r => r.Severity != ReasonSeverity.Error));
         return result;
+    }
+
+    // The owner roles the subject has now: the application's current owner assignments, and the business owner an open
+    // intake request names (O07 Business Owner; document 25, B25-10) once they consented (B25-18). The person the requester
+    // named counts for the Accept gate before the application exists; the accepted intake then makes them its business
+    // owner.
+    private static IEnumerable<string> AssignedOwnerRoles(RuntimeCall call, GateSubject subject)
+    {
+        IEnumerable<string> roles = subject.Owners.Select(o => o.Text("ownerRole")).Where(k => k != null).Select(k => k!);
+        string? meaning = subject.Intake?.Text("statusMeaning");
+        if (subject.Intake?.Text("businessOwner") is string named && (meaning == null || meaning == "draft" || meaning == "submitted" || meaning == "in-progress")
+            && IntakeOwnerConsented(call, subject.Intake, named))
+        {
+            roles = roles.Concat(new[] { EngineKeys.BusinessOwnerRole });
+        }
+
+        return roles.Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal);
     }
 
     // OP-06 for the application, when it has a lifecycle stage. Missing is computed, never stored (28, issue 16).
@@ -397,7 +933,8 @@ public sealed partial class EngineRuntime
             ("applicationKindKey", JsonTreeNode.FromString(subject.ApplicationKindKey!)),
             ("tierKey", RuntimeJson.OptionalText(subject.TierKey)),
             ("lifecycleStageKey", JsonTreeNode.FromString(stage)),
-            ("links", JsonTreeNode.CreateArray(links.Select(DocumentFact).Where(f => f != null).Select(f => f!))));
+            ("links", JsonTreeNode.CreateArray(links.Select(DocumentFact).Where(f => f != null).Select(f => f!))),
+            ("isRetired", !ApplicationIsLive(call.Snapshot!, subject.Application) ? JsonTreeNode.True : null));
         EvaluationResult<JsonTreeNode?> result = Evaluate(call, EngineOperation.EvaluateDocumentationCompleteness, call.Snapshot, input);
         return IsAnswer(EngineOperation.EvaluateDocumentationCompleteness, result.Outcome) ? result.Payload : null;
     }

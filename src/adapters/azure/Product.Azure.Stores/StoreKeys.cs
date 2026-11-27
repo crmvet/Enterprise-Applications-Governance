@@ -24,6 +24,16 @@ public enum StoreKeyScope
     // Rows with no Retired On. The engine's own key of the entity counts only such rows (O03), and its flows register a
     // resource again after the component that held it was retired.
     CurrentRows,
+
+    // Rows with no Ended On: an O26 Data Mapping that ended frees its domain, location and origin for a new mapping, as the
+    // model's key says ("among rows with no Ended On").
+    OpenRows,
+
+    // Rows in service: no Retired On, and a status meaning other than archived. The model's O25 key counts the locations
+    // not retired, and the engine counts a location out of service when either is set (the save's match on platform and
+    // External Id, G-18's Url key, every read). A draft location that is withdrawn is archived with no Retired On, so it
+    // frees its External Id for a location added again (wave 4b, fix round 2: the add answered HTTP 500 before).
+    InServiceRows,
 }
 
 // One key the logical model asks the store to enforce (enforcement "store"), held by the database as a row of the store
@@ -114,10 +124,21 @@ public sealed class StoreKey
             case StoreKeyScope.ActiveRows:
                 return !(columns.TryGetMember("isActive", out JsonTreeNode? active) && active.Kind == JsonTreeKind.False);
             case StoreKeyScope.CurrentRows:
-                return !(columns.TryGetMember("retiredOn", out JsonTreeNode? retired) && retired.Kind != JsonTreeKind.Null && !(retired.Kind == JsonTreeKind.String && retired.GetString().Length == 0));
+                return !HasValue(columns, "retiredOn");
+            case StoreKeyScope.OpenRows:
+                return !HasValue(columns, "endedOn");
+            case StoreKeyScope.InServiceRows:
+                return !HasValue(columns, "retiredOn")
+                    && !(columns.TryGetMember("statusMeaning", out JsonTreeNode? meaning) && meaning.Kind == JsonTreeKind.String && string.Equals(meaning.GetString(), "archived", StringComparison.Ordinal));
             default:
                 return true;
         }
+    }
+
+    // True when the member holds a value: not absent, not a JSON null and not an empty string.
+    private static bool HasValue(JsonTreeNode columns, string member)
+    {
+        return columns.TryGetMember(member, out JsonTreeNode? value) && value.Kind != JsonTreeKind.Null && !(value.Kind == JsonTreeKind.String && value.GetString().Length == 0);
     }
 
     private static string Normalize(string text)
@@ -275,12 +296,16 @@ public static class StoreKeyCatalog
         ["C33 Tier+Change Type+Target Stage+Portfolio+Configuration Set"] = new[] { "tierKey", "changeTypeKey", "targetStageKey", "portfolioId" },
         ["C39 Number+Version+Configuration Set"] = new[] { "number", "version" },
         ["C42 Principal+Workload Role+Configuration Set"] = new[] { "principalObjectId", "workloadRoleKey" },
+        ["C47 Rank+Configuration Set"] = new[] { "rank" },
+        ["C48 Rank+Configuration Set"] = new[] { "rank" },
     };
 
     // Operational keys whose scope is narrower than every row, by model key.
     private static readonly Dictionary<string, StoreKeyScope> OperationalScopes = new(StringComparer.Ordinal)
     {
         ["O03 Link Kind+External Id"] = StoreKeyScope.CurrentRows,
+        ["O25 Data Platform+External Id"] = StoreKeyScope.InServiceRows,
+        ["O26 Data Domain+Data Location+Data Origin"] = StoreKeyScope.OpenRows,
     };
 
     private const string ConfigurationSetColumn = "Configuration Set";

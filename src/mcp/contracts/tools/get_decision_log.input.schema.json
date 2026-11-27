@@ -18,6 +18,11 @@
       "x-entity": "O02 Business Application",
       "description": "Only decisions about this application or its records."
     },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only decisions about applications in this portfolio, child portfolios included."
+    },
     "decisionTypeKeys": {
       "type": "array",
       "minItems": 1,
@@ -52,6 +57,11 @@
     },
     "skipToken": {
       "$ref": "../common.schema.json#/$defs/skipToken"
+    },
+    "dataDomainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "Only decisions about this data domain or the domains below it: their ownership, and the uses and mappings that point at them."
     }
   },
   "additionalProperties": false,

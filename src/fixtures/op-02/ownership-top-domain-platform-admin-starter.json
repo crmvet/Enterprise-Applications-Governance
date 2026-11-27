@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "ownership-top-domain-platform-admin-starter",
+  "description": "Starter: the platform admin appoints the owners of top-level domains (D-41, question 4).",
+  "snapshot": {
+    "presetKey": "starter"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "ownership",
+    "subjectKind": "data-domain",
+    "dataDomainLevelKey": "domain",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "ownership-top-domain-lead",
+          "approverRoleKey": "platform-admin"
+        },
+        {
+          "ruleKey": "ownership-top-domain-proposed-owners"
+        }
+      ]
+    }
+  }
+}

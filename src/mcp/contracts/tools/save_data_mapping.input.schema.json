@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_data_mapping input",
+  "description": "This domain's data sits here, or it left: saves up to 100 data mappings (O26), each with its origin and the container names as seen. A mapping is matched again on its domain, location and origin. An AI client's mapping is a draft until a person confirms it. A production copy or masked copy outside production is judged by the copy rule: never is refused for everyone (G-25), and a copy that needs a decision gets a proposed copy decision, which a person sends.",
+  "x-tool": "save_data_mapping",
+  "type": "object",
+  "required": [
+    "items"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "domainKey",
+          "locationId",
+          "origin"
+        ],
+        "properties": {
+          "mappingId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O26 Data Mapping",
+            "description": "The mapping to change, confirm or end."
+          },
+          "domainKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C49 Data Domain",
+            "description": "A domain at a declarable level."
+          },
+          "locationId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O25 Data Location",
+            "description": "Where the data sits."
+          },
+          "containers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Container names as seen, such as tables. Empty means the whole location. Labels only, never data.",
+            "maxItems": 100,
+            "uniqueItems": true
+          },
+          "origin": {
+            "$ref": "../common.schema.json#/$defs/dataOrigin"
+          },
+          "copiedFromMappingId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O26 Data Mapping",
+            "description": "For a replica or a copy: the mapping it came from."
+          },
+          "endOn": {
+            "$ref": "../common.schema.json#/$defs/date",
+            "description": "Ends the mapping on this date."
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "True confirms the mapping. A person's save confirms unless this is false. An AI client never confirms (G-21)."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "The mappings to save.",
+      "minItems": 1,
+      "maxItems": 100
+    },
+    "proposeCopyDecision": {
+      "type": "boolean",
+      "default": true,
+      "description": "Open a copy decision for a copy outside production that needs one."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "items": [
+        {
+          "domainKey": "payroll",
+          "locationId": "30000000-0000-4000-8000-000000000001",
+          "containers": [
+            "PAYMAST"
+          ],
+          "origin": "system-of-record"
+        }
+      ]
+    }
+  ]
+}

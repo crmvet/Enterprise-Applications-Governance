@@ -12,7 +12,9 @@ namespace Product.Engine.Configuration.Validation.Rules;
 
 // V27: sequential approval rules in one group have unique sequence numbers, and every approval rule group of a
 // decision type with Requires Approval has at least one rule that is not a consultation. A consultation answer
-// never counts (OP-02, rule 9), so a group of consultations only would let nobody's approval count.
+// never counts (OP-02, rule 9), so a group of consultations only would let nobody's approval count. A rule that asks the
+// proposed owners (document 21, B21-9) is skipped when the decision names nobody new, so it is no counting rule on its
+// own either: the group also needs a rule that asks a role or an owner role.
 public sealed class V27ApprovalRuleGroups : ValidationRule, IContentRule
 {
     public static readonly V27ApprovalRuleGroups Instance = new();
@@ -62,6 +64,17 @@ public sealed class V27ApprovalRuleGroups : ValidationRule, IContentRule
                     ReasonCodes.ApprovalRuleConsultationOnly,
                     "the Approval Rule group of " + group.Describe() + " (" + group.RowList() + ") holds only consultations, and a consultation never counts, so no approval could accept the decision. "
                     + "Add a rule that is not a consultation, or retire the group.",
+                    "approval-rule",
+                    group.Rows[0].KeyPath,
+                    group.Rows[0].Pointer));
+            }
+            else if (requiresApproval.Contains(group.DecisionTypeKey) && group.Rows.Any(r => RowFacts.IsTrue(r, "approverProposedOwners"))
+                && group.Rows.All(r => RowFacts.IsTrue(r, "isConsultation") || RowFacts.IsTrue(r, "approverProposedOwners")))
+            {
+                issues.Add(IssueWithCode(
+                    ReasonCodes.ApprovalRuleConsultationOnly,
+                    "the Approval Rule group of " + group.Describe() + " (" + group.RowList() + ") counts only the proposed owners, and a decision that names nobody new skips that rule, so no approval could accept it. "
+                    + "Add a rule that asks a role or an owner role.",
                     "approval-rule",
                     group.Rows[0].KeyPath,
                     group.Rows[0].Pointer));

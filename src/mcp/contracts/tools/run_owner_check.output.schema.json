@@ -108,6 +108,65 @@
                   "x-entity": "O21 Review"
                 },
                 "description": "The owner check reviews the engine opened, one per affected application."
+              },
+              "dataSubjects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "subjectKind",
+                    "dataDomainKey",
+                    "dataLocationId",
+                    "label",
+                    "ownerRoleKey",
+                    "hasDeputy"
+                  ],
+                  "properties": {
+                    "subjectKind": {
+                      "enum": [
+                        "data-domain",
+                        "data-location"
+                      ]
+                    },
+                    "dataDomainKey": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/key",
+                          "x-entity": "C49 Data Domain"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "dataLocationId": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/id",
+                          "x-entity": "O25 Data Location"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "label": {
+                      "type": "string",
+                      "description": "The domain's path, or the location's name.",
+                      "x-untrusted": true
+                    },
+                    "ownerRoleKey": {
+                      "$ref": "../common.schema.json#/$defs/key",
+                      "x-entity": "C28 Owner Role"
+                    },
+                    "hasDeputy": {
+                      "type": "boolean",
+                      "description": "True when the role has a deputy on the same domain or location."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "The owner roles the person holds on data domains and data locations."
               }
             },
             "additionalProperties": false

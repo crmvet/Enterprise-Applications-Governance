@@ -51,7 +51,13 @@ public sealed class ApprovalScopeRequest
         string? applicationKindKey = null,
         string? targetStageKey = null,
         IEnumerable<string>? portfolioPath = null,
-        StandardChangeFact? standardChange = null)
+        StandardChangeFact? standardChange = null,
+        bool subjectApplicationRegistered = false,
+        string? subjectKind = null,
+        string? classificationKey = null,
+        bool? aiUse = null,
+        string? dataDomainLevelKey = null,
+        DataTaxonomyChange? dataTaxonomyChange = null)
     {
         DecisionTypeKey = Key(decisionTypeKey ?? throw new ArgumentNullException(nameof(decisionTypeKey)), nameof(decisionTypeKey))!;
         TierKey = Key(tierKey, nameof(tierKey));
@@ -61,7 +67,30 @@ public sealed class ApprovalScopeRequest
         TargetStageKey = Key(targetStageKey, nameof(targetStageKey));
         PortfolioPath = new ReadOnlyCollection<string>((portfolioPath ?? Enumerable.Empty<string>()).Where(id => !string.IsNullOrEmpty(id)).Distinct(StringComparer.Ordinal).ToList());
         StandardChange = standardChange;
+        SubjectApplicationRegistered = subjectApplicationRegistered;
+        SubjectKind = Key(subjectKind, nameof(subjectKind));
+        ClassificationKey = Key(classificationKey, nameof(classificationKey));
+        AiUse = aiUse;
+        DataDomainLevelKey = Key(dataDomainLevelKey, nameof(dataDomainLevelKey));
+        DataTaxonomyChange = dataTaxonomyChange;
     }
+
+    // The data taxonomy's scope fields (docs/architecture/data-taxonomy.md, Entities and Approval rules), matched like the others.
+    // The decision's subject kind (O09 Subject Kind, an entity key such as data-use). A request that names none is about
+    // an application, as every request was before the data taxonomy (a choice of this build, under D-41).
+    public string? SubjectKind { get; }
+
+    // The effective classification of the data the decision is about (OP-15).
+    public string? ClassificationKey { get; }
+
+    // True when the data use reaches AI, false when it does not, null when the decision is not about a use.
+    public bool? AiUse { get; }
+
+    // The level of the data domain an ownership decision is about.
+    public string? DataDomainLevelKey { get; }
+
+    // What a configuration draft does to the data taxonomy, computed from its diff (DataTaxonomyDiff), never from words.
+    public DataTaxonomyChange? DataTaxonomyChange { get; }
 
     public string DecisionTypeKey { get; }
 
@@ -81,6 +110,11 @@ public sealed class ApprovalScopeRequest
     // For change authorization: whether the change fits an approved standard change model (OP-12).
     public StandardChangeFact? StandardChange { get; }
 
+    // True when the decision is about a request linked to an application already in the register (not a draft). The
+    // lowest-tier engine acceptance covers a request that starts a new application only (security review 2026-11-24,
+    // document 25, B25-15): a request linked to a registered application always goes to a person.
+    public bool SubjectApplicationRegistered { get; }
+
     public static ApprovalScopeRequest FromJson(JsonTreeNode input)
     {
         var wire = new WireObject(
@@ -93,7 +127,13 @@ public sealed class ApprovalScopeRequest
             "applicationKindKey",
             "targetStageKey",
             "portfolioPath",
-            "standardChange");
+            "standardChange",
+            "subjectApplicationRegistered",
+            "subjectKind",
+            "classificationKey",
+            "aiUse",
+            "dataDomainLevelKey",
+            "dataTaxonomyChange");
         return new ApprovalScopeRequest(
             wire.RequiredKey("decisionTypeKey"),
             wire.OptionalKey("tierKey"),
@@ -102,7 +142,13 @@ public sealed class ApprovalScopeRequest
             wire.OptionalKey("applicationKindKey"),
             wire.OptionalKey("targetStageKey"),
             wire.Strings("portfolioPath"),
-            StandardChangeFact.FromJson(wire.OptionalObject("standardChange", "qualifies", "modelKey", "approvedByDecisionId", "failedConditions")));
+            StandardChangeFact.FromJson(wire.OptionalObject("standardChange", "qualifies", "modelKey", "approvedByDecisionId", "failedConditions")),
+            wire.Bool("subjectApplicationRegistered", false),
+            wire.OptionalKey("subjectKind"),
+            wire.OptionalKey("classificationKey"),
+            wire.OptionalBool("aiUse"),
+            wire.OptionalKey("dataDomainLevelKey"),
+            wire.Has("dataTaxonomyChange") ? wire.Contract("dataTaxonomyChange", EngineContract.DataTaxonomyChanges) : null);
     }
 
     private static string? Key(string? value, string name)
@@ -136,7 +182,10 @@ public sealed class RequiredApproval
         int minimumCount,
         int? timeoutDays,
         bool requiresTypedReason,
-        string? guidelineKey)
+        string? guidelineKey,
+        bool approverProposedOwners = false,
+        string? fallbackOwnerRoleKey = null,
+        OwnerSubject? ownerSubject = null)
     {
         if (source == ApprovalRequirementSource.ApprovalRule && ruleKey == null)
         {
@@ -160,6 +209,9 @@ public sealed class RequiredApproval
         TimeoutDays = timeoutDays;
         RequiresTypedReason = requiresTypedReason;
         GuidelineKey = guidelineKey;
+        ApproverProposedOwners = approverProposedOwners;
+        FallbackOwnerRoleKey = fallbackOwnerRoleKey;
+        OwnerSubject = ownerSubject == Contract.OwnerSubject.BusinessApplication ? null : ownerSubject;
     }
 
     public ApprovalRequirementSource Source { get; }
@@ -193,6 +245,19 @@ public sealed class RequiredApproval
 
     public string? GuidelineKey { get; }
 
+    // True when each person the decision proposes to make an owner must approve, by name (document 21, B21-9). The adapter
+    // opens one record per person named and asks for that many approvals; a decision that names nobody skips it.
+    public bool ApproverProposedOwners { get; }
+
+    // The owner role asked instead when the application has no current holder of ApproverOwnerRoleKey, or the decision
+    // ends its holder's assignment; after it, the nearest portfolio's Accountable Principal (document 21, B21-9).
+    public string? FallbackOwnerRoleKey { get; }
+
+    // Where the owner role is resolved (C31 and C32 Owner Subject; docs/architecture/data-taxonomy.md, Entities): the data domain, its
+    // parent, a data location or the domains a configuration draft touches. Null means the business application, the
+    // behavior before the data taxonomy. OP-02 names it; OP-16 and the runtime resolve the holder through OP-15.
+    public OwnerSubject? OwnerSubject { get; }
+
     // The key approval records point at (ApprovalFact.ruleKey): the rule key, or the decision right key.
     public string RequirementKey => RuleKey ?? DecisionRightKey!;
 
@@ -211,13 +276,17 @@ public sealed class RequiredApproval
             .Add("timeoutDays", TimeoutDays)
             .Add("requiresTypedReason", RequiresTypedReason)
             .Add("guidelineKey", GuidelineKey)
+            .Add("approverProposedOwners", ApproverProposedOwners ? JsonTreeNode.True : null)
+            .Add("fallbackOwnerRoleKey", FallbackOwnerRoleKey)
+            .Add("ownerSubject", OwnerSubject.HasValue ? EngineContract.OwnerSubjects.ToWire(OwnerSubject.Value) : null)
             .Build();
     }
 
     internal static readonly string[] WireFields =
     {
         "source", "ruleKey", "decisionRightKey", "approverRoleKey", "approverOwnerRoleKey", "isConsultation", "approvalMode",
-        "sequence", "minimumCount", "timeoutDays", "requiresTypedReason", "guidelineKey",
+        "sequence", "minimumCount", "timeoutDays", "requiresTypedReason", "guidelineKey", "approverProposedOwners", "fallbackOwnerRoleKey",
+        "ownerSubject",
     };
 
     // Reads one RequiredApproval as OP-02 wrote it. A minimum count below 1 is a broken configuration (V28).
@@ -258,7 +327,10 @@ public sealed class RequiredApproval
             minimumCount,
             wire.OptionalInt("timeoutDays"),
             wire.Bool("requiresTypedReason", false),
-            wire.OptionalKey("guidelineKey"));
+            wire.OptionalKey("guidelineKey"),
+            wire.Bool("approverProposedOwners", false),
+            wire.OptionalKey("fallbackOwnerRoleKey"),
+            wire.Has("ownerSubject") ? wire.Contract("ownerSubject", EngineContract.OwnerSubjects) : null);
     }
 }
 
@@ -307,7 +379,7 @@ public sealed class ApprovalScopeResult : IOperationPayload
         AcceptanceBasis = acceptanceBasis;
     }
 
-    // The approvals that must be satisfied. Empty only for engine-accept.
+    // The approvals that must be satisfied. For engine-accept, only the consents of the proposed owners (B25-18), often none.
     public IReadOnlyList<RequiredApproval> Requirements { get; }
 
     // The consultation cards to send. Their answers are stored as recommendation only.
@@ -359,6 +431,8 @@ public static class RequiredApprovalsOperation
         SnapshotRow? changeType = CheckScopeKey(snapshot, "change-type", request.ChangeTypeKey, "input.changeTypeKey");
         CheckScopeKey(snapshot, "application-kind", request.ApplicationKindKey, "input.applicationKindKey");
         CheckScopeKey(snapshot, "target-stage", request.TargetStageKey, "input.targetStageKey");
+        CheckScopeKey(snapshot, "data-classification", request.ClassificationKey, "input.classificationKey");
+        CheckScopeKey(snapshot, "data-domain-level", request.DataDomainLevelKey, "input.dataDomainLevelKey");
 
         IReadOnlyList<EngineAcceptanceEntry> lockedList = LockedList(snapshot);
         string typeKey = request.DecisionTypeKey;
@@ -371,14 +445,7 @@ public static class RequiredApprovalsOperation
             return StandardChange(snapshot, request, changeType, trace);
         }
 
-        var scope = new Dictionary<string, string?>(StringComparer.Ordinal)
-        {
-            { "tierKey", request.TierKey },
-            { "lifecycleStageKey", request.LifecycleStageKey },
-            { "changeTypeKey", request.ChangeTypeKey },
-            { "applicationKindKey", request.ApplicationKindKey },
-            { "targetStageKey", request.TargetStageKey },
-        };
+        Dictionary<string, string?> scope = ScopeColumns(request);
 
         List<ScopeGroup> ruleGroups = ScopeGroups.Build(snapshot, ApprovalRuleEntity, typeKey, ScopeGroups.ApprovalRuleScope);
         ScopeResolution rules = ScopeGroups.Resolve(ruleGroups, scope, request.PortfolioPath, ApprovalRuleEntity, typeKey);
@@ -394,7 +461,18 @@ public static class RequiredApprovalsOperation
                 (approval.IsConsultation ? consultations : requirements).Add(approval);
             }
 
-            // Rule 9: a winning group of a type with Requires Approval holds at least one rule that is not a consultation (V27).
+            // Rule 9: a winning group of a type with Requires Approval holds at least one rule that is not a consultation (V27),
+            // and a rule that asks only the proposed owners does not count for it, because a decision may name nobody new.
+            if (requirements.Count > 0 && requirements.All(r => r.ApproverProposedOwners) && SnapshotRead.Flag(decisionType, "requiresApproval"))
+            {
+                throw OperationStop.Broken(
+                    ReasonCodes.ApprovalRuleConsultationOnly,
+                    "The winning Approval Rule group of decision type " + SnapshotRead.Quote(typeKey) + " (" + rules.Winner.Describe()
+                    + ") counts only the proposed owners, and the type requires approval. The configuration is broken.",
+                    "Approval Rule",
+                    rules.Winner.Rows[0].KeyPath);
+            }
+
             if (requirements.Count == 0 && SnapshotRead.Flag(decisionType, "requiresApproval"))
             {
                 throw OperationStop.Broken(
@@ -406,27 +484,55 @@ public static class RequiredApprovalsOperation
             }
         }
 
-        if (requirements.Count > 0)
+        // Consents (document 25, B25-18): a rule that asks only the proposed owners is their consent to the role, never the
+        // group's counting rule. For a type that does not require approval (rule 9 refuses such a group for one that does),
+        // a winning group whose counting rules all ask the proposed owners goes on as if no counting group matched, to the
+        // engine's acceptance (rule 8) or the accountable card (rule 7), and keeps those rules as requirements beside it.
+        // The adapter drops a consent when the decision names nobody new (C32 Approver Proposed Owners).
+        bool consentsOnly = requirements.Count > 0 && requirements.All(r => r.ApproverProposedOwners);
+        if (requirements.Count > 0 && !consentsOnly)
         {
             return new OperationAnswer<ApprovalScopeResult>("required", new ApprovalScopeResult(Sorted(requirements), Sorted(consultations), null), null, trace);
         }
 
-        // Rule 8, lowest-tier: only when no counting approval rule group matches.
-        if (HasEntry(lockedList, typeKey, EngineAcceptanceCondition.LowestTier) && IsLowestTier(snapshot, request.TierKey))
+        IReadOnlyList<RequiredApproval> consents = consentsOnly ? Sorted(requirements) : Array.Empty<RequiredApproval>();
+
+        // Rule 8, lowest-tier: only when no counting approval rule group matches, and only for a subject that starts a new
+        // application (B25-15): a request linked to a registered application goes to the accountable holder. A consent
+        // stays a requirement: the engine accepts once it is given.
+        if (HasEntry(lockedList, typeKey, EngineAcceptanceCondition.LowestTier) && IsLowestTier(snapshot, request.TierKey) && !request.SubjectApplicationRegistered)
         {
             trace.Add(new RuleTrace("Setting", EngineKeys.EngineAcceptableDecisionTypes, RuleTraceRole.Matched));
             trace.Add(new RuleTrace("Tier", request.TierKey!, RuleTraceRole.Matched));
             var basis = new AcceptanceBasis(typeKey, EngineAcceptanceCondition.LowestTier);
             return new OperationAnswer<ApprovalScopeResult>(
                 "engine-accept",
-                new ApprovalScopeResult(Array.Empty<RequiredApproval>(), Sorted(consultations), basis),
+                new ApprovalScopeResult(consents, Sorted(consultations), basis),
                 new[] { ReasonCatalog.Create(ReasonCodes.DecisionEngineAccepted, "Decision Type", typeKey) },
                 trace);
         }
 
-        // Rule 7: one card to the holder of the accountable letter, resolved with the same rule.
-        requirements.Add(Accountable(snapshot, request, scope, trace));
-        return new OperationAnswer<ApprovalScopeResult>("required", new ApprovalScopeResult(requirements, Sorted(consultations), null), null, trace);
+        // Rule 7: one card to the holder of the accountable letter, resolved with the same rule, beside any consent.
+        var withAccountable = new List<RequiredApproval>(consents) { Accountable(snapshot, request, scope, trace) };
+        return new OperationAnswer<ApprovalScopeResult>("required", new ApprovalScopeResult(withAccountable, Sorted(consultations), null), null, trace);
+    }
+
+    // The request's scope as the rule groups match it. The proposal right check reads the same columns.
+    internal static Dictionary<string, string?> ScopeColumns(ApprovalScopeRequest request)
+    {
+        return new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            { "tierKey", request.TierKey },
+            { "lifecycleStageKey", request.LifecycleStageKey },
+            { "changeTypeKey", request.ChangeTypeKey },
+            { "applicationKindKey", request.ApplicationKindKey },
+            { "targetStageKey", request.TargetStageKey },
+            { "subjectKind", request.SubjectKind ?? EngineKeys.ApplicationSubjectKind },
+            { "classificationKey", request.ClassificationKey },
+            { "aiUse", request.AiUse.HasValue ? (request.AiUse.Value ? "true" : "false") : null },
+            { "dataDomainLevelKey", request.DataDomainLevelKey },
+            { "dataTaxonomyChange", request.DataTaxonomyChange.HasValue ? EngineContract.DataTaxonomyChanges.ToWire(request.DataTaxonomyChange.Value) : null },
+        };
     }
 
     private static SnapshotRow? CheckScopeKey(ConfigurationSnapshot snapshot, string entityKey, string? key, string field)
@@ -524,11 +630,14 @@ public static class RequiredApprovalsOperation
     {
         string? roleKey = SnapshotRead.Text(row, "approverRoleKey");
         string? ownerRoleKey = SnapshotRead.Text(row, "approverOwnerRoleKey");
-        if ((roleKey == null) == (ownerRoleKey == null))
+        bool proposedOwners = SnapshotRead.Flag(row, "approverProposedOwners");
+        int named = (roleKey == null ? 0 : 1) + (ownerRoleKey == null ? 0 : 1) + (proposedOwners ? 1 : 0);
+        string? fallback = SnapshotRead.Text(row, "fallbackOwnerRoleKey");
+        if (named != 1 || (fallback != null && ownerRoleKey == null))
         {
             throw OperationStop.Broken(
                 ReasonCodes.RefExactlyOne,
-                "Approval Rule " + SnapshotRead.Quote(row.KeyPath) + " must name exactly one of approverRoleKey and approverOwnerRoleKey, so the configuration is broken.",
+                "Approval Rule " + SnapshotRead.Quote(row.KeyPath) + " must name exactly one of approverRoleKey, approverOwnerRoleKey and approverProposedOwners, and a fallback owner role only beside an owner role, so the configuration is broken.",
                 "Approval Rule",
                 row.KeyPath);
         }
@@ -565,7 +674,31 @@ public static class RequiredApprovalsOperation
             minimumCount,
             SnapshotRead.Int(row, ApprovalRuleEntity, "timeoutDays"),
             SnapshotRead.Flag(row, "requiresTypedReason"),
-            SnapshotRead.Text(row, "guidelineKey"));
+            SnapshotRead.Text(row, "guidelineKey"),
+            proposedOwners,
+            fallback,
+            OwnerSubjectOf(row, "Approval Rule", ownerRoleKey));
+    }
+
+    // C31 or C32 Owner Subject, only beside an owner role (V56).
+    private static OwnerSubject? OwnerSubjectOf(SnapshotRow row, string entity, string? ownerRoleKey)
+    {
+        string? text = SnapshotRead.Text(row, "ownerSubject");
+        if (text == null)
+        {
+            return null;
+        }
+
+        if (ownerRoleKey == null || !EngineContract.OwnerSubjects.TryParse(text, out OwnerSubject subject))
+        {
+            throw OperationStop.Broken(
+                ReasonCodes.DataOwnerSubjectRule,
+                entity + " " + SnapshotRead.Quote(row.KeyPath) + " names owner subject " + SnapshotRead.Quote(text) + (ownerRoleKey == null ? " without an owner role" : ", which is not a known owner subject") + ", so the configuration is broken.",
+                entity,
+                row.KeyPath);
+        }
+
+        return subject;
     }
 
     // Rule 7. The accountable holder's card is answered first to respond, by one person (Minimum Count 1).
@@ -628,7 +761,10 @@ public static class RequiredApprovalsOperation
             1,
             null,
             false,
-            null);
+            null,
+            false,
+            ownerRoleKey == null ? null : SnapshotRead.Text(holder, "fallbackOwnerRoleKey"),
+            OwnerSubjectOf(holder, "Decision Right", ownerRoleKey));
     }
 
     private static List<RequiredApproval> Sorted(IEnumerable<RequiredApproval> approvals)

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "reject-without-reason-invalid-input",
+  "description": "A rejection takes a typed reason. Without one the answer is invalid input, naming the reason field, and nothing is written.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "reject",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "decisionRightKey": "intake-a",
+      "requiredRoleKey": "platform-admin",
+      "expiresOnUtc": "2026-11-30T09:00:00Z"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "intake",
+      "tierKey": "tier-1"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-reason-required",
+        "severity": "error",
+        "ref": "reason"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

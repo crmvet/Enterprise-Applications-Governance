@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "self-approval-at-tier-2-allowed",
+  "description": "The same self-approval at tier 2 passes: Balanced lets a proposer approve their own decision below tier 3 (D-40).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "retirement-approval",
+      "requiredOwnerRoleKey": "business-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "retirement",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-1"
+    },
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "flagged": false
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

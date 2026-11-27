@@ -1,4 +1,7 @@
 {
+  "$comment": [
+    "Aligned with the process documents (document 21, B21-9): a data owner is named before go-live at tiers 2 and 3 (guideline G2; the gap map's decision 5, option B). Owner gaps follow the same scope, so a tier 1 application with no data owner shows no gap. The data taxonomy later replaces these rows with data uses declared and decided."
+  ],
   "entity": "gate-requirement",
   "rows": [
     {
@@ -50,6 +53,24 @@
       "requiredReviewTypeKey": "security-review"
     },
     {
+      "key": "go-live-data-owner-tier-2",
+      "label": "A data owner is named",
+      "gateKey": "go-live",
+      "tierKey": "tier-2",
+      "requirementKind": "owner-assigned",
+      "requiredOwnerRoleKey": "data-owner",
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "go-live-data-owner-tier-3",
+      "label": "A data owner is named",
+      "gateKey": "go-live",
+      "tierKey": "tier-3",
+      "requirementKind": "owner-assigned",
+      "requiredOwnerRoleKey": "data-owner",
+      "guidelineKey": "g2"
+    },
+    {
       "key": "go-live-autonomy-agent",
       "label": "Autonomy level agreed",
       "gateKey": "go-live",
@@ -57,6 +78,40 @@
       "requirementKind": "decision-accepted",
       "requiredDecisionTypeKey": "autonomy-level",
       "guidelineKey": "g17"
+    },
+    {
+      "key": "design-data-uses-declared-tier-2",
+      "label": "Data uses are declared",
+      "gateKey": "design",
+      "tierKey": "tier-2",
+      "requirementKind": "data-uses-declared",
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "design-data-uses-declared-tier-3",
+      "label": "Data uses are declared",
+      "gateKey": "design",
+      "tierKey": "tier-3",
+      "requirementKind": "data-uses-declared",
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "design-data-uses-decided-tier-2",
+      "label": "Data uses are decided",
+      "gateKey": "design",
+      "tierKey": "tier-2",
+      "requirementKind": "data-uses-decided",
+      "requiredDecisionTypeKey": "data-use",
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "design-data-uses-decided-tier-3",
+      "label": "Data uses are decided",
+      "gateKey": "design",
+      "tierKey": "tier-3",
+      "requirementKind": "data-uses-decided",
+      "requiredDecisionTypeKey": "data-use",
+      "guidelineKey": "g2"
     }
   ]
 }

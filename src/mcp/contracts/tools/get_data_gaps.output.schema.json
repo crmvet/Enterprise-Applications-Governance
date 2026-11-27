@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_data_gaps output",
+  "description": "The response envelope. On success, data holds the count per check and the findings, highest weight first.",
+  "x-tool": "get_data_gaps",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "counts",
+        "items",
+        "totalCount",
+        "appLevelDataOwners"
+      ],
+      "properties": {
+        "counts": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^DC-[0-9]{2}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Findings per check in the scope, before the checks and severities filters."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/dataFinding"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        },
+        "appLevelDataOwners": {
+          "type": "array",
+          "description": "Under domains-required: the current data owner assignments held on applications, which no longer answer anything, listed for clean-up through propose_owner_change (document 24, B24-22). Empty in the other modes and for a domain or location scope.",
+          "items": {
+            "type": "object",
+            "required": [
+              "ownerAssignmentId",
+              "businessApplicationId",
+              "applicationName",
+              "principal",
+              "isDeputy",
+              "fixTool",
+              "recordUrl"
+            ],
+            "properties": {
+              "ownerAssignmentId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O06 Owner Assignment"
+              },
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "applicationName": {
+                "type": "string",
+                "x-untrusted": true
+              },
+              "principal": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isDeputy": {
+                "type": "boolean"
+              },
+              "fixTool": {
+                "$ref": "../common.schema.json#/$defs/toolName"
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

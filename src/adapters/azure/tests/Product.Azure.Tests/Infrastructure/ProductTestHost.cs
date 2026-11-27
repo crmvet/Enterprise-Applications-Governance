@@ -48,6 +48,10 @@ internal sealed class HostSettings
     // Approval Rule that needs two answers). Null seeds the demo binding as it is.
     public string? BindingOperations { get; set; }
 
+    // Configuration operations for version 1, as a JSON array, in a draft patch after the binding (for example a data
+    // domain tree). Null seeds the demo configuration as it is.
+    public string? DraftOperations { get; set; }
+
     public DateTime Now { get; set; } = DemoSeed.Start;
 
     // The remote address every request appears to come from (an in-memory test server has none). Null leaves it unset.
@@ -144,7 +148,7 @@ internal sealed class ProductTestHost : IAsyncDisposable
         {
             using var store = new SqliteProductStore(new SqliteStoreOptions { ConnectionString = ConnectionString(file), NewSeedId = RowIds.EntityCounter() });
             store.EnsureSchema();
-            DemoSeed.Into(store, settings.BindingOperations);
+            DemoSeed.Into(store, settings.BindingOperations, settings.DraftOperations);
         }
 
         return new ProductTestHost(settings, file, scratch);

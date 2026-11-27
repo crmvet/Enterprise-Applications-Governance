@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_configuration_draft input",
+  "description": "One configuration draft as its record page shows it: its state, base version and rationale, the row diff against the configuration in force now, the rule errors and warnings the engine found, the applications and gates it touches, and its decision with the people who accepted it. A read for any role.",
+  "x-tool": "get_configuration_draft",
+  "type": "object",
+  "required": [
+    "configurationDraftId"
+  ],
+  "properties": {
+    "configurationDraftId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "The draft.",
+      "x-entity": "C46 Configuration Draft"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "configurationDraftId": "00000000-0000-4000-8000-000000000c46"
+    }
+  ]
+}

@@ -101,7 +101,7 @@
       "description": "Upsert creates a row or merges values into the row with that key. Retire sets isActive to false. There is no delete."
     },
     "contract.area": {
-      "enum": ["taxonomy", "people", "rules", "gates", "change-management", "documentation"],
+      "enum": ["taxonomy", "people", "rules", "gates", "change-management", "documentation", "data"],
       "description": "An area a preset covers."
     },
     "contract.status-entity": {
@@ -114,9 +114,12 @@
         "document-link",
         "claim",
         "deployment-record",
-        "review"
+        "review",
+        "data-location",
+        "data-mapping",
+        "data-use"
       ],
-      "description": "The operational entities whose status is a Status (C05) row."
+      "description": "The operational entities whose status is a Status (C05) row. The data taxonomy adds its three records."
     },
     "contract.status-meaning": {
       "enum": [
@@ -184,16 +187,36 @@
       "description": "How a deployment record arrived."
     },
     "contract.link-category": {
-      "enum": ["delivery", "pipeline", "document", "evidence", "microsoft-resource", "external-change"],
-      "description": "Which link entity a link kind serves."
+      "enum": ["delivery", "pipeline", "document", "evidence", "microsoft-resource", "external-change", "data-location"],
+      "description": "Which link entity a link kind serves. Data location serves O25 Data Location (data taxonomy, D-37)."
+    },
+    "contract.data-handling-rule": {
+      "enum": ["allowed", "decision", "masked-only", "never"],
+      "description": "How data of a class or a domain may be used (D-37; docs/architecture/data-taxonomy.md, The main fields). Strictness rises in that order. A domain may make a rule stricter, never looser."
+    },
+    "contract.owner-subject": {
+      "enum": ["business-application", "data-domain", "parent-data-domain", "data-location", "touched-data-domains"],
+      "description": "Where an owner role named on an approval rule or a decision right is resolved (docs/architecture/data-taxonomy.md, Entities). Absent means the business application, the behavior before the data taxonomy."
+    },
+    "contract.data-taxonomy-change": {
+      "enum": ["touches", "loosens"],
+      "description": "What a configuration draft does to the data taxonomy, computed by the engine from the draft's diff (docs/architecture/data-taxonomy.md, Approval rules)."
+    },
+    "contract.owner-subject-kind": {
+      "enum": ["business-application", "data-domain", "data-location"],
+      "description": "Where an owner role can be held: the subject kinds of O06 Owner Assignment (D-37; docs/architecture/data-taxonomy.md, Entities)."
+    },
+    "contract.data-taxonomy-mode": {
+      "enum": ["off", "domains-optional", "domains-required"],
+      "description": "Whether data domains are off, optional or required for data use decisions (D-37; docs/architecture/data-taxonomy.md, Levels and the mode)."
     },
     "contract.change-management-mode": {
       "enum": ["built-in", "linked"],
       "description": "Built in, or linked to the client ITSM tool (D-08)."
     },
     "contract.requirement-kind": {
-      "enum": ["decision-accepted", "document-current", "review-done", "owner-assigned"],
-      "description": "How the engine tests a gate requirement."
+      "enum": ["decision-accepted", "document-current", "review-done", "owner-assigned", "data-uses-declared", "data-uses-decided"],
+      "description": "How the engine tests a gate requirement. data-uses-declared and data-uses-decided come with the data taxonomy (docs/architecture/data-taxonomy.md, Gate requirements)."
     },
     "contract.ai-only-code-approval-handling": {
       "enum": ["ignore", "flag", "stop"],
@@ -552,6 +575,10 @@
           "then": { "properties": { "valueType": { "const": "number" }, "value": { "type": "integer", "minimum": 1 } } }
         },
         {
+          "if": { "required": ["key"], "properties": { "key": { "const": "review-request-due-days" } } },
+          "then": { "properties": { "valueType": { "const": "number" }, "value": { "type": "integer", "minimum": 0 } } }
+        },
+        {
           "if": { "required": ["key"], "properties": { "key": { "const": "default-flag-notify" } } },
           "then": { "properties": { "valueType": { "const": "json" }, "value": { "$ref": "#/$defs/notify" } } }
         },
@@ -673,6 +700,39 @@
                 "uniqueItems": true
               }
             }
+          }
+        },
+        {
+          "if": { "required": ["key"], "properties": { "key": { "const": "data-taxonomy-mode" } } },
+          "then": {
+            "properties": {
+              "valueType": { "const": "contract:data-taxonomy-mode" },
+              "value": { "$ref": "#/$defs/contract.data-taxonomy-mode" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["key"], "properties": { "key": { "const": "data-location-stale-days" } } },
+          "then": { "properties": { "valueType": { "const": "number" }, "value": { "type": "integer", "minimum": 1 } } }
+        },
+        {
+          "if": { "required": ["key"], "properties": { "key": { "const": "measure-targets" } } },
+          "then": {
+            "properties": {
+              "valueType": { "const": "json" },
+              "value": { "type": "object", "additionalProperties": { "oneOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] } }
+            },
+            "$comment": "Document 24, B24-22: the target per measure key; V38 checks the keys (MeasureSettings)."
+          }
+        },
+        {
+          "if": { "required": ["key"], "properties": { "key": { "const": "signal-thresholds" } } },
+          "then": {
+            "properties": {
+              "valueType": { "const": "json" },
+              "value": { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0 } } }
+            },
+            "$comment": "Document 24, B24-22: the threshold numbers per signal key; V38 checks the keys and the numbers each signal takes (MeasureSettings)."
           }
         },
         { "dependentRequired": { "narrowsSettingKey": ["portfolioId"], "portfolioId": ["narrowsSettingKey"] } }
@@ -1354,6 +1414,28 @@
               "requiredReviewTypeKey": false
             }
           }
+        },
+        {
+          "if": { "required": ["requirementKind"], "properties": { "requirementKind": { "const": "data-uses-declared" } } },
+          "then": {
+            "properties": {
+              "requiredDecisionTypeKey": false,
+              "requiredDocumentTypeKey": false,
+              "requiredReviewTypeKey": false,
+              "requiredOwnerRoleKey": false
+            }
+          }
+        },
+        {
+          "if": { "required": ["requirementKind"], "properties": { "requirementKind": { "const": "data-uses-decided" } } },
+          "then": {
+            "required": ["requiredDecisionTypeKey"],
+            "properties": {
+              "requiredDocumentTypeKey": false,
+              "requiredReviewTypeKey": false,
+              "requiredOwnerRoleKey": false
+            }
+          }
         }
       ]
     },
@@ -1537,7 +1619,7 @@
         },
         "requiresApproval": {
           "type": "boolean",
-          "description": "True when approval rules (C32) decide who must approve. False sends one card to the holder of the accountable letter (C31). Either way a person answers a card, except for the locked list in engine-acceptable-decision-types.",
+          "description": "True when approval rules (C32) decide who must approve. False sends one approval request to the holder of the accountable letter (C31). Either way a person answers on the decision page, except for the locked list in engine-acceptable-decision-types.",
           "$comment": "WORKING DEFAULT (open design question 8): outside the locked engine acceptance list, every decision goes on a person's card."
         }
       }
@@ -1652,7 +1734,7 @@
       "properties": {
         "requiresAuthorization": {
           "type": "boolean",
-          "description": "True when a change of this type needs a change authorization decision answered by a person on a card."
+          "description": "True when a change of this type needs a change authorization decision answered by a person on the decision page."
         },
         "requiresStandardModel": {
           "type": "boolean",
@@ -1781,7 +1863,7 @@
         "templateUrl": { "$ref": "#/$defs/httpsUrl", "description": "A link to a template in the playbook." },
         "currentNeedsPerson": {
           "type": "boolean",
-          "description": "True when \"current\" set by an AI client needs a person's confirmation card.",
+          "description": "True when \"current\" set by an AI client needs a person to confirm it.",
           "$comment": "WORKING DEFAULT (open design question 9): marking a gate-relevant document current needs a confirmation card."
         }
       }
@@ -2066,6 +2148,17 @@
           "x-references": "role",
           "description": "The product role a holder must also hold (CHK-06).",
           "x-proposal": "document 26, sections 3.3 and 15"
+        },
+        "subjectKinds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/contract.owner-subject-kind" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Where the role can be held: business-application, data-domain or data-location. Absent means business-application only (data taxonomy, D-37)."
+        },
+        "inheritsDown": {
+          "type": "boolean",
+          "description": "True when a holder on a data domain answers for the domains below it that name no holder of their own (OP-15)."
         }
       }
     },
@@ -2266,6 +2359,38 @@
           "$ref": "#/$defs/key",
           "x-references": "role",
           "description": "The product role holding the letter, when organization-wide. A supports row names neither."
+        },
+        "fallbackOwnerRoleKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "owner-role",
+          "description": "Only on an accountable row with ownerRoleKey. When the subject has no current holder of that owner role, the one approval request asks the holders of this owner role instead, then the Accountable Principal of the nearest portfolio that names one.",
+          "x-proposal": "document 21, B21-9"
+        },
+        "subjectKind": {
+          "$ref": "#/$defs/key",
+          "description": "Optional scope: the decision's subject kind, an entity key such as data-use, data-mapping, data-domain or business-application (docs/architecture/data-taxonomy.md, Entities). A request that names none is about an application."
+        },
+        "classificationKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "data-classification",
+          "description": "Optional scope: the effective classification of the data the decision is about."
+        },
+        "aiUse": {
+          "type": "boolean",
+          "description": "Optional scope: true when the data use reaches AI, false when it does not."
+        },
+        "dataDomainLevelKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "data-domain-level",
+          "description": "Optional scope: the level of the data domain an ownership decision is about."
+        },
+        "dataTaxonomyChange": {
+          "$ref": "#/$defs/contract.data-taxonomy-change",
+          "description": "Optional scope of a configuration change: touches or loosens the data taxonomy, computed by the engine from the draft's diff."
+        },
+        "ownerSubject": {
+          "$ref": "#/$defs/contract.owner-subject",
+          "description": "Only with ownerRoleKey. Where that owner role is resolved: the data domain, its parent, a data location or the domains a configuration draft touches (V56). Absent means the business application."
         }
       }
     },
@@ -2280,10 +2405,22 @@
       }
     },
     "decision-right.rules": {
-      "$comment": "V10 and V31: a supports row names no holder; every other row names exactly one of ownerRoleKey and roleKey.",
-      "if": { "required": ["letter"], "properties": { "letter": { "const": "supports" } } },
-      "then": { "properties": { "ownerRoleKey": false, "roleKey": false } },
-      "else": { "oneOf": [{ "required": ["ownerRoleKey"] }, { "required": ["roleKey"] }] }
+      "$comment": "V10 and V31: a supports row names no holder; every other row names exactly one of ownerRoleKey and roleKey. A fallback owner role stands only beside an owner role.",
+      "allOf": [
+        {
+          "if": { "required": ["letter"], "properties": { "letter": { "const": "supports" } } },
+          "then": { "properties": { "ownerRoleKey": false, "roleKey": false } },
+          "else": { "oneOf": [{ "required": ["ownerRoleKey"] }, { "required": ["roleKey"] }] }
+        },
+        {
+          "if": { "required": ["fallbackOwnerRoleKey"] },
+          "then": { "required": ["ownerRoleKey"] }
+        },
+        {
+          "if": { "required": ["ownerSubject"] },
+          "then": { "required": ["ownerRoleKey"] }
+        }
+      ]
     },
     "decision-right.seedRow": {
       "description": "C31 Decision Right. Who is responsible, accountable, consulted, informed, or (AI only) supports, for a decision type in a scope. Rows with identical scope form one rule group.",
@@ -2349,12 +2486,23 @@
         "approverOwnerRoleKey": {
           "$ref": "#/$defs/key",
           "x-references": "owner-role",
-          "description": "The owner role that must approve. Exactly one of this and approverRoleKey."
+          "description": "The owner role that must approve. Exactly one of this, approverRoleKey and approverProposedOwners."
         },
         "approverRoleKey": {
           "$ref": "#/$defs/key",
           "x-references": "role",
           "description": "The product role that must approve."
+        },
+        "approverProposedOwners": {
+          "type": "boolean",
+          "description": "True when each person the decision proposes to make an owner must approve, by name: the successor and any new deputy of an ownership decision. A decision that names nobody new skips the rule.",
+          "x-proposal": "document 21, B21-9"
+        },
+        "fallbackOwnerRoleKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "owner-role",
+          "description": "Only with approverOwnerRoleKey. When the application has no current holder of that owner role, or the decision ends its holder's assignment, the request asks the holders of this owner role instead, then the Accountable Principal of the nearest portfolio that names one.",
+          "x-proposal": "document 21, B21-9"
         },
         "approvalMode": {
           "$ref": "#/$defs/contract.approval-mode",
@@ -2389,6 +2537,32 @@
           "type": "boolean",
           "description": "Whether a guest's answer can count (document 26, section 7.3).",
           "x-proposal": "document 26, sections 14 and 15"
+        },
+        "subjectKind": {
+          "$ref": "#/$defs/key",
+          "description": "Optional scope: the decision's subject kind, an entity key such as data-use, data-mapping, data-domain or business-application (docs/architecture/data-taxonomy.md, Entities). A request that names none is about an application."
+        },
+        "classificationKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "data-classification",
+          "description": "Optional scope: the effective classification of the data the decision is about."
+        },
+        "aiUse": {
+          "type": "boolean",
+          "description": "Optional scope: true when the data use reaches AI, false when it does not."
+        },
+        "dataDomainLevelKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "data-domain-level",
+          "description": "Optional scope: the level of the data domain an ownership decision is about."
+        },
+        "dataTaxonomyChange": {
+          "$ref": "#/$defs/contract.data-taxonomy-change",
+          "description": "Optional scope of a configuration change: touches or loosens the data taxonomy, computed by the engine from the draft's diff."
+        },
+        "ownerSubject": {
+          "$ref": "#/$defs/contract.owner-subject",
+          "description": "Only with approverOwnerRoleKey. Where that owner role is resolved: the data domain, its parent, a data location or the domains a configuration draft touches (V56). Absent means the business application."
         }
       }
     },
@@ -2403,12 +2577,26 @@
       }
     },
     "approval-rule.rules": {
-      "$comment": "V10: exactly one approver. A sequential rule carries its sequence.",
+      "$comment": "V10: exactly one approver (an owner role, a role, or the proposed owners), and a fallback owner role only beside an owner role. A sequential rule carries its sequence.",
       "allOf": [
-        { "oneOf": [{ "required": ["approverOwnerRoleKey"] }, { "required": ["approverRoleKey"] }] },
+        {
+          "oneOf": [
+            { "required": ["approverOwnerRoleKey"] },
+            { "required": ["approverRoleKey"] },
+            { "required": ["approverProposedOwners"], "properties": { "approverProposedOwners": { "const": true } } }
+          ]
+        },
+        {
+          "if": { "required": ["fallbackOwnerRoleKey"] },
+          "then": { "required": ["approverOwnerRoleKey"] }
+        },
         {
           "if": { "required": ["approvalMode"], "properties": { "approvalMode": { "const": "sequential" } } },
           "then": { "required": ["sequence"] }
+        },
+        {
+          "if": { "required": ["ownerSubject"] },
+          "then": { "required": ["approverOwnerRoleKey"] }
         }
       ]
     },
@@ -2567,7 +2755,11 @@
     "target-stage.seedFields": {
       "description": "Seed fields of C34 (classes R and O).",
       "properties": {
-        "rank": { "type": "integer", "description": "Order from development to production. Used for ordering only." }
+        "rank": { "type": "integer", "description": "Order from development to production. Used for ordering only." },
+        "isProduction": {
+          "type": "boolean",
+          "description": "True for a production stage. The copy to test rule reads it, never a stage key. At least one stage has it (V58, data taxonomy)."
+        }
       }
     },
     "target-stage.seedRow": {
@@ -3321,6 +3513,247 @@
       "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/known-client.seedFields" }],
       "unevaluatedProperties": false
     },
+    "data-classification.seedFields": {
+      "description": "Seed fields of C47 (classes R and O).",
+      "properties": {
+        "rank": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Higher means more sensitive. Unique among active rows. It follows the label priority order. The engine compares ranks, never labels."
+        },
+        "impliedTierQuestionKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "tier-question",
+          "description": "The tier question this class informs. In Balanced it is sensitivity."
+        },
+        "impliedAnswerKey": {
+          "$ref": "#/$defs/key",
+          "description": "The answer option of the implied tier question that data of this class implies. A key within that question; V52 checks it resolves (data taxonomy slice 2)."
+        },
+        "defaultUseRule": { "$ref": "#/$defs/contract.data-handling-rule", "description": "Applies to reads and writes that do not reach AI." },
+        "defaultAiUseRule": { "$ref": "#/$defs/contract.data-handling-rule", "description": "Applies to uses that reach AI." },
+        "defaultCopyToTestRule": { "$ref": "#/$defs/contract.data-handling-rule", "description": "Applies to production copies outside production." }
+      }
+    },
+    "data-classification.seedRow": {
+      "description": "C47 Data Classification. A ranked sensitivity level in the tenant's Purview label names, with its default handling rules (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.seedFields" }, { "$ref": "#/$defs/data-classification.seedFields" }],
+      "required": ["key", "label", "rank", "defaultUseRule", "defaultAiUseRule", "defaultCopyToTestRule"],
+      "unevaluatedProperties": false
+    },
+    "data-classification.setRow": {
+      "description": "C47 Data Classification. A ranked sensitivity level in the tenant's Purview label names, with its default handling rules (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/row.seedFields" },
+        { "$ref": "#/$defs/row.engineFields" },
+        { "$ref": "#/$defs/data-classification.seedFields" }
+      ],
+      "required": ["key", "label", "rank", "defaultUseRule", "defaultAiUseRule", "defaultCopyToTestRule"],
+      "unevaluatedProperties": false
+    },
+    "data-classification.presetValues": {
+      "description": "Upsert values for C47 in a preset patch or overlay. Fields not named keep their value. A new row must carry every required field (checked by the engine).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-classification.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-classification.draftValues": {
+      "description": "Upsert values for C47 in a draft patch. Seed and working set fields. Fields not named keep their value.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-classification.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-domain-level.seedFields": {
+      "description": "Seed fields of C48 (classes R and O).",
+      "properties": {
+        "rank": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1 is the top. Unique among active rows. A child domain's level ranks higher than its parent's."
+        },
+        "ownerRequired": {
+          "type": "boolean",
+          "description": "True when each domain at this level needs its own data owner, not an inherited one (DC-02)."
+        },
+        "declarable": {
+          "type": "boolean",
+          "description": "True (the default) when data uses and mappings may point at domains of this level."
+        }
+      }
+    },
+    "data-domain-level.seedRow": {
+      "description": "C48 Data Domain Level. One level of the business data domain tree of this install (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.seedFields" }, { "$ref": "#/$defs/data-domain-level.seedFields" }],
+      "required": ["key", "label", "rank"],
+      "unevaluatedProperties": false
+    },
+    "data-domain-level.setRow": {
+      "description": "C48 Data Domain Level. One level of the business data domain tree of this install (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/row.seedFields" },
+        { "$ref": "#/$defs/row.engineFields" },
+        { "$ref": "#/$defs/data-domain-level.seedFields" }
+      ],
+      "required": ["key", "label", "rank"],
+      "unevaluatedProperties": false
+    },
+    "data-domain-level.presetValues": {
+      "description": "Upsert values for C48 in a preset patch or overlay. Fields not named keep their value. A new row must carry every required field (checked by the engine).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-domain-level.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-domain-level.draftValues": {
+      "description": "Upsert values for C48 in a draft patch. Seed and working set fields. Fields not named keep their value.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-domain-level.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-domain.seedFields": {
+      "description": "Seed fields of C49 (classes R and O).",
+      "properties": {
+        "parentKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "data-domain",
+          "description": "The domain above this one. Absent at the top. No cycles (V49)."
+        },
+        "levelKey": { "$ref": "#/$defs/key", "x-references": "data-domain-level", "description": "This node's level." },
+        "classificationKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "data-classification",
+          "description": "Required at the top (V52). Below the top, absent means inherit the nearest classification above."
+        },
+        "useRule": { "$ref": "#/$defs/contract.data-handling-rule", "description": "A stricter use rule for this branch. Absent adds nothing here." },
+        "aiUseRule": { "$ref": "#/$defs/contract.data-handling-rule", "description": "A stricter AI use rule for this branch. Absent adds nothing here." },
+        "copyToTestRule": { "$ref": "#/$defs/contract.data-handling-rule", "description": "A stricter copy to test rule for this branch. Absent adds nothing here." },
+        "retentionClassKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "list-value:retention-class",
+          "description": "How long the data is kept. Absent means inherit."
+        },
+        "examples": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "What belongs here, in plain words. AI clients use it to suggest mappings. An untrusted field."
+        }
+      }
+    },
+    "data-domain.seedRow": {
+      "description": "C49 Data Domain. One node of the business data domain tree, held flat with its parent key (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.seedFields" }, { "$ref": "#/$defs/data-domain.seedFields" }],
+      "required": ["key", "label", "levelKey"],
+      "unevaluatedProperties": false
+    },
+    "data-domain.setRow": {
+      "description": "C49 Data Domain. One node of the business data domain tree, held flat with its parent key (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/row.seedFields" },
+        { "$ref": "#/$defs/row.engineFields" },
+        { "$ref": "#/$defs/data-domain.seedFields" }
+      ],
+      "required": ["key", "label", "levelKey"],
+      "unevaluatedProperties": false
+    },
+    "data-domain.presetValues": {
+      "description": "Upsert values for C49 in a preset patch or overlay. Fields not named keep their value. A new row must carry every required field (checked by the engine).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-domain.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-domain.draftValues": {
+      "description": "Upsert values for C49 in a draft patch. Seed and working set fields. Fields not named keep their value.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-domain.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-platform.seedFields": {
+      "description": "Seed fields of C50 (classes R and O).",
+      "properties": {
+        "locationKindKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "list-value:location-kind",
+          "description": "A grouping: app platform, CRM, ERP, relational database, document database, file store, lake, SaaS application, legacy or other."
+        },
+        "vendorKey": { "$ref": "#/$defs/key", "x-references": "list-value:data-vendor", "description": "The vendor." },
+        "instanceLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "What a top-level location is called: environment, server, account, org, host, tenant or workspace."
+        },
+        "storeLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "What a child location is called: database, library, share or lakehouse. Absent means the platform has no child level."
+        },
+        "containerLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "What the names on a mapping are called: table, schema.table, container, object, file or folder."
+        },
+        "defaultLinkKindKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "link-kind",
+          "description": "The link kind of category data-location a new location of this platform takes (V58)."
+        },
+        "idPattern": {
+          "type": "string",
+          "minLength": 1,
+          "format": "regex",
+          "description": "A regular expression a valid External Id of this platform matches (V40)."
+        },
+        "urlPattern": {
+          "type": "string",
+          "minLength": 1,
+          "format": "regex",
+          "description": "A regular expression a valid Url of this platform matches (V40)."
+        },
+        "estateKey": {
+          "$ref": "#/$defs/key",
+          "x-references": "list-value:estate",
+          "description": "Later: the gap check estate that can confirm locations of this platform."
+        }
+      }
+    },
+    "data-platform.seedRow": {
+      "description": "C50 Data Platform. A kind of data store from any vendor (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.seedFields" }, { "$ref": "#/$defs/data-platform.seedFields" }],
+      "required": ["key", "label", "locationKindKey", "vendorKey", "containerLabel", "defaultLinkKindKey"],
+      "unevaluatedProperties": false
+    },
+    "data-platform.setRow": {
+      "description": "C50 Data Platform. A kind of data store from any vendor (data taxonomy, D-37).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/row.seedFields" },
+        { "$ref": "#/$defs/row.engineFields" },
+        { "$ref": "#/$defs/data-platform.seedFields" }
+      ],
+      "required": ["key", "label", "locationKindKey", "vendorKey", "containerLabel", "defaultLinkKindKey"],
+      "unevaluatedProperties": false
+    },
+    "data-platform.presetValues": {
+      "description": "Upsert values for C50 in a preset patch or overlay. Fields not named keep their value. A new row must carry every required field (checked by the engine).",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-platform.seedFields" }],
+      "unevaluatedProperties": false
+    },
+    "data-platform.draftValues": {
+      "description": "Upsert values for C50 in a draft patch. Seed and working set fields. Fields not named keep their value.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/row.valueFields" }, { "$ref": "#/$defs/data-platform.seedFields" }],
+      "unevaluatedProperties": false
+    },
     "presetFile": {
       "description": "C03 Preset, as authored: config/presets/<preset-key>/preset.json. The build adds kind and writes the bundle manifest.",
       "type": "object",
@@ -3571,7 +4004,11 @@
         "separation-rule": { "type": "array", "items": { "$ref": "#/$defs/separation-rule.seedRow" } },
         "tool-policy": { "type": "array", "items": { "$ref": "#/$defs/tool-policy.seedRow" } },
         "column-protection-rule": { "type": "array", "items": { "$ref": "#/$defs/column-protection-rule.seedRow" } },
-        "known-client": { "type": "array", "items": { "$ref": "#/$defs/known-client.seedRow" } }
+        "known-client": { "type": "array", "items": { "$ref": "#/$defs/known-client.seedRow" } },
+        "data-classification": { "type": "array", "items": { "$ref": "#/$defs/data-classification.seedRow" } },
+        "data-domain-level": { "type": "array", "items": { "$ref": "#/$defs/data-domain-level.seedRow" } },
+        "data-domain": { "type": "array", "items": { "$ref": "#/$defs/data-domain.seedRow" } },
+        "data-platform": { "type": "array", "items": { "$ref": "#/$defs/data-platform.seedRow" } }
       },
       "additionalProperties": false
     },
@@ -3620,7 +4057,11 @@
         "workload-grant": { "type": "array", "items": { "$ref": "#/$defs/workload-grant.setRow" } },
         "column-protection-rule": { "type": "array", "items": { "$ref": "#/$defs/column-protection-rule.setRow" } },
         "portfolio-access": { "type": "array", "items": { "$ref": "#/$defs/portfolio-access.setRow" } },
-        "known-client": { "type": "array", "items": { "$ref": "#/$defs/known-client.setRow" } }
+        "known-client": { "type": "array", "items": { "$ref": "#/$defs/known-client.setRow" } },
+        "data-classification": { "type": "array", "items": { "$ref": "#/$defs/data-classification.setRow" } },
+        "data-domain-level": { "type": "array", "items": { "$ref": "#/$defs/data-domain-level.setRow" } },
+        "data-domain": { "type": "array", "items": { "$ref": "#/$defs/data-domain.setRow" } },
+        "data-platform": { "type": "array", "items": { "$ref": "#/$defs/data-platform.setRow" } }
       },
       "additionalProperties": false
     },
@@ -3670,7 +4111,11 @@
             "separation-rule",
             "tool-policy",
             "column-protection-rule",
-            "known-client"
+            "known-client",
+            "data-classification",
+            "data-domain-level",
+            "data-domain",
+            "data-platform"
           ],
           "description": "The entity key. Child rows (list-value, tier-answer-option, decision-outcome) use a child key path."
         },
@@ -3986,6 +4431,42 @@
               "values": { "$ref": "#/$defs/known-client.presetValues" }
             }
           }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-classification" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-classification.presetValues" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-domain-level" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-domain-level.presetValues" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-domain" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-domain.presetValues" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-platform" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-platform.presetValues" }
+            }
+          }
         }
       ]
     },
@@ -4038,7 +4519,11 @@
             "workload-grant",
             "column-protection-rule",
             "portfolio-access",
-            "known-client"
+            "known-client",
+            "data-classification",
+            "data-domain-level",
+            "data-domain",
+            "data-platform"
           ],
           "description": "The entity key. Child rows (list-value, tier-answer-option, decision-outcome) use a child key path."
         },
@@ -4375,6 +4860,42 @@
           "then": {
             "properties": { "key": { "$ref": "#/$defs/key" }, "values": { "$ref": "#/$defs/known-client.draftValues" } }
           }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-classification" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-classification.draftValues" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-domain-level" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-domain-level.draftValues" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-domain" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-domain.draftValues" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-platform" } } },
+          "then": {
+            "properties": {
+              "key": { "$ref": "#/$defs/key" },
+              "values": { "$ref": "#/$defs/data-platform.draftValues" }
+            }
+          }
         }
       ]
     },
@@ -4468,7 +4989,11 @@
             "separation-rule",
             "tool-policy",
             "column-protection-rule",
-            "known-client"
+            "known-client",
+            "data-classification",
+            "data-domain-level",
+            "data-domain",
+            "data-platform"
           ],
           "description": "The entity key. It matches the file name."
         },
@@ -4623,6 +5148,22 @@
         {
           "if": { "required": ["entity"], "properties": { "entity": { "const": "known-client" } } },
           "then": { "properties": { "rows": { "items": { "$ref": "#/$defs/known-client.seedRow" } } } }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-classification" } } },
+          "then": { "properties": { "rows": { "items": { "$ref": "#/$defs/data-classification.seedRow" } } } }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-domain-level" } } },
+          "then": { "properties": { "rows": { "items": { "$ref": "#/$defs/data-domain-level.seedRow" } } } }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-domain" } } },
+          "then": { "properties": { "rows": { "items": { "$ref": "#/$defs/data-domain.seedRow" } } } }
+        },
+        {
+          "if": { "required": ["entity"], "properties": { "entity": { "const": "data-platform" } } },
+          "then": { "properties": { "rows": { "items": { "$ref": "#/$defs/data-platform.seedRow" } } } }
         }
       ]
     },

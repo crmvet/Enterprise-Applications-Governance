@@ -3,12 +3,14 @@ using System.Collections.Generic;
 
 namespace Product.Mcp.Core.Contracts;
 
-// The 11 fixed error codes of document 24, section 3.5 (mcp/contracts/errors.json). Codes never change and are never
-// reused. ContractSet checks at load time that errors.json holds exactly these.
+// The 12 fixed error codes of document 24, section 3.5 (mcp/contracts/errors.json). Codes never change and are never
+// reused. ContractSet checks at load time that errors.json holds exactly these. step_up_required (D-38; document 24,
+// B24-9) is the twelfth: an approval answer that needs a fresh sign-in.
 public static class McpErrorCodes
 {
     public const string NotSignedIn = "not_signed_in";
     public const string NotAuthorized = "not_authorized";
+    public const string StepUpRequired = "step_up_required";
     public const string AiCannotDoThis = "ai_cannot_do_this";
     public const string RuleViolation = "rule_violation";
     public const string Validation = "validation";
@@ -21,7 +23,7 @@ public static class McpErrorCodes
 
     public static readonly IReadOnlyList<string> All = new[]
     {
-        NotSignedIn, NotAuthorized, AiCannotDoThis, RuleViolation, Validation, NotFound, Conflict, Locked, RateLimited,
+        NotSignedIn, NotAuthorized, StepUpRequired, AiCannotDoThis, RuleViolation, Validation, NotFound, Conflict, Locked, RateLimited,
         UpstreamUnavailable, ConfigurationUnavailable,
     };
 }

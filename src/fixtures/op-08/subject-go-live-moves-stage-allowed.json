@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-go-live-moves-stage-allowed",
+  "description": "An accepted go-live decision with outcome go moves the application to the outcome's Next Lifecycle Stage (operate), with the decision as Stage Decision.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-60"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "go-live",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "go"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "go-live",
+      "ready": true,
+      "requirements": []
+    },
+    "subject": {
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered",
+        "lifecycleStage": "change-and-release"
+      }
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Business Application",
+          "operation": "update",
+          "rowId": "fixture-app-1",
+          "columns": {
+            "lifecycleStage": "operate",
+            "stageDecision": "fixture-decision-60"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

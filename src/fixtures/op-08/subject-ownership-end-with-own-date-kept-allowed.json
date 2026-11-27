@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-ownership-end-with-own-date-kept-allowed",
+  "description": "Document 25, B25-20: an end that names its own date keeps it. The business owner ends on 2026-11-30 as the item says, although the successor starts on 2026-12-18.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-52"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "ownership",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "assign",
+      "proposedChangesJson": {
+        "owners": [
+          {
+            "ownerRoleKey": "business-owner",
+            "endAssignmentId": "fixture-owner-1",
+            "startOn": "2026-11-30"
+          },
+          {
+            "ownerRoleKey": "business-owner",
+            "addObjectId": "fixture-person-3",
+            "startOn": "2026-12-18"
+          }
+        ]
+      }
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "subject": {
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered"
+      },
+      "owners": [
+        {
+          "id": "fixture-owner-1",
+          "businessApplication": "fixture-app-1",
+          "ownerRole": "business-owner",
+          "principal": "fixture-person-1",
+          "isDeputy": false,
+          "startOn": "2026-01-05"
+        }
+      ],
+      "newRowIds": [
+        "fixture-owner-9"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "update",
+          "rowId": "fixture-owner-1",
+          "columns": {
+            "endOn": "2026-11-30"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "create",
+          "rowId": "fixture-owner-9",
+          "columns": {
+            "ownerRole": "business-owner",
+            "principal": "fixture-person-3",
+            "startOn": "2026-12-18"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

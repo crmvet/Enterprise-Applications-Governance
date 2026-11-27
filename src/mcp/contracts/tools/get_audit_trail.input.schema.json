@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_audit_trail input",
+  "description": "The product's audit entries (O24), newest first: the history of one record, the acts of one person (as the actor or as the person an AI client acted for), the entries on one application's records, or every entry. Each composed tool call, each refused call, each approval answer, acceptance and update-subject effect leaves one. Only the auditor and the platform admin read them (document 26, section 5.3). Writes nothing.",
+  "x-tool": "get_audit_trail",
+  "type": "object",
+  "properties": {
+    "recordId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "Any operational row",
+      "description": "Only the entries about this record. For a decision, its approval requests too."
+    },
+    "principalObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only the entries where this person acted, or an AI client acted for them."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only the entries about this application and its records."
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      },
+      "description": "Only these operations, such as composed-call, call-refused, decision-accepted, approval-outcome-written, subject-updated."
+    },
+    "actorKinds": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/actorKindMeaning"
+      },
+      "description": "Only these actor kinds."
+    },
+    "clientApp": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Only the entries made through this client app, by the name the engine stamped (as clientApp shows it, such as Claude Code). Case is ignored."
+    },
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "On or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "On or before this date."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "recordId": "50000000-0000-4000-8000-000000000001",
+      "top": 50
+    }
+  ]
+}

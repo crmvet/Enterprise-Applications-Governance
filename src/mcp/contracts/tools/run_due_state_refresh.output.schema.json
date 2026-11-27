@@ -1,0 +1,530 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_due_state_refresh output",
+  "description": "The response envelope. On success, data is the run: the counts, the reviews it opened, the documents it marked stale, the approval requests it expired, cancelled and asked again, every notice it sent (reminder, repeat, escalation, overdue, expiry, flag) with who it went to, and the items that could not finish.",
+  "x-tool": "run_due_state_refresh",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "trigger",
+        "dryRun",
+        "counts",
+        "reviewsOpened",
+        "documentsStale",
+        "approvals",
+        "notices",
+        "failed",
+        "more"
+      ],
+      "properties": {
+        "trigger": {
+          "enum": [
+            "person",
+            "timer",
+            "command"
+          ],
+          "description": "What started the run: person for this tool."
+        },
+        "dryRun": {
+          "type": "boolean",
+          "description": "True when validateOnly was true: every item ran and nothing was written."
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "reviewsOpened",
+            "reviewsOverdue",
+            "documentsStale",
+            "decisionsRefreshed",
+            "approvalsExpired",
+            "approvalsCancelled",
+            "approvalsOpened",
+            "reminders",
+            "escalations",
+            "flagNotices",
+            "failed"
+          ],
+          "properties": {
+            "reviewsOpened": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Reviews opened on their Next Due On."
+            },
+            "reviewsOverdue": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Due reviews whose lead owner was told, on their first overdue day, that they are late."
+            },
+            "documentsStale": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Current documents past their Stale On, now stale."
+            },
+            "decisionsRefreshed": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Decisions whose approval requests the refresh brought up to date."
+            },
+            "approvalsExpired": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Approval requests past their Expires On, now expired."
+            },
+            "approvalsCancelled": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Approval requests a settled decision still held open, now cancelled."
+            },
+            "approvalsOpened": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Approval requests asked again after an expiry."
+            },
+            "reminders": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Reminders and repeats sent."
+            },
+            "escalations": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Escalations sent: to the deputy, else the accountable holder."
+            },
+            "flagNotices": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Flag notices sent for deployments flagged at gate level flag or above."
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items that could not finish; the warnings say why."
+            }
+          },
+          "additionalProperties": false
+        },
+        "reviewsOpened": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "reviewId",
+              "recordNumber",
+              "businessApplicationId",
+              "applicationName",
+              "reviewType",
+              "dueOn",
+              "fromReviewId",
+              "recordUrl"
+            ],
+            "properties": {
+              "reviewId": {
+                "description": "The new review. Null on a dry run.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O21 Review"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordNumber": {
+                "description": "Its record number, such as REV-0042. Null on a dry run.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "applicationName": {
+                "type": "string"
+              },
+              "reviewType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "dueOn": {
+                "description": "When it is due: the done review's Next Due On.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fromReviewId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O21 Review",
+                "description": "The done review whose Next Due On it follows."
+              },
+              "recordUrl": {
+                "description": "Opens the review. Null on a dry run.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "documentsStale": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "documentLinkId",
+              "businessApplicationId",
+              "applicationName",
+              "documentType",
+              "staleOn",
+              "recordUrl"
+            ],
+            "properties": {
+              "documentLinkId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O19 Document Link"
+              },
+              "businessApplicationId": {
+                "description": "The document's application.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "applicationName": {
+                "description": "Its name.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "documentType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "staleOn": {
+                "description": "The Stale On that passed.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "approvals": {
+          "type": "object",
+          "required": [
+            "decisions",
+            "expiredRecordIds",
+            "cancelledRecordIds",
+            "openedRecordIds"
+          ],
+          "properties": {
+            "decisions": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Decisions brought up to date."
+            },
+            "expiredRecordIds": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              }
+            },
+            "cancelledRecordIds": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              }
+            },
+            "openedRecordIds": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              },
+              "description": "The restarts. Empty on a dry run."
+            }
+          },
+          "additionalProperties": false
+        },
+        "notices": {
+          "type": "array",
+          "description": "Every notice the run sent, each one Audit Entry (operation reminder-sent or flag-notice-sent).",
+          "items": {
+            "type": "object",
+            "required": [
+              "notice",
+              "subjectKind",
+              "entity",
+              "rowId",
+              "label",
+              "businessApplicationId",
+              "applicationName",
+              "ruleKey",
+              "reminderNumber",
+              "escalated",
+              "channel",
+              "dueOn",
+              "to",
+              "recordUrl"
+            ],
+            "properties": {
+              "notice": {
+                "enum": [
+                  "remind",
+                  "repeat",
+                  "escalate",
+                  "overdue",
+                  "expired",
+                  "flag"
+                ],
+                "description": "remind, repeat and escalate follow the reminder rule (OP-11); overdue is a review's first late day; expired is the escalation of an approval request at its Expires On; flag is a flagged deployment."
+              },
+              "subjectKind": {
+                "enum": [
+                  "review",
+                  "document",
+                  "approval",
+                  "claim",
+                  "deployment"
+                ]
+              },
+              "entity": {
+                "type": "string",
+                "description": "The entity key of the record the notice is about."
+              },
+              "rowId": {
+                "$ref": "../common.schema.json#/$defs/id"
+              },
+              "label": {
+                "type": "string",
+                "description": "The record in words."
+              },
+              "businessApplicationId": {
+                "description": "The record's application, when known.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "applicationName": {
+                "description": "Its name.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ruleKey": {
+                "description": "The reminder rule that caused it. Null for overdue, expired and flag.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C26 Reminder Rule"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reminderNumber": {
+                "description": "The step of the rule for this item, from 1.",
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "escalated": {
+                "type": "boolean",
+                "description": "True when it went to the deputy, else the accountable holder."
+              },
+              "channel": {
+                "description": "The channel (C38 channel list) the message goes out on.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dueOn": {
+                "description": "The date the steps count from.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "to": {
+                "type": "object",
+                "required": [
+                  "people",
+                  "roles",
+                  "ownerRole",
+                  "toDeputies"
+                ],
+                "properties": {
+                  "people": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "../common.schema.json#/$defs/principalRef"
+                    }
+                  },
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    "description": "Product roles: their bound groups are read live when the message goes out."
+                  },
+                  "ownerRole": {
+                    "description": "The owner role the people hold, when they are its holders or deputies.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "toDeputies": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "failed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "rowId",
+              "what",
+              "code",
+              "message"
+            ],
+            "properties": {
+              "entity": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "what": {
+                "type": "string"
+              },
+              "code": {
+                "description": "The engine reason code.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "message": {
+                "description": "Why it could not finish.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "more": {
+          "type": "boolean",
+          "description": "True when more items were due than one run handles; the next run goes on."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

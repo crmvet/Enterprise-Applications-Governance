@@ -1,0 +1,254 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-15",
+  "case": "owner-disabled-deputy-acts-dc04",
+  "description": "Hana is disabled in the directory, so Rosa, her deputy, acts for People (P08, step 2), and OP-15 reports DC-04.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "people",
+        "values": {
+          "label": "People",
+          "levelKey": "domain",
+          "classificationKey": "confidential",
+          "retentionClassKey": "keep-7-years"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "payroll",
+        "values": {
+          "label": "Payroll",
+          "parentKey": "people",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted",
+          "aiUseRule": "never"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "bank-details",
+        "values": {
+          "label": "Bank details",
+          "parentKey": "payroll",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "timesheets",
+        "values": {
+          "label": "Timesheets",
+          "parentKey": "people",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "field-operations",
+        "values": {
+          "label": "Field operations",
+          "levelKey": "domain",
+          "classificationKey": "internal"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "safety-findings",
+        "values": {
+          "label": "Safety findings",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "parts-catalog",
+        "values": {
+          "label": "Parts catalog",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "commercial",
+        "values": {
+          "label": "Commercial",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "contracts",
+        "values": {
+          "label": "Contracts",
+          "parentKey": "commercial",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "supplier-contracts",
+        "values": {
+          "label": "Supplier contracts",
+          "parentKey": "contracts",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "customers",
+        "values": {
+          "label": "Customers",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "client-accounts",
+        "values": {
+          "label": "Client accounts",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "domainKey": "people"
+  },
+  "facts": {
+    "ownerAssignments": [
+      {
+        "assignmentId": "fixture-owner-hana",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-hana",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "people"
+      },
+      {
+        "assignmentId": "fixture-owner-rosa",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-rosa",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "people",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-hana"
+      },
+      {
+        "assignmentId": "fixture-owner-greta",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-greta",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "payroll"
+      },
+      {
+        "assignmentId": "fixture-owner-ines",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-ines",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "field-operations"
+      },
+      {
+        "assignmentId": "fixture-owner-ravi",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-ravi",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "field-operations",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-ines"
+      },
+      {
+        "assignmentId": "fixture-owner-kai",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-kai",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "safety-findings"
+      },
+      {
+        "assignmentId": "fixture-owner-kai-deputy",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-ravi",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "safety-findings",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-kai"
+      },
+      {
+        "assignmentId": "fixture-owner-clara",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-clara",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "contracts"
+      },
+      {
+        "assignmentId": "fixture-owner-greta-2",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-greta",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "contracts",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-clara"
+      },
+      {
+        "assignmentId": "fixture-owner-nadia",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-nadia",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "customers"
+      },
+      {
+        "assignmentId": "fixture-owner-wren",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-wren",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "customers",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-nadia"
+      }
+    ],
+    "principals": [
+      {
+        "principalId": "fixture-person-hana",
+        "directoryState": "disabled"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "resolved",
+    "payload": {
+      "gaps": [
+        "data.owner-inactive"
+      ]
+    },
+    "reasons": [
+      {
+        "code": "data.owner-inactive",
+        "severity": "warning",
+        "ref": "people"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

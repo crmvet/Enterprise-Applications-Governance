@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_approval_status input",
-  "description": "Who was asked, who answered, what still counts and what is missing. Writes nothing. It never offers to answer a card.",
+  "description": "Who was asked, who answered, what still counts and what is missing. Writes nothing. A person answers a request on the decision page (answer_approval, the web app only, D-38); an AI client never answers one.",
   "x-tool": "get_approval_status",
   "type": "object",
   "required": [

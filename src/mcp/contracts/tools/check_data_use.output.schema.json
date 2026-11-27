@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_data_use output",
+  "description": "The response envelope. On success, data is the state the use would have, its governing rule, its approvers and the tier answer the data implies.",
+  "x-tool": "check_data_use",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "state",
+        "domain",
+        "location",
+        "classification",
+        "governingRule",
+        "configurationSetVersion",
+        "decisionNeeded",
+        "refusedWhenSaved",
+        "decisionTypeKey",
+        "approvalsNeeded",
+        "approvers",
+        "impliedAnswer",
+        "existingDataUseId",
+        "explanation"
+      ],
+      "properties": {
+        "state": {
+          "$ref": "../common.schema.json#/$defs/dataUseState"
+        },
+        "domain": {
+          "$ref": "../common.schema.json#/$defs/dataDomainRef"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dataLocationBrief"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "classification": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dataClassificationValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "governingRule": {
+          "$ref": "../common.schema.json#/$defs/dataGoverningRule"
+        },
+        "configurationSetVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The configuration version the answer was judged by."
+        },
+        "decisionNeeded": {
+          "type": "boolean",
+          "description": "True when a data-use decision is needed before the use."
+        },
+        "refusedWhenSaved": {
+          "type": "boolean",
+          "description": "True when the governing rule is never: nobody may save this use (G-25)."
+        },
+        "decisionTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C18 Decision Type"
+        },
+        "approvalsNeeded": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The counted approvals the decision needs."
+        },
+        "approvers": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/dataApprover"
+          }
+        },
+        "impliedAnswer": {
+          "description": "The tier answer the data implies, as a hint for the tier questions.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/impliedAnswer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "existingDataUseId": {
+          "description": "An open use of the same application, domain, location and AI flag, when one is already declared.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O27 Data Use"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "explanation": {
+          "type": "string",
+          "description": "The answer in one or two plain sentences."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

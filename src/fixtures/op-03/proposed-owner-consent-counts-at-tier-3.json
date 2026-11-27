@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "proposed-owner-consent-counts-at-tier-3",
+  "description": "Balanced at tier 3: the successor proposed the ownership decision and accepts by name, and the sponsor approves for the business owner role that changes hands. The successor's consent is not a check on the proposal, so the separation rule does not apply to it, and both requirements are met.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "ownership",
+      "tierKey": "tier-3"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "ownership-business-owner",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 1,
+        "timeoutDays": 10,
+        "requiresTypedReason": false,
+        "approverOwnerRoleKey": "business-owner",
+        "fallbackOwnerRoleKey": "sponsor"
+      },
+      {
+        "source": "approval-rule",
+        "ruleKey": "ownership-proposed-owners",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 1,
+        "timeoutDays": 10,
+        "requiresTypedReason": false,
+        "approverProposedOwners": true,
+        "guidelineKey": "g2"
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "ownership-business-owner",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-sponsor",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": false,
+        "respondedOnUtc": "2026-11-24T08:00:00Z",
+        "expiresOnUtc": "2026-12-04T08:00:00Z"
+      },
+      {
+        "approvalRecordId": "r2",
+        "ruleKey": "ownership-proposed-owners",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-successor",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": false,
+        "respondedOnUtc": "2026-11-24T08:00:00Z",
+        "expiresOnUtc": "2026-12-04T08:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-successor"
+    }
+  },
+  "expected": {
+    "outcome": "satisfied",
+    "payload": {
+      "overall": "satisfied"
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

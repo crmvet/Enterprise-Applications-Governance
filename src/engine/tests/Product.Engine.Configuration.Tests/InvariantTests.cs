@@ -57,13 +57,14 @@ public sealed class InvariantTests
         }
     }
 
-    // The generator is the set build-presets validates: 4 full presets and 18 overlay combinations.
+    // The generator is the set build-presets validates: 4 full presets and 40 overlay combinations (18 before the data
+    // domains starter overlay, D-37).
     [Fact]
     public void TheGeneratorGivesEveryShippedSelection()
     {
         PresetSelection[] selections = Selections().ToArray();
 
-        Assert.Equal(22, selections.Length);
+        Assert.Equal(44, selections.Length);
         Assert.Equal(4, selections.Count(s => s.Overlays.Length == 0));
         Assert.Equal(OperationTestData.ShippedSelections().Select(s => s.Key + "|" + string.Join("+", s.Value)), selections.Select(s => s.PresetKey + "|" + string.Join("+", s.Overlays)));
     }
@@ -292,7 +293,10 @@ public sealed class InvariantTests
                         Assert.False(counts, at + " counted " + answer.ApprovalRecordId + " after a separation refusal");
                     }
 
-                    if (enforcements.Contains("refuse"))
+                    // A proposed owner's own yes is consent, so no separation rule applies to it (document 25, B25-14);
+                    // the group's other rules carry the check, and the decision is still not satisfied below.
+                    bool consent = scope.Requirements.Any(r => r.RequirementKey == answer.RuleKey && r.ApproverProposedOwners);
+                    if (enforcements.Contains("refuse") && !consent)
                     {
                         Assert.Contains("approval.separation-refused", codes);
                         Assert.False(counts, at + " counted " + answer.ApprovalRecordId + " under a winning refuse rule");
@@ -585,7 +589,7 @@ public sealed class InvariantTests
             }
         }
 
-        Assert.Equal(22, hashes.Count);
+        Assert.Equal(44, hashes.Count);
     }
 
     // ---- Generators and helpers ----

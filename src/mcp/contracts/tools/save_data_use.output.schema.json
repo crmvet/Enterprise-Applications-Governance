@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_data_use output",
+  "description": "The response envelope. On success, data is the write result for the data use, its computed decision state, and the decision opened or sent.",
+  "x-tool": "save_data_use",
+  "x-ai-write-states": [
+    "draft",
+    "proposed"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the data use (O27).",
+      "properties": {
+        "dataUseId": {
+          "description": "Null only for a validateOnly check of a new use.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O27 Data Use"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "replacedDataUseId": {
+          "description": "The confirmed use this save ended, because it widened to write or turned AI on.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O27 Data Use"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "use": {
+          "$ref": "../common.schema.json#/$defs/dataUseItem"
+        },
+        "governingRule": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dataGoverningRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionId": {
+          "description": "The data-use decision this save opened or sent.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionSubmitted": {
+          "type": "boolean",
+          "description": "True when the decision went to its approvers. Only a person's confirmed use sends it."
+        },
+        "approvalsNeeded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approvalsRequested": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/approvalAsked"
+          }
+        }
+      },
+      "required": [
+        "dataUseId",
+        "recordNumber",
+        "replacedDataUseId",
+        "use",
+        "governingRule",
+        "decisionId",
+        "decisionSubmitted",
+        "approvalsNeeded",
+        "approvalsRequested"
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

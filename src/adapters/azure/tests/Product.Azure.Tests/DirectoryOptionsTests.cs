@@ -57,6 +57,16 @@ public sealed class DirectoryOptionsTests
         Assert.Contains("runs only in the Development environment", Message(refused), StringComparison.Ordinal);
     }
 
+    // The demo inventory file is fictional, so naming it outside Development and Demo fails startup (wave 4b review), as the
+    // persona file does.
+    [Fact]
+    public void TheDemoInventoryFileFailsStartupOutsideDevelopmentAndDemo()
+    {
+        Exception refused = StartFails(Production(("Product:Directory:DemoInventoryFile", "seed/demo-inventory.json")));
+
+        Assert.Contains("Product:Directory:DemoInventoryFile names a fictional demo inventory", Message(refused), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheValidatorFindsEverySecretAndAsksLiveReadsForEntraSignIn()
     {
@@ -114,9 +124,10 @@ public sealed class DirectoryOptionsTests
         JsonNode gapCheck = await host.Call(Personas.Owen, "run_gap_check");
 
         Assert.Equal("upstream_unavailable", holders["error"]!["code"]!.GetValue<string>());
-        Assert.Contains("no Graph client is bound to this server", holders["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("this install has no connection to the directory", holders["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
         Assert.Equal("upstream_unavailable", gapCheck["error"]!["code"]!.GetValue<string>());
         Assert.Null(host.Services.GetService<IDirectoryReader>());
+        Assert.Null(host.Services.GetService<IInventoryReader>());
         Assert.Single(host.Services.GetServices<IValidateOptions<DirectoryOptions>>().OfType<DirectoryOptionsValidator>());
     }
 

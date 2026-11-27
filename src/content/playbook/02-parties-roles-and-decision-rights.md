@@ -29,7 +29,7 @@ One person may hold several roles, especially early on. The playbook still keeps
 - Every application names a business owner, a technical owner and a data owner, each a person, each with a deputy.
 - Every kind of decision has exactly one accountable role.
 - People get roles only through Microsoft Entra groups, never one by one.
-- When an owner leaves, a deputy acts at once and a successor is named before access goes.
+- Each deputy holds the owner role and may answer that role's approval requests. When an owner leaves, the product is designed to let the deputy act at once, and a successor is named before access goes.
 - Three things hold the parties together: one application record every party points to, one decision log every party writes to, and one value stream with one decider per stage.
 
 ## How it works
@@ -38,7 +38,7 @@ One person may hold several roles, especially early on. The playbook still keeps
 2. **Bind each role to a group.** Create one Entra group per role. Give people the role by adding them to the group.
 3. **Agree the decision rights.** Use the matrix below as the default. Keep one accountable role per row. Where a decision needs a second yes, make it an approval rule with two approvers, not a second accountable.
 4. **Name owners per app.** At registration, name the owner roles for the application, each with a deputy and a start date.
-5. **Plan for leavers.** Agree the handover time. When an owner leaves, the deputy acts and a successor accepts on a card.
+5. **Plan for leavers.** Agree the handover time. The deputy already holds the owner role and may answer its approval requests, and a reminder nobody answers escalates to the deputy. When an owner leaves, the product is designed to let the deputy act until a successor accepts on the decision page.
 6. **Record every decision.** Each decision is one line in the shared decision log: what, who, when, why.
 
 ## The default roles
@@ -47,7 +47,7 @@ One person may hold several roles, especially early on. The playbook still keeps
 |---|---|
 | Owner roles, per application | Business owner, sponsor, data owner, technical owner, builder, process owner, support owner, security owner |
 | Product roles, through Entra groups | Requester, maker, application owner, data owner, architect, change manager, change board, PMO, AI lead, security reviewer, platform admin, configuration admin, auditor, reader |
-| Workload roles, for non-human workloads only | A deployment recorder for pipeline steps, and an approval writer for the flows that send approval cards |
+| Workload roles, for non-human workloads only | A deployment recorder for pipeline steps, and an approval writer for the flows that send approval notices |
 
 Pipelines are not people, and Entra does not pass a group's app roles to a service principal. So in the default configuration a non-human workload holds its workload role directly, through a recorded grant with a reason, the decision behind it and an expiry date. People never hold a workload role, and agent identities never get a grant.
 
@@ -77,7 +77,7 @@ The matrix is a hybrid, hub-and-spoke default. A more central organization moves
 
 ## Processes this chapter uses
 
-- **P08 Owner leaves.** The deputy acts, open approvals move, and a successor accepts on a card.
+- **P08 Owner leaves.** The deputy holds the owner role and may answer its requests, and reminders escalate to the deputy. The product is designed to let the deputy act for the leaver and to move open approvals. A successor accepts on the decision page.
 - **P11 Configuration change.** Roles, their group bindings and the decision rights are configuration. Changing them is a recorded configuration change, accepted by the configuration admin.
 
 ## How the product is designed to support it
@@ -85,7 +85,7 @@ The matrix is a hybrid, hub-and-spoke default. A more central organization moves
 - It is designed to hold roles, decision rights and approval rules as configuration records that each organization can rename and remap.
 - It is designed to resolve each product role to the Entra group bound to it, to read who holds a role from Entra at the moment it matters, and to flag any role given to a person directly.
 - It is designed to record owner roles on each application, with deputies, start dates and end dates, and to flag apps with no owner or no deputy.
-- It is designed to send each decision to the holder of its accountable role on an approval card, and to keep the answer in the shared decision log.
+- It is designed to send each decision to the holder of its accountable role, who answers on the decision page, and to keep the answer in the shared decision log.
 
 ## What you can tailor
 

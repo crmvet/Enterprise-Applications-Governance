@@ -46,6 +46,16 @@ public sealed class DirectoryOptionsValidator : IValidateOptions<DirectoryOption
             }
         }
 
+        if (options.Mode == DirectoryReadMode.Demo && !development && !ProductDemo.IsDemo(_environment))
+        {
+            failures.Add("Product:Directory:Mode is Demo, which reads the fictional demo personas and runs only in the Development or the Demo environment. Use Live or Off.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.DemoInventoryFile) && !development && !ProductDemo.IsDemo(_environment))
+        {
+            failures.Add("Product:Directory:DemoInventoryFile names a fictional demo inventory, which is read only in the Development or the Demo environment. Remove it.");
+        }
+
         if (options.Mode == DirectoryReadMode.Recorded && !development)
         {
             failures.Add("Product:Directory:Mode is Recorded, which serves fictional recorded responses and runs only in the Development environment. Use Live or Off.");

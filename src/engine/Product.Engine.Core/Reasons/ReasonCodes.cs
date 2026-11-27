@@ -64,6 +64,10 @@ public static class ReasonCodes
     public const string GateRequirementReviewNotDone = "gate.requirement-review-not-done";
     public const string GateRequirementOwnerMissing = "gate.requirement-owner-missing";
 
+    // The data taxonomy's requirement kinds (docs/architecture/data-taxonomy.md, Gate requirements).
+    public const string GateRequirementDataUsesUndeclared = "gate.requirement-data-uses-undeclared";
+    public const string GateRequirementDataUsesUndecided = "gate.requirement-data-uses-undecided";
+
     // ---- OP-08 write guard, G-01 to G-17 ----
     public const string ConfigActivationOnly = "config.activation-only";
     public const string ConfigPresetReadOnly = "config.preset-read-only";
@@ -92,8 +96,21 @@ public static class ReasonCodes
     public const string RecordDeleteNotAllowed = "record.delete-not-allowed";
     public const string RecordAppendOnly = "record.append-only";
 
+    // The update-subject effect (document 25, B25-8): a proposed change that can no longer apply when the decision is
+    // accepted, such as an owner assignment that already ended, is skipped and named.
+    public const string SubjectChangeSkipped = "subject.change-skipped";
+
+    // A review ends done only with Done On, Reviewer and an accepted Outcome Decision of its review type's decision type
+    // (document 22, O21; document 25, B25-12).
+    public const string ReviewDoneIncomplete = "review.done-incomplete";
+    public const string ReviewOutcomeNotAccepted = "review.outcome-not-accepted";
+
     // Document 22, section 2.3, class F: a row frozen once final (RA-05 names no code).
     public const string RecordFinal = "record.final";
+
+    // Document 22, O04 rules: a dependency points to exactly one of another application or a component, never to its own
+    // application (document 25, B25-13).
+    public const string DependencyTargetInvalid = "dependency.target-invalid";
     public const string ActorAgentWriteRefused = "actor.agent-write-refused";
     public const string LinkForbiddenUrl = "link.forbidden-url";
     public const string PrincipalErasureNotAllowed = "principal.erasure-not-allowed";
@@ -106,6 +123,70 @@ public static class ReasonCodes
     // Document 22, section 8.1: a proposed decision is withdrawn only by its proposer or its decider.
     public const string DecisionWithdrawNotAllowed = "decision.withdraw-not-allowed";
 
+    // ---- The data taxonomy's guard rules, G-18 to G-25 (docs/architecture/data-taxonomy.md) ----
+    public const string DataDomainRetired = "data.domain-retired";
+    public const string DataUseDuplicate = "data.use-duplicate";
+    public const string DataLocationDuplicate = "data.location-duplicate";
+    public const string DataLevelNotDeclarable = "data.level-not-declarable";
+    public const string DataOwnerSubject = "data.owner-subject";
+    public const string DataDecisionCannotAllow = "data.decision-cannot-allow";
+    public const string AiDataRowDraftOnly = "ai.data-row-draft-only";
+    public const string LinkSecret = "link.secret";
+    public const string DataCopyOrigin = "data.copy-origin";
+    public const string LocationDepth = "location.depth";
+    public const string LocationStage = "location.stage";
+
+    // D-41, question 7, as the product owner changed it: a use or copy whose rule is never is refused when it is saved.
+    public const string DataRuleNever = "data.rule-never";
+
+    // ---- The data taxonomy's validation rules, V49 to V60 (docs/architecture/data-taxonomy.md, Validation rules) ----
+    public const string DataDomainParent = "data.domain-parent";
+    public const string DataDomainLevel = "data.domain-level";
+    public const string DataLevelRank = "data.level-rank";
+    public const string DataClassification = "data.classification";
+    public const string DataClassificationLower = "data.classification-lower";
+    public const string DataDomainInUse = "data.domain-in-use";
+    public const string DataDecisionUnrouted = "data.decision-unrouted";
+    public const string DataOwnerSubjectRule = "data.owner-subject-rule";
+    public const string DataOwnershipAccountable = "data.ownership-accountable";
+    public const string DataPlatform = "data.platform";
+    public const string DataLoosens = "data.loosens";
+    public const string DataPresetTenant = "data.preset-tenant";
+
+    // ---- The data checks DC-01 to DC-14 (OP-15 to OP-17; docs/architecture/data-taxonomy.md, Data checks) ----
+    public const string DataNoOwner = "data.no-owner";
+    public const string DataOwnOwnerMissing = "data.own-owner-missing";
+    public const string DataNoDeputy = "data.no-deputy";
+    public const string DataOwnerInactive = "data.owner-inactive";
+    public const string DataDecisionMissing = "data.decision-missing";
+    public const string DataNoOneToAsk = "data.no-one-to-ask";
+    public const string DataBreaksRule = "data.breaks-rule";
+    public const string DataCopyOutsideProduction = "data.copy-outside-production";
+    public const string DataSensitivityBelowData = "data.sensitivity-below-data";
+    public const string DataUndeclared = "data.undeclared";
+    public const string DataMappingMissing = "data.mapping-missing";
+    public const string DataLocationUnowned = "data.location-unowned";
+    public const string DataLocationStale = "data.location-stale";
+    public const string DataRetentionOpen = "data.retention-open";
+    public const string DataRetiredDomainRows = "data.retired-domain-rows";
+
+    // ---- The proposal right check: proposed codes ----
+    // Document 24, tool 17, and the Tool Policy row save-decision-proposal: only a holder of a responsible, accountable or
+    // consulted Decision Right (C31) for the decision type in its scope proposes it (judgment call, B24-5).
+    public const string DecisionProposeNotAllowed = "decision.propose-not-allowed";
+
+    // ---- A person's own answer to an approval (D-38): proposed codes ----
+    // Document 26, AN-01 and AN-02 as D-38 rewrites them: a person answers their own Approval Record on the product's
+    // decision page, and the token proves who answered. The approval answer check refuses, before anything is written,
+    // every answer the person may not give.
+    public const string ApprovalAnswerPersonOnly = "approval.answer-person-only";
+    public const string ApprovalAnswerNotAsked = "approval.answer-not-asked";
+    public const string ApprovalAnswerSeparation = "approval.answer-separation";
+    public const string ApprovalAnswerAlreadyGiven = "approval.answer-already-given";
+    public const string ApprovalAnswerExpired = "approval.answer-expired";
+    public const string ApprovalAnswerClosed = "approval.answer-closed";
+    public const string ApprovalAnswerReasonRequired = "approval.answer-reason-required";
+
     // ---- Engine runtime: proposed codes ----
     // WORKING DEFAULT (open design question 12): document 26, RA-07. An app-only caller counts only with a current
     // Workload Grant, and only for that grant's workload role.
@@ -113,6 +194,24 @@ public static class ReasonCodes
 
     // The approval refresh (expiry, restarts and cancellations) is the approval runner's call only.
     public const string ApprovalRefreshNotAllowed = "approval.refresh-not-allowed";
+
+    // "Ask again" on an approval request (document 25, B25-24): only the decision's proposer or a platform admin, as a
+    // person, asks a request again; and only a request that expired, or one in the last 48 hours of its time.
+    public const string ApprovalRenewNotAllowed = "approval.renew-not-allowed";
+    public const string ApprovalNotRenewable = "approval.not-renewable";
+
+    // The due-state refresh (document 23, S2; document 25, B25-18): only the engine's own scheduled work or
+    // a person holding the platform admin role runs it; an item that fails is reported and the others go on.
+    public const string DueStateRefreshNotAllowed = "due-state.refresh-not-allowed";
+    public const string DueStateItemFailed = "due-state.item-failed";
+
+    // A decision the engine accepts with no card waits for the consent of the person it would make an owner (document 25,
+    // B25-18): the business owner an intake names.
+    public const string DecisionConsentWaiting = "decision.consent-waiting";
+
+    // A deployment is recorded only to a target in service (document 24, B24-18; document 25, B25-19): a retired target keeps
+    // its records and takes no new one.
+    public const string DeploymentTargetRetired = "deployment.target-retired";
 
     // ---- Activation and the bootstrap of version 1: proposed codes ----
     public const string ActivationDiscarded = "activation.discarded";

@@ -160,6 +160,16 @@
           "type": "integer",
           "minimum": 1,
           "description": "For rate_limited: when to try again."
+        },
+        "claimsChallenge": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "For step_up_required: the claims challenge to sign in again with, as Microsoft Entra ID reads it (base64 JSON). Absent when a fresh sign-in alone is enough."
+        },
+        "recordUrl": {
+          "$ref": "./common.schema.json#/$defs/recordUrl",
+          "description": "The record the refusal points to, such as the document link to update instead of linking a second one. The same link form as recordUrl on a success."
         }
       },
       "additionalProperties": false,
@@ -183,6 +193,7 @@
       "enum": [
         "not_signed_in",
         "not_authorized",
+        "step_up_required",
         "ai_cannot_do_this",
         "rule_violation",
         "validation",
@@ -310,7 +321,7 @@
       "description": "Links an AI client can cite.",
       "properties": {
         "recordUrl": {
-          "$ref": "./common.schema.json#/$defs/url",
+          "$ref": "./common.schema.json#/$defs/recordUrl",
           "description": "Opens the main record in the product's page or app."
         }
       },

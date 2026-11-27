@@ -43,4 +43,22 @@ public static class RateLimiter
         int seconds = (int)Math.Ceiling((windowStart + Window - utcNow).TotalSeconds);
         return Math.Max(1, seconds);
     }
+
+    // The most refused calls of one caller the audit ledger records in an hour (security review 2026-11-24, document 24,
+    // B24-14). A refusal past it is still answered and still in the request logs; only the ledger stops taking more, so a
+    // client that loops on refused calls cannot fill the append-only ledger.
+    public const int RefusalsRecordedPerHour = 60;
+
+    // True while the caller's refusals this hour stay within RefusalsRecordedPerHour. Counts this refusal.
+    public static bool MayRecordRefusal(IRateLimitStore store, string personObjectId, DateTime utcNow)
+    {
+        if (store == null)
+        {
+            throw new ArgumentNullException(nameof(store));
+        }
+
+        DateTime windowStart = new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, 0, 0, DateTimeKind.Utc);
+        string key = "refusals-recorded|" + TelemetryEvent.HashCaller(personObjectId, "rate-limit");
+        return store.Increment(key, windowStart, Window) <= RefusalsRecordedPerHour;
+    }
 }

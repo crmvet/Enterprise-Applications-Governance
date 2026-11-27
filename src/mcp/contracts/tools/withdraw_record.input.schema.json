@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "withdraw_record input",
-  "description": "Takes back a record the caller created and that is not final. Cancels its pending approval cards. Accepted decisions are never withdrawn; a new decision supersedes them. Withdrawing a submitted configuration draft also withdraws its Proposed decision. Nothing is deleted.",
+  "description": "Takes back a record the caller created and that is not final. Cancels its pending approval requests. Accepted decisions are never withdrawn; a new decision supersedes them. Withdrawing a submitted configuration draft also withdraws its Proposed decision. Nothing is deleted.",
   "x-tool": "withdraw_record",
   "type": "object",
   "required": [
@@ -16,9 +16,12 @@
         "change-request",
         "decision",
         "application-draft",
-        "configuration-draft"
+        "configuration-draft",
+        "data-use",
+        "data-mapping",
+        "data-location"
       ],
-      "description": "The kind of record to withdraw. application-draft is a Business Application (O02) still in draft."
+      "description": "The kind of record to withdraw. application-draft is a Business Application (O02) still in draft. data-use, data-mapping and data-location withdraw a draft data row (it is archived) and its proposed decisions."
     },
     "subjectId": {
       "$ref": "../common.schema.json#/$defs/id",

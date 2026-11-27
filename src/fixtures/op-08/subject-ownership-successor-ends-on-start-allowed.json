@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-ownership-successor-ends-on-start-allowed",
+  "description": "Document 25, B25-20: a successor never leaves a role empty. The decision ends the business owner and the deputy who succeeds them with no date of their own, and starts the deputy as business owner on 2026-12-18. Both ends take that date, so the outgoing owner stays until the successor starts.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-52"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "ownership",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "outcome": "assign",
+      "proposedChangesJson": {
+        "owners": [
+          {
+            "ownerRoleKey": "business-owner",
+            "endAssignmentId": "fixture-owner-1"
+          },
+          {
+            "ownerRoleKey": "business-owner",
+            "endAssignmentId": "fixture-owner-2"
+          },
+          {
+            "ownerRoleKey": "business-owner",
+            "addObjectId": "fixture-person-2",
+            "startOn": "2026-12-18"
+          }
+        ]
+      }
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "subject": {
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "registered"
+      },
+      "owners": [
+        {
+          "id": "fixture-owner-1",
+          "businessApplication": "fixture-app-1",
+          "ownerRole": "business-owner",
+          "principal": "fixture-person-1",
+          "isDeputy": false,
+          "startOn": "2026-01-05"
+        },
+        {
+          "id": "fixture-owner-2",
+          "businessApplication": "fixture-app-1",
+          "ownerRole": "business-owner",
+          "principal": "fixture-person-2",
+          "isDeputy": true,
+          "deputyFor": "fixture-owner-1",
+          "startOn": "2026-01-05"
+        }
+      ],
+      "newRowIds": [
+        "fixture-owner-9"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "update",
+          "rowId": "fixture-owner-1",
+          "columns": {
+            "endOn": "2026-12-18"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "update",
+          "rowId": "fixture-owner-2",
+          "columns": {
+            "endOn": "2026-12-18"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Owner Assignment",
+          "operation": "create",
+          "rowId": "fixture-owner-9",
+          "columns": {
+            "ownerRole": "business-owner",
+            "principal": "fixture-person-2",
+            "startOn": "2026-12-18"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

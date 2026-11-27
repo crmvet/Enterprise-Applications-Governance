@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "product-role-is-not-the-owner-role-refused",
+  "description": "A retirement asks the business owner of this application. The person holds the application owner product role, but no business owner assignment on this application, so the answer is refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "retirement-approval",
+      "requiredOwnerRoleKey": "business-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "retirement",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-not-asked",
+        "severity": "error",
+        "entity": "Owner Role",
+        "ref": "business-owner"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

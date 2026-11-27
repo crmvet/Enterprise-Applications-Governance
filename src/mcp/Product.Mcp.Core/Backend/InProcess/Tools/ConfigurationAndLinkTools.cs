@@ -51,7 +51,9 @@ internal static partial class ToolHandlers
             ("configurationSet", Js.Obj(
                 ("key", JsonTreeNode.FromString(version.ConfigurationSetKey)),
                 ("version", JsonTreeNode.FromInt64(version.VersionNumber)),
-                ("publishedOn", Js.Utc(s.Session.PublishedOnUtc ?? s.Now)),
+                ("publishedOn", Js.Utc(version.VersionNumber == s.Call.Snapshot.VersionNumber && version.ConfigurationSetKey == s.Call.Snapshot.ConfigurationSetKey
+                    ? s.InForcePublishedOn
+                    : s.PublishedOnOf(s.Query("configuration-set-version", ("configurationSet", version.ConfigurationSetKey)).FirstOrDefault(v => v.Number("versionNumber") == version.VersionNumber)))),
                 ("contentHash", JsonTreeNode.FromString(version.ContentHash)))),
             ("rows", Arr(page.Select(x => Js.Obj(
                 ("entity", JsonTreeNode.FromString(x.Entity)),
@@ -119,8 +121,13 @@ internal static partial class ToolHandlers
             "decision" => s.RequireRow("decision", id, "subjectId").Id,
             "intake-request" => IntakeDecisionOf(s, s.RequireRow("intake-request", id, "subjectId")),
             "change-request" => s.RequireRow("change-request", id, "subjectId").Text("authorizationDecision"),
+            "data-use" or "data-mapping" => LatestDataDecision(s, kind, s.RequireRow(kind, id, "subjectId").Id),
             _ => null,
         };
+        if ((kind == "data-use" || kind == "data-mapping" || kind == "data-domain") && Want("data"))
+        {
+            results.Add(DataTraceAspect(s, kind, id, ref stamped));
+        }
         if (decisionId != null)
         {
             stamped = (int)(s.Rows.Get("decision", decisionId)?.Number("configurationSetVersion") ?? stamped);
@@ -164,7 +171,7 @@ internal static partial class ToolHandlers
             {
                 var trace = new List<JsonTreeNode>
                 {
-                    TraceStep(1, "gate-policy", policy?.KeyPath, policy != null, policy == null ? "No gate policy row covers this tier, change type and target stage." : "The gate policy row for tier " + app?.Text("tier") + ", change type " + change + " and stage " + target?.Text("targetStage") + "."),
+                    TraceStep(1, "gate-policy", policy?.KeyPath, policy != null, policy == null ? "No gate policy row covers this tier, change type and target stage." : "The gate policy row for " + s.Label("tier", app?.Text("tier")) + ", a " + s.Label("change-type", change).ToLowerInvariant() + " change and the " + s.Label("target-stage", target?.Text("targetStage")).ToLowerInvariant() + " stage."),
                     TraceStep(2, "deployment-route", record.Text("deploymentRoute"), true, "The route the engine set from the entry point."),
                 };
                 results.Add(Js.Obj(
@@ -176,13 +183,90 @@ internal static partial class ToolHandlers
             }
         }
 
-        string summary = results.Count == 0 ? "No rule trace applies to this record for the aspects asked." : results.Count + " rule trace(s), under configuration version " + stamped + ".";
+        string summary = results.Count == 0 ? "No rule trace applies to this record for the aspects asked." : Count(results.Count, "rule trace", "rule traces") + ", under configuration version " + stamped + ".";
         JsonTreeNode data = Js.Obj(
             ("configurationSetVersion", JsonTreeNode.FromInt64(stamped)),
             ("engineVersion", JsonTreeNode.FromString(EngineInfo.Version)),
             ("aspects", Arr(results)),
             ("summary", JsonTreeNode.FromString(summary)));
         return s.Answer(data, summary);
+    }
+
+    // The decision a data use or a copy's approvals come from: the proposed one, else the latest accepted one.
+    private static string? LatestDataDecision(ToolScope s, string kind, string rowId)
+    {
+        var decisions = s.Query("decision", (kind == "data-use" ? "subjectDataUse" : "subjectDataMapping", rowId)).ToList();
+        return decisions.FirstOrDefault(d => d.Text("statusMeaning") == "proposed")?.Id
+            ?? NewestFirst(decisions.Where(d => d.Text("statusMeaning") == "accepted")).FirstOrDefault()?.Id;
+    }
+
+    // The inheritance trace of a data use, a copy or a domain (docs/architecture/data-taxonomy.md, Changing the taxonomy): one step per domain from the
+    // top down, saying what each sets (classification, the handling rule that governs, a data owner of its own), then the
+    // classification's default; the winner is where the governing rule is set. Example: "AI use never, set on Payroll;
+    // classification restricted, from People".
+    private static JsonTreeNode DataTraceAspect(ToolScope s, string kind, string id, ref int stamped)
+    {
+        var tree = new DataTree(s.Snapshot);
+        StoredRow? row = kind == "data-domain" ? null : s.RequireRow(kind, id, "subjectId");
+        string domainKey = kind == "data-domain" ? id : row!.Text("dataDomain") ?? string.Empty;
+        if (tree.Domain(domainKey) == null)
+        {
+            throw kind == "data-domain" ? s.NotFound("Data Domain", id, "subjectId") : s.Invalid("subjectId", "The row points at data domain " + domainKey + ", which the configuration in force does not hold.");
+        }
+
+        stamped = (int)(row?.Number("configurationSetVersion") ?? stamped);
+        bool reachesAi = row?.Flag("reachesAi") == true;
+        // A use is traced for the rule that governs it, a copy for the copy rule, and a domain for its strictest rule (a
+        // rule a domain sets wins a tie with a classification's default, so the trace names where to change it).
+        EffectiveDataRule rule = kind == "data-mapping" ? tree.Rule(domainKey, DataRuleName.Copy)
+            : kind == "data-use" ? tree.GoverningRuleForUse(domainKey, reachesAi)
+            : new[] { DataRuleName.Ai, DataRuleName.Use, DataRuleName.Copy }.Select(n => tree.Rule(domainKey, n)).OrderByDescending(r => r.Value).ThenBy(r => r.SetOnDomainKey == null ? 1 : 0).First();
+        EffectiveClassification? classification = tree.Classification(domainKey);
+        var owners = s.Query("owner-assignment").Where(o => o.Text("ownerRole") == EngineKeys.DataOwnerRole && o.Text("endOn") == null && !o.Flag("isDeputy") && o.Text("subjectDataDomain") != null).ToList();
+        var steps = new List<JsonTreeNode>();
+        int step = 0;
+        foreach (SnapshotRow node in tree.Chain(domainKey).Reverse())
+        {
+            var said = new List<string>();
+            if (Js.Text(node.Columns, "classificationKey") is string c)
+            {
+                said.Add("classification " + c + (classification?.SetOnDomainKey == node.KeyPath ? ", the one in force" : ", overridden below"));
+            }
+
+            foreach ((string column, string words) in new[] { ("useRule", "use rule"), ("aiUseRule", "AI use rule"), ("copyToTestRule", "copy to test rule") })
+            {
+                if (Js.Text(node.Columns, column) is string value)
+                {
+                    said.Add(words + " " + value);
+                }
+            }
+
+            StoredRow? owner = owners.FirstOrDefault(o => o.Text("subjectDataDomain") == node.KeyPath);
+            if (owner != null)
+            {
+                said.Add("data owner " + s.DisplayLabel(owner.Text("principal") ?? string.Empty));
+            }
+
+            steps.Add(TraceStep(++step, "data-domain", node.KeyPath, true, DataTree.Label(node) + (said.Count == 0 ? ": sets nothing of its own." : ": " + string.Join("; ", said) + ".")));
+        }
+
+        if (classification != null)
+        {
+            steps.Add(TraceStep(++step, "data-classification", classification.Key, rule.SetOnDomainKey == null,
+                "The default " + rule.NameWire + " rule of classification " + classification.Key + " is " + Js.Text(s.ConfigRow("data-classification", classification.Key)?.Columns, rule.Name == DataRuleName.Use ? "defaultUseRule" : rule.Name == DataRuleName.Ai ? "defaultAiUseRule" : "defaultCopyToTestRule") + "."));
+        }
+
+        steps.Add(TraceStep(++step, rule.SetOnDomainKey != null ? "data-domain" : "data-classification", rule.SetOnDomainKey ?? rule.ClassificationKey, true, "Governs: " + tree.DescribeRule(rule, domainKey) + "."));
+        string? winnerKey = rule.SetOnDomainKey ?? rule.ClassificationKey;
+        return Js.Obj(
+            ("aspect", JsonTreeNode.FromString("data")),
+            ("operation", JsonTreeNode.FromString(kind == "data-domain" ? "OP-15" : "OP-16")),
+            ("winner", winnerKey == null ? JsonTreeNode.Null : Js.Obj(
+                ("entity", JsonTreeNode.FromString(rule.SetOnDomainKey != null ? "data-domain" : "data-classification")),
+                ("key", JsonTreeNode.FromString(winnerKey)),
+                ("scope", Js.Obj(("rule", JsonTreeNode.FromString(rule.NameWire)), ("value", JsonTreeNode.FromString(EngineContract.DataHandlingRules.ToWire(rule.Value))))))),
+            ("dropped", Js.EmptyArray),
+            ("trace", Arr(steps)));
     }
 
     // One aspect from an engine evaluation's rule trace (document 25: outcome, reasons, rule trace).
@@ -240,7 +324,7 @@ internal static partial class ToolHandlers
         CompiledSnapshot active = s.Call.Snapshot;
         var versions = s.Query("configuration-set-version", ("configurationSet", active.ConfigurationSetKey)).OrderByDescending(v => v.Number("versionNumber") ?? 0).ToList();
         StoredRow? activeRow = versions.FirstOrDefault(v => v.Number("versionNumber") == active.VersionNumber);
-        DateTime activatedOn = Js.ParseMoment(activeRow?.Text("publishedOn")) ?? Js.ParseMoment(activeRow?.Text("engineCheckedOn")) ?? s.Session.PublishedOnUtc ?? s.Now;
+        DateTime activatedOn = activeRow == null ? s.InForcePublishedOn : s.PublishedOnOf(activeRow);
         var findings = new List<JsonTreeNode>();
         if (activeRow != null && activeRow.Text("contentHash") is string stored && stored != active.ContentHash)
         {
@@ -268,9 +352,9 @@ internal static partial class ToolHandlers
             members.Add(("versions", Arr(versions.Select(v => Js.Obj(
                 ("version", JsonTreeNode.FromInt64(v.Number("versionNumber") ?? 0)),
                 ("status", JsonTreeNode.FromString(v.Number("versionNumber") == active.VersionNumber ? "active" : "superseded")),
-                ("activatedOn", Js.Utc(Js.ParseMoment(v.Text("publishedOn")) ?? Js.ParseMoment(v.Text("engineCheckedOn")) ?? activatedOn)),
+                ("activatedOn", Js.Utc(v.Number("versionNumber") == active.VersionNumber ? activatedOn : s.PublishedOnOf(v))),
                 ("decisionId", Js.Str(v.Text("changeDecision") ?? v.Text("acceptedByDecision"))),
-                ("summary", JsonTreeNode.FromString(v.Text("changeSummary") ?? "Version " + (v.Number("versionNumber") ?? 0) + ".")))))));
+                ("summary", JsonTreeNode.FromString(VersionChangeLines(s, v) is { Count: > 0 } plain ? string.Join(" ", plain) : "Version " + (v.Number("versionNumber") ?? 0) + ".")))))));
         }
 
         if (s.Flag("includeDrafts") ?? true)
@@ -287,7 +371,7 @@ internal static partial class ToolHandlers
             members.Add(("skipToken", Js.OptStr(next)));
         }
 
-        return s.Answer(Js.Obj(members.ToArray()), "Version " + active.VersionNumber + " is active and loads; " + findings.Count + " finding(s).");
+        return s.Answer(Js.Obj(members.ToArray()), "Version " + active.VersionNumber + " is active and loads; " + Count(findings.Count, "finding", "findings") + ".");
     }
 
     // ---- 41. list_presets ----
@@ -331,7 +415,7 @@ internal static partial class ToolHandlers
 
     // ---- 42. propose_configuration_change ----
 
-    // WORKING DEFAULT (open design question 4): a person accepts the engine's exact diff on one card; the instructing
+    // WORKING DEFAULT (open design question 4): a person accepts the engine's exact diff on the decision page; the instructing
     // admin may accept their own AI's draft unless strict separation is in force.
     private static JsonTreeNode ProposeConfigurationChange(ToolScope s)
     {
@@ -385,42 +469,12 @@ internal static partial class ToolHandlers
             ("message", JsonTreeNode.FromString(Js.Text(i, "message") ?? "A rule failed.")))).ToList();
         bool valid = Js.Flag(payload, "isValid") == true;
 
-        var diff = new List<JsonTreeNode>();
-        var byChange = new List<JsonTreeNode>();
-        var gateChanges = new List<JsonTreeNode>();
-        var apps = s.Rows.Query(RowQuery.For("business-application")).Where(a => a.Text("statusMeaning") != "archived").ToList();
-        var affected = new HashSet<string>(StringComparer.Ordinal);
-        foreach (JsonTreeNode op in operations.Items)
-        {
-            string entity = Js.Text(op, "entity") ?? string.Empty;
-            string key = Js.Text(op, "key") ?? string.Empty;
-            SnapshotRow? current = s.ConfigRow(entity, key);
-            string kind = Js.Text(op, "op") == "retire" ? "retired" : current == null || !current.IsActive ? "added" : "updated";
-            JsonTreeNode after = kind == "retired" ? JsonTreeNode.Null : Js.Obj((current?.Columns.Members ?? Array.Empty<KeyValuePair<string, JsonTreeNode>>()).Where(m => Js.Member(op, "values")?.TryGetMember(m.Key, out _) != true).Concat(Js.Member(op, "values")?.Members ?? Array.Empty<KeyValuePair<string, JsonTreeNode>>()));
-            if (KeyPathShape.IsMatch(key) && KeyPathShape.IsMatch(entity))
-            {
-                diff.Add(Js.Obj(("entity", JsonTreeNode.FromString(entity)), ("key", JsonTreeNode.FromString(key)), ("op", JsonTreeNode.FromString(kind)), ("before", current?.Columns ?? JsonTreeNode.Null), ("after", after)));
-                var touched = apps.Where(a => Touches(a, entity, key, current, after)).Select(a => a.Id).OrderBy(id => id, StringComparer.Ordinal).ToList();
-                touched.ForEach(id => affected.Add(id));
-                byChange.Add(Js.Obj(("entity", JsonTreeNode.FromString(entity)), ("key", JsonTreeNode.FromString(key)), ("applicationsAffected", JsonTreeNode.FromInt64(touched.Count)), ("sampleApplicationIds", Js.Strs(touched.Take(5)))));
-            }
-
-            if (entity == "gate-policy")
-            {
-                JsonTreeNode source = after.Kind == JsonTreeKind.Object ? after : current?.Columns ?? Js.EmptyObject;
-                if (Js.Text(source, "tierKey") is string tier && Js.Text(source, "changeTypeKey") is string change && Js.Text(source, "targetStageKey") is string stage)
-                {
-                    gateChanges.Add(Js.Obj(
-                        ("tierKey", JsonTreeNode.FromString(tier)),
-                        ("changeTypeKey", JsonTreeNode.FromString(change)),
-                        ("targetStageKey", JsonTreeNode.FromString(stage)),
-                        ("from", Js.Str(current == null ? null : Js.Text(current.Columns, "gateLevel"))),
-                        ("to", Js.Str(kind == "retired" ? null : Js.Text(after, "gateLevel")))));
-                }
-            }
-        }
-
-        int inFlight = s.Rows.Query(RowQuery.For("decision").Where("statusMeaning", "proposed")).Count + s.Rows.Query(RowQuery.For("change-request").Where("statusMeaning", "submitted")).Count;
+        DraftImpact impact = DraftImpactOf(s, operations);
+        var diff = impact.Diff;
+        var byChange = impact.ByChange;
+        var gateChanges = impact.GateChanges;
+        var affected = impact.Affected;
+        int inFlight = impact.InFlight;
         string decisionType = operations.Items.Any(o => Js.Text(o, "entity") == "gate-policy") ? "gate-policy-change" : EngineKeys.ConfigurationChangeDecisionType;
         EvaluationResult<JsonTreeNode?> required = s.Call.Evaluate(EngineOperation.ResolveRequiredApprovals, Js.Obj(("decisionTypeKey", JsonTreeNode.FromString(decisionType)), ("portfolioPath", Js.EmptyArray)));
         var approvals = required.Outcome == "required" ? Js.Items(required.Payload, "requirements").Select(r => ApprovalNeeded(s, decisionType, r)).Where(r => r != null).Select(r => r!).ToList() : new List<JsonTreeNode>();
@@ -437,11 +491,7 @@ internal static partial class ToolHandlers
             {
                 ("recordId", JsonTreeNode.Null),
                 ("status", ToolScope.StatusValue("draft", "Draft")),
-                ("performedBy", Js.Obj(
-                    ("actorKind", JsonTreeNode.FromString(s.Session.ActorKind)),
-                    ("principal", s.PrincipalRef(s.PersonId)),
-                    ("onBehalfOf", s.IsAiCaller ? s.PrincipalRef(s.PersonId) : JsonTreeNode.Null),
-                    ("clientApp", ToolScope.IsGuid(s.Session.Caller.ClientAppId) ? Js.Obj(("appId", JsonTreeNode.FromString(s.Session.Caller.ClientAppId)), ("label", JsonTreeNode.FromString(s.Session.Caller.ClientAppLabel ?? s.Session.Caller.ClientAppId))) : JsonTreeNode.Null))),
+                ("performedBy", s.CallerPerformedBy()),
                 ("isAiCreated", JsonTreeNode.FromBoolean(s.IsAiCaller)),
                 ("engineStamp", Js.Obj(("engineVersion", JsonTreeNode.FromString(EngineInfo.Version)), ("engineCheckedOn", Js.Utc(s.Now)))),
                 ("created", JsonTreeNode.False),
@@ -459,12 +509,83 @@ internal static partial class ToolHandlers
                 ("applicationsAffected", JsonTreeNode.FromInt64(affected.Count)),
                 ("byChange", Arr(byChange)),
                 ("gateChanges", Arr(gateChanges)),
-                ("recordsInFlight", JsonTreeNode.FromInt64(inFlight)))),
+                ("recordsInFlight", JsonTreeNode.FromInt64(inFlight)),
+
+                // The live data uses and copies whose state the change would move, in the proposal's own preview, as the
+                // stored draft lists them (docs/architecture/data-taxonomy.md).
+                ("dataUses", DataUseImpactItems(s, s.Call.DataUseImpact(baseVersion, changeSet))))),
             ("approvalsNeeded", Arr(approvals)),
-            ("activation", JsonTreeNode.FromString("Submit the draft. A person accepts the decision on an approval card. Nothing changes until then.")));
-        string summary = !valid ? "The draft has " + errors.Count + " rule error(s); fix them before it is submitted." : draftId == null ? "The change is valid. Nothing was stored (validateOnly)." : "The configuration draft is stored. Nothing is in force until a person accepts its decision on a card.";
+            ("activation", JsonTreeNode.FromString("Submit the draft. A person accepts the decision on its decision page. Nothing changes until then.")));
+        string summary = !valid ? "The draft has " + Count(errors.Count, "rule error", "rule errors") + "; fix them before it is submitted." : draftId == null ? "The change is valid. Nothing was stored (validateOnly)." : "The configuration draft is stored. Nothing is in force until a person accepts its decision on the decision page.";
         return s.Answer(data, summary, draftId == null || s.Call.IsDryRun ? null : s.RecordUrl("configuration-draft", draftId),
             draftId == null || s.Call.IsDryRun ? Array.Empty<NextStep>() : new[] { ToolScope.Next("submit_record", ("subjectKind", JsonTreeNode.FromString("configuration-draft")), ("subjectId", JsonTreeNode.FromString(draftId))) });
+    }
+
+    // What a draft's operations change against the configuration in force, and what they touch (propose_configuration_change
+    // and get_configuration_draft, document 24, B24-18): the row diff, the applications each change touches, the gate
+    // levels that move, and the records in flight. The same computation for the proposal and the stored draft, so the
+    // Configuration page shows the numbers the admin saw when proposing.
+    private sealed class DraftImpact
+    {
+        public List<JsonTreeNode> Diff { get; } = new();
+
+        public List<JsonTreeNode> ByChange { get; } = new();
+
+        public List<JsonTreeNode> GateChanges { get; } = new();
+
+        public HashSet<string> Affected { get; } = new(StringComparer.Ordinal);
+
+        // The gates whose requirements or levels the draft changes: gate rows, gate requirement rows and gate policy rows.
+        public SortedSet<string> GatesTouched { get; } = new(StringComparer.Ordinal);
+
+        public int InFlight { get; set; }
+    }
+
+    private static DraftImpact DraftImpactOf(ToolScope s, JsonTreeNode operations)
+    {
+        var impact = new DraftImpact();
+        var apps = s.Rows.Query(RowQuery.For("business-application")).Where(a => a.Text("statusMeaning") != "archived").ToList();
+        foreach (JsonTreeNode op in operations.Items)
+        {
+            string entity = Js.Text(op, "entity") ?? string.Empty;
+            string key = Js.Text(op, "key") ?? string.Empty;
+            SnapshotRow? current = s.ConfigRow(entity, key);
+            string kind = Js.Text(op, "op") == "retire" ? "retired" : current == null || !current.IsActive ? "added" : "updated";
+            JsonTreeNode after = kind == "retired" ? JsonTreeNode.Null : Js.Obj((current?.Columns.Members ?? Array.Empty<KeyValuePair<string, JsonTreeNode>>()).Where(m => Js.Member(op, "values")?.TryGetMember(m.Key, out _) != true).Concat(Js.Member(op, "values")?.Members ?? Array.Empty<KeyValuePair<string, JsonTreeNode>>()));
+            if (KeyPathShape.IsMatch(key) && KeyPathShape.IsMatch(entity))
+            {
+                impact.Diff.Add(Js.Obj(("entity", JsonTreeNode.FromString(entity)), ("key", JsonTreeNode.FromString(key)), ("op", JsonTreeNode.FromString(kind)), ("before", current?.Columns ?? JsonTreeNode.Null), ("after", after)));
+                var touched = apps.Where(a => Touches(a, entity, key, current, after)).Select(a => a.Id).OrderBy(id => id, StringComparer.Ordinal).ToList();
+                touched.ForEach(id => impact.Affected.Add(id));
+                impact.ByChange.Add(Js.Obj(("entity", JsonTreeNode.FromString(entity)), ("key", JsonTreeNode.FromString(key)), ("applicationsAffected", JsonTreeNode.FromInt64(touched.Count)), ("sampleApplicationIds", Js.Strs(touched.Take(5)))));
+            }
+
+            JsonTreeNode source = after.Kind == JsonTreeKind.Object ? after : current?.Columns ?? Js.EmptyObject;
+            if (entity == "gate" && KeyPathShape.IsMatch(key))
+            {
+                impact.GatesTouched.Add(key);
+            }
+            else if (entity == "gate-requirement" && Js.Text(source, "gateKey") is string gateKey && KeyPathShape.IsMatch(gateKey))
+            {
+                impact.GatesTouched.Add(gateKey);
+            }
+
+            if (entity == "gate-policy")
+            {
+                if (Js.Text(source, "tierKey") is string tier && Js.Text(source, "changeTypeKey") is string change && Js.Text(source, "targetStageKey") is string stage)
+                {
+                    impact.GateChanges.Add(Js.Obj(
+                        ("tierKey", JsonTreeNode.FromString(tier)),
+                        ("changeTypeKey", JsonTreeNode.FromString(change)),
+                        ("targetStageKey", JsonTreeNode.FromString(stage)),
+                        ("from", Js.Str(current == null ? null : Js.Text(current.Columns, "gateLevel"))),
+                        ("to", Js.Str(kind == "retired" ? null : Js.Text(after, "gateLevel")))));
+                }
+            }
+        }
+
+        impact.InFlight = s.Rows.Query(RowQuery.For("decision").Where("statusMeaning", "proposed")).Count + s.Rows.Query(RowQuery.For("change-request").Where("statusMeaning", "submitted")).Count;
+        return impact;
     }
 
     // True when a change to the row touches the application: its tier, kind or stage row, or a gate policy row for its tier.
@@ -509,7 +630,7 @@ internal static partial class ToolHandlers
     // only by the engine as the effect of a write it records (G-07), and this check writes nothing.
     private static JsonTreeNode CheckRoleBindings(ToolScope s)
     {
-        IDirectoryReader directory = s.Options.Directory ?? throw s.Upstream("Microsoft Graph", "no Graph client is bound to this server");
+        IDirectoryReader directory = s.Options.Directory ?? throw s.Upstream("Microsoft Graph", "this install has no connection to the directory");
         var findings = new List<string>();
         var bindings = new List<JsonTreeNode>();
         foreach (SnapshotRow binding in s.ActiveRows("role-group-binding").OrderBy(b => b.KeyPath, StringComparer.Ordinal))
@@ -530,7 +651,7 @@ internal static partial class ToolHandlers
             string? method = Js.Text(binding.Columns, "bindingMethod");
             bindings.Add(Js.Obj(
                 ("roleKey", JsonTreeNode.FromString(role)),
-                ("group", group == null ? JsonTreeNode.Null : Js.Obj(("objectId", JsonTreeNode.FromString(group)), ("displayLabel", JsonTreeNode.FromString(found.Value?.DisplayLabel ?? s.DisplayLabel(group))))),
+                ("group", group == null ? JsonTreeNode.Null : Js.Obj(("objectId", JsonTreeNode.FromString(group)), ("displayLabel", JsonTreeNode.FromString(GroupLabel(s, directory, role, found.Value, group))))),
                 ("bindingMethod", method == "dataverse-group-team" || method == "entra-app-role-assignment" ? JsonTreeNode.FromString(method) : JsonTreeNode.Null),
                 ("groupExists", JsonTreeNode.FromBoolean(found.Value != null)),
                 ("lastVerifiedOn", Js.Utc(s.Now))));
@@ -603,7 +724,35 @@ internal static partial class ToolHandlers
             ("directAssignments", Arr(assignments)),
             ("findings", Js.Strs(findings)),
             ("auditEntryId", JsonTreeNode.Null));
-        return s.Answer(data, findings.Count == 0 ? "Every role is held through its group or a current Workload Grant." : findings.Count + " finding(s) on role bindings and grants.");
+        string against = directory is IDemoDirectory ? " Checked against the demo personas: a bound group counts as found when a persona is in it." : string.Empty;
+        return s.Answer(data, (findings.Count == 0 ? "Every role is held through its group or a current Workload Grant." : Count(findings.Count, "finding", "findings") + " on role bindings and grants.") + against);
+    }
+
+    // The name of a bound group, the same in every read (wave 3 verification: the role list called group 107 "Portfolio
+    // readers" while the holders read and the binding check called it "Reader group (demo)"). The name the product holds
+    // for the group (its Principal Reference) wins everywhere: get_role_access, get_role_holders and check_role_bindings.
+    // A group the product has no name for takes the directory's name. On a demo install or a local run with no stored
+    // name, the demo personas' fictional groups have no name of their own, so such a group is named for the role it is
+    // bound to ("Reader group (demo)"), never for one of its members (docs/architecture/data-taxonomy.md).
+    internal static string GroupLabel(ToolScope s, IDirectoryReader? directory, string roleKey, DirectoryObject? found, string groupObjectId)
+    {
+        StoredRow? known = s.Principal(groupObjectId);
+        if (known != null && !known.Flag("isErased") && known.Text("displayLabel") is string stored && stored.Length > 0)
+        {
+            return stored;
+        }
+
+        if (directory is IDemoDirectory)
+        {
+            return s.Label("role", roleKey) + " group (demo)";
+        }
+
+        if (found == null && directory != null && directory.Group(s.Session.Caller, groupObjectId) is DirectoryAnswer<DirectoryObject?> answer && answer.Answered)
+        {
+            found = answer.Value;
+        }
+
+        return found?.DisplayLabel ?? groupObjectId;
     }
 
     // ---- 45. save_link ----

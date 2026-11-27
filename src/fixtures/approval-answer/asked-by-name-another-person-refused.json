@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "asked-by-name-another-person-refused",
+  "description": "The same request, answered by the business owner, who holds the owner role the successor would take. A record that asks one person by name is that person's only, so the answer is refused and nothing is written.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": []
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "ownership-proposed-owners",
+      "requiredOwnerRoleKey": "business-owner",
+      "askedPrincipalId": "fixture-person-3"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "ownership",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-not-asked",
+        "severity": "error",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

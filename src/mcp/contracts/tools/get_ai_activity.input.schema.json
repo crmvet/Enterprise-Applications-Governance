@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_ai_activity input",
+  "description": "What AI clients did across the estate (guidelines G16, G17): the rows an AI client created and whether each waits for a person, who took it forward and when, whether a person edited it first, and what was withdrawn; the calls the product refused an AI client, with the rule; the approval answers an AI actor gave, a recommendation only; and the deployments flagged for an AI-only code approval. With counts by client, by person and by application. The AI lead, the security reviewer, the platform admin and the auditor see the whole estate; anyone else sees the AI work done for them. Writes nothing.",
+  "x-tool": "get_ai_activity",
+  "type": "object",
+  "properties": {
+    "view": {
+      "enum": [
+        "all",
+        "drafts",
+        "waiting",
+        "accepted",
+        "withdrawn",
+        "refused",
+        "answers",
+        "code-approvals"
+      ],
+      "default": "all",
+      "description": "Which items to list. waiting: AI drafts no person has taken forward; accepted: AI drafts a person took forward; refused: calls the product refused an AI client. The counts cover every view."
+    },
+    "mineOnly": {
+      "type": "boolean",
+      "description": "True keeps the AI work done for you. Always true for a caller without an estate-wide role."
+    },
+    "onBehalfOfObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only the AI work done for this person. An estate-wide role only, or yourself."
+    },
+    "clientApp": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Only clients whose label holds this text, such as Claude Code."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only the AI work on this application."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only the AI work about applications in this portfolio, child portfolios included, or about an intake request in it with no application yet. The counts and the items share the scope. A portfolio that does not exist is refused."
+    },
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "On or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "On or before this date."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "view": "waiting",
+      "clientApp": "Claude Code"
+    },
+    {
+      "view": "waiting",
+      "portfolioId": "50000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

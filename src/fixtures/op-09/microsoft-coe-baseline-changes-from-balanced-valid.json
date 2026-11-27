@@ -68,11 +68,13 @@
         "Changed Tier `tier-3`: label.",
         "Added Vocabulary Mapping `business-owner-coe-role`.",
         "Added Vocabulary Mapping `coe-lead-coe-role`.",
+        "Added Vocabulary Mapping `domain-level-governance-domain-type`.",
         "Added Vocabulary Mapping `maker-coe-role`.",
         "Added Vocabulary Mapping `platform-admin-coe-role`.",
         "Added Vocabulary Mapping `product-owner-coe-role`.",
         "Added Vocabulary Mapping `security-reviewer-coe-role`.",
-        "Added Vocabulary Mapping `sponsor-coe-role`."
+        "Added Vocabulary Mapping `sponsor-coe-role`.",
+        "Added Vocabulary Mapping `subdomain-level-governance-domain-type`."
       ]
     },
     "reasons": [

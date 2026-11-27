@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_data_uses input",
+  "description": "The data uses (O27) across every domain in one list, each with its decision state from OP-16, computed when read: what each application reads or writes, whether the data reaches an AI model, and whether a decision allows it. Open uses by default. Filters by domain (with the domains below it), application, state, AI, access and words; dataUseIds reads given uses, ended ones too. Writes nothing.",
+  "x-tool": "list_data_uses",
+  "type": "object",
+  "properties": {
+    "domainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "Only uses of this domain and, unless includeSubtree is false, of the domains below it."
+    },
+    "includeSubtree": {
+      "type": "boolean",
+      "default": true,
+      "description": "False keeps the uses of domainKey itself only."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only this application's uses."
+    },
+    "dataUseIds": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/id",
+        "x-entity": "O27 Data Use"
+      },
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "description": "Only these uses, whatever their state or end date (a use's record page). Each must exist."
+    },
+    "states": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/dataUseState"
+      },
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "description": "Only uses in these decision states. counts.byState is for the other filters, before this one."
+    },
+    "reachesAi": {
+      "type": "boolean",
+      "description": "True keeps the uses whose data reaches an AI model; false keeps the others."
+    },
+    "accessKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/dataAccess"
+      },
+      "minItems": 1,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "description": "Only uses with these kinds of access."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Words that must appear in the application's name, the domain's path, the purpose, the record number or the AI service."
+    },
+    "includeEnded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True adds the ended, retired and archived uses."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "domainKey": "payroll",
+      "states": [
+        "needed",
+        "proposed"
+      ]
+    },
+    {
+      "dataUseIds": [
+        "00000000-0000-4000-8000-0000000005a1"
+      ]
+    }
+  ]
+}

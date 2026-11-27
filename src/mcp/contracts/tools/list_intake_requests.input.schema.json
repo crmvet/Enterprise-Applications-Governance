@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_intake_requests input",
+  "description": "Intake requests for the intake and demand page. view triage: submitted requests waiting for triage. mine: requests the person requested or created. drafts: drafts. demand: requests on the table (submitted, in progress or completed), the highest score first. all: every request the person may read. Rows follow the intake-visibility setting (default own: the requester, plus PMO, platform admin and architect); hidden rows are counted in couldNotRead. The demand filters (size band, horizon, priority, scored) and orderBy serve the PMO's demand list; portfolioId narrows to a portfolio and the ones below it. Writes nothing.",
+  "x-tool": "list_intake_requests",
+  "type": "object",
+  "properties": {
+    "view": {
+      "enum": [
+        "triage",
+        "mine",
+        "drafts",
+        "demand",
+        "all"
+      ],
+      "default": "all",
+      "description": "Which requests."
+    },
+    "statusMeanings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/recordStatusMeaning"
+      },
+      "description": "Only requests with these status meanings."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Words to find in the title, the need or the record number."
+    },
+    "sizeBandKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      },
+      "description": "Only requests with one of these size bands. \"none\" matches a request with no size band."
+    },
+    "horizonKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      },
+      "description": "Only requests with one of these horizons. \"none\" matches a request with no horizon."
+    },
+    "priorityKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      },
+      "description": "Only requests with one of these priorities: an accepted priority outcome key (such as fund, defer or stop), \"proposed\" while a priority decision waits, or \"none\"."
+    },
+    "scored": {
+      "type": "boolean",
+      "description": "True: only scored requests. False: only requests with no score yet."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only requests in this portfolio or one below it: the request's own Portfolio, else the portfolio of the application it is linked to (document 24, B24-17)."
+    },
+    "orderBy": {
+      "enum": [
+        "score",
+        "priority",
+        "size-band",
+        "horizon",
+        "recent",
+        "title"
+      ],
+      "description": "The order. Default: score for the demand view (the highest first, unscored last), else the most recently changed first. priority puts accepted outcomes first in the order the configuration lists them, then proposed, then none; size-band and horizon follow their value lists."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "view": "triage"
+    }
+  ]
+}

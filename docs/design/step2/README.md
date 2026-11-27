@@ -1,6 +1,6 @@
 # Step 2 design: the logical design of the next version
 
-**Status: in design.** These documents describe what the next version is designed to do. Nothing in them is released or deployed. The code in [`src/`](../../../src/) is early work that follows this design, under the MIT License, not a release.
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** These documents are the logical design that the code in [`src/`](../../../src/README.md) follows, under the MIT License. They were first written as a design, so much of the text still says "is designed to". The build's own proposals at the end of each document (B20-1 and similar) say what was built, with dates. [What works today](../../../src/adapters/azure/STATUS.md) lists what is built and what is designed but not built, and the [architecture pages](../../architecture/README.md) describe the product as built.
 
 This folder holds the logical design of the next version of Enterprise Applications Governance. It names every term and entity, sets out the configuration model and the logical data model, describes the processes, lists the tools on the product's own MCP server, designs the rules engine and the security model, and records the working defaults and the questions that are still open.
 

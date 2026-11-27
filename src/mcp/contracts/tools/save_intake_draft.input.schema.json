@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "save_intake_draft input",
-  "description": "Starts or edits an intake request: a new idea, or an application already built that needs registering. The row is always Draft. The requester is always the caller. Only the requester may edit, and only while it is draft. An AI client can never set the status.",
+  "description": "Starts or edits an intake request: a new idea, or an application already built that needs registering. The row is always Draft. The requester is always the caller. Only the requester may edit, and only while it is draft. An AI client can never set the status. The business owner is named by the person's object ID, from find_people.",
   "x-tool": "save_intake_draft",
   "type": "object",
   "required": [
@@ -34,7 +34,12 @@
     "businessApplicationId": {
       "$ref": "../common.schema.json#/$defs/id",
       "x-entity": "O02 Business Application",
-      "description": "The application this request is about, when it already exists."
+      "description": "The application this request is about, when it already exists. Only an application the requester holds an owner role on, or a draft application the requester created; otherwise not_authorized."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "The portfolio the request belongs to. The application an accepted request creates starts in it."
     },
     "expectedBenefit": {
       "type": "string",
@@ -50,6 +55,11 @@
       "$ref": "../common.schema.json#/$defs/key",
       "x-entity": "C07 List Value",
       "description": "Now, next or later, from the horizon value list."
+    },
+    "businessOwnerObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "x-entity": "O05 Principal Reference",
+      "description": "The person the requester names as the business owner: the object ID find_people gives. A person the product knows, signed in as a user, not leaving, and not the requester. Counts for the Accept gate, is asked by name on the priority decision, and becomes the business owner of the application the accepted intake creates (or the draft it registers) when it has none."
     },
     "clientRequestId": {
       "$ref": "../common.schema.json#/$defs/clientRequestId"

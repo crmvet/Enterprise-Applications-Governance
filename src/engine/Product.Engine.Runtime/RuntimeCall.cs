@@ -49,6 +49,16 @@ internal sealed class RuntimeCall
 
     public List<AppliedWrite> Writes { get; } = new();
 
+    // What the call changed outside the engine's rows, in a host table the host keeps (the approval outbox a platform admin
+    // retries): entity, row ID and the state it left. The composed call's Audit Entry lists them beside its writes, so the
+    // change is on the record though no engine row changed (document 25, B25-24).
+    public List<(string Entity, string RowId, string State)> HostChanges { get; } = new();
+
+    // What runs once the call's transaction has committed, in order: a change in a host table that must not happen when
+    // the engine's own record of it is rolled back (security review: the outbox retry changed its row before
+    // the Audit Entry of who asked was committed). Never run for a dry run, a replay or a failed call.
+    public List<Action> AfterCommit { get; } = new();
+
     public List<Reason> Reasons { get; } = new();
 
     public Dictionary<string, JsonTreeNode> Results { get; } = new(StringComparer.Ordinal);
@@ -56,6 +66,13 @@ internal sealed class RuntimeCall
     public int FactRounds { get; set; }
 
     public int Depth { get; set; }
+
+    // A dry run (validateOnly): every rule and write runs, then the transaction rolls back. It takes no record number.
+    public bool DryRun { get; set; }
+
+    // True while the engine settles gate decisions that waited for their gate (SettleHeldGateDecisions), so an acceptance
+    // inside that step does not start the step again.
+    public bool SettlingGates { get; set; }
 
     public EvaluationContext Context(CompiledSnapshot? snapshot = null, bool nested = false)
     {
@@ -183,6 +200,12 @@ internal sealed class WriteSpec
     public WriteAcceptance? Acceptance { get; set; }
 
     public JsonTreeNode? GateReadiness { get; set; }
+
+    // For a person's own approval answer: the approval answer check the runtime just ran for that person (G-06, D-38).
+    public ApprovalAnswerBasis? ApprovalAnswer { get; set; }
+
+    // For an accept-decision write: the decision's subject, for the update-subject effect (document 25, B25-8).
+    public SubjectFacts? Subject { get; set; }
 
     // The snapshot to guard against, when not the call's (the bootstrap guards its writes against version 1).
     public CompiledSnapshot? Snapshot { get; set; }

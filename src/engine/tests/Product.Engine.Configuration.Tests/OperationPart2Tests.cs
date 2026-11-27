@@ -163,7 +163,9 @@ public sealed class OperationPart2Tests
                             .ToArray();
                         string at = selection.Key + "+" + string.Join("+", selection.Value) + " " + gate + " " + (tier ?? "-") + " " + kind;
 
-                        var nothing = new ReadinessRequest(gate, tier, kind, documentation: Array.Empty<DocumentStatusFact>());
+                        // The data taxonomy's two kinds (docs/architecture/data-taxonomy.md, Gate requirements): nothing declared and one use undecided, against one use
+                        // declared and decided.
+                        var nothing = new ReadinessRequest(gate, tier, kind, documentation: Array.Empty<DocumentStatusFact>(), dataUses: new DataUseReadinessFact(0, false, 1, 1));
                         EvaluationResult<ReadinessResult?> no = GateReadinessOperation.Evaluate(snapshot, context, nothing);
                         Assert.True(no.Payload != null, at + ": " + string.Join(" | ", no.Reasons));
                         Assert.Equal(expected, no.Payload!.Requirements.Select(r => r.RequirementKey).ToArray());
@@ -171,7 +173,7 @@ public sealed class OperationPart2Tests
                         Assert.Equal(expected.Length == 0 ? "ready" : "not-ready", no.Outcome);
                         Assert.Equal(expected.Length > 0, no.Reasons.Any(r => r.Code == "gate.not-ready"));
 
-                        var everything = new ReadinessRequest(gate, tier, kind, decisions, current, reviews, owners);
+                        var everything = new ReadinessRequest(gate, tier, kind, decisions, current, reviews, owners, dataUses: new DataUseReadinessFact(1, false, 0, 0));
                         EvaluationResult<ReadinessResult?> yes = GateReadinessOperation.Evaluate(snapshot, context, everything);
                         Assert.Equal("ready", yes.Outcome);
                         Assert.Empty(yes.Reasons);
@@ -213,7 +215,7 @@ public sealed class OperationPart2Tests
         Assert.Equal("incomplete", docs.Outcome);
 
         JsonTreeNode input = OperationTestData.Json("{\"gateKey\":\"go-live\",\"tierKey\":\"tier-3\",\"applicationKindKey\":\"power-platform-app\",\"acceptedDecisionTypeKeys\":[\"acceptance\"],"
-            + "\"doneReviewTypeKeys\":[\"security-review\"],\"documentation\":" + OperationTestData.Canonical(docs.Payload!.ToJson()) + "}");
+            + "\"doneReviewTypeKeys\":[\"security-review\"],\"assignedOwnerRoleKeys\":[\"data-owner\"],\"documentation\":" + OperationTestData.Canonical(docs.Payload!.ToJson()) + "}");
         EvaluationResult<JsonTreeNode?> ready = OperationJson.Evaluate(EngineOperation.EvaluateGateReadiness, compiled.Snapshot, context, input);
 
         // The wiki page is missing, but the go-live gate asks only for the runbook, which is current.

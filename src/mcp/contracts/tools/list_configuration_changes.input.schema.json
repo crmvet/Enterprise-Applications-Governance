@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_configuration_changes input",
+  "description": "The versions of the configuration in force, newest first, with who accepted each and when, and the configuration drafts with their state. A read for any role. A draft changes nothing until a person accepts its decision on the decision page.",
+  "x-tool": "list_configuration_changes",
+  "type": "object",
+  "properties": {
+    "view": {
+      "enum": [
+        "all",
+        "versions",
+        "drafts"
+      ],
+      "default": "all",
+      "description": "versions or drafts lists only those; all lists both."
+    },
+    "draftStates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/draftStatusMeaning"
+      },
+      "description": "Only drafts in these states. Leave out for every state."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "view": "all"
+    },
+    {
+      "view": "drafts",
+      "draftStates": [
+        "draft",
+        "submitted"
+      ]
+    }
+  ]
+}

@@ -36,7 +36,7 @@ namespace Product.Azure.Stores;
 // ASCII characters and a key path at most 450 characters; a second create of one ID, or a second Configuration Set
 // Version with the same set and number, is a conflict. Two transactions that change one row are a conflict for the
 // second to commit, where the in-memory store lets the last one win.
-public abstract class RowStore : IProductStore
+public abstract class RowStore : IProductStore, IKeySetReader
 {
     // The longest row ID and key path the Azure SQL tables hold (varchar(36) and nvarchar(450)).
     public const int MaxIdLength = 36;
@@ -48,6 +48,12 @@ public abstract class RowStore : IProductStore
     private readonly RowStoreOptions _options;
     private bool _disposed;
 
+    // What the Admin page shows of the store (document 24, B24-18): its kind, and for a store with migrations the schema
+    // version this build needs. The host does not start below that version, so it is also the version the store is at.
+    public virtual string StoreKind => "row-store";
+
+    public virtual int? RequiredSchemaVersion => null;
+
     protected RowStore(RowStoreOptions options, IRowDatabase database, EntityCatalog? catalog = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -56,7 +62,7 @@ public abstract class RowStore : IProductStore
             throw new ArgumentException("A store has an ID (RowStoreOptions.StoreId).", nameof(options));
         }
 
-        Database = database ?? throw new ArgumentNullException(nameof(database));
+        _database = database ?? throw new ArgumentNullException(nameof(database));
         Catalog = catalog ?? EntityCatalog.Embedded;
         StoreId = options.StoreId;
     }
@@ -65,7 +71,17 @@ public abstract class RowStore : IProductStore
 
     public EntityCatalog Catalog { get; }
 
-    protected IRowDatabase Database { get; }
+    // The database. Each use is one database call, which StoreRoundTrips counts for the current request (wave 4b review).
+    protected IRowDatabase Database
+    {
+        get
+        {
+            StoreRoundTrips.Add();
+            return _database;
+        }
+    }
+
+    private readonly IRowDatabase _database;
 
     // ---- IRecordReader over committed rows ----
 
@@ -87,6 +103,18 @@ public abstract class RowStore : IProductStore
         }
 
         return CommittedQuery(query).Select(r => r.Row).ToList();
+    }
+
+    // ---- IKeySetReader over committed rows: one database read each ----
+
+    public IReadOnlyList<StoredRow> GetMany(string entity, IReadOnlyCollection<string> ids)
+    {
+        return CommittedMany(entity, ids).Select(r => r.Row).ToList();
+    }
+
+    public IReadOnlyList<StoredRow> QueryIn(string entity, string column, IReadOnlyCollection<string> values)
+    {
+        return CommittedIn(entity, column, values).Select(r => r.Row).ToList();
     }
 
     public IStoreTransaction Begin()
@@ -209,7 +237,9 @@ public abstract class RowStore : IProductStore
     // A version as an earlier activation left it in force, with the rows InMemoryStore.SeedVersion writes, in the same
     // order (so seeded IDs match): the working set in force at this version, the Configuration Set Version row, and the
     // live rows equal to the snapshot, replacing the live rows of an earlier seeded version. One database transaction.
-    public void SeedVersion(CompiledSnapshot snapshot)
+    // publishedOnUtc, the seed moment, is the version row's Published On (wave 4b verify round): a column, so no ID or order changes,
+    // and "in force since" and the configuration review date read it instead of the time of the call.
+    public void SeedVersion(CompiledSnapshot snapshot, DateTime? publishedOnUtc = null)
     {
         if (snapshot == null)
         {
@@ -236,7 +266,8 @@ public abstract class RowStore : IProductStore
             ("versionNumber", JsonTreeNode.FromInt64(snapshot.VersionNumber)),
             ("contentJson", snapshot.ContentJson),
             ("contentHash", JsonTreeNode.FromString(snapshot.ContentHash)),
-            ("snapshotSchemaVersion", JsonTreeNode.FromString(snapshot.Snapshot.SchemaVersion.Major + "." + snapshot.Snapshot.SchemaVersion.Minor)))));
+            ("snapshotSchemaVersion", JsonTreeNode.FromString(snapshot.Snapshot.SchemaVersion.Major + "." + snapshot.Snapshot.SchemaVersion.Minor)),
+            ("publishedOn", publishedOnUtc.HasValue ? JsonTreeNode.FromString(PublishedOnText(publishedOnUtc.Value)) : null))));
 
         foreach (SnapshotEntity entity in snapshot.Snapshot.Entities)
         {
@@ -260,6 +291,12 @@ public abstract class RowStore : IProductStore
         }
 
         Database.Apply(changes, StoreCallContext.Current, RowStoreOperations.Seed);
+    }
+
+    // The seed moment in the canonical UTC form, as InMemoryStore writes it.
+    private static string PublishedOnText(DateTime moment)
+    {
+        return CanonicalJson.FormatUtc(moment.Kind == DateTimeKind.Utc ? moment : moment.ToUniversalTime());
     }
 
     // ---- IApprovalOutboxStore (host bookkeeping for the approval runner; never an engine row) ----
@@ -413,11 +450,20 @@ public abstract class RowStore : IProductStore
         }
     }
 
+    // The row checks a write passes before it reaches the database: the subject columns name exactly one subject
+    // (EntityInfo.SubjectCheck; on Azure SQL also a CHECK constraint, sql/0008-data-taxonomy.sql), and the unique columns
+    // fit their index.
     private static void CheckUniqueLengths(RowChange change)
     {
         if (change.Columns == null)
         {
             return;
+        }
+
+        string? subject = change.Entity.SubjectCheck?.Problem(change.Columns);
+        if (subject != null)
+        {
+            throw new InvalidOperationException(change.Entity.Key + " " + change.Id + " " + subject);
         }
 
         foreach (PromotedColumn column in change.Entity.UniqueColumns)
@@ -475,6 +521,55 @@ public abstract class RowStore : IProductStore
             .ToList();
     }
 
+    // The committed rows with these IDs, by ID: one database read for the IDs a row can have.
+    private IReadOnlyList<StoredRowData> CommittedMany(string entity, IEnumerable<string>? ids)
+    {
+        List<string> storable = KeySetReads.Distinct(ids).Where(IsStorableId).ToList();
+        if (storable.Count == 0 || !Catalog.TryGet(entity, out EntityInfo? info))
+        {
+            return Array.Empty<StoredRowData>();
+        }
+
+        var wanted = new HashSet<string>(storable, StringComparer.Ordinal);
+        return Database.GetMany(info, storable)
+            .Where(r => wanted.Contains(r.Row.Id))
+            .OrderBy(r => r.Row.Id, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    // The committed rows whose column holds one of the values, by ID: one database read for the values it can narrow
+    // by, and one query per value it cannot (a value longer than a database narrows by, or a column name a JSON path
+    // cannot carry). Every row is checked here exactly, as CommittedQuery checks it.
+    private IReadOnlyList<StoredRowData> CommittedIn(string entity, string column, IEnumerable<string>? values)
+    {
+        List<string> keys = KeySetReads.Distinct(values);
+        if (keys.Count == 0 || !Catalog.TryGet(entity, out EntityInfo? info))
+        {
+            return Array.Empty<StoredRowData>();
+        }
+
+        var rows = new SortedDictionary<string, StoredRowData>(StringComparer.Ordinal);
+        List<string> narrow = IsPlainName(column) ? keys.Where(v => v.Length <= MaxNarrowingLength).ToList() : new List<string>();
+        if (narrow.Count > 0)
+        {
+            var wanted = new HashSet<string>(narrow, StringComparer.Ordinal);
+            foreach (StoredRowData row in Database.QueryIn(info, column, narrow).Where(r => KeySetReads.HoldsOneOf(r.Row, column, wanted)))
+            {
+                rows[row.Row.Id] = row;
+            }
+        }
+
+        foreach (string value in keys.Where(v => !narrow.Contains(v, StringComparer.Ordinal)))
+        {
+            foreach (StoredRowData row in CommittedQuery(RowQuery.For(entity).Where(column, value)))
+            {
+                rows[row.Row.Id] = row;
+            }
+        }
+
+        return rows.Values.ToList();
+    }
+
     // A column name a JSON path can carry without escaping.
     private static bool IsPlainName(string name)
     {
@@ -503,7 +598,7 @@ public abstract class RowStore : IProductStore
     }
 
     // One engine transaction. Pending writes by entity and ID; a null row is a delete.
-    private sealed class Transaction : IStoreTransaction
+    private sealed class Transaction : IStoreTransaction, IKeySetReader
     {
         private readonly RowStore _store;
         private readonly SortedDictionary<string, SortedDictionary<string, Pending>> _pending = new(StringComparer.Ordinal);
@@ -581,9 +676,82 @@ public abstract class RowStore : IProductStore
             return rows.Values.ToList();
         }
 
+        // The committed rows of a key set in one database read, with this transaction's own writes over them.
+        public IReadOnlyList<StoredRow> GetMany(string entity, IReadOnlyCollection<string> ids)
+        {
+            List<string> keys = KeySetReads.Distinct(ids);
+            var rows = new SortedDictionary<string, StoredRow>(StringComparer.Ordinal);
+            SortedDictionary<string, Pending>? pending = _pending.TryGetValue(entity, out SortedDictionary<string, Pending>? p) ? p : null;
+            foreach (StoredRowData row in _store.CommittedMany(entity, pending == null ? keys : keys.Where(id => !pending.ContainsKey(id))))
+            {
+                rows[row.Row.Id] = row.Row;
+            }
+
+            if (pending != null)
+            {
+                foreach (string id in keys)
+                {
+                    if (pending.TryGetValue(id, out Pending? write) && write.Row != null)
+                    {
+                        rows[id] = write.Row;
+                    }
+                }
+            }
+
+            return rows.Values.ToList();
+        }
+
+        public IReadOnlyList<StoredRow> QueryIn(string entity, string column, IReadOnlyCollection<string> values)
+        {
+            var wanted = new HashSet<string>(KeySetReads.Distinct(values), StringComparer.Ordinal);
+            var rows = new SortedDictionary<string, StoredRow>(StringComparer.Ordinal);
+            SortedDictionary<string, Pending>? pending = _pending.TryGetValue(entity, out SortedDictionary<string, Pending>? p) ? p : null;
+            foreach (StoredRowData row in _store.CommittedIn(entity, column, wanted))
+            {
+                if (pending == null || !pending.ContainsKey(row.Row.Id))
+                {
+                    rows[row.Row.Id] = row.Row;
+                }
+            }
+
+            if (pending != null)
+            {
+                foreach (Pending write in pending.Values)
+                {
+                    if (write.Row != null && KeySetReads.HoldsOneOf(write.Row, column, wanted))
+                    {
+                        rows[write.Row.Id] = write.Row;
+                    }
+                }
+            }
+
+            return rows.Values.ToList();
+        }
+
         public string NewId(string entity)
         {
             return _store._options.NewId(entity);
+        }
+
+        // Reserved in the database at once, outside this overlay: a number another call took is never given again, and a
+        // rolled-back transaction leaves a gap. The rows this transaction created hold numbers the counter already holds.
+        public long NextRecordNumber(string entity, string prefix)
+        {
+            Open();
+            if (string.IsNullOrEmpty(prefix))
+            {
+                throw new ArgumentException("A record number has a prefix.", nameof(prefix));
+            }
+
+            foreach (char c in prefix)
+            {
+                if (c < 'A' || c > 'Z')
+                {
+                    throw new ArgumentException("A record number prefix holds only the letters A to Z.", nameof(prefix));
+                }
+            }
+
+            return _store.Database.NextRecordNumber(_store.RequireEntity(entity), prefix);
         }
 
         public void Create(string entity, string id, string? key, JsonTreeNode columns)

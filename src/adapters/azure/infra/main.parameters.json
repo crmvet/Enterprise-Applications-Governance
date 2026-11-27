@@ -35,6 +35,9 @@
     "demo": {
       "value": "${PRODUCT_DEMO=false}"
     },
+    "demoPersonas": {
+      "value": "${PRODUCT_DEMO_PERSONAS=false}"
+    },
     "approvalRunnerEnabled": {
       "value": "${PRODUCT_APPROVAL_RUNNER_ENABLED=false}"
     },

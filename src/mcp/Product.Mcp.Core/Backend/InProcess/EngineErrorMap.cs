@@ -11,7 +11,7 @@ using Product.Mcp.Core.Envelope;
 
 namespace Product.Mcp.Core.Backend.InProcess;
 
-// Maps an engine answer that failed (document 25, section 7) to one of the 11 fixed error codes (document 24, section 3.5),
+// Maps an engine answer that failed (document 25, section 7) to one of the 12 fixed error codes (document 24, section 3.5),
 // the same way for every entry point: the MCP endpoint, the REST API, the record endpoint and the approval outcome
 // endpoint. The HTTP status of the answer is the code's status in errors.json (ContractSet.Errors).
 //
@@ -137,6 +137,6 @@ public static class EngineErrorMap
     {
         bool ruleCode = code == McpErrorCodes.RuleViolation || code == McpErrorCodes.Locked || code == McpErrorCodes.ConfigurationUnavailable;
         bool fieldCode = code == McpErrorCodes.Validation || code == McpErrorCodes.NotFound;
-        return new McpError(code, message, fieldCode ? reason.Ref : null, ruleCode ? reason.Ref : null);
+        return new McpError(code, message, fieldCode ? reason.Ref : null, ruleCode ? reason.Ref : null, GuidelineRefs.ForReason(reason.Code));
     }
 }

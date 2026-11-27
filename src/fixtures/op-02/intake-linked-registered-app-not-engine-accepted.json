@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "intake-linked-registered-app-not-engine-accepted",
+  "description": "A lowest-tier intake linked to an application already in the register goes to the accountable holder (security review 2026-11-24, document 25, B25-15): the lowest-tier engine acceptance covers a request that starts a new application only. Balanced also ships the consent of the business owner the request names (intake-business-owner-consent, document 25, B25-18), which stays a requirement beside it; the runtime drops it when the request names nobody new.",
+  "workingDefaults": [
+    8
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "intake",
+    "tierKey": "tier-1",
+    "portfolioPath": [],
+    "subjectApplicationRegistered": true
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-business-owner-consent",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": false,
+          "guidelineKey": "g2",
+          "approverProposedOwners": true
+        },
+        {
+          "source": "accountable",
+          "decisionRightKey": "intake-a",
+          "approverRoleKey": "platform-admin",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "requiresTypedReason": false
+        }
+      ],
+      "consultations": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-consult-architect",
+          "approverRoleKey": "architect",
+          "isConsultation": true,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-consult-pmo",
+          "approverRoleKey": "pmo",
+          "isConsultation": true,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-consult-security",
+          "approverRoleKey": "security-reviewer",
+          "isConsultation": true,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "intake-consult-architect",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-consult-pmo",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-consult-security",
+        "role": "won"
+      },
+      {
+        "entity": "Decision Right",
+        "key": "intake-a",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-business-owner-consent",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

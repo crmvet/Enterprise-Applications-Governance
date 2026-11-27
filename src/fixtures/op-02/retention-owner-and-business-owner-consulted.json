@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "retention-owner-and-business-owner-consulted",
+  "description": "A data-retention decision goes to the domain's data owner, with the application's business owner consulted (docs/architecture/data-taxonomy.md, Approval rules).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-retention",
+    "tierKey": "tier-2",
+    "subjectKind": "data-use",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "data-retention-owner",
+          "ownerSubject": "data-domain"
+        }
+      ],
+      "consultations": [
+        {
+          "ruleKey": "data-retention-business-owner",
+          "approverOwnerRoleKey": "business-owner"
+        }
+      ]
+    }
+  }
+}

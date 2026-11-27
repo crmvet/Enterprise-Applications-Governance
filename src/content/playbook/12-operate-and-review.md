@@ -65,7 +65,7 @@ Most of an app's life is after go-live. Owners move on, audiences grow, document
 - It is designed to set each app's next review date from its tier's cadence, open reviews when they come due, remind the owner and escalate to the deputy.
 - It is designed to record each reminder, so "who was told, and when" can be shown.
 - It is designed to work out missing documents from configuration and to move documents from current to stale when their freshness time passes.
-- It is designed to keep "current" set by an AI client as a claim, for documents a gate depends on, until the document owner confirms it on a card.
+- It is designed to keep "current" set by an AI client as a claim, for documents a gate depends on, until the document owner confirms it.
 - It is designed to link to Microsoft's monitoring, usage and recommendations, and to copy none of them.
 
 ## What you can tailor
@@ -85,7 +85,7 @@ Most of an app's life is after go-live. Owners move on, audiences grow, document
 
 - The builder's AI tool writes and updates the app's documents as part of each change, in the team's own repository, wiki or SharePoint. A document no longer waits for a later phase.
 - The AI can prepare the access list from Entra and the owner check, so each review starts with the facts gathered. The owner still decides.
-- An AI client may mark a document current. For a document a gate depends on, that stays a claim until its owner confirms it on a card.
+- An AI client may mark a document current. For a document a gate depends on, that stays a claim until its owner confirms it.
 - Reviews come due by tier and reach the owner, then the deputy, without anyone chasing by hand.
 
 ## Old paradigm to avoid

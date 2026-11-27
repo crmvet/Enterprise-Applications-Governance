@@ -131,6 +131,22 @@ export async function createMsalAuth(settings: EntraSettings): Promise<MsalAuth>
     onUnauthorized() {
       redirect(pca.getActiveAccount());
     },
+    stepUp(claimsChallenge) {
+      // A fresh sign-in for an approval answer (D-38): always a login prompt, so auth_time is new; with the
+      // authentication context's claims challenge when the API sent one (base64 JSON).
+      const account = pca.getActiveAccount();
+      let claims: string | undefined;
+      try {
+        claims = claimsChallenge ? window.atob(claimsChallenge) : undefined;
+      } catch {
+        claims = undefined;
+      }
+      writeNumber(REDIRECT_AT_KEY, 0);
+      pca.acquireTokenRedirect({ scopes, prompt: 'login', redirectStartPage: window.location.href, ...(account ? { account } : {}), ...(claims ? { claims } : {}) }).catch(e => {
+        problem = `Sign-in could not start (${errorCode(e) || 'unknown error'}).`;
+        events.notify();
+      });
+    },
     user(): SignedInUser | null {
       const account = pca.getActiveAccount();
       return account ? { name: account.name ?? null, username: account.username || null } : null;

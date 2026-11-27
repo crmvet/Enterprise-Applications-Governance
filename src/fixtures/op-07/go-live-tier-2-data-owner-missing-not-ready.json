@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "go-live-tier-2-data-owner-missing-not-ready",
+  "description": "Balanced names a data owner before go-live at tiers 2 and 3 (guideline G2). A tier 2 app with its acceptance and runbook in place but no data owner is not ready.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "documentation": {
+      "items": [
+        {
+          "requirementKey": "runbook-tier-2",
+          "documentTypeKey": "runbook",
+          "status": "current"
+        }
+      ]
+    },
+    "assignedOwnerRoleKeys": [
+      "business-owner",
+      "technical-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "gateKey": "go-live",
+      "ready": false,
+      "requirements": [
+        {
+          "requirementKey": "go-live-acceptance",
+          "requirementKind": "decision-accepted",
+          "requiredDecisionTypeKey": "acceptance",
+          "met": true,
+          "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-data-owner-tier-2",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "data-owner",
+          "met": false,
+          "reasonCode": "gate.requirement-owner-missing",
+          "guidelineKey": "g2",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-runbook-tier-2",
+          "requirementKind": "document-current",
+          "requiredDocumentTypeKey": "runbook",
+          "met": true,
+          "triggered": false
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "gate.requirement-owner-missing",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "go-live-data-owner-tier-2"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -2,7 +2,7 @@
 bin/
 obj/
 
-# Node packages for tools/ and ui/harness/
+# Node packages for tools/, ui/harness/ and tests/e2e/
 node_modules/
 
 # Page harness build output. Rebuilt with "npm run build" in ui/harness/
@@ -15,3 +15,9 @@ dist/
 .vs/
 TestResults/
 *.user
+
+# End-to-end runs: screenshots, reports, traces and videos of each run (tests/e2e/README.md)
+/tests/e2e/runs/
+/tests/e2e/test-results/
+/tests/e2e/playwright-report/
+/tests/e2e/blob-report/

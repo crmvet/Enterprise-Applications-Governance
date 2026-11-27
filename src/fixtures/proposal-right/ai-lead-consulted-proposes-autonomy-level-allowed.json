@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "ai-lead-consulted-proposes-autonomy-level-allowed",
+  "description": "The AI lead is consulted on an agent's autonomy level (Balanced autonomy-level-c, D-20), so may propose one; the security reviewer is accountable.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "autonomy-level",
+    "tierKey": "tier-2",
+    "applicationKindKey": "agent",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "ai-lead"
+    ],
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "grantedBy": {
+        "decisionRightKey": "autonomy-level-c",
+        "letter": "consulted",
+        "roleKey": "ai-lead"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

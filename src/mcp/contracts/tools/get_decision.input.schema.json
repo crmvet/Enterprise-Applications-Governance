@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_decision input",
+  "description": "One decision for its page: the statement, type, outcome and status; who proposed it and whether an AI client drafted it; the subject; the approval state (for a proposed decision the engine evaluates the rules now; a settled one shows the records as stored); the supersede and amend chain; the evidence. A decision about an intake request the caller may not read answers not_found. Writes nothing.",
+  "x-tool": "get_decision",
+  "type": "object",
+  "required": [
+    "decisionId"
+  ],
+  "properties": {
+    "decisionId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O09 Decision",
+      "description": "The decision."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "decisionId": "60000000-0000-4000-8000-000000000013"
+    }
+  ]
+}

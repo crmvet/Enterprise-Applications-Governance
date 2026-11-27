@@ -27,7 +27,7 @@
       "properties": {
         "status": {
           "$ref": "../common.schema.json#/$defs/statusValue",
-          "description": "Always Proposed. Only people accept a decision, on approval cards.",
+          "description": "Always Proposed. A decision is accepted only through people's answers on the decision page.",
           "properties": {
             "meaning": {
               "$ref": "../common.schema.json#/$defs/decisionStatusMeaning",

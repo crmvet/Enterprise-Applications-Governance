@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-application-created-registered-as-effect-allowed",
+  "description": "The update-subject effect of an accepted intake creates the new application registered, at the stage the plan names, with Stage Since set by the engine. Allowed.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "create",
+    "rowId": "fixture-app-9",
+    "nestedEffect": "update-subject",
+    "after": {
+      "name": "Visit planner",
+      "purpose": "Plan store visits on the phone",
+      "applicationKind": "power-platform-app",
+      "status": "app-registered",
+      "lifecycleStage": "prioritize-and-fund",
+      "stageDecision": "fixture-decision-21"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "registered",
+        "stageSince": "2026-11-22T09:00:00Z",
+        "performedByActorKind": "engine"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

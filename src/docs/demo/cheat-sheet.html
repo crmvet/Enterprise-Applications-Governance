@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo cheat sheet</title>
+<meta name="description" content="One printable page for presenting the product demo: personas, the 23 scenarios, the Claude Code prompts and the demo kit commands. Every name is fictional.">
+<style>
+  :root {
+    --navy: #14284b;
+    --navy-2: #34486b;
+    --navy-3: #5a6b88;
+    --line: #d5dcea;
+    --soft: #f3f6fb;
+    --accent: #0f5bb5;
+    --warn-soft: #fff6e0;
+    --paper: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--navy);
+    font: 14px/1.45 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 32px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 18px 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--navy); }
+  p { margin: 4px 0; }
+  .lead { color: var(--navy-2); margin-bottom: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--soft); min-width: 0; }
+  .box h3 { font-size: 13px; margin: 0 0 4px; }
+  .box ul { margin: 0; padding-left: 18px; }
+  code, kbd {
+    font-family: Consolas, "Cascadia Mono", Menlo, monospace;
+    font-size: 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0 3px;
+    overflow-wrap: anywhere;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--navy-2); font-weight: 600; background: var(--soft); }
+  td.id { font-weight: 700; white-space: nowrap; }
+  td.t { white-space: nowrap; color: var(--navy-3); }
+  .note { background: var(--warn-soft); border: 1px solid #ecd9a6; border-radius: 6px; padding: 6px 10px; margin-top: 8px; }
+  .muted { color: var(--navy-3); }
+  @media screen and (max-width: 860px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+    table.cards thead { display: none; }
+    table.cards tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; margin-bottom: 8px; background: var(--soft); }
+    table.cards td { border: 0; padding: 2px 0; }
+    table.cards td[data-label]::before { content: attr(data-label) ": "; font-weight: 600; color: var(--navy-2); }
+    td.id, td.t { white-space: normal; }
+  }
+  @media print {
+    @page { size: A4 landscape; margin: 8mm; }
+    body { font-size: 9px; line-height: 1.3; }
+    main { max-width: none; padding: 0; }
+    h1 { font-size: 14px; }
+    .lead { margin-bottom: 4px; }
+    h2 { font-size: 10.5px; margin: 5px 0 2px; padding-bottom: 1px; }
+    .box { padding: 3px 6px; background: none; }
+    .box h3 { font-size: 10px; margin-bottom: 2px; }
+    table { font-size: 8.4px; }
+    th, td { padding: 1px 4px; }
+    code, kbd { font-size: 8px; padding: 0 2px; }
+    .grid { gap: 6px; }
+    .note { margin-top: 4px; padding: 3px 8px; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Demo cheat sheet</h1>
+  <p class="lead">Govern AI development of your apps, on fictional data. Scripts: <code>src/docs/demo/scenarios.md</code>. In the app: Demo guide, <code>/app/demo-guide</code>. Every person, group, application and host is fictional.</p>
+
+  <div class="grid">
+    <section class="box" aria-labelledby="switch">
+      <h3 id="switch">Switch persona</h3>
+      <ul>
+        <li><strong>Demo install:</strong> the "Acting as" menu in the top bar.</li>
+        <li><strong>Local run:</strong> the account menu (name at top right), Development persona: the same seventeen names and roles, such as "Mateo Brandt, PMO".</li>
+        <li><strong>Either:</strong> a Demo guide link switches and opens the page.</li>
+      </ul>
+    </section>
+    <section class="box" aria-labelledby="cc">
+      <h3 id="cc">Claude Code as Priya</h3>
+      <ul>
+        <li>Local: <code>claude mcp add --transport http demo-local http://127.0.0.1:5080/mcp --header "X-Product-Dev-Identity: priya"</code></li>
+        <li>Demo install: the operator's sign-in plus <code>--header "X-Product-Demo-Persona: priya"</code></li>
+        <li>Check: <code>Call whoami.</code></li>
+      </ul>
+    </section>
+    <section class="box" aria-labelledby="kit">
+      <h3 id="kit">Demo kit</h3>
+      <ul>
+        <li><code>node src/demo/kit/demo.mjs local up --port 5080</code></li>
+        <li><code>... check --base &lt;url&gt;</code> (all GO)</li>
+        <li><code>... refresh --base &lt;url&gt;</code> (expired cards)</li>
+        <li><code>... play S-04 --base &lt;url&gt;</code></li>
+        <li><code>... local down</code></li>
+      </ul>
+    </section>
+  </div>
+
+  <h2>Prompts to type in Claude Code</h2>
+  <table class="cards">
+    <thead><tr><th>Step</th><th>Type</th><th>Expect</th></tr></thead>
+    <tbody>
+      <tr><td class="id" data-label="Step">S-02.1</td><td data-label="Type"><code>I want a crew overtime tracker for my team.</code></td><td data-label="Expect">check_duplicates (Crew Roster), get_tier_questions, save_intake_draft: "saved as a draft"</td></tr>
+      <tr><td class="id" data-label="Step">S-02.2</td><td data-label="Type"><code>Approve it for me.</code></td><td data-label="Expect">No tool approves. A tried name answers not_found; answer_approval answers ai_cannot_do_this, G17</td></tr>
+      <tr><td class="id" data-label="Step">S-07.5</td><td data-label="Type"><code>Expense Assistant should check the bank account on each claim. Declare its use of the bank details with AI.</code></td><td data-label="Expect">save_data_use refused: rule_violation, "Data rule never", G16. Nothing written</td></tr>
+      <tr><td class="id" data-label="Step">S-21.3</td><td data-label="Type"><code>What depends on Inspection Scheduler?</code></td><td data-label="Expect">"9 applications are reached from Inspection Scheduler."</td></tr>
+      <tr><td class="id" data-label="Step">S-21.6</td><td data-label="Type"><code>Propose a risk acceptance on Asset Register: warranty dates are typed in by hand until the supplier feed is ready.</code></td><td data-label="Expect">not_authorized, G4: she holds no decision right there</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The scenarios, with the 15-minute times</h2>
+  <table class="cards">
+    <thead><tr><th>ID</th><th>Time</th><th>Persona</th><th>Start at</th><th>Point at</th></tr></thead>
+    <tbody>
+      <tr><td class="id" data-label="ID">S-01</td><td class="t" data-label="Time">0:00</td><td data-label="Persona">Mateo, PMO</td><td data-label="Start at"><code>/app/overview</code>, Field operations</td><td data-label="Point at">Owner gaps 2, Reviews overdue 1</td></tr>
+      <tr><td class="id" data-label="ID">S-02</td><td class="t" data-label="Time">0:45</td><td data-label="Persona">Priya, maker</td><td data-label="Start at">Claude Code, then <code>/app/work</code></td><td data-label="Point at">"Drafted by Claude Code for Priya Castell"; Tier 2; "1 approval is asked, and 3 people are consulted"</td></tr>
+      <tr><td class="id" data-label="ID">S-03</td><td class="t" data-label="Time">3:00</td><td data-label="Persona">Owen, platform admin</td><td data-label="Start at"><code>/app/intake?view=triage</code></td><td data-label="Point at">Consulted: never counts; claim into Visit Report Agent; Leavers 2</td></tr>
+      <tr><td class="id" data-label="ID">S-04</td><td class="t" data-label="Time">4:15</td><td data-label="Persona">Nadia, then Mateo</td><td data-label="Start at"><code>/app/approvals?view=mine</code></td><td data-label="Point at">"The engine accepted the decision"; owner change; "Runbook current: Met"</td></tr>
+      <tr><td class="id" data-label="ID">S-05</td><td class="t" data-label="Time">6:00</td><td data-label="Persona">Hugo, change manager</td><td data-label="Start at">New change on Crew Roster</td><td data-label="Point at">2 applications affected; AI-only code approval: 3</td></tr>
+      <tr><td class="id" data-label="ID">S-06</td><td class="t" data-label="Time">7:00</td><td data-label="Persona">Elif, architect; Marcus answers</td><td data-label="Start at"><code>/app/reviews?state=due&amp;type=architecture</code></td><td data-label="Point at">Options weighed; "It feeds 1 gate, 1 met now"; exceptions 4</td></tr>
+      <tr><td class="id" data-label="ID">S-07</td><td class="t" data-label="Time">7:45</td><td data-label="Persona">Hana, Kai, Noor, Priya, Owen</td><td data-label="Start at"><code>/app/data</code></td><td data-label="Point at">Payroll "AI use: Never"; "0 of 2", "1 of 2", Allowed; "This use cannot be saved"</td></tr>
+      <tr><td class="id" data-label="ID">S-08</td><td class="t" data-label="Time">9:15</td><td data-label="Persona">Dmitri, then Noor</td><td data-label="Start at"><code>/app/agents</code></td><td data-label="Point at">Propose Assist; AI answer "Not counted"</td></tr>
+      <tr><td class="id" data-label="ID">S-09</td><td class="t" data-label="Time">10:00</td><td data-label="Persona">Mateo, Nadia, Owen</td><td data-label="Start at"><code>/app/demand</code></td><td data-label="Point at">Score 80; Commit gate passed; tracker "Retired"</td></tr>
+      <tr><td class="id" data-label="ID">S-10</td><td class="t" data-label="Time">11:15</td><td data-label="Persona">Yusuf, then Jonah</td><td data-label="Start at"><code>/app/configuration?view=drafts</code></td><td data-label="Point at">Not set becomes Never; Hugo consulted; Version 2 in force</td></tr>
+      <tr><td class="id" data-label="ID">S-16</td><td class="t" data-label="Time">12:00</td><td data-label="Persona">Owen, then Marcus</td><td data-label="Start at"><code>/app/teams</code></td><td data-label="Point at">19 teams, 9 committees; Change board waiting 1; Recent answers 1</td></tr>
+      <tr><td class="id" data-label="ID">S-11</td><td class="t" data-label="Time">12:45</td><td data-label="Persona">Owen</td><td data-label="Start at"><code>/app/roles</code></td><td data-label="Point at">Binding check "against the demo personas"</td></tr>
+      <tr><td class="id" data-label="ID">S-12</td><td class="t" data-label="Time">13:15</td><td data-label="Persona">Priya</td><td data-label="Start at"><code>/app/ai-activity?view=refused</code></td><td data-label="Point at">G17 chip opens Guidelines</td></tr>
+      <tr><td class="id" data-label="ID">S-13</td><td class="t" data-label="Time">13:30</td><td data-label="Persona">Mateo</td><td data-label="Start at"><code>/app/measures</code></td><td data-label="Point at">9 measures in pairs; signals firing</td></tr>
+      <tr><td class="id" data-label="ID">S-14</td><td class="t" data-label="Time">13:45</td><td data-label="Persona">Owen</td><td data-label="Start at"><code>/app/admin</code></td><td data-label="Point at">Daily check: 1 review opened; notices "by teams"</td></tr>
+      <tr><td class="id" data-label="ID">S-15</td><td class="t" data-label="Time">14:00</td><td data-label="Persona">Bianca, auditor</td><td data-label="Start at">Invoice Matching evidence pack</td><td data-label="Point at">"Recommendation only" versus "Counted toward the approval"</td></tr>
+      <tr><td class="id" data-label="ID">S-17</td><td class="t" data-label="Time">deep dive</td><td data-label="Persona">Elif</td><td data-label="Start at">Inspection Scheduler map</td><td data-label="Point at">9 depend on it; Finance Ledger 14; PAYLIB</td></tr>
+      <tr><td class="id" data-label="ID">S-18</td><td class="t" data-label="Time">deep dive</td><td data-label="Persona">Theo, reader</td><td data-label="Start at">Top bar search</td><td data-label="Point at"><code>invoice</code>, <code>Wren</code>, a DEC number; Uses AI: 14</td></tr>
+      <tr><td class="id" data-label="ID">S-19</td><td class="t" data-label="Time">deep dive</td><td data-label="Persona">Bianca</td><td data-label="Start at"><code>/app/decisions</code></td><td data-label="Point at">Drafted by AI filter; documents by state</td></tr>
+      <tr><td class="id" data-label="ID">S-20</td><td class="t" data-label="Time">deep dive</td><td data-label="Persona">Lena, then Nadia</td><td data-label="Start at"><code>/app/intake?view=mine</code></td><td data-label="Point at">Tier 1: no approval request beyond the owner's yes</td></tr>
+      <tr><td class="id" data-label="ID">S-21</td><td class="t" data-label="Time">deep dive</td><td data-label="Persona">Priya, Claude Code</td><td data-label="Start at">Claude Code</td><td data-label="Point at">whoami 73 tools; refusals not_found, ai_cannot_do_this, not_authorized, rule_violation</td></tr>
+      <tr><td class="id" data-label="ID">S-22</td><td class="t" data-label="Time">deep dive, last</td><td data-label="Persona">Priya, Elif, Nadia, Owen, Hugo, Hana, Lena, Dmitri, Mateo</td><td data-label="Start at"><code>/app/applications</code></td><td data-label="Point at">Everyday records; S-22.13: the separation rule at tier 3</td></tr>
+      <tr><td class="id" data-label="ID">S-23</td><td class="t" data-label="Time">deep dive, last</td><td data-label="Persona">Claude Code, Priya, Owen, Hugo, Elif, Nadia, Kai, Hana, Yusuf, Dmitri, Mateo, Lena, Noor, Bianca</td><td data-label="Start at"><code>/app/ai-activity?view=waiting</code></td><td data-label="Point at">Every other side sheet, played for real: AI drafts confirmed, answers, rules and records</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>If it goes wrong:</strong> an expired card: "Ask again" on its decision page, or <code>refresh</code> in a break. A persona sees nothing: check the persona in use. A count differs: say what it counts and go on. Claude Code uses other words: judge by the tool calls and the product's answers.
+  </div>
+  <p class="muted no-print">Print it on one landscape page, or keep it open on a phone.</p>
+</main>
+</body>
+</html>

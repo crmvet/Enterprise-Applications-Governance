@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "ownership-top-domain-governance-lead",
+  "description": "An ownership decision about a top-level domain goes to the data governance lead, and each proposed owner accepts (D-41, question 4).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "ownership",
+    "subjectKind": "data-domain",
+    "dataDomainLevelKey": "domain",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "ownership-top-domain-lead",
+          "approverRoleKey": "data-governance-lead"
+        },
+        {
+          "ruleKey": "ownership-top-domain-proposed-owners",
+          "approverProposedOwners": true
+        }
+      ]
+    }
+  }
+}

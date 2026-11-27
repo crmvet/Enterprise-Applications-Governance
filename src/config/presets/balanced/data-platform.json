@@ -1,0 +1,30 @@
+{
+  "$comment": [
+    "C50 Data Platform (data taxonomy, D-37; docs/architecture/data-taxonomy.md). Kinds of data store from any vendor, Microsoft or not, legacy included.",
+    "Only product names ship here, with no tenant identifiers (V44, V60). A client adds platforms through process P11.",
+    "A top-level location of a platform is its instance (environment, server, account, org, host); a platform with a store label also has child locations (database, library, lakehouse). Locations go two levels deep at most (D-41, question 9). The containers a mapping names (tables, objects, files) are text on the mapping, never rows."
+  ],
+  "entity": "data-platform",
+  "rows": [
+    { "key": "dataverse", "label": "Dataverse", "sortOrder": 1, "locationKindKey": "app-platform", "vendorKey": "microsoft", "instanceLabel": "environment", "containerLabel": "table", "defaultLinkKindKey": "dataverse-environment" },
+    { "key": "dynamics-365", "label": "Dynamics 365 customer engagement", "sortOrder": 2, "locationKindKey": "crm", "vendorKey": "microsoft", "instanceLabel": "environment", "containerLabel": "table", "defaultLinkKindKey": "dataverse-environment" },
+    { "key": "salesforce", "label": "Salesforce", "sortOrder": 3, "locationKindKey": "crm", "vendorKey": "salesforce", "instanceLabel": "org", "containerLabel": "object", "defaultLinkKindKey": "external-data-system" },
+    { "key": "dynamics-365-finance", "label": "Dynamics 365 Finance and Operations", "sortOrder": 4, "locationKindKey": "erp", "vendorKey": "microsoft", "instanceLabel": "environment", "storeLabel": "legal entity", "containerLabel": "data entity", "defaultLinkKindKey": "external-data-system" },
+    { "key": "sap-erp", "label": "SAP ERP", "sortOrder": 5, "locationKindKey": "erp", "vendorKey": "sap", "instanceLabel": "system", "storeLabel": "client", "containerLabel": "business object", "defaultLinkKindKey": "external-data-system" },
+    { "key": "azure-sql", "label": "Azure SQL Database", "sortOrder": 6, "locationKindKey": "relational-database", "vendorKey": "microsoft", "instanceLabel": "server", "storeLabel": "database", "containerLabel": "schema.table", "defaultLinkKindKey": "azure-data-resource" },
+    { "key": "sql-server", "label": "SQL Server", "sortOrder": 7, "locationKindKey": "relational-database", "vendorKey": "microsoft", "instanceLabel": "server", "storeLabel": "database", "containerLabel": "schema.table", "defaultLinkKindKey": "external-data-system" },
+    { "key": "oracle-database", "label": "Oracle Database", "sortOrder": 8, "locationKindKey": "relational-database", "vendorKey": "oracle", "instanceLabel": "server", "storeLabel": "database", "containerLabel": "schema.table", "defaultLinkKindKey": "external-data-system" },
+    { "key": "postgresql", "label": "PostgreSQL", "sortOrder": 9, "locationKindKey": "relational-database", "vendorKey": "other", "instanceLabel": "server", "storeLabel": "database", "containerLabel": "schema.table", "defaultLinkKindKey": "external-data-system" },
+    { "key": "cosmos-db", "label": "Azure Cosmos DB", "sortOrder": 10, "locationKindKey": "document-database", "vendorKey": "microsoft", "instanceLabel": "account", "storeLabel": "database", "containerLabel": "container", "defaultLinkKindKey": "azure-data-resource" },
+    { "key": "sharepoint", "label": "SharePoint", "sortOrder": 11, "locationKindKey": "file-store", "vendorKey": "microsoft", "instanceLabel": "site", "storeLabel": "library", "containerLabel": "folder", "defaultLinkKindKey": "sharepoint-location" },
+    { "key": "file-share", "label": "File share", "sortOrder": 12, "locationKindKey": "file-store", "vendorKey": "other", "instanceLabel": "server", "storeLabel": "share", "containerLabel": "folder", "defaultLinkKindKey": "external-data-system" },
+    { "key": "sftp-drop", "label": "SFTP drop", "sortOrder": 13, "locationKindKey": "file-store", "vendorKey": "other", "instanceLabel": "server", "storeLabel": "directory", "containerLabel": "file", "defaultLinkKindKey": "external-data-system" },
+    { "key": "fabric-lakehouse", "label": "Fabric lakehouse", "sortOrder": 14, "locationKindKey": "lake", "vendorKey": "microsoft", "instanceLabel": "workspace", "storeLabel": "lakehouse", "containerLabel": "table or path", "defaultLinkKindKey": "fabric-item" },
+    { "key": "saas-application", "label": "SaaS application", "sortOrder": 15, "locationKindKey": "saas-application", "vendorKey": "other", "instanceLabel": "tenant", "containerLabel": "object", "defaultLinkKindKey": "external-data-system" },
+    { "key": "workday", "label": "Workday", "sortOrder": 16, "locationKindKey": "saas-application", "vendorKey": "workday", "instanceLabel": "tenant", "containerLabel": "business object", "defaultLinkKindKey": "external-data-system" },
+    { "key": "servicenow", "label": "ServiceNow", "sortOrder": 17, "locationKindKey": "saas-application", "vendorKey": "servicenow", "instanceLabel": "instance", "containerLabel": "table", "defaultLinkKindKey": "external-data-system" },
+    { "key": "ibm-i", "label": "IBM i", "sortOrder": 18, "locationKindKey": "legacy", "vendorKey": "ibm", "instanceLabel": "host", "storeLabel": "library", "containerLabel": "file", "defaultLinkKindKey": "external-data-system" },
+    { "key": "mainframe", "label": "Mainframe", "sortOrder": 19, "locationKindKey": "legacy", "vendorKey": "ibm", "instanceLabel": "partition", "storeLabel": "subsystem", "containerLabel": "dataset", "defaultLinkKindKey": "external-data-system" },
+    { "key": "other", "label": "Other", "sortOrder": 20, "locationKindKey": "other", "vendorKey": "other", "containerLabel": "item", "defaultLinkKindKey": "external-data-system" }
+  ]
+}

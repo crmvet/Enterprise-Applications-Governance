@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g08-ai-marks-review-done-refused",
+  "description": "G-08 as this build widens it: done is a positive end, so an AI client for the architect never marks a review done, even with an accepted outcome decision. The reviewer is a person (document 25, B25-12).",
+  "ruleIds": [
+    "G-08"
+  ],
+  "tags": [
+    "review-done"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-3",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "roleKeys": [
+        "architect"
+      ],
+      "onBehalfOfPrincipalId": "fixture-person-3"
+    }
+  },
+  "input": {
+    "entity": "review",
+    "operation": "update",
+    "rowId": "fixture-review-1",
+    "after": {
+      "status": "review-done",
+      "doneOn": "2026-11-24",
+      "reviewer": "fixture-person-3",
+      "outcomeDecision": "fixture-decision-9"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "due",
+      "reviewType": "architecture",
+      "businessApplication": "fixture-app-1",
+      "dueOn": "2026-11-30"
+    },
+    "reviewOutcome": {
+      "decisionId": "fixture-decision-9",
+      "statusMeaning": "accepted",
+      "decisionTypeKey": "design",
+      "subjectApplicationId": "fixture-app-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "ai.status-not-allowed"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "ai.status-not-allowed",
+        "severity": "error",
+        "ref": "review-done"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

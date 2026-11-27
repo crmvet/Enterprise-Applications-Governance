@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "asked-by-name-the-named-person-allowed",
+  "description": "An ownership decision asks the proposed successor by name (Asked Principal; document 25, B25-14). The successor holds no owner role on the application yet, and may answer.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-3",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": []
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "ownership-proposed-owners",
+      "requiredOwnerRoleKey": "business-owner",
+      "askedPrincipalId": "fixture-person-3"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "ownership",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "requirementKey": "ownership-proposed-owners",
+      "askedByName": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

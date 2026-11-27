@@ -1,0 +1,648 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_measures output",
+  "description": "The response envelope. On success, data lists the windows, the measures with their trend, the signals, and the rows behind one measure or signal when asked.",
+  "x-tool": "get_measures",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "asOf",
+        "windowDays",
+        "windows",
+        "measures",
+        "signals",
+        "firingCount",
+        "rows"
+      ],
+      "properties": {
+        "asOf": {
+          "$ref": "../common.schema.json#/$defs/date"
+        },
+        "windowDays": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "windows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "index",
+              "from",
+              "to"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "from": {
+                "$ref": "../common.schema.json#/$defs/date"
+              },
+              "to": {
+                "$ref": "../common.schema.json#/$defs/date"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Oldest first; the last ends today."
+        },
+        "measures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/measure"
+          }
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/signal"
+          }
+        },
+        "firingCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "measureKey",
+                "signalNumber",
+                "items",
+                "totalCount"
+              ],
+              "properties": {
+                "measureKey": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/key"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "signalNumber": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "entity",
+                      "recordId",
+                      "label",
+                      "value",
+                      "note",
+                      "recordUrl"
+                    ],
+                    "properties": {
+                      "entity": {
+                        "type": "string"
+                      },
+                      "recordId": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string",
+                        "x-untrusted": true
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "note": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "recordUrl": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/recordUrl"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "skipToken": {
+                  "$ref": "../common.schema.json#/$defs/nextSkipToken"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "measure": {
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "definition",
+        "kind",
+        "unit",
+        "watcher",
+        "guideline",
+        "healthyDirection",
+        "value",
+        "numerator",
+        "denominator",
+        "trend",
+        "baseline",
+        "target",
+        "targetSource",
+        "targetMet",
+        "secondary",
+        "rowCount"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "../common.schema.json#/$defs/key"
+        },
+        "label": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "flow",
+            "coverage"
+          ],
+          "description": "flow counts events per window; coverage reads the records as they are now."
+        },
+        "unit": {
+          "enum": [
+            "days",
+            "percent",
+            "count"
+          ]
+        },
+        "watcher": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "guideline": {
+          "$ref": "../common.schema.json#/$defs/guidelineNumber"
+        },
+        "healthyDirection": {
+          "enum": [
+            "up",
+            "down",
+            "quiet"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number",
+              "description": "The newest window."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "numerator": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "denominator": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trend": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "index",
+                "value"
+              ],
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The target the sponsor agreed, from the measure-targets setting (document 24, B24-22). Null until one is agreed."
+        },
+        "targetSource": {
+          "enum": [
+            "not-set",
+            "configuration"
+          ]
+        },
+        "targetMet": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Whether the newest value meets the target, read in the healthy direction (down and quiet: at most the target; up: at least). Null with no target or no value."
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "The number to read beside it.",
+              "required": [
+                "label",
+                "unit",
+                "value",
+                "numerator",
+                "denominator"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "unit": {
+                  "enum": [
+                    "percent",
+                    "count"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "numerator": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "denominator": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rowCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "signal": {
+      "type": "object",
+      "required": [
+        "number",
+        "key",
+        "label",
+        "watcher",
+        "chapter",
+        "threshold",
+        "thresholdSource",
+        "readBy",
+        "value",
+        "unit",
+        "firing",
+        "note",
+        "rowCount",
+        "decisionCount",
+        "decisions"
+      ],
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "key": {
+          "$ref": "../common.schema.json#/$defs/key"
+        },
+        "label": {
+          "type": "string"
+        },
+        "watcher": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The playbook chapter that fixes it."
+        },
+        "threshold": {
+          "type": "string"
+        },
+        "thresholdSource": {
+          "enum": [
+            "product-default",
+            "configuration"
+          ]
+        },
+        "readBy": {
+          "enum": [
+            "product",
+            "outside"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "enum": [
+                "percent",
+                "days",
+                "count"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "firing": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "description": "Null when the product does not hold the records."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rowCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "decisionCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Decisions recorded about this signal (slideBackSignalKey on save_decision_proposal) that the caller may read."
+        },
+        "decisions": {
+          "type": "array",
+          "maxItems": 5,
+          "description": "The latest decisions this signal led to, newest first.",
+          "items": {
+            "$ref": "#/$defs/signalDecision"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "point": {
+      "type": "object",
+      "required": [
+        "index",
+        "value",
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "numerator": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "denominator": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "signalDecision": {
+      "type": "object",
+      "required": [
+        "decisionId",
+        "recordNumber",
+        "statement",
+        "decisionType",
+        "status",
+        "decidedOn",
+        "recordUrl"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "statement": {
+          "type": "string"
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/statusValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

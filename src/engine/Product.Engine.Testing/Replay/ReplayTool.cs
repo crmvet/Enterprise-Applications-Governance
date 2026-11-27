@@ -55,6 +55,9 @@ public sealed class ReplayTool
         { "OP-12", EngineOperation.EvaluateStandardChange },
         { "OP-13", EngineOperation.CompareGapCheckResult },
         { "OP-14", EngineOperation.EvaluateLinkedAuthorization },
+        { "OP-15", EngineOperation.ResolveDataDomain },
+        { "OP-16", EngineOperation.EvaluateDataUse },
+        { "OP-17", EngineOperation.RunDataChecks },
     };
 
     private readonly ConfigurationComposer _composer;

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Product.Azure.Stores;
 using Product.Mcp.Core.Contracts;
 using Product.Mcp.Core.Envelope;
 
@@ -44,6 +46,7 @@ public static class ProductPipeline
 
         ProductHostOptions host = app.ApplicationServices.GetRequiredService<IOptions<ProductHostOptions>>().Value;
         bool strictTransport = StrictTransport(host, app.ApplicationServices.GetRequiredService<IHostEnvironment>());
+        app.Use(CountStoreRoundTrips);
         app.Use((context, next) => ResponseDefaults(context, next, strictTransport));
         app.Use(FailureGuard);
         app.UseRouting();
@@ -59,6 +62,14 @@ public static class ProductPipeline
         app.UseAuthorization();
         app.UseEndpoints(endpoints => endpoints.MapProduct());
         return app;
+    }
+
+    // A new count of database round trips for each request (StoreRoundTrips), which the MCP request log line reports
+    // (wave 4b review). An async method, so the count ends with the request.
+    private static async Task CountStoreRoundTrips(HttpContext context, RequestDelegate next)
+    {
+        StoreRoundTrips.Begin();
+        await next(context).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -129,20 +140,66 @@ public static class ProductPipeline
             && publicUrl.Scheme == Uri.UriSchemeHttps;
     }
 
+    // Whether one answer carries Strict-Transport-Security (wave 4 security follow-up: the app's answers on the sandbox
+    // came without it). Every answer of a host whose public URL is https outside Development carries it, as before. So
+    // does every answer to a request that reached the app over https, directly or through the platform's front end,
+    // which ends TLS and says so in X-Forwarded-Proto (App Service and Functions do), whatever the configuration says,
+    // unless the request names a loopback host: a local run on http://127.0.0.1 or https://localhost must stay reachable
+    // over plain HTTP, as ASP.NET's own HSTS leaves localhost out. A browser ignores the header on plain HTTP anyway.
+    internal static bool StrictTransportFor(HttpRequest request, bool configured)
+    {
+        if (configured)
+        {
+            return true;
+        }
+
+        string forwarded = request.Headers["X-Forwarded-Proto"].ToString();
+        bool https = request.IsHttps || forwarded.Split(',').Select(p => p.Trim()).FirstOrDefault()?.Equals("https", StringComparison.OrdinalIgnoreCase) == true;
+        return https && !IsLoopbackHost(request.Host.Host);
+    }
+
+    private static bool IsLoopbackHost(string? host)
+    {
+        if (string.IsNullOrEmpty(host) || string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase) || host!.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return System.Net.IPAddress.TryParse(host.Trim('[', ']'), out System.Net.IPAddress? address) && System.Net.IPAddress.IsLoopback(address);
+    }
+
     // A server failure on any route: logged with the request's correlation ID (the whole exception in Development;
     // elsewhere its type and stack, never its message, which may quote request data or a store's internals, as the MCP
     // endpoint's failure callback does), and answered with a failure envelope that names only that ID. The answer is the
     // same in every environment, so no page of exception details is ever served. A response that already started cannot
     // be replaced: the failure then ends the request as before.
-    private static async Task FailureGuard(HttpContext context, RequestDelegate next)
+    internal static async Task FailureGuard(HttpContext context, RequestDelegate next)
     {
         try
         {
             await next(context).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        catch (Exception exception) when (ClientWentAway(context, exception))
         {
-            // The caller went away; there is no one to answer.
+            // The client canceled the request (a browser that moved to another page, a closed tab, a timeout on the
+            // caller's side) or ended its body early. Nothing failed on the server and there is no one to answer, so it
+            // is one information line with the correlation ID, never an error with a stack trace (wave 3 QA: Kestrel's
+            // "Unexpected end of request content" was logged as a server failure).
+            ILogger requests = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("Product.Azure.Host.Requests");
+            if (context.RequestAborted.IsCancellationRequested)
+            {
+                requests.LogInformation("The client canceled the request {CorrelationId} to {Path} before it was answered.", ProductRequest.CorrelationId(context), context.Request.Path.Value);
+            }
+            else
+            {
+                // The connection is still open: the answer is 400, as Kestrel gives a body it cannot read.
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                }
+
+                requests.LogInformation("The client ended the body of request {CorrelationId} to {Path} early; it is answered 400.", ProductRequest.CorrelationId(context), context.Request.Path.Value);
+            }
         }
         catch (Exception exception) when (exception is not OutOfMemoryException && !context.Response.HasStarted)
         {
@@ -163,6 +220,20 @@ public static class ProductPipeline
             var error = new McpError(McpErrorCodes.UpstreamUnavailable, "The server failed on this request. Try again later; if it keeps failing, give an administrator the correlation ID " + correlationId + ".");
             await HttpJson.Write(context, StatusCodes.Status500InternalServerError, Envelope.Failure(error, correlationId)).ConfigureAwait(false);
         }
+    }
+
+    // True when a request ended because its client went away, not because the server failed: the request's abort token
+    // fired (any exception then is the abort's), or Kestrel refused the rest of a body the client stopped sending
+    // (BadHttpRequestException with 400, such as "Unexpected end of request content", or the connection reset).
+    internal static bool ClientWentAway(HttpContext context, Exception exception)
+    {
+        if (context.RequestAborted.IsCancellationRequested)
+        {
+            return exception is not OutOfMemoryException;
+        }
+
+        return exception is Microsoft.AspNetCore.Http.BadHttpRequestException bad && bad.StatusCode == StatusCodes.Status400BadRequest && !context.Response.HasStarted
+            || exception is Microsoft.AspNetCore.Connections.ConnectionResetException;
     }
 
     /// <summary>
@@ -189,7 +260,7 @@ public static class ProductPipeline
 
             SetIfMissing(headers, "X-Frame-Options", "DENY");
             SetIfMissing(headers, "Referrer-Policy", "no-referrer");
-            if (strictTransport)
+            if (StrictTransportFor(context.Request, strictTransport))
             {
                 headers["Strict-Transport-Security"] = StrictTransportSecurity;
             }

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_data_uses output",
+  "description": "The response envelope. On success, data lists the matching data uses by application, then domain, with their decision states, and the counts by state.",
+  "x-tool": "list_data_uses",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "counts",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/dataUseItem"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "all",
+            "byState"
+          ],
+          "properties": {
+            "all": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The uses the filters keep before the state filter."
+            },
+            "byState": {
+              "type": "object",
+              "required": [
+                "not-needed",
+                "needed",
+                "proposed",
+                "allowed",
+                "denied",
+                "re-decide",
+                "breaks-rule",
+                "no-one-to-ask"
+              ],
+              "properties": {
+                "not-needed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "needed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "proposed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "allowed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "denied": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "re-decide": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "breaks-rule": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "no-one-to-ask": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "description": "How many of those uses are in each decision state."
+            }
+          },
+          "additionalProperties": false
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many uses match every filter."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

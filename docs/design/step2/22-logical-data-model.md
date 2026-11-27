@@ -192,7 +192,7 @@ An operational entity whose Status (or Outcome) references C05 also carries a me
 
 ### 2.6 Subjects that can be one of several entities
 
-O09 Decision, O18 Delivery Link and O20 Evidence Link each belong to one subject of several possible kinds. O24 Audit Entry names its row by entity name and row ID.
+O09 Decision, O18 Delivery Link and O20 Evidence Link each belong to one subject of several possible kinds, and so does O06 Owner Assignment since the data taxonomy (an application, a data domain or a data location; B22-14). O24 Audit Entry names its row by entity name and row ID.
 
 - **Logical shape:** a Subject Kind column plus one optional reference per allowed kind. Exactly one reference is set, and it matches Subject Kind.
 - **Subject kind values (new term: subject kind list)** are logical entity names. They are fixed by the schema, because adding a kind adds a column. They are part of the engine contract, not configuration.
@@ -292,7 +292,7 @@ Every setting, with its default and its owner, is listed in one settings table i
 | `draft-expiry-days` | 30 (document 21) | C46 Expires On |
 | `workload-grant-max-days` | 365 (document 26) | C42 Expires On |
 | `default-ai-only-code-approval-handling` | flag (document 21; working default, open design question 7, see 28-working-defaults.md) | C33, O14 |
-| `intake-visibility` | own: the requester, plus the PMO, platform admin and architect roles (28, issue 10 and Q13) | `fn_CanReadIntake`, Dataverse ownership of O07 |
+| `intake-visibility` | own: the requester, plus the PMO, platform admin and architect roles (28, issue 10 and Q13), and the people the request involves (B22-13) | `fn_CanReadIntake`, Dataverse ownership of O07 |
 | `claim-visibility` | admins and claimant (28, issue 10 and Q13) | `fn_CanReadClaim`, Dataverse ownership of O22 and O23 |
 | `record-access-mode` | open read, with portfolio read available (document 26; 28, issue 10 and Q13) | `fn_CanReadPortfolio`, Dataverse ownership in portfolio read |
 | `audit-retention-days` | forever on Dataverse; the client's policy on Azure (document 26). The earlier `history-retention-days` is merged into it (28, issue 15) | Section 8.6 |
@@ -728,8 +728,9 @@ Rules: exactly one of To Application and To Component. To Application is never t
 
 | Column | Type | Req | Ref | Description |
 |---|---|---|---|---|
-| Record Number (new) | text(20) | Y | | A number such as INT-00123, assigned by the engine |
+| Record Number (new) | text(20) | Y | | A number such as IR-0123, assigned by the engine (prefix IR, B22-9) |
 | Requester | ref(O05) | Y | PR | Who asked |
+| Business Owner (proposal) | ref(O05) | N | PR | The person the requester names as business owner. Counts for the Accept gate, and becomes the business owner on acceptance (B22-9) |
 | Title | text(200) | Y | | A short name for the request |
 | Need | longtext | Y | | The business need in plain words |
 | Proposed Kind | ref(C15) | N | CFG | The application kind the requester expects |
@@ -784,6 +785,8 @@ Rule: exactly one of Intake Request and Business Application.
 | Amends | ref(O09) | N | OPS | The earlier decision this one changes in part. Declined amendments stay listed (I-191) |
 | Confidence | ref(C07) | N | CFG | How sure the decider is, from the `confidence` list [S1] |
 | Superseded By (new) | ref(O09) | N | OPS | Derived: the accepted decision whose Supersedes points here. Computed in a view on Azure. Stored by the engine on Dataverse, as the only write a frozen row ever receives (section 8.1) |
+| Exception Standard (proposal) | text(200) | N | | An exception decision only: the standard it departs from (B22-9) |
+| Exception Review On (proposal) | date | N | | An exception decision only: the date it is reviewed again (B22-9) |
 
 Rule: exactly one Subject column is set, and it matches Subject Kind.
 
@@ -884,6 +887,7 @@ Rules: exactly one of Required Owner Role and Required Role. Only the approval w
 | Is Outside Window | bool | Y | | Yes when it finished outside the change request's window (D-13) |
 | Is Other Path | bool | Y | | Yes when the route is not allowed by the target's change path (D-19) |
 | Is Missing Approval | bool | Y | | Yes when the change lacked the approvals its policy requires, at write time |
+| Is AI Only Code Approval (proposal) | bool | N | | Yes when the sender reported that the only code review approval came from an AI and the gate policy flags it (C33 AI Only Code Approval Handling). Computed by the engine at write time (B22-10) |
 | Idempotency Key | text(200) | Y | | The sender's run and stage identifier. Unique. A retry with the same key returns the existing record (I-189). Engine-generated for records entered by a person |
 | Corrects Record (new) | ref(O14) | N | OPS | The earlier record this one corrects. The earlier record stays, and views show the latest correction |
 | Tested In | ref(O14) | N | OPS | Later: the test deployment this production deployment came from (I-180) |
@@ -985,6 +989,7 @@ A wrong evidence link is never removed. A new evidence link with Evidence Level 
 
 | Column | Type | Req | Ref | Description |
 |---|---|---|---|---|
+| Record Number (proposal) | text(20) | Y | | A number such as REV-0042, assigned by the engine when it opens the review (B22-9) |
 | Business Application | ref(O02) | Y | OPS | The application reviewed |
 | Review Type | ref(C24) | Y | CFG | The kind of review |
 | Status | ref(C05) | Y | CFG | Status label |
@@ -1064,11 +1069,11 @@ A wrong evidence link is never removed. A new evidence link with Evidence Level 
 
 ## 5. Later entities
 
-Kept in the model, not built first. Attributes are a first cut.
+Kept in the model, not built first. Attributes are a first cut. L01 Data Area was withdrawn by the data taxonomy (D-37):
+C49 Data Domain with its owners in O06, O26 Data Mapping and O27 Data Use replace it (B22-14).
 
 | ID | Entity | Class | Attributes (type, required) | Relationships |
 |---|---|---|---|---|
-| L01 | Data Area | M | Classification ref(C07) Y; Data Owner ref(O05) Y; Steward ref(O05) N; Retention Rule text(200) N; Copy To Test Rule ref(C07) N (I-86) | Decisions of type data use point to it (a new Subject Data Area column on O09) |
 | L02 | Checklist Template | V | Applies To text(64) Y (stage, review type or retirement); Items Json json Y (item key, text, guideline key, evidence hint) | To C39 through item keys |
 | L03 | Checklist Result | F | Checklist Template ref(L02) Y; Business Application ref(O02) Y; Results Json json Y (item key, result, by whom, date); Evidence through O20 (a new subject kind) (I-237) | Restrict to L02 and O02 |
 | L04 | Standard | V | Owner Role ref(C28) or Role ref(C29), one Y; Standard Status ref(C05) Y; Standard Url url Y | Exception decisions point to it |
@@ -1870,3 +1875,121 @@ OP-13 needs "the registered components in covered estates", but O03 Technical Co
 4. **Dataverse.** Alternate keys on O01 and O19 that section 10.2 does not list (section 10.1's rule gives them); an autonumber on C46, which section 10.1 does not list; option values wait for the publisher; O24 Row Id as text(36), because custom tables offer no GUID column (UNVERIFIED).
 5. **UNVERIFIED:** foreign keys, checks, filtered indexes and `json` columns on ledger tables, and `ALTER TABLE ADD CONSTRAINT` on a ledger table. A technical test checks them before the Azure schema is applied.
 6. **Configuration row names.** Live configuration rows carry the bundle's field names (`roleKey`, `entraGroupObjectId`, `value`, `basedOnPresetKey`), not this document's (Role, Entra Group, Value Json, Based On Preset). The two should meet, or the column map should carry the bundle name, before an adapter maps configuration rows (document 21, B21-7).
+
+### B22-8 O09 Proposed Changes Json (built 2026-11-24, D-41)
+
+- **The column.** O09 Decision gains Proposed Changes Json (json, not required, a proposal in the model): the subject changes the decision makes once accepted, in the engine's form. An ownership decision holds `owners` (the owner changes of `propose_owner_change`: owner role, the holder to add, the assignment to end, deputy, start date), a tier decision `tierKey`, an autonomy level decision `autonomyLevelKey`. Other decision types hold none. It is set while the decision is proposed and is frozen with it (class F).
+- **Why a column.** The update-subject effect (document 25, B25-8) needs the proposal in a form it can apply and an approver can read. Before, the tools wrote the proposed owners into Context as text, where the engine cannot trust it. Context stays the human why.
+- **Azure SQL.** Rows keep their columns as JSON, and the new column is not promoted, so no migration is needed. The generated drafts (`model/generated`) are regenerated.
+- **The registration status** (B22-6) now has its effect: an accepted intake registers its application, as document 25, B25-8 describes.
+
+### B22-9 Intake, decision and review columns (built 2026-11-24, D-41)
+
+- **O07 Business Owner** (ref to O05, not required, a proposal; relationship RX29): the person the requester names as the business owner of the application the request is for. It counts for an Accept gate requirement of the owner role business-owner, and the accepted intake makes the person that owner when the application has none (document 25, B25-10). Written by `save_intake_draft` from a Principal Reference the store holds.
+- **O07 Score and Size Band** now have a writer: `score_intake_request`, the PMO's demand fields (document 24, B24-9). Priority stays a decision (C18 priority), not a column.
+- **O09 Exception Standard** (text 200) and **Exception Review On** (date), both not required, proposals: what an exception decision records besides its reason (document 23, P04 step 6). Set while the decision is proposed and frozen with it. Only an exception decision holds them (document 25, B25-11).
+- **O21 Record Number** (text 20, a proposal): REV-0042, given by the engine to every review it opens; reviews written before this build have none. Its business key is held by the store (`host.StoreKey`, as the other record numbers); the older key of Business Application, Review Type and Due On stays held back.
+- **Record Number prefixes.** O07 takes `IR` (was `INT`), the prefix the demo estate and the pages already use; the model's prefix pattern takes two to four letters. Every Record Number is given by the engine after the highest number the store holds (document 25, B25-9).
+- **Azure SQL.** The new columns are JSON members, not promoted, so `0001` to `0006` do not change. `0007-record-numbers.sql` adds the record number counters. The generated drafts (`model/generated`) are regenerated; the Dataverse draft now has six autonumber columns.
+
+### B22-10 Deployment flag, reviews and claims (built 2026-11-24, D-41)
+
+- **O14 Is AI Only Code Approval** (bool, not required, a proposal): the fourth flag of a deployment record, computed by the engine at write time like the other three (document 25, B25-12). P05 step 5 already names the flag; O14 had no column, so the engine computed it and dropped it. Records written before this build have no value and read as no. They are not backfilled: O14 is final at insert (an append-only ledger table on Azure SQL), and a correction is a new record.
+- **No migration.** Operational columns are JSON members on Azure SQL, not promoted columns, so a new column needs no `ALTER TABLE` and no new migration; a deployed database reads the member on the next write. The generated drafts (`model/generated`) are regenerated.
+- **O21 Done.** Done On, Reviewer and Outcome Decision are required when done, as the table says, and the engine now checks it, with the Outcome Decision accepted (document 25, B25-12). Next Due On is set when done: Done On plus the cadence interval (C25) of the review type at the application's tier, empty for an event review.
+- **O21 has no change column.** A post-change review names its change by record number in its Description, and `get_change_request` finds it that way (document 24, B24-10). A Change Request reference on O21 is a later proposal, if the description match proves weak.
+- **O23 Url** now has a writer: `compare_inventory_list` stores the link an item carries, and a claim copies it to the O03 component it creates. The live inventory gives no link.
+
+### B22-11 The call history and refused calls in O24 (built 2026-11-24, D-41)
+
+- **No new column, no migration.** O24 already holds Operation, Entity Name, Row Id, Changed Values Json, Actor, Actor Kind, On Behalf Of, Client App and Correlation Id. Two Operation values are new in use: `composed-call` (one entry for every tool call that writes, with or without a Request Key) and `call-refused` (a refused call, written in a transaction of its own; document 25, B25-13). Both name the tool in Entity Name and the record the call named in Row Id.
+- **Changed Values Json** of an unkeyed `composed-call` lists the rows the call wrote: entity, operation, row ID and the status meaning the write left, never a value or a label (the column rule "never secrets, never principal labels"). A keyed call keeps the answer it replays, as before. A `call-refused` entry holds the tool, the fixed error code, the rule key, the engine's reason code and the rules behind it, never the arguments.
+- **O04 rules enforced.** The engine now checks the O04 rule "exactly one of To Application and To Component; To Application is never the From Application", and an ended dependency never changes (document 25, B25-13). The business key among open rows is matched by `save_dependency`, which changes the open link instead of adding a second one; the engine itself has no fact for it yet.
+- **O01 and O15 writers.** `save_portfolio` and `save_deployment_target` write O01 and O15 (document 24, B24-11). O01's "no cycles" is checked by the tool; an engine fact for it is not built. O15 has no retired column, so a target is not retired yet (a Retired On column is a later proposal).
+
+### B22-12 O10 Asked Principal has a writer; C31 and C32 gain two columns (built 2026-11-24, D-41)
+
+- **O10 Asked Principal** ("who the card went to") is now written by the engine when it opens a record that asks one person by name: a proposed owner of an ownership decision, a portfolio's Accountable Principal when no holder of the owner role is left, or the business owner an intake names for a request with no application (document 25, B25-14). Required Role or Required Owner Role is still set: for a proposed owner, the owner role they would take. Only the named person answers such a record. No migration: the column exists, and Azure SQL holds O10 as before.
+- **C32 Approver Proposed Owners** (yes or no) and **C32 and C31 Fallback Owner Role** (a reference to C28), proposals of document 21, B21-9. C32's rule becomes "exactly one of Approver Owner Role, Approver Role and Approver Proposed Owners", and a Fallback Owner Role stands only beside an owner role. Configuration lives in the compiled snapshot on Azure, so no table changes; the logical model and its generated drafts carry the columns (relationships R32e and R32f).
+
+### B22-13 O07 Portfolio, and who reads an intake request (built 2026-11-24, D-41)
+
+- **O07 Portfolio** (a reference to O01, relationship RX30), a proposal: the portfolio a request belongs to. The application an accepted request creates starts in it (document 25, B25-15). Azure SQL holds O07 as JSON rows, so no migration was added; the logical model and its generated drafts carry the column.
+- **`intake-visibility` "own"** also lets in the business owner a request names, the current owners of the application it is linked to, and anyone an approval record on a decision about it asks or was answered by (document 24, B24-14). The rule lives in the tool outputs, as before; no row filter on Azure SQL implements `fn_CanReadIntake` yet.
+
+### B22-14 The data taxonomy, slice 1 (built 2026-11-24, D-37 and D-41)
+
+The [data taxonomy](../../architecture/data-taxonomy.md#entities) is in the logical model: 81 entities, 72 of them from this
+document for the first release (45 configuration and 27 operational). Decision records
+[D-37](../../decisions/D-37-business-data-domains-mapped-to-technical-locations.md) and
+[D-41](../../decisions/D-41-the-data-taxonomy-details-and-a-never-rule-cannot-be-broken.md) give the reasons.
+
+**New entities.** C47 to C50 are class V, retired, never deleted, with Key plus Configuration Set unique; C47 and C48 also
+hold Rank plus Configuration Set unique among active rows. The operational ones:
+
+| Entity | Class | Attributes (type, required) | Keys |
+|---|---|---|---|
+| O25 Data Location | E | Data Platform ref(C50) Y; Parent Location ref(O25) N; Target Stage ref(C34) C; Deployment Target ref(O15) N; Hosted By Application ref(O02) N; Link Kind ref(C37) Y; External Id text(400) C; Url url C (at least one of the two); Label As Seen text(200) Y; Last Seen On datetime N; Status ref(C05) Y and its meaning (registration status); Retired On date N | Data Platform plus External Id among rows not retired (store); Data Platform plus Url among rows not retired with no External Id (engine) |
+| O26 Data Mapping | E | Data Domain ref(C49) Y; Data Location ref(O25) Y; Containers json N; Data Origin meaning(data origin) Y; Copied From ref(O26) N; Status and meaning Y; Confirmed On date N; Start On date Y; Ended On date N | Data Domain plus Data Location plus Data Origin among rows not ended (store) |
+| O27 Data Use | E | Record Number text(20) Y (DU-0042); Business Application ref(O02) Y; Data Domain ref(C49) Y; Data Location ref(O25) N; Access meaning(data access) Y; Purpose text(500) Y; Reaches AI bool Y; AI Service As Seen text(200) N; AI Component ref(O03) N; Is Deidentified bool Y; Access Approach ref(C07) N; Status and meaning Y; Start On date Y; Ended On date N | Record Number (store); Business Application plus Data Domain plus Data Location plus Reaches AI among rows not ended, an empty location counting as a value (engine) |
+
+All three are deleted only as drafts by their creator, and are otherwise retired or ended with a date. An AI client's row
+starts as draft. The relationships are R106 to R114 of the catalog; every one is Restrict.
+
+**Changed entities.**
+- **O06 Owner Assignment.** Business Application becomes conditional. New: Subject Kind text(64) C (business-application,
+  data-domain or data-location; empty means business-application), Subject Data Domain ref(C49) C, Subject Data Location
+  ref(O25) C. Exactly one subject is set and Subject Kind names it.
+- **O09 Decision.** New subjects: Subject Data Use ref(O27), Subject Data Mapping ref(O26), Subject Data Domain ref(C49),
+  Subject Data Location ref(O25), relationships R72h to R72k. The exactly-one rule lists them. Subject Application may
+  also hold the application of a subject of another kind, as the decision tools write it today.
+- **O02 Business Application.** Holds No Business Data bool N.
+- **C28, C34, C31, C32.** C28 Subject Kinds (json) and Inherits Down (bool); C34 Is Production (bool). C31 and C32 gain
+  six scope columns as proposals (Subject Kind, Classification, AI Use, Data Domain Level, Data Taxonomy Change, Owner
+  Subject), read by the engine from data taxonomy slice 2.
+- **Contracts.** New: data handling rule, data origin, data access, owner subject kind, data taxonomy mode, data use
+  state (computed), and as proposals owner subject and data taxonomy change. Link category gains data location; the
+  subject kind list gains Data Use, Data Mapping, Data Domain and Data Location; requirement kind proposes data uses
+  declared and data uses decided.
+
+**Azure SQL.** `0008-data-taxonomy.sql` is generated like `0001` to `0003` and changes none of them: it creates the
+seven tables as system-versioned temporal tables (classes V and E), drops the one security policy, adds
+`CK_OwnerAssignment_OneSubject` on the row's JSON `WITH CHECK` (every existing row names one application and no kind, so
+it passes), creates the policy again over every product table, and denies the app the new history tables. The host requires schema version 8.
+O09 gets no database check: its tools write Subject Application beside other subjects, and its frozen ledger rows could
+never be corrected. The store makes the O06 check before a write on SQLite and Azure SQL alike.
+
+### B22-15 The drafted by pair (built 2026-11-24, D-36 and D-41)
+
+The common stamps name the last write (section 2.4), so once a person edited an AI draft, nothing on the row said which
+AI client drafted it, and for whom: the AI activity page and the intake wizard lost "Drafted by Claude Code for Priya
+Castell". The operational column set gains two columns, as proposals:
+
+| Column | Type | Req | Ref | Description |
+|---|---|---|---|---|
+| Drafted By Client App (proposal) | text(200) | N | | The client app of the AI client that created the row, such as Claude Code |
+| Drafted For Principal (proposal) | ref(O05) | C | PR | The person that AI client acted for. Set with Drafted By Client App |
+
+- **Who writes them.** The engine, on create only, when the actor is an AI client acting for a person (OP-08 stamps, G-09).
+  A caller's value is dropped like any stamp; an update never changes them, the engine's included. A row a person, a
+  pipeline, the approval runner or the engine created leaves both empty.
+- **Rows from before.** A row written before the pair existed has neither. The reads fall back to the last stamp while an
+  AI client wrote last, else to Created By Principal with no client (document 24, B24-17).
+- **Relationship** R00f: Drafted For Principal to O05, 0..1 to 0..n, Restrict, on every operational entity.
+- **Stores.** Both stores keep each row's columns as JSON, so SQLite, the in-memory store and Azure SQL need no change and
+  no migration: the schema version stays 8. The generated drafts (`model/generated/`) carry the two columns.
+
+### B22-16 A deployment target retires (built 2026-11-24, D-41)
+
+The Places screen retires a target (document 24, B24-18). O15 Deployment Target gains two columns, proposals until
+document 22's body is revised:
+
+- **Retired On** (date, optional): the day a person retired the target. Empty means in service. Set instead of deleting the
+  row, as O03 and O25 do, so the target keeps its deployment records, its pipeline map entries and its history.
+- **Retired Reason** (text, 2000, optional): why, such as the environment that replaced it.
+
+Choices: a date and a reason rather than an Is Active flag, because the record must say when and why, as every other
+retirement in the model does. Link Kind and External Id stay the business key, retired rows included, so a retired
+target comes back into service rather than being registered twice. Both stores keep each row's columns as JSON, so
+SQLite, the in-memory store and Azure SQL need no change and no migration: the schema version stays 8. The generated
+drafts (`model/generated/`) carry the two columns.

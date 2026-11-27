@@ -6,7 +6,9 @@ using Product.Engine.Core.Reasons;
 namespace Product.Engine.Configuration.Validation.Rules;
 
 // V20: decision types that require approval and carry no tier (configuration change, gate policy change)
-// have at least one approval rule. A decision type without Requires Approval has only consultation rules, if any.
+// have at least one approval rule. A decision type without Requires Approval has only consultation rules, if any, and the
+// consents of the people it would make owners (C32 Approver Proposed Owners; document 25, B25-18): a consent never stands
+// for the decision's own card, which still goes to the accountable holder or is the engine's acceptance.
 public sealed class V20ApprovalCoverage : ValidationRule, IContentRule
 {
     public static readonly V20ApprovalCoverage Instance = new();
@@ -36,7 +38,7 @@ public sealed class V20ApprovalCoverage : ValidationRule, IContentRule
                 continue;
             }
 
-            foreach (ContentRow rule in typeRules.Where(r => !RowFacts.IsTrue(r, "isConsultation")))
+            foreach (ContentRow rule in typeRules.Where(r => !RowFacts.IsTrue(r, "isConsultation") && !RowFacts.IsTrue(r, "approverProposedOwners")))
             {
                 issues.Add(Issue(
                     "Approval Rule " + Q(rule.KeyPath) + " counts toward Decision Type " + Q(type.Key) + ", which does not require approval, so its one card goes to the accountable holder. "

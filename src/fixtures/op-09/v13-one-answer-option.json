@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-09",
   "case": "v13-one-answer-option",
-  "description": "A draft retires two of the three answers to the sensitivity question. A tier question with one active answer cannot tell tiers apart, so V13 refuses it.",
+  "description": "A draft retires two of the three answers to the sensitivity question. A tier question with one active answer cannot tell tiers apart, so V13 refuses it. The data classifications that imply the retired answers fail V52 as well (data taxonomy).",
   "ruleIds": [
     "V13"
   ],
@@ -40,6 +40,27 @@
         "ruleId": "V13",
         "entity": "Tier Question",
         "ref": "sensitivity"
+      },
+      {
+        "code": "data.classification",
+        "severity": "error",
+        "ruleId": "V52",
+        "entity": "Data Classification",
+        "ref": "confidential"
+      },
+      {
+        "code": "data.classification",
+        "severity": "error",
+        "ruleId": "V52",
+        "entity": "Data Classification",
+        "ref": "internal"
+      },
+      {
+        "code": "data.classification",
+        "severity": "error",
+        "ruleId": "V52",
+        "entity": "Data Classification",
+        "ref": "restricted"
       }
     ],
     "reasonsMatch": "exact"

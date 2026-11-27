@@ -56,7 +56,9 @@
         "stage",
         "businessOwner",
         "technicalOwner",
-        "recordUrl"
+        "recordUrl",
+        "isAiCreated",
+        "performedBy"
       ],
       "properties": {
         "businessApplicationId": {
@@ -121,8 +123,23 @@
             }
           ]
         },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "recordUrl": {
-          "$ref": "../common.schema.json#/$defs/url"
+          "$ref": "../common.schema.json#/$defs/recordUrl"
         }
       },
       "additionalProperties": false
@@ -155,6 +172,8 @@
               "displayLabel": "Business owner (sample)"
             },
             "technicalOwner": null,
+            "isAiCreated": false,
+            "performedBy": null,
             "recordUrl": "https://product.example.org/records/10000000-0000-4000-8000-000000000001"
           }
         ],

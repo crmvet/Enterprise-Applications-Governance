@@ -76,7 +76,7 @@ Adopting the playbook means deciding every guideline, so this chapter touches al
 
 ## Processes this chapter uses
 
-- **P11 Configuration change.** Every tailoring step above is a configuration change: the admin says what to change, an AI client prepares it, the product is designed to validate it and show the difference, and the admin accepts it on a card. In the default configuration the instructing admin may accept their own AI's draft; with the strict separation overlay a second configuration admin must accept.
+- **P11 Configuration change.** Every tailoring step above is a configuration change: the admin says what to change, an AI client prepares it, the product is designed to validate it and show the difference, and the admin accepts it on the decision page. In the default configuration the instructing admin may accept their own AI's draft; with the strict separation overlay a second configuration admin must accept.
 - **P10 AI draft and human accept.** The AI that prepares a configuration change only drafts it. The record shows "performed by" the AI, on behalf of the admin.
 
 ## How the product is designed to support it
@@ -105,7 +105,7 @@ Adopting the playbook means deciding every guideline, so this chapter touches al
 
 ## How AI changes this
 
-- Tailoring no longer means editing a long document by hand. The configuration admin tells an AI client what to change, for example "add a fourth tier" or "rename the change board". The AI client prepares the change, the product is designed to show the exact difference, and the admin accepts it on a card.
+- Tailoring no longer means editing a long document by hand. The configuration admin tells an AI client what to change, for example "add a fourth tier" or "rename the change board". The AI client prepares the change, the product is designed to show the exact difference, and the admin accepts it on the decision page.
 - Adoption starts from the keynote in chapter 0 and from the paved road in chapter 20, not from a policy document that people must read before they may build.
 - The four guidelines for AI development (G21 to G24) are decided like every other guideline: adopted as is, adopted with local text, or not adopted with a reason.
 

@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_records output",
+  "description": "The response envelope. On success, data lists the records the caller may read that carry the number: usually one, none when no such record exists or the caller may not read it.",
+  "x-tool": "find_records",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "recordId",
+              "recordNumber",
+              "label",
+              "status",
+              "businessApplicationId",
+              "recordUrl"
+            ],
+            "properties": {
+              "entity": {
+                "enum": [
+                  "business-application",
+                  "intake-request",
+                  "decision",
+                  "change-request",
+                  "review",
+                  "configuration-draft",
+                  "data-use"
+                ],
+                "description": "The kind of record."
+              },
+              "recordId": {
+                "$ref": "../common.schema.json#/$defs/id"
+              },
+              "recordNumber": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The record number as the record holds it, such as DEC-0123."
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the record is: an application's name, a request's or change's title, a decision's statement, a review's type and application.",
+                "x-untrusted": true
+              },
+              "status": {
+                "description": "The record's status, or null when it has none.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/statusValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessApplicationId": {
+                "description": "The application the record belongs to, when it belongs to one.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "The record's page in the product's web app."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "DEC-0123 is a decision: Approve the crew planner for tier 2.",
+      "data": {
+        "items": [
+          {
+            "entity": "decision",
+            "recordId": "30000000-0000-4000-8000-000000000123",
+            "recordNumber": "DEC-0123",
+            "label": "Approve the crew planner for tier 2.",
+            "status": {
+              "label": "Proposed",
+              "meaning": "proposed"
+            },
+            "businessApplicationId": "30000000-0000-4000-8000-000000000511",
+            "recordUrl": "https://product.example.org/app/records/decision/30000000-0000-4000-8000-000000000123"
+          }
+        ]
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/app/records/decision/30000000-0000-4000-8000-000000000123"
+      },
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0075"
+    }
+  ]
+}

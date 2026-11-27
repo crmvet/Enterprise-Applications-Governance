@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_people input",
+  "description": "Finds people by name among the people the product knows (O05 Principal References), for a picker: a successor, an owner, the business owner of a request. Every word given must start a word of the name. Users only unless principalKinds says otherwise. Erased people are never found. No leave date is returned. Writes nothing.",
+  "x-tool": "find_people",
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 100,
+      "description": "Two or more letters of the name, such as \"pri pa\" for Priya Patel."
+    },
+    "principalKinds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/principalKind"
+      },
+      "description": "The kinds to find. Default: user."
+    },
+    "activeOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "True leaves out people the last owner check found disabled or deleted."
+    },
+    "top": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 20,
+      "description": "The most people to return."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "text": "pri"
+    }
+  ]
+}

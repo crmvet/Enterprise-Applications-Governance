@@ -1,5 +1,5 @@
 {
-  "description": "Fictional demo client binding for local runs and tests. Every ID is a patterned placeholder. The eight role groups of the MCP test harness bound to their product roles, two workload identities holding their workload roles through Workload Grants (the approval runner and the build pipeline), and Claude Code on the Known Client list with the harness client ID. Compiled with the balanced preset as version 1 by the local server's seed command.",
+  "description": "Fictional demo client binding for local runs, tests and demo installs. Every ID is a patterned placeholder. All fifteen human product roles bound to fictional role groups (the eight groups of the MCP test harness, 101 to 108, and seven more, 110 to 116, for the data owner, change board, PMO, AI lead, security reviewer, auditor and data governance lead), so each demo persona of seed/demo-personas.json holds its role. Two workload identities hold their workload roles through Workload Grants (the approval runner and the build pipeline), and Claude Code is on the Known Client list with the harness client ID. The draftOperations add the Known Client, the measure targets the demo sponsor agreed (playbook chapter 19; document 24, B24-22) and the demo configuration patch of the data taxonomy (D-37): the 25-row business data domain tree of docs/architecture/data-taxonomy.md, and People's match to the Fabric domain \"HR\". seed/demo-estate.gen.mjs writes the data domain and vocabulary mapping operations; edit them there. Compiled with the balanced preset as version 1 by the local server's seed command.",
   "bindingOperations": [
     {
       "op": "upsert",
@@ -99,6 +99,90 @@
     },
     {
       "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "data-owner-group",
+      "values": {
+        "label": "data-owner group",
+        "roleKey": "data-owner",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000110",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role data-owner"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "change-board-group",
+      "values": {
+        "label": "change-board group",
+        "roleKey": "change-board",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000111",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role change-board"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "pmo-group",
+      "values": {
+        "label": "pmo group",
+        "roleKey": "pmo",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000112",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role pmo"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "ai-lead-group",
+      "values": {
+        "label": "ai-lead group",
+        "roleKey": "ai-lead",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000113",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role ai-lead"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "security-reviewer-group",
+      "values": {
+        "label": "security-reviewer group",
+        "roleKey": "security-reviewer",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000114",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role security-reviewer"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "auditor-group",
+      "values": {
+        "label": "auditor group",
+        "roleKey": "auditor",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000115",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role auditor"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "role-group-binding",
+      "key": "data-governance-lead-group",
+      "values": {
+        "label": "data-governance-lead group",
+        "roleKey": "data-governance-lead",
+        "entraGroupObjectId": "00000000-0000-4000-8000-000000000116",
+        "bindingMethod": "entra-app-role-assignment",
+        "bindingDetail": "App role data-governance-lead"
+      }
+    },
+    {
+      "op": "upsert",
       "entity": "workload-grant",
       "key": "approval-runner",
       "values": {
@@ -136,6 +220,348 @@
         "clientIdentifier": "00000000-0000-4000-8000-0000000000ac",
         "isAiClient": true,
         "isAllowed": true
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "setting",
+      "key": "measure-targets",
+      "values": {
+        "value": {
+          "lead-time": 30,
+          "share-registered": 95,
+          "owner-coverage": 95,
+          "decisions-on-time": 90,
+          "standard-change-share": 60,
+          "deployments-on-record": 100,
+          "documents-current": 90,
+          "ai-work-accepted": 100,
+          "slide-back-signals": 0
+        }
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "customers",
+      "values": {
+        "label": "Customers",
+        "levelKey": "domain",
+        "classificationKey": "confidential",
+        "retentionClassKey": "keep-7-years",
+        "examples": "Who the customers are and how the business serves them: accounts, contacts, orders, cases and feedback.",
+        "sortOrder": 1
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-accounts",
+      "values": {
+        "label": "Client accounts and contacts",
+        "parentKey": "customers",
+        "levelKey": "subdomain",
+        "examples": "Customer organizations, their sites, and the named people to contact at each one.",
+        "sortOrder": 2
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-orders",
+      "values": {
+        "label": "Client orders",
+        "parentKey": "customers",
+        "levelKey": "subdomain",
+        "examples": "Orders customers place for parts and repair work, with their status and history.",
+        "sortOrder": 3
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-cases",
+      "values": {
+        "label": "Client cases and feedback",
+        "parentKey": "customers",
+        "levelKey": "subdomain",
+        "examples": "Faults and damage claims customers report, complaints, and what customers say about finished work.",
+        "sortOrder": 4
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "commercial",
+      "values": {
+        "label": "Commercial",
+        "levelKey": "domain",
+        "classificationKey": "confidential",
+        "examples": "How the business sells: proposals, quotes and contracts.",
+        "sortOrder": 5
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "proposals",
+      "values": {
+        "label": "Proposals and quotes",
+        "parentKey": "commercial",
+        "levelKey": "subdomain",
+        "examples": "Opportunities, quotes and bids for repair work, with their prices and status.",
+        "sortOrder": 6
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "contracts",
+      "values": {
+        "label": "Contracts",
+        "parentKey": "commercial",
+        "levelKey": "subdomain",
+        "retentionClassKey": "keep-10-years",
+        "examples": "Signed agreements with clients and suppliers: terms, prices, liability and renewal dates.",
+        "sortOrder": 7
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-contracts",
+      "values": {
+        "label": "Client contracts",
+        "parentKey": "contracts",
+        "levelKey": "data-set",
+        "examples": "Service agreements signed with clients and contractors.",
+        "sortOrder": 8
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "supplier-contracts",
+      "values": {
+        "label": "Supplier contracts",
+        "parentKey": "contracts",
+        "levelKey": "data-set",
+        "examples": "Agreements with suppliers: payment terms, volume rebates, liability and renewal clauses.",
+        "sortOrder": 9
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "people",
+      "values": {
+        "label": "People",
+        "levelKey": "domain",
+        "classificationKey": "confidential",
+        "retentionClassKey": "keep-7-years",
+        "examples": "Everyone who works for the business: personnel records, pay and time. Kept for seven years after a person leaves.",
+        "sortOrder": 10
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "personnel-records",
+      "values": {
+        "label": "Personnel records",
+        "parentKey": "people",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "examples": "Workers, positions, managers, training and certificates.",
+        "sortOrder": 11
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "payroll",
+      "values": {
+        "label": "Payroll",
+        "parentKey": "people",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "aiUseRule": "never",
+        "retentionClassKey": "keep-10-years",
+        "examples": "Salary, deductions, tax codes and the bank details pay goes to.",
+        "sortOrder": 12
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "paychecks",
+      "values": {
+        "label": "Paychecks",
+        "parentKey": "payroll",
+        "levelKey": "data-set",
+        "examples": "Each pay run: gross pay, deductions, net pay and mileage or expense payments.",
+        "sortOrder": 13
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "bank-details",
+      "values": {
+        "label": "Bank details",
+        "parentKey": "payroll",
+        "levelKey": "data-set",
+        "examples": "The bank account each person is paid into.",
+        "sortOrder": 14
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "timesheets",
+      "values": {
+        "label": "Timesheets",
+        "parentKey": "people",
+        "levelKey": "subdomain",
+        "examples": "Hours worked per job and day, and their approvals.",
+        "sortOrder": 15
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "field-operations",
+      "values": {
+        "label": "Field operations",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "retentionClassKey": "keep-3-years",
+        "examples": "The work done at field sites: inspections, safety findings, crews and assets.",
+        "sortOrder": 16
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "inspections",
+      "values": {
+        "label": "Inspections",
+        "parentKey": "field-operations",
+        "levelKey": "subdomain",
+        "examples": "Site inspections, their checklists, notes and photos.",
+        "sortOrder": 17
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "safety-findings",
+      "values": {
+        "label": "Safety findings",
+        "parentKey": "field-operations",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "examples": "Hazards found at sites until they are fixed, which can hold injury details.",
+        "sortOrder": 18
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "crew-schedules",
+      "values": {
+        "label": "Crew schedules",
+        "parentKey": "field-operations",
+        "levelKey": "subdomain",
+        "examples": "Crew shifts, members and their skills.",
+        "sortOrder": 19
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "assets",
+      "values": {
+        "label": "Assets and equipment",
+        "parentKey": "field-operations",
+        "levelKey": "subdomain",
+        "examples": "Field assets with their location, warranty and maintenance history.",
+        "sortOrder": 20
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "warehouse",
+      "values": {
+        "label": "Warehouse",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "What the stores hold and what parts cost.",
+        "sortOrder": 21
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "stock-levels",
+      "values": {
+        "label": "Stock levels",
+        "parentKey": "warehouse",
+        "levelKey": "subdomain",
+        "examples": "Stock per store and part, and the counts that check it.",
+        "sortOrder": 22
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "parts-catalog",
+      "values": {
+        "label": "Parts catalog",
+        "parentKey": "warehouse",
+        "levelKey": "subdomain",
+        "examples": "Every spare part with its supplier and price.",
+        "sortOrder": 23
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "workplace",
+      "values": {
+        "label": "Workplace",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "Offices, desks, rooms and parking.",
+        "sortOrder": 24
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "visitor-log",
+      "values": {
+        "label": "Visitor log",
+        "parentKey": "workplace",
+        "levelKey": "subdomain",
+        "classificationKey": "confidential",
+        "examples": "Who visited which office, when, and whom they came to see.",
+        "sortOrder": 25
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "people-fabric-domain",
+      "values": {
+        "label": "People as a Fabric domain",
+        "sourceEntity": "data-domain",
+        "sourceKey": "people",
+        "vocabularyKey": "fabric-domain",
+        "term": "HR",
+        "sourceUrl": "https://app.fabric.example.org/domains/hr",
+        "checkedOn": "2026-11-20"
       }
     }
   ]

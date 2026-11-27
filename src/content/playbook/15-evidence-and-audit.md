@@ -23,7 +23,7 @@
 
 | Evidence | Where it lives | How the pack holds it |
 |---|---|---|
-| Decisions and approvals | The shared decision log, approval cards | The entries themselves, with approval history |
+| Decisions and approvals | The shared decision log, the decision pages | The entries themselves, with approval history |
 | Changes and deployments | The change record; your pipeline's run history | The records, with links to each run |
 | Reviews | Review records | The records, with outcomes |
 | Documents | Your wiki, repository or SharePoint | Links, status and last check |
@@ -59,7 +59,7 @@
 
 - **P03 Change management.** Change records, authorizations and reviews after the change.
 - **P05 Deployment record.** Every deployment, its flags and its links.
-- **P10 AI draft and human accept.** The performed-by marks and confirmation cards.
+- **P10 AI draft and human accept.** The performed-by marks and the person's confirmations.
 - **P11 Configuration change.** Each configuration version, who instructed it and who accepted it.
 
 ## How the product is designed to support it

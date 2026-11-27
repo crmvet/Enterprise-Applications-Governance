@@ -37,13 +37,31 @@ internal static class McpInvoker
         CallerFacts facts = services.GetRequiredService<CallerFacts>();
         bool credential = context.Request.Headers.ContainsKey(HeaderNames.Authorization);
         var validator = new ClaimsTokenValidator(caller, credential, requiredScope, oid => facts.DelegatedKindOf(caller, oid), auth.TenantId);
+        ProductWebAppOptions? webApp = personEntry ? services.GetRequiredService<IOptions<ProductWebAppOptions>>().Value : null;
         McpServerOptions options = PerRequest(
             services.GetRequiredService<McpServerOptions>(),
             ProductRequest.CorrelationId(context),
             ResourceUrl(context),
             requiredScope,
-            personEntry ? services.GetRequiredService<IOptions<ProductWebAppOptions>>().Value : null,
+            webApp,
+            webApp?.PersonLabel(caller),
             FailureLogger(context));
+        // Record links (document 24, B24-17): with no public base URL and no record base configured (a local run in
+        // Development; outside it the startup check requires an https public base URL), they follow the address the
+        // request came to, such as http://127.0.0.1:5081/app/records, so a local page opens its own records.
+        options.RecordUrlBase = RequestRecordUrlBase(context);
+
+        // The caller's own calendar day (B24-21): the web app sends the person's local day; the backend keeps it only
+        // within a day of the UTC day. On the person entry only (security review): an AI client or a script on
+        // the MCP endpoint gets the UTC day, as ToolScope.PersonToday says.
+        options.CallerLocalDay = personEntry && context.Request.Headers.TryGetValue(LocalDayHeader, out var day) && day.Count == 1 ? day.ToString() : null;
+        if (!personEntry && caller?.DemoPersona != null)
+        {
+            // A demo operator's AI client acting as a demo persona on the MCP endpoint (D-39, Demo only): the engine
+            // stamps "Claude Code, demo operator" for the persona, never the operator.
+            options.AiClientLabelSuffix = ProductDemo.OperatorLabelSuffix;
+        }
+
         return new McpServerCore(
             services.GetRequiredService<ContractSet>(),
             validator,
@@ -51,6 +69,9 @@ internal static class McpInvoker
             services.GetRequiredService<ITelemetrySink>(),
             options);
     }
+
+    // The header that carries the caller's local calendar day (YYYY-MM-DD).
+    public const string LocalDayHeader = "X-Product-Local-Day";
 
     public static McpRequest Request(Product.Engine.Core.Canonical.JsonTreeNode message, HttpContext context)
     {
@@ -76,6 +97,28 @@ internal static class McpInvoker
         return context.Request.Scheme + "://" + context.Request.Host.ToUriComponent() + "/" + host.McpPath.TrimStart('/');
     }
 
+    // The request's own record base: scheme, host and port of the request plus /app/records, only when the host names no
+    // public base URL and no record base, and the request came to a loopback address (the contracts type a record link
+    // as https, or http on loopback only). Null otherwise, so the backend's configured base stands.
+    public static string? RequestRecordUrlBase(HttpContext context)
+    {
+        ProductHostOptions host = context.RequestServices.GetRequiredService<IOptions<ProductHostOptions>>().Value;
+        if (!string.IsNullOrWhiteSpace(host.PublicBaseUrl) || !string.IsNullOrWhiteSpace(host.RecordUrlBase) || !context.Request.Host.HasValue)
+        {
+            return null;
+        }
+
+        string name = context.Request.Host.Host;
+        bool loopback = string.Equals(name, "localhost", StringComparison.OrdinalIgnoreCase)
+            || (System.Net.IPAddress.TryParse(name.Trim('[', ']'), out System.Net.IPAddress? address) && System.Net.IPAddress.IsLoopback(address));
+        if (!loopback)
+        {
+            return null;
+        }
+
+        return context.Request.Scheme + "://" + context.Request.Host.ToUriComponent() + "/app/records";
+    }
+
     // The Origin check of streamable HTTP (DNS rebinding): no Origin header, an allowed origin, or in Development a
     // loopback origin.
     public static bool OriginAllowed(HttpContext context)
@@ -98,7 +141,9 @@ internal static class McpInvoker
             && (uri.IsLoopback || string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase));
     }
 
-    private static McpServerOptions PerRequest(McpServerOptions shared, string correlationId, string resourceUrl, string scope, ProductWebAppOptions? personEntry, Action<Exception, string> onFailure)
+    // On the person entry the Client App label is the web app's own, or "Web app, demo operator" when a demo persona acts
+    // (D-39): the engine stamps it on every row and audit entry the request writes.
+    private static McpServerOptions PerRequest(McpServerOptions shared, string correlationId, string resourceUrl, string scope, ProductWebAppOptions? personEntry, string? personLabel, Action<Exception, string> onFailure)
     {
         var options = new McpServerOptions
         {
@@ -117,7 +162,7 @@ internal static class McpInvoker
         {
             options.Entry = CallerEntry.Person;
             options.PersonClientAppIds = personEntry.ClientIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).ToList();
-            options.PersonClientLabel = personEntry.ClientLabel;
+            options.PersonClientLabel = personLabel ?? personEntry.ClientLabel;
         }
 
         return options;

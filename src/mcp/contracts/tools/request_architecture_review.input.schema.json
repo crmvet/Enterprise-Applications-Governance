@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "request_architecture_review input",
-  "description": "Asks for an ad hoc architecture review of an application or a change. The engine creates a Review (O21) of type architecture, status due, and it appears in the architect's queue. A request, never a decision: the review ends in a design decision that people accept on cards. If an open architecture review already exists for the subject, the tool returns it and writes nothing new.",
+  "description": "Asks for an ad hoc architecture review of an application or a change. The engine creates a Review (O21) of type architecture, status due, and it appears in the architect's queue. A request, never a decision: the review ends in a design decision that people answer on the decision page. If an open architecture review already exists for the subject, the tool returns it and writes nothing new.",
   "$comment": "WORKING DEFAULT (open design question 9). An AI client may send the request where the Tool Policy row says AI May Submit = yes for subject kind review-request. Shipped yes.",
   "x-tool": "request_architecture_review",
   "type": "object",

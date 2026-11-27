@@ -4,6 +4,8 @@
 // display zone, which the build chooses once at startup with configureDisplayZone:
 //   the harness shows UTC, so every render is the same on every machine;
 //   the web app shows the viewer's own zone (the browser's local zone) and names it, for example "GMT+1" or "EST".
+// Wave 4b: in the viewer's zone a date and time carries the zone's name at that moment, so a July
+// time in New York reads EDT and a December one EST; zoneLabel() keeps today's name, for headings.
 import type { IsoDate, IsoDateTime } from './contracts';
 
 export type DisplayZone = 'utc' | 'local';
@@ -36,6 +38,8 @@ const dates = formatters('UTC');
 let zoneMode: DisplayZone = 'utc';
 let times = dates;
 let zoneName = 'UTC';
+// The zone's short name at a given moment, in the viewer's zone; null in UTC display.
+let zoneNames: Intl.DateTimeFormat | null = null;
 
 // Chooses the zone for date-time values. Call it once, before the first render.
 export function configureDisplayZone(mode: DisplayZone, now: Date = new Date()): void {
@@ -43,27 +47,39 @@ export function configureDisplayZone(mode: DisplayZone, now: Date = new Date()):
   if (mode === 'utc') {
     times = dates;
     zoneName = 'UTC';
+    zoneNames = null;
     return;
   }
   times = formatters(undefined);
-  const part = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(now).find(p => p.type === 'timeZoneName');
-  zoneName = part?.value ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time');
+  zoneNames = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' });
+  zoneName = zoneAt(now);
 }
 
-// The short name of the display zone, for "18:00 to 21:00 UTC".
+// The short name of the display zone today, for headings such as "Times in EST".
 export const zoneLabel = (): string => zoneName;
+
+// The zone's short name at the moment a value names: EDT for a July time in New York, EST for a December one. In UTC
+// display it is UTC.
+function zoneAt(value: Date): string {
+  if (!zoneNames) return zoneName;
+  const part = zoneNames.formatToParts(value).find(p => p.type === 'timeZoneName');
+  return part?.value ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time');
+}
 
 const isDateOnly = (value: string) => value.length === 10;
 const toDate = (value: IsoDate | IsoDateTime) => new Date(isDateOnly(value) ? `${value}T00:00:00Z` : value);
 const pick = (value: string) => (isDateOnly(value) ? dates : times);
 
-export const fmtDate = (value: IsoDate | IsoDateTime | null | undefined, fallback = 'Not set') =>
-  value ? pick(value).dayMonthYear.format(toDate(value)) : fallback;
+// Every month in three letters: en-GB writes September as "Sept" (QA, fix round 1: "15 Sept 2026" beside "3 Oct").
+const threeLetters = (text: string) => text.replace(/\bSept\b/g, 'Sep');
 
-export const fmtDayMonth = (value: IsoDate | IsoDateTime) => pick(value).dayMonth.format(toDate(value));
-export const fmtWeekday = (value: IsoDate | IsoDateTime) => pick(value).weekdayDayMonth.format(toDate(value));
+export const fmtDate = (value: IsoDate | IsoDateTime | null | undefined, fallback = 'Not set') =>
+  value ? threeLetters(pick(value).dayMonthYear.format(toDate(value))) : fallback;
+
+export const fmtDayMonth = (value: IsoDate | IsoDateTime) => threeLetters(pick(value).dayMonth.format(toDate(value)));
+export const fmtWeekday = (value: IsoDate | IsoDateTime) => threeLetters(pick(value).weekdayDayMonth.format(toDate(value)));
 export const fmtTime = (value: IsoDateTime) => times.time.format(toDate(value));
-export const fmtMonth = (value: IsoDate | IsoDateTime) => pick(value).month.format(toDate(value));
+export const fmtMonth = (value: IsoDate | IsoDateTime) => threeLetters(pick(value).month.format(toDate(value)));
 export const fmtWeekdayOnly = (value: IsoDate | IsoDateTime) => pick(value).weekday.format(toDate(value));
 export const dayOfMonth = (value: IsoDate | IsoDateTime) => Number(dayKey(value).slice(8, 10));
 
@@ -85,14 +101,18 @@ export function dayStartMs(date: IsoDate): number {
 }
 
 export const fmtDateTime = (value: IsoDateTime | null | undefined) =>
-  value ? `${fmtDate(value)}, ${fmtTime(value)} ${zoneName}` : 'Not set';
+  value ? `${fmtDate(value)}, ${fmtTime(value)} ${zoneAt(toDate(value))}` : 'Not set';
 
-// "27 Nov, 18:00 to 21:00 UTC" or "4 Dec, 22:00 to 5 Dec, 01:00 UTC".
+// "27 Nov, 18:00 to 21:00 UTC" or "4 Dec, 22:00 to 5 Dec, 01:00 UTC". A window across a clock change names the zone
+// after each time: "1 Nov, 01:00 EDT to 01:30 EST".
 export function fmtWindow(start: IsoDateTime | null, end: IsoDateTime | null): string {
   if (!start || !end) return 'No window yet';
+  const startZone = zoneAt(toDate(start));
+  const endZone = zoneAt(toDate(end));
+  const from = startZone === endZone ? fmtTime(start) : `${fmtTime(start)} ${startZone}`;
   return dayKey(start) === dayKey(end)
-    ? `${fmtDayMonth(start)}, ${fmtTime(start)} to ${fmtTime(end)} ${zoneName}`
-    : `${fmtDayMonth(start)}, ${fmtTime(start)} to ${fmtDayMonth(end)}, ${fmtTime(end)} ${zoneName}`;
+    ? `${fmtDayMonth(start)}, ${from} to ${fmtTime(end)} ${endZone}`
+    : `${fmtDayMonth(start)}, ${from} to ${fmtDayMonth(end)}, ${fmtTime(end)} ${endZone}`;
 }
 
 // "18:00 to 21:00" on one day, or "22:00 to 5 Dec, 01:00" across midnight. No zone name.
@@ -144,6 +164,16 @@ export function humanizeKey(key: string | null | undefined): string {
 
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+// The hint under a review request's due date (wave 4b review): an empty date takes the number of days the rules in force
+// set (setting review-request-due-days). Before that setting is read, or where it is not a number, the hint says the
+// rules set it, which holds either way.
+export function reviewDueHint(days: unknown): string {
+  if (typeof days === 'number' && Number.isFinite(days) && days >= 0) {
+    return days === 0 ? 'Optional. Empty: due today, as the rules in force set.' : `Optional. Empty: due in ${plural(days, 'day', 'days')}, as the rules in force set.`;
+  }
+  return 'Optional. Empty: due on the day the rules in force set.';
+}
+
 // A link out of the product, or null. The tool schemas type every such URL as https, but the page does not rely on the
 // server's checks: only an absolute https URL without user information becomes a link, so a stored value such as a
 // javascript: or data: URL is shown as text and never navigated to.
@@ -156,4 +186,27 @@ export function externalHref(value: string | null | undefined): string | null {
     return null;
   }
   return url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+}
+
+// The person a write was made for, only when that is someone other than who made it. A person's own write on the web
+// app carries On Behalf Of as themselves, and "Nadia Ferreira for Nadia Ferreira" says nothing.
+export function forSomeoneElse<P extends { objectId: string; displayLabel?: string | null }>(
+  principal: { objectId: string } | null | undefined,
+  onBehalfOf: P | null | undefined,
+): P | null {
+  if (!onBehalfOf) return null;
+  if (principal && principal.objectId.toLowerCase() === onBehalfOf.objectId.toLowerCase()) return null;
+  return onBehalfOf;
+}
+
+// Dates the engine writes in its own words (2027-01-15) shown as the page shows dates. A date inside a longer token,
+// such as an ID or an address, is left alone.
+export function humanizeDates(text: string): string {
+  return text.replace(/(^|[\s(,;:"'])(\d{4}-\d{2}-\d{2})(?![\dT:/-])/g, (whole, before: string, date: string) => {
+    try {
+      return `${before}${fmtDate(date, date)}`;
+    } catch {
+      return whole;
+    }
+  });
 }

@@ -1,5 +1,5 @@
 {
-  "description": "The fictional field operations estate of the scripted walkthrough, for local runs and tests: Principal References for the role groups, five people and two workload identities, one portfolio, four registered applications with their owners, two deployment targets, two components and three dependencies. Every ID is a patterned placeholder and every name is fictional. Seeded in this order after version 1.",
+  "description": "The fictional field operations estate of the scripted walkthrough, for local runs and tests: Principal References for the role groups of all fourteen human roles, five people and two workload identities, one portfolio, four registered applications with their owners, two deployment targets, two components and three dependencies. Every ID is a patterned placeholder and every name is fictional. Seeded in this order after version 1.",
   "rows": [
     {
       "entity": "principal-reference",
@@ -148,6 +148,76 @@
         "principalKind": "service-principal",
         "entraObjectId": "00000000-0000-4000-8000-000000000302",
         "displayLabel": "Field ops release pipeline",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000716",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000110",
+        "displayLabel": "Data owners",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000717",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000111",
+        "displayLabel": "Change board",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000718",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000112",
+        "displayLabel": "PMO",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000719",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000113",
+        "displayLabel": "AI leads",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000720",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000114",
+        "displayLabel": "Security reviewers",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000721",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000115",
+        "displayLabel": "Auditors",
+        "isErased": false
+      }
+    },
+    {
+      "entity": "principal-reference",
+      "id": "00000000-0000-4000-8000-000000000722",
+      "columns": {
+        "principalKind": "group",
+        "entraObjectId": "00000000-0000-4000-8000-000000000116",
+        "displayLabel": "Data governance leads",
         "isErased": false
       }
     },

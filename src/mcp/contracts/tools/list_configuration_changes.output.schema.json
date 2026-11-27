@@ -1,0 +1,489 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_configuration_changes output",
+  "description": "The response envelope. On success, data lists the versions with who accepted each, and the drafts with their state, paged.",
+  "x-tool": "list_configuration_changes",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "configurationSet",
+        "versions",
+        "drafts",
+        "counts"
+      ],
+      "properties": {
+        "configurationSet": {
+          "type": "object",
+          "required": [
+            "key",
+            "activeVersion",
+            "contentHash"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "The configuration set in force."
+            },
+            "activeVersion": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "contentHash": {
+              "$ref": "../common.schema.json#/$defs/contentHash"
+            }
+          },
+          "additionalProperties": false
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/version"
+          },
+          "description": "Every version, newest first."
+        },
+        "drafts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/draft"
+          },
+          "description": "The drafts, newest first, one page."
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "versions",
+            "drafts",
+            "openDrafts"
+          ],
+          "properties": {
+            "versions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "drafts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Drafts in the states asked for."
+            },
+            "openDrafts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Drafts in draft or submitted."
+            }
+          },
+          "additionalProperties": false
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    },
+    "version": {
+      "type": "object",
+      "description": "One Configuration Set Version (C02).",
+      "required": [
+        "version",
+        "isActive",
+        "baseVersion",
+        "publishedOn",
+        "contentHash",
+        "changeSummary",
+        "instructedBy",
+        "decision",
+        "acceptedBy",
+        "acceptedHow",
+        "sourceDraftId"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "baseVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publishedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contentHash": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/contentHash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "changeSummary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "instructedBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/decisionRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptedBy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/acceptor"
+          },
+          "description": "The people whose approval counted on its configuration change decision."
+        },
+        "acceptedHow": {
+          "enum": [
+            "approval",
+            "engine",
+            "bootstrap",
+            "not-accepted"
+          ],
+          "description": "approval: people accepted it on the decision page; engine: the engine accepted it with no approval request; bootstrap: version 1, from the first install."
+        },
+        "sourceDraftId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "C46 Configuration Draft"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "draft": {
+      "type": "object",
+      "description": "One configuration draft (C46).",
+      "required": [
+        "configurationDraftId",
+        "recordNumber",
+        "state",
+        "baseVersion",
+        "isUpgradeDraft",
+        "changeSummary",
+        "operationCount",
+        "isValid",
+        "errorCount",
+        "warningCount",
+        "instructedBy",
+        "submittedOn",
+        "expiresOn",
+        "discardedOn",
+        "discardReason",
+        "resultingVersion",
+        "decision",
+        "isAiCreated",
+        "performedBy",
+        "recordUrl"
+      ],
+      "properties": {
+        "configurationDraftId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "C46 Configuration Draft"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "object",
+          "required": [
+            "key",
+            "label"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/draftStatusMeaning"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "baseVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The version the draft was written against."
+        },
+        "isUpgradeDraft": {
+          "type": "boolean",
+          "description": "True for a draft a product release proposed."
+        },
+        "changeSummary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What the draft changes, one line per change, as the engine wrote it."
+        },
+        "operationCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "isValid": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "description": "False when the engine found rule errors when it validated the draft."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warningCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "instructedBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "submittedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "discardedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "discardReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resultingVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The version the draft became once activated."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/decisionRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client drafted it for the admin."
+        },
+        "performedBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "decisionRef": {
+      "type": "object",
+      "description": "A decision by its number, type and status, with a link to its page.",
+      "required": [
+        "decisionId",
+        "recordNumber",
+        "decisionType",
+        "status",
+        "decidedOn",
+        "recordUrl"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "acceptor": {
+      "type": "object",
+      "description": "A person whose approval counted, the day they answered, and the role or owner role the request asked.",
+      "required": [
+        "principal",
+        "answeredOn",
+        "askedAs"
+      ],
+      "properties": {
+        "principal": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "answeredOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "askedAs": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

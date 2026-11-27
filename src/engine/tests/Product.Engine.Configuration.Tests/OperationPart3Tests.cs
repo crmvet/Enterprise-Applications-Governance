@@ -91,13 +91,15 @@ public sealed class OperationPart3Tests
             var request = new StandardChangeRequest("standard", null, new StandardChangeFacts(tierRank: 1), order.Select(m => new ModelApprovalFact(m, DecisionStatusMeaning.Accepted)));
             EvaluationResult<StandardChangeResult?> result = StandardChangeOperation.Evaluate(compiled.Snapshot, OperationTestData.Context(compiled), request);
 
+            // Balanced's own model (document 21, B21-9) has no approving decision here, so it is skipped.
             Assert.Equal("a-model", result.Payload!.ModelKey);
-            Assert.Equal(new[] { "a-model:won", "b-model:dropped", "c-model:dropped" }, result.Trace.Where(t => t.Entity == "Standard Change Model").Select(t => t.Key + ":" + EngineContract.RuleTraceRoles.ToWire(t.Role)).OrderBy(s => s, StringComparer.Ordinal).ToArray());
+            Assert.Equal(new[] { "a-model:won", "b-model:dropped", "c-model:dropped", "routine-maintenance:skipped" }, result.Trace.Where(t => t.Entity == "Standard Change Model").Select(t => t.Key + ":" + EngineContract.RuleTraceRoles.ToWire(t.Role)).OrderBy(s => s, StringComparer.Ordinal).ToArray());
         }
     }
 
-    // Over every shipped selection: no preset ships a model, so a standard change never qualifies until a client lists
-    // one; an emergency type never qualifies; and with a client's model added, the OP-12 payload, passed on unchanged
+    // Over every shipped selection: the one model a preset ships (Balanced's routine-maintenance, document 21, B21-9) has no
+    // approving decision until a person in the install approves it, so a standard change never qualifies until then, and
+    // a type with no model has no candidate; an emergency type never qualifies; and with a client's model added, the OP-12 payload, passed on unchanged
     // through the wire form, makes OP-02 accept the standard change and cite the model's approving decision. A change
     // that does not qualify is refused by OP-02, never sent to a broader group.
     [Fact]
@@ -113,7 +115,9 @@ public sealed class OperationPart3Tests
                 var none = new StandardChangeRequest(type.Key, null, new StandardChangeFacts(tierRank: 1, statedConditionKeys: new[] { "labels-only" }));
                 EvaluationResult<StandardChangeResult?> nothing = StandardChangeOperation.Evaluate(shipped.Snapshot, OperationTestData.Context(shipped), none);
                 Assert.Equal("does-not-qualify", nothing.Outcome);
-                Assert.Equal(Flag(type, "allowsAuthorizationAfter") ? "standard-model.type" : "standard-model.no-candidate", Assert.Single(nothing.Reasons).Code);
+                bool shippedModel = Active(shipped.Snapshot, "standard-change-model").Any(m => Text(m, "changeTypeKey") == type.Key);
+                string expected = Flag(type, "allowsAuthorizationAfter") ? "standard-model.type" : shippedModel ? "standard-model.not-approved" : "standard-model.no-candidate";
+                Assert.Equal(expected, Assert.Single(nothing.Reasons).Code);
             }
 
             SnapshotRow? standard = Active(shipped.Snapshot, "change-type").FirstOrDefault(t => t.Key == "standard");
@@ -657,6 +661,11 @@ public sealed class OperationPart3Tests
     private static bool Flag(SnapshotRow row, string column)
     {
         return row.TryGetColumn(column, out JsonTreeNode? value) && value.Kind == JsonTreeKind.True;
+    }
+
+    private static string? Text(SnapshotRow row, string column)
+    {
+        return row.TryGetColumn(column, out JsonTreeNode? value) && value.Kind == JsonTreeKind.String ? value.GetString() : null;
     }
 
     private static JsonTreeNode Member(JsonTreeNode node, string name)

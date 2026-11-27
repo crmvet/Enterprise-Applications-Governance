@@ -1,6 +1,6 @@
 # P06 Gap check and claim
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-03](../../../src/docs/demo/scenarios/S-03-triage-gap-check-places-leavers.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Its reads of Microsoft's inventory have run only over recorded or demo responses, not in a real tenant. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -31,11 +31,11 @@ An admin asks, in Claude Code or another MCP client. Nothing runs unattended.
    - **Vanished:** a registered component of a live application that the run did not see opens a claim. Components of kinds the run cannot see are never marked vanished.
 5. **Record the run.** The product records who ran it, the role used, the estates, the client app and the counts. Open claims for the same Microsoft ID are updated, not duplicated.
 6. **Claim.** A candidate owner claims an item:
-   - **to an existing application:** the engine adds the technical component. If the claimant is not an owner of that application, a confirmation card goes to its technical owner ([P10](p10-ai-draft-and-human-accept.md)). Which act counts as a person's here is an open design question;
+   - **to an existing application:** the engine adds the technical component. If the claimant is not an owner of that application, a confirmation request goes to its technical owner ([P10](p10-ai-draft-and-human-accept.md)). Which act counts as a person's here is an open design question;
    - **to a new application:** the claim starts an intake ([P01](p01-intake-and-triage.md)) with the component filled in.
 7. **Dismiss.** The platform admin dismisses an item with a reason, for example "not a business application".
 8. **Resolve vanished items.** The technical owner says what happened: retired (this sets the component's retirement date; [P09](p09-retirement.md)), moved (a migration created a new app ID, and the new component records which one it replaces), or still there in an estate the run could not read.
-9. **Agents.** Microsoft's agent registry already shows agents without owners. The product links to that evidence and records the business decision, made by the AI lead. It never reassigns owners in Agent 365. That happens in the Microsoft 365 admin center.
+9. **Agents (designed, not built).** Microsoft's agent registry already shows agents without owners. The product is designed to link to that evidence and record the business decision, made by the AI lead. It never reassigns owners in Agent 365. That happens in the Microsoft 365 admin center.
 
 ## What is recorded
 
@@ -47,12 +47,12 @@ An admin asks, in Claude Code or another MCP client. Nothing runs unattended.
 | Business application | Created through [P01](p01-intake-and-triage.md) when the claim is for a new app |
 | Decision | Ownership, and decisions on agents |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
 | Ownership of a new application | The named business owner | Everyone must approve |
-| Attaching a component to an application by someone who is not its owner | The application's technical owner, on a confirmation card | First to respond |
+| Attaching a component to an application by someone who is not its owner | The application's technical owner, through a confirmation request | First to respond |
 | Decision on a flagged agent | AI lead | First to respond |
 
 ## What an organization can configure
@@ -63,7 +63,7 @@ An admin asks, in Claude Code or another MCP client. Nothing runs unattended.
 - Who decides ownership.
 - Who can read claims. The default is "admins and the claimant".
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 

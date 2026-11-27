@@ -42,7 +42,7 @@
     },
     {
       "key": "intake-cancelled",
-      "label": "Cancelled",
+      "label": "Canceled",
       "appliesToEntity": "intake-request",
       "engineMeaning": "cancelled"
     },
@@ -69,7 +69,7 @@
     },
     {
       "key": "change-cancelled",
-      "label": "Cancelled",
+      "label": "Canceled",
       "appliesToEntity": "change-request",
       "engineMeaning": "cancelled"
     },
@@ -86,6 +86,25 @@
       "appliesToEntity": "business-application",
       "engineMeaning": "archived"
     },
+    { "key": "data-location-draft", "label": "Draft", "appliesToEntity": "data-location", "engineMeaning": "draft" },
+    {
+      "key": "data-location-registered",
+      "label": "Registered",
+      "appliesToEntity": "data-location",
+      "engineMeaning": "registered"
+    },
+    { "key": "data-location-archived", "label": "Archived", "appliesToEntity": "data-location", "engineMeaning": "archived" },
+    { "key": "data-mapping-draft", "label": "Draft", "appliesToEntity": "data-mapping", "engineMeaning": "draft" },
+    {
+      "key": "data-mapping-registered",
+      "label": "Registered",
+      "appliesToEntity": "data-mapping",
+      "engineMeaning": "registered"
+    },
+    { "key": "data-mapping-archived", "label": "Archived", "appliesToEntity": "data-mapping", "engineMeaning": "archived" },
+    { "key": "data-use-draft", "label": "Draft", "appliesToEntity": "data-use", "engineMeaning": "draft" },
+    { "key": "data-use-registered", "label": "Confirmed", "appliesToEntity": "data-use", "engineMeaning": "registered" },
+    { "key": "data-use-archived", "label": "Archived", "appliesToEntity": "data-use", "engineMeaning": "archived" },
     { "key": "approval-pending", "label": "Waiting", "appliesToEntity": "approval-record", "engineMeaning": "pending" },
     {
       "key": "approval-approved",
@@ -102,7 +121,7 @@
     { "key": "approval-expired", "label": "Expired", "appliesToEntity": "approval-record", "engineMeaning": "expired" },
     {
       "key": "approval-cancelled",
-      "label": "Cancelled",
+      "label": "Canceled",
       "appliesToEntity": "approval-record",
       "engineMeaning": "cancelled"
     },
@@ -146,6 +165,6 @@
     },
     { "key": "review-due", "label": "Due", "appliesToEntity": "review", "engineMeaning": "due" },
     { "key": "review-done", "label": "Done", "appliesToEntity": "review", "engineMeaning": "done" },
-    { "key": "review-cancelled", "label": "Cancelled", "appliesToEntity": "review", "engineMeaning": "cancelled" }
+    { "key": "review-cancelled", "label": "Canceled", "appliesToEntity": "review", "engineMeaning": "cancelled" }
   ]
 }

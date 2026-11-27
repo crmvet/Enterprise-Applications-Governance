@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "priority-sponsor-with-business-owner-fallback",
+  "description": "Priority has no approval rules, so the sponsor holds the one card, and the accountable row names the business owner as the fallback for a request with no sponsor yet (P01 step 8).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "priority",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "accountable",
+          "decisionRightKey": "priority-a",
+          "approverOwnerRoleKey": "sponsor",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "requiresTypedReason": false,
+          "fallbackOwnerRoleKey": "business-owner"
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact"
+  }
+}

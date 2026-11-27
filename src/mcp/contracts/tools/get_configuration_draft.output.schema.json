@@ -1,0 +1,743 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_configuration_draft output",
+  "description": "The response envelope. On success, data is the draft with its diff, validation and impact. nextSteps name submit_record for a draft and withdraw_record while it is open.",
+  "x-tool": "get_configuration_draft",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "draft",
+        "proposalRationale",
+        "baseMoved",
+        "activeVersion",
+        "diff",
+        "validation",
+        "impact",
+        "decision",
+        "approvals",
+        "acceptedBy"
+      ],
+      "properties": {
+        "draft": {
+          "$ref": "#/$defs/draft"
+        },
+        "proposalRationale": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Why the admin asked for the change."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "baseMoved": {
+          "type": "boolean",
+          "description": "True when the draft is open and its base version is no longer the version in force: the engine rebases at activation and refuses an overlap."
+        },
+        "activeVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "diff": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "key",
+              "op",
+              "before",
+              "after"
+            ],
+            "properties": {
+              "entity": {
+                "$ref": "../common.schema.json#/$defs/entityKey"
+              },
+              "key": {
+                "$ref": "../common.schema.json#/$defs/keyPath"
+              },
+              "op": {
+                "enum": [
+                  "added",
+                  "updated",
+                  "retired"
+                ]
+              },
+              "before": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "after": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The row diff against the configuration in force now."
+        },
+        "validation": {
+          "type": "object",
+          "description": "What the engine found when it validated the draft (OP-09).",
+          "required": [
+            "isValid",
+            "errors",
+            "warnings"
+          ],
+          "properties": {
+            "isValid": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/issue"
+              }
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/issue"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "impact": {
+          "type": "object",
+          "required": [
+            "applicationsAffected",
+            "applications",
+            "byChange",
+            "gateChanges",
+            "gatesTouched",
+            "recordsInFlight",
+            "dataUses"
+          ],
+          "properties": {
+            "applicationsAffected": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "applications": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "businessApplicationId",
+                  "name",
+                  "tier",
+                  "recordUrl"
+                ],
+                "properties": {
+                  "businessApplicationId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  "name": {
+                    "type": "string",
+                    "x-untrusted": true
+                  },
+                  "tier": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "recordUrl": {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Up to 50 of the applications whose rules would change."
+            },
+            "byChange": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "entity",
+                  "key",
+                  "applicationsAffected",
+                  "sampleApplicationIds"
+                ],
+                "properties": {
+                  "entity": {
+                    "$ref": "../common.schema.json#/$defs/entityKey"
+                  },
+                  "key": {
+                    "$ref": "../common.schema.json#/$defs/keyPath"
+                  },
+                  "applicationsAffected": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "sampleApplicationIds": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O02 Business Application"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "gateChanges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "tierKey",
+                  "changeTypeKey",
+                  "targetStageKey",
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "tierKey": {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  "changeTypeKey": {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  "targetStageKey": {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/gateLevel"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "to": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/gateLevel"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "gatesTouched": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "description": "The gates whose requirements or rows the draft changes."
+            },
+            "recordsInFlight": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Records already submitted. They keep the requirements frozen at their submission."
+            },
+            "dataUses": {
+              "type": "array",
+              "description": "The live data uses and copies on the domains the change touches, with their state under the configuration in force and under the change (docs/architecture/data-taxonomy.md, Changing the taxonomy). Empty once the draft is activated, withdrawn or expired, or when the change touches no domain.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "id",
+                  "recordNumber",
+                  "application",
+                  "domain",
+                  "stateBefore",
+                  "stateAfter",
+                  "breaksRule",
+                  "needsNewDecision",
+                  "recordUrl"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "data-use",
+                      "data-mapping"
+                    ]
+                  },
+                  "id": {
+                    "$ref": "../common.schema.json#/$defs/id"
+                  },
+                  "recordNumber": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "application": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "businessApplicationId",
+                          "name"
+                        ],
+                        "properties": {
+                          "businessApplicationId": {
+                            "$ref": "../common.schema.json#/$defs/id"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "domain": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "key",
+                      "path"
+                    ],
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "stateBefore": {
+                    "type": "string",
+                    "description": "The OP-16 state: not-needed, needed, proposed, allowed, denied, re-decide, no-one-to-ask or breaks-rule."
+                  },
+                  "stateAfter": {
+                    "type": "string",
+                    "description": "The OP-16 state: not-needed, needed, proposed, allowed, denied, re-decide, no-one-to-ask or breaks-rule."
+                  },
+                  "breaksRule": {
+                    "type": "boolean",
+                    "description": "True when the use or copy would break a rule under the change and does not today."
+                  },
+                  "needsNewDecision": {
+                    "type": "boolean",
+                    "description": "True when a use that is allowed or needs no decision today would need a decision under the change."
+                  },
+                  "recordUrl": {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/decisionRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvals": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/approvalsSummary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptedBy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/acceptor"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "draft": {
+      "type": "object",
+      "description": "One configuration draft (C46).",
+      "required": [
+        "configurationDraftId",
+        "recordNumber",
+        "state",
+        "baseVersion",
+        "isUpgradeDraft",
+        "changeSummary",
+        "operationCount",
+        "isValid",
+        "errorCount",
+        "warningCount",
+        "instructedBy",
+        "submittedOn",
+        "expiresOn",
+        "discardedOn",
+        "discardReason",
+        "resultingVersion",
+        "decision",
+        "isAiCreated",
+        "performedBy",
+        "recordUrl"
+      ],
+      "properties": {
+        "configurationDraftId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "C46 Configuration Draft"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "object",
+          "required": [
+            "key",
+            "label"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/draftStatusMeaning"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "baseVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The version the draft was written against."
+        },
+        "isUpgradeDraft": {
+          "type": "boolean",
+          "description": "True for a draft a product release proposed."
+        },
+        "changeSummary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What the draft changes, one line per change, as the engine wrote it."
+        },
+        "operationCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "isValid": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "description": "False when the engine found rule errors when it validated the draft."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warningCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "instructedBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "submittedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "discardedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "discardReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resultingVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The version the draft became once activated."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/decisionRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client drafted it for the admin."
+        },
+        "performedBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "decisionRef": {
+      "type": "object",
+      "description": "A decision by its number, type and status, with a link to its page.",
+      "required": [
+        "decisionId",
+        "recordNumber",
+        "decisionType",
+        "status",
+        "decidedOn",
+        "recordUrl"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "acceptor": {
+      "type": "object",
+      "description": "A person whose approval counted, the day they answered, and the role or owner role the request asked.",
+      "required": [
+        "principal",
+        "answeredOn",
+        "askedAs"
+      ],
+      "properties": {
+        "principal": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "answeredOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "askedAs": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "issue": {
+      "type": "object",
+      "required": [
+        "entity",
+        "key",
+        "ruleKey",
+        "message"
+      ],
+      "properties": {
+        "entity": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/entityKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "key": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/keyPath"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ruleKey": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The validation rule, such as V23."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

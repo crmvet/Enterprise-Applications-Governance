@@ -7,6 +7,7 @@ using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Product.Azure.Host;
 using Product.Azure.Host.Seeding;
 using Product.Azure.Stores;
 using Product.Azure.Stores.SqlServer;
@@ -37,10 +38,16 @@ Commands:
                     --connection <name>  connection string name, default Product
                     --app-identity <n>   database user name of the app's managed identity
   schema-script   Write the table script generated from the logical model:
-                    --out <file>         output file, default standard output";
+                    --out <file>         output file, default standard output
+  refresh-due-states
+                  Run the engine's daily due-state refresh once, now, as the engine (document 23, S2):
+                    --dry-run            run every item and write nothing";
 
-    /// <summary>The environment name of a demo install, where the seed command may write the fictional demo estate.</summary>
-    public const string DemoEnvironment = "Demo";
+    /// <summary>
+    /// The environment name of a demo install, where the seed command may write the fictional demo estate and the web app
+    /// may offer the demo persona switch (D-39). The same name as <see cref="ProductDemo.EnvironmentName"/>.
+    /// </summary>
+    public const string DemoEnvironment = ProductDemo.EnvironmentName;
 
     /// <summary>Seeds the demo. Returns the process exit code.</summary>
     public static int Seed(string[] args, TextWriter output)
@@ -73,7 +80,7 @@ Commands:
             return 1;
         }
 
-        SeedResult result = ProductSeeding.SeedDemo(store, catalog, preset, overlays, binding, rows, validatedOn);
+        SeedResult result = ProductSeeding.SeedDemo(store, catalog, preset, overlays, binding, rows, validatedOn, DateTime.UtcNow);
         output.WriteLine("Seeded " + ((Product.Engine.Runtime.Ports.IRecordStore)store).StoreId + ": " + result.ConfigurationSetKey + " version " + result.VersionNumber + " (" + result.ContentHash + "), " + result.RowsSeeded + " rows.");
         return 0;
     }
@@ -101,6 +108,36 @@ Commands:
         var variables = new Dictionary<string, string>(StringComparer.Ordinal) { ["AppIdentityName"] = identity! };
         SqlServerMigrations.Apply(connection!, variables, output);
         output.WriteLine("Schema version " + SqlServerMigrations.AppliedVersion(connection!) + " is applied (this build needs " + SqlServerMigrations.RequiredVersion + ").");
+        return 0;
+    }
+
+    /// <summary>
+    /// Runs the engine's due-state refresh once, as the engine itself, against the store the server is configured for
+    /// (document 23, S2; document 25, B25-18). The Functions app runs the same refresh from its timer.
+    /// Returns the process exit code.
+    /// </summary>
+    public static int RefreshDueStates(string[] args, TextWriter output)
+    {
+        bool dryRun = args.Any(a => string.Equals(a, "--dry-run", StringComparison.OrdinalIgnoreCase));
+        (IConfiguration configuration, IHostEnvironment environment) = Configuration(args.Where(a => !string.Equals(a, "--dry-run", StringComparison.OrdinalIgnoreCase)).ToArray());
+        PresetCatalog catalog = PresetCatalog.Load(new[] { FromBase(configuration["Product:PresetsPath"] ?? "presets") });
+        using IProductStore store = ServerStore.Create(configuration, environment);
+        var runtime = new Product.Engine.Runtime.EngineRuntime((Product.Engine.Runtime.Ports.IRecordStore)store, (Product.Engine.Runtime.Ports.IConfigurationStore)store, catalog);
+        int max = int.TryParse(configuration["Product:DueStateRefresh:MaxItems"], NumberStyles.None, CultureInfo.InvariantCulture, out int configured) && configured > 0 ? configured : Product.Engine.Runtime.DueStateRefreshRequest.DefaultMaxItems;
+        Product.Engine.Runtime.RuntimeOutcome outcome = DueStateRefreshRunner.RunOnce(runtime, Product.Engine.Runtime.DueStateRefreshRequest.CommandTrigger, dryRun, max, null);
+        if (!outcome.Succeeded)
+        {
+            output.WriteLine("The due-state refresh did not run: " + outcome.Outcome + (outcome.Reasons.Count == 0 ? "." : " (" + outcome.Reasons[0].Code + ": " + outcome.Reasons[0].Message + ")"));
+            return 1;
+        }
+
+        JsonTreeNode counts = Product.Mcp.Core.Json.Js.Member(outcome.Payload, "counts") ?? Product.Mcp.Core.Json.Js.EmptyObject;
+        output.WriteLine((dryRun ? "Dry run of the due-state refresh, nothing written: " : "The due-state refresh ran: ") + Product.Mcp.Core.Json.Js.Write(counts));
+        foreach (Product.Engine.Core.Reason warning in outcome.Reasons)
+        {
+            output.WriteLine("  " + warning.Code + ": " + warning.Message);
+        }
+
         return 0;
     }
 

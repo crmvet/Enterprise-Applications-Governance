@@ -18,7 +18,7 @@
 |---|---|---|
 | SR-01 | People get product roles only through membership of an Entra group bound to the role. No product role is ever assigned to a person directly | D-11 |
 | SR-02 | Non-human principals (agent identities, agent users, agent accounts, service principals, managed identities) never hold a human product role. A pipeline or the approval runner gets one workload role through a narrow, listed C42 Workload Grant instead (section 3.4). Agent identities and agent users never get a grant (working default, open design question 12, see 28-working-defaults.md) | D-11, sweep proposal |
-| SR-03 | AI never approves. Only a human user, answering through the approval channel, can produce an approval that counts. The responder's directory object type is checked, not the channel | D-02, D-10, sweep proposal |
+| SR-03 | AI never approves. Only a human user can produce an approval that counts, answering on the product's decision page, where the token proves who answered (D-38), or on a card where an install keeps that option. The responder's directory object type is checked, not the channel | D-02, D-10, D-38, sweep proposal |
 | SR-04 | Every write goes through the engine, whoever the caller. The engine always runs as the caller and never with more rights (working default, Q15). On Dataverse the engine is synchronous plug-ins and custom APIs; on Azure it is the API, which is the only write path | D-10, D-22 |
 | SR-05 | Every write records who acted, as what kind of actor, through which client app, on behalf of whom, and under which configuration set version | D-10 |
 | SR-06 | Decisions, approval records and audit entries are append-only once final | Document 20 rule 6 |
@@ -38,7 +38,7 @@
 - **Eleven checks** (CHK-01 to CHK-11) flag direct assignments, non-human group members, nested groups, drift, departed owners and guest holders. Results land in an access check review (C24), never in automatic membership changes.
 - **Record access:** open read of the register by default, with three settings: intake visible to its requester and a few roles, claims visible to admins and the claimant, and portfolio-read available (working default, Q13). Narrow writes always (owner assignment, portfolio scope or decision rights), append-only evidence. Nobody writes configuration tables directly; live configuration changes only inside the activation operation (working default, 28 issue 3).
 - **Column protection:** engine-written columns (tier, stage, flags, approval counts), approval-writer-only columns (approval outcome), restricted-read columns (audit change values, technical identifiers). Configuration rows list them.
-- **Approvals:** the engine creates approval records from approval rules; the approval runner (the approval flows), holding the approval writer workload role, writes the outcome; the engine counts it only if the responder is a human user who holds the required role at response time and is not excluded by a C40 Separation Rule.
+- **Approvals:** the engine creates approval records from approval rules; the person asked answers on the product's decision page, and Teams and Outlook messages link there (D-38); the engine records the answer only for the signed-in person the request asks, and counts it only if the responder is a human user who holds the required role at response time and is not excluded by a C40 Separation Rule. The approval runner (the approval flows), holding the approval writer workload role, still writes an answer given on a card.
 - **Audit:** platform audit plus the product's own audit entries (O24). On Azure the product log is the full change log in an append-only ledger table with digests in immutable storage.
 - **Residency and backups** follow the platform: a Power Platform geography on Dataverse, the client's chosen Azure region on Azure, with backup redundancy chosen to stay inside the boundary.
 - **Top 10 threats** are in section 13, each with a Dataverse and an Azure mitigation.
@@ -99,7 +99,7 @@ Why agent users need special care: Learn says agent users have "user-like capabi
 
 | Actor kind | When the engine records it | Can it approve |
 |---|---|---|
-| Person | A human user acted directly, through the app or the web page | Yes, only through the approval channel |
+| Person | A human user acted directly, through the app or the web page | Yes: their own answer on the product's decision page (D-38), or on a card the approval runner brings |
 | AI client for a person | A human user's token arrived through an AI client, such as Claude Code through the product's MCP server | No |
 | Agent identity | A call arrived with an agent identity or agent user as the subject. Refused for every write in the default configuration | No |
 | Pipeline | A workload grant holder of kind deployment recorder wrote a deployment record | No |
@@ -153,11 +153,12 @@ Every row is a configuration row a client may rename, merge, split or drop (D-06
 | `auditor` | Auditor (read only) | Any | Read everything, including audit entries and restricted-read columns. Never writes | Nothing | `<product>-role-auditor` | D-01 |
 | `reader` | Reader (new term) | Any | Read the register, decisions and the change schedule. No audit entries, no restricted-read columns. Never writes | Nothing | `<product>-role-reader` | D-11 (proposal in this document; in document 21's seed list by working default, 28 issue 7) |
 | `security-reviewer` | Security reviewer (new term) | IT (security and risk) | Record security review decisions; own the tier rules' security questions | Security review for tier 3; must agree on restricted data reaching an AI model; autonomy level (accountable) | `<product>-role-security-reviewer` | D-01 (security sits inside IT) |
+| `data-governance-lead` | Data governance lead (new term) | Business (the data office) | Read the register; propose owner changes; keep data locations and mappings current; see every data gap | The owners of top-level data domains in Balanced and Regulated (accountable, from data taxonomy slice 2); the platform admin does it in Starter | `<product>-role-data-governance-lead` | D-41, question 4 (B26-15) |
 
 Notes:
 
 - **AI lead (D-20).** The client can map it to the same group as the platform admin (small team), require a different person (strict separation), rename it, drop it, or change which decisions it approves. These are C30 and C32 rows, not code.
-- **One seed list.** Document 21 holds the one C29 seed list, agreed with this table: these 14 human roles, plus the workload roles `deployment-recorder` and `approval-writer` (section 3.4), held only through workload grants (working default, 28 issue 7). Document 20's C29 seed line carries the same list. Without `reader` and `security-reviewer`, every read-only person would need the auditor role, which also reads the audit trail, and the security decisions in the default decision rights would have no role to point to.
+- **One seed list.** Document 21 holds the one C29 seed list, agreed with this table: these 15 human roles, plus the workload roles `deployment-recorder` and `approval-writer` (section 3.4), held only through workload grants (working default, 28 issue 7). Document 20's C29 seed line carries the same list. Without `reader` and `security-reviewer`, every read-only person would need the auditor role, which also reads the audit trail, and the security decisions in the default decision rights would have no role to point to.
 - **Change authority.** The change manager authorizes tier 3 changes and emergencies; the board handles exceptions and windows that cover several applications. A client that wants board scrutiny for tier 3 changes one approval rule and one decision right (working default, Q11).
 - **Platform admin is not a configuration admin.** A person can hold both, but the roles stay separate so that a preset can require two people (section 7.7).
 - **Administrators are not data users by default** (I-74). On Dataverse, Power Platform, Dynamics 365 and Global administrators are no longer given the System Administrator role automatically and must self-elevate, and every elevation is logged in Microsoft Purview [SM16, SM17]. The product's roles never include System Administrator.
@@ -284,7 +285,7 @@ The default is open read, with three settings (working default, 28 issue 10 and 
 
 | Setting | Values | Default | Who reads at the default |
 |---|---|---|---|
-| `intake-visibility` (document 22) | `own`, `all` | `own` | The requester of the row, plus the PMO, platform admin and architect roles |
+| `intake-visibility` (document 22) | `own`, `all` | `own` | The requester of the row, plus the PMO, platform admin, architect and auditor roles (the auditor reads everything; wave 4 fix round 1). The AI lead and the security reviewer also read a request an AI client drafted, as they oversee every person's AI work (wave 4 fix round 1) |
 | `claim-visibility` (document 22) | `admins-and-claimant`, `all` | `admins-and-claimant` | The platform admin and AI lead roles, plus the suggested claimant or the person who claimed the item. Applies to gap check runs and claims |
 | `record-access-mode` (this document) | `open-read`, `portfolio-read` | `open-read` | Every holder of any product role, for every other operational record |
 
@@ -309,10 +310,10 @@ Writes never depend on the read mode. A role holder may change an application's 
 | Business application (O02) | All roles | Requester, maker, application owner (as Draft); platform admin | Own apps: application owner and maker (builder). Platform admin. Registration status, tier and stage: engine only, from accepted decisions | Draft rows by creator |
 | Technical component, dependency (O03, O04) | All roles; external IDs and URLs restricted (section 6) | Own apps; architect; platform admin; claim step | Own apps; architect; platform admin | None (end dated or archived) |
 | Owner assignment (O06) | All roles | Engine, from an accepted ownership decision | Engine only | None |
-| Intake request (O07) | By `intake-visibility`. Default: the requester of the row, PMO, platform admin and architect | Requester and above | Requester while Draft; PMO for score, horizon, size band; platform admin for triage fields | Draft by creator |
+| Intake request (O07) | By `intake-visibility`. Default: the requester of the row, PMO, platform admin, architect and auditor | Requester and above | Requester while Draft; PMO for score, horizon, size band; platform admin for triage fields | Draft by creator |
 | Tier assessment (O08) | All roles | Requester, application owner, platform admin | Assessor while not final | None |
 | Decision (O09) | All roles | Any role holder, as Proposed. AI-created rows always Proposed | Proposer while Proposed. Status: engine only. Accepted rows: never | None; Proposed rows can be Withdrawn |
-| Approval record (O10) | All roles | Engine, from approval rules | Outcome columns: approval writer only (column security, Q15). Counts Toward Requirement: engine only | None |
+| Approval record (O10) | All roles | Engine, from approval rules | Outcome columns: the approval writer (column security, Q15), or the person the request asks, through the decision page and the engine's approval answer check (D-38). Counts Toward Requirement: engine only | None |
 | Change request, affected application (O11, O12) | All roles | Application owner (own apps), maker (own apps), change manager | Same as create while not completed; result: change manager, application owner | Draft by creator |
 | Artifact version, deployment record (O13, O14) | All roles | Deployment recorder workload; application owner and maker (own apps); platform admin | Result and read-back columns by the sender before final; flags: engine only | None |
 | Deployment target, pipeline reference, pipeline map (O15 to O17) | All roles; external IDs and URLs restricted | Platform admin; application owner (map entries, own apps) | Same | None (archived) |
@@ -378,7 +379,7 @@ New configuration entity (section 15): **Column Protection Rule**, one row per p
 | Protection kind | Meaning |
 |---|---|
 | Engine-written | No person and no AI client writes it, through any route. Only the engine sets it, in its own engine-nested write, still running as the caller (RA-12). A value for it in a request is refused |
-| Approval-writer-only | Only the approval writer workload role sets it. Platform column security enforces this on both bindings (working default, Q15) |
+| Approval-writer-only | Only the approval writer workload role sets it, or, since D-38, the person the approval request asks, writing their own answer through the decision page after the engine's approval answer check. Platform column security enforces this on both bindings (working default, Q15) |
 | Restricted read | Only listed roles read it; others see it empty or masked |
 | Masked read | Others see a partial value |
 
@@ -433,8 +434,8 @@ New configuration entity (section 15): **Column Protection Rule**, one row per p
 
 | ID | Rule |
 |---|---|
-| AN-01 | No tool, custom API or page action approves, rejects or completes an approval. The only path to an outcome is the approval channel |
-| AN-02 | Only the approval writer workload role, held by the approval runner, writes outcome columns (section 6.2) |
+| AN-01 | A person answers an approval request they were asked on the product's decision page, and the token proves who answered (D-38). Teams and Outlook messages are notices that link to the page; answering inside a card stays a later per-install option. No tool an AI client is served approves, rejects or completes an approval, and no tool or page action accepts a decision: the engine accepts it when the counted answers meet the rule. Step-up sign-in for tier 3 and configuration changes is a setting, off in the demo |
+| AN-02 | Outcome columns (section 6.2) are written only by the person the request asks, through the decision page after the engine's approval answer check (the responder is the signed-in person, never a value in the request), or by the approval writer workload role, held by the approval runner, for an answer given on a card (D-38) |
 | AN-03 | The engine counts an approval only if: outcome is approved; Approver Principal Kind is user (not agent user); Approver Actor Kind is person; the responder holds the required role or owner role at response time; and no C40 Separation Rule excludes them (OP-03 reads C40, working default 28 issue 5) |
 | AN-04 | Approvers are resolved from live Entra membership or current owner assignments when the request is sent; non-human members are dropped before the card goes out and reported by CHK-02 |
 | AN-05 | An answer from a non-human principal is stored with outcome "recommendation only" and never counts |
@@ -449,17 +450,17 @@ New configuration entity (section 15): **Column Protection Rule**, one row per p
 
 1. A decision is recorded as Proposed (by a person, or by an AI client for a person).
 2. The engine finds the approval rules (C32) that match the decision type and scope. The single most specific rule group wins, and broader groups drop out (working default, 28 issue 2). With no rule, one card goes to the accountable holder (AN-11). The engine creates one approval record per required approval and resolves the approvers (AN-04).
-3. The approval runner, holding the approval writer workload role, sends approval cards to those people through Power Automate approvals. Approval types include everyone must approve, first to respond, and custom responses [SM42].
-4. A person answers in Outlook, Teams or the action center. Responses include the approver's name, email and comments [SM42].
-5. The approval runner resolves the responder's directory object with Microsoft Graph and reads its type. A human user returns `#microsoft.graph.user`; an agent user returns the `#microsoft.graph.agentUser` subtype [SM24]. Which flow connector or action returns the full type, and the exact responder ID output of the approval action, are UNVERIFIED (spike).
-6. The approval runner writes outcome, responder, principal kind, actor kind, channel and the run link to the approval record.
+3. The people asked get a notice in Teams or Outlook that links to the decision page (D-38). Where an install keeps cards, the approval runner, holding the approval writer workload role, sends approval cards through Power Automate approvals; approval types include everyone must approve, first to respond, and custom responses [SM42].
+4. A person answers on the decision page, signed in with Entra (step-up sign-in where the setting asks for it). The engine's approval answer check runs first: the person holds the role or owner role now, no separation rule keeps the answer from counting, the request is pending and not expired, and a typed reason is given where needed; a refused answer writes nothing. On a card, a person answers in Outlook, Teams or the action center, and responses include the approver's name, email and comments [SM42].
+5. On the page, the token gives the responder's object ID, and the engine resolves the caller and its principal kind as for every call. For a card, the approval runner resolves the responder's directory object with Microsoft Graph and reads its type. A human user returns `#microsoft.graph.user`; an agent user returns the `#microsoft.graph.agentUser` subtype [SM24]. Which flow connector or action returns the full type, and the exact responder ID output of the approval action, are UNVERIFIED (spike).
+6. The engine writes the person's own answer (outcome, responder, principal and actor kind, channel in-app, typed reason), or the approval runner writes a card's answer with the run link.
 7. The engine runs AN-03 (OP-03, reading C40), sets Counts Toward Requirement, and when every requirement is met moves the decision to Accepted and applies its effects in the same transaction, as engine-nested writes under the caller (section 3.4). For an accepted configuration change decision, that effect is the activation: the only operation that writes live configuration rows and creates the C02 version (RA-11). Anything else stays Proposed or becomes Rejected.
 
 ### 7.3 Checks at response time
 
 | Check | Source of truth | If it fails |
 |---|---|---|
-| Writer holds the approval writer workload role | Platform identity of the caller (application user, or app-only token) and a current C42 Workload Grant | Write refused; product event logged |
+| Writer is the person the request asks (the decision page), or holds the approval writer workload role (a card) | The validated token of the signed-in person, checked by the engine's approval answer check (D-38); or the platform identity of the caller (application user, or app-only token) and a current C42 Workload Grant | Write refused, nothing recorded; product event logged |
 | Responder is a human user | Graph object type [SM24] | Stored as recommendation only |
 | Responder is not a guest, unless the rule allows guests | Graph user type | Stored, does not count |
 | Responder holds the required role or owner role now | Live Entra membership, or current owner assignment | Stored, does not count; reminder to the deputy |
@@ -474,17 +475,17 @@ New configuration entity (section 15): **Column Protection Rule**, one row per p
 
 ### 7.5 Azure binding
 
-The default is Power Automate approval cards from the approval runner flow group, which carries one Process license. The product's own approval page is offered where a client's security review asks for token-level evidence of the approver (working default, Q19; it applies, because D-26 picks the Azure binding).
+Since D-38 the default is the product's own decision page: the person answers there, and Teams and Outlook messages link to it. Power Automate approval cards from the approval runner flow group become a later per-install option for answering inside a card. (Working default Q19 had cards first and the page where a security review asked; D-38 reverses that order.)
 
 | Option | Status | How | Identity evidence | License and cost |
 |---|---|---|---|---|
-| A. Power Automate approval cards | Default (Q19) | The approval runner, a flow group in one Power Platform environment with Dataverse kept for approvals, sends cards and calls the product's API as the approval writer (app role on its service principal, held through a C42 grant) | Responder from the approval output, resolved through Graph | One Process license on the runner flow group; approvers need Power Automate rights, not Premium (document 23, section 3.2) |
-| B. The product's own approval page | Offered where a security review asks | Cards or emails link to a page where the person signs in with Entra and answers | The token's object ID and type, checked like any API call; Conditional Access applies to the sign-in | Azure hosting only |
+| A. Power Automate approval cards | A later per-install option (D-38) | The approval runner, a flow group in one Power Platform environment with Dataverse kept for approvals, sends cards and calls the product's API as the approval writer (app role on its service principal, held through a C42 grant) | Responder from the approval output, resolved through Graph | One Process license on the runner flow group; approvers need Power Automate rights, not Premium (document 23, section 3.2) |
+| B. The product's own approval page | Default (D-38); built as `answer_approval` on the web app's entry (B26-7) | Cards or emails link to a page where the person signs in with Entra and answers | The token's object ID and type, checked like any API call; Conditional Access applies to the sign-in | Azure hosting only |
 | C. Logic Apps | Not used by default | A Logic Apps workflow with a managed identity sends approval email and calls the API | Responder identity from an approval email response: UNVERIFIED how strongly it is authenticated | Pay per action (see [Logic Apps pricing](https://azure.microsoft.com/pricing/details/logic-apps/)) |
 
 ### 7.6 Residual risks
 
-- **An approver's own AI acting as the approver.** If a person lets an AI tool answer a card in their name through a delegated API, the responder object is the person. The product cannot see this. Whether any Microsoft API lets a client answer a Power Automate approval as the user is UNVERIFIED. Mitigations: typed reasons, Purview audit of approval actions, client-side controls such as Work IQ human approval options (sweep), and, on Azure option B (the product's own approval page), step-up sign-in through Conditional Access.
+- **An approver's own AI acting as the approver.** If a person lets an AI tool answer a card in their name through a delegated API, the responder object is the person. The product cannot see this. Whether any Microsoft API lets a client answer a Power Automate approval as the user is UNVERIFIED. Mitigations: typed reasons, Purview audit of approval actions, client-side controls such as Work IQ human approval options (sweep), and, on the product's own decision page, step-up sign-in through Conditional Access for tier 3 and configuration changes, a setting that is off in the demo (D-38; B26-7).
 - **An agent user answering a card.** Agent users have mailboxes and Teams presence [SM23]. AN-04 drops them before sending, and step 5 catches them if they answer anyway. A spike tests that an agent identity cannot complete a card (sweep proposal).
 
 ### 7.7 Separation of duties (configuration)
@@ -635,7 +636,7 @@ When a person reads the register through an AI client, tool results go to that c
 
 | ID | Threat | Example | Dataverse mitigation | Azure mitigation | Residual risk |
 |---|---|---|---|---|---|
-| T01 | AI records or counts an approval | An owner's Claude Code session, signed in as the approver, tries to set an approval outcome; an agent user answers a card | No approve tool (AN-01); outcome columns secured to the approval writer (column security); plug-in checks the writer and responder type (AN-03); agent users dropped before sending | Same rules in the API; app role check on the writer; responder type from Graph | A person lets an AI answer in their name through a delegated API (section 7.6) |
+| T01 | AI records or counts an approval | An owner's Claude Code session, signed in as the approver, tries to set an approval outcome; an agent user answers a card | No approve tool for an AI client (AN-01); outcome columns secured to the approval writer and the person's own answer through the decision page (column security); plug-in checks the writer and responder type (AN-03); agent users dropped before sending | `answer_approval` is served only on the web app's entry and refused to an AI client; the engine's approval answer check accepts only a person signed in as a user, the one the request asks; app role check on the runner; responder type from Graph | A person lets an AI answer in their name through a delegated API (section 7.6) |
 | T02 | Token misuse at the MCP server or API | The server forwards the user's token downstream; accepts a token issued for another resource; a gateway uses one shared credential | On-behalf-of only, never pass-through [SM27]; audience validation [SM26]; Dataverse roles still apply to the on-behalf-of token | Same; assignment required [SM29]; stateless server; gateway passes caller tokens (sweep proposal) | Misconfiguration; covered by the on-behalf-of spike tests |
 | T03 | Engine bypass | A system administrator sends writes with `BypassBusinessLogicExecution`; someone disables a plug-in step; a bulk import | No product role holds System Administrator or the bypass privilege [SM41]; CHK-10; Engine Checked On stamp and the scheduled consistency check; System Administrator kept for break-glass accounts (Q16); auditing still records changes; self-elevation logged [SM17] | Only the API's identity has general write; Entra-only authentication [SM31b]; no human DML; RLS block predicates [SM32]; the same stamp and check; database owner kept for break-glass accounts (Q16) | A determined platform administrator; detected, not prevented |
 | T04 | Role creep and wrong holders | A role assigned to a user directly; a departed owner still in the group; an agent user added to a role group; nested groups; guests | Group teams only (SR-01); CHK-01 to CHK-07, CHK-11; Entra access reviews; 8-hour cache handled by urgent revoke [SM1] | App roles on groups only; same checks; nested groups get nothing [SM28] | Between check runs; depends on the client running reviews |
@@ -657,7 +658,7 @@ All rows below are configuration (D-06, D-07, D-10). Keys follow document 20, se
 | Entity | Key or column | Default | Purpose |
 |---|---|---|---|
 | C04 Setting | `record-access-mode` | `open-read` | Read scope for operational records (section 5.2; Q13) |
-| C04 Setting | `intake-visibility` (document 22) | `own`: the requester, plus PMO, platform admin and architect | Who reads intake requests (section 5.2; Q13) |
+| C04 Setting | `intake-visibility` (document 22) | `own`: the requester, plus PMO, platform admin, architect and auditor | Who reads intake requests (section 5.2; Q13) |
 | C04 Setting | `claim-visibility` (document 22) | Admins and claimant: platform admin, AI lead, and the suggested claimant or claimant | Who reads gap check runs and claims (section 5.2; Q13) |
 | C04 Setting | `ai-approval-lock` | On, locked (document 20) | AI never approves |
 | C04 Setting | `agent-read-access` | Off | Whether agent identities may read anything (RA-06) |
@@ -936,6 +937,7 @@ The optional Lifecycle Workflows sample (Q18) still has no identity of its own.
 ### B26-3 Access matrix and protected columns (sections 5.3 and 6.2)
 
 - **Decision (O09).** "Proposed rows can be withdrawn": only by the proposer, read as Created By Principal, or the decider, in person or through an AI client for them (`decision.withdraw-not-allowed`).
+- **Decision (O09), create through `save_decision_proposal` (2026-11-23).** "Any role holder, as Proposed" is narrowed for that tool: the engine lets the person behind the call propose only a decision type they hold a responsible, accountable or consulted Decision Right for in the decision's scope, through a role or an owner role on the subject's application (`decision.propose-not-allowed`, `not_authorized`). The same check runs for an AI client and for the person entry. Decisions other tools open (intake triage, change authorization, ownership) keep those tools' checks. Why A is included: document 24, B24-5.
 - **Approval record (O10).** Approver Holds Required Role (document 22, B22-1) joins the approval-writer-only columns of section 6.2; a person's value is refused with `approval.outcome-writer`. Decision Right and Is Consultation join the request columns, which only the engine writes, at creation.
 - **Links (O18 to O20).** The undo window counts from Created On, and a Created On later than now refuses the delete. `forbidden-url-patterns` (section 6.5) is matched ignoring case, with a one-second timeout per pattern; a timeout is a broken configuration.
 - **Review (O21).** "Reviewer named on the row; outcome through a decision": the guard checks neither today, for a person or an AI client (still open, as under B26-2, RA-03).
@@ -957,13 +959,346 @@ Only a person signed in as a user and holding the active `platform-admin` role e
   app's client IDs, and the server admits the person entry only when the token's verified `azp` is one of them. Any
   other client on the REST API, an AI client with a token for the same API among them, is the AI client entry and must
   pass the Known Client check. An agent user or agent identity keeps its kind on every entry and holds no role (RA-06).
-  The web app registration is preauthorized for `api.access` only, with admin-only consent. The four pages are
-  read-only, so the REST API serves the read tools only.
-- **Answering an approval in the product itself.** AN-01, AN-02 and S1 keep approval outcomes to the approval runner,
-  and working default Q19 offers the product's own page only where a client's security review asks for token-level
-  evidence of who answered. Building it needs more than the person entry: a guarded engine path for a person answering
-  their own Approval Record (the responder is the signed-in person the token proves, never a value in the request), a
-  change to the `fn_ApprovalPending` predicate for that path, a page specification, step-up sign-in for the answer, and
-  a product owner decision on AN-02's wording.
+  The web app registration is preauthorized for `api.access` only, with admin-only consent. Since D-36 the person entry
+  is served the write tools too, checked by the Tool Policy and the engine exactly as on the MCP endpoint; an AI client
+  on the REST API gets the read tools only and writes through the MCP endpoint.
+- **Answering an approval in the product itself.** Built on 2026-11-23 after D-38: see B26-7. AN-01 and AN-02 above
+  now say that a person answers on the decision page.
 - **Proposal.** Keep the pages read-only for the first release, and take the approval page to the next design pass with
-  the parts above.
+  the parts above. Superseded on 2026-11-23: D-36 makes the web app act, and D-38 makes the decision page the place a
+  person answers. The engine path and the predicates are built (B26-7); the page and step-up sign-in are not.
+
+### B26-7 A person answers an approval on the decision page (built 2026-11-23, D-38)
+
+- **What D-38 says.** The decision page is the default place to answer, and the token proves who answered.
+  Teams and Outlook messages become notices that link to the page; answering inside a card stays a later per-install
+  option. Step-up sign-in for tier 3 and configuration changes is a setting, off in the demo. AN-01 and AN-02 above are
+  rewritten in those words.
+- **The tool.** `answer_approval` (document 24, tool 52) takes the Approval Record, approve or reject, and a typed
+  reason. It is served only on the person entry, the product's web app: the MCP endpoint never lists it, an AI client
+  that calls it on any entry is refused with `ai_cannot_do_this`, and an app-only token never reaches a tool. The input
+  names no responder.
+- **The engine's approval answer check** (a new pure operation, with fixtures) runs under the version the decision was
+  stamped with, before anything is written. The caller must be a person signed in as a user (an AI client, an agent,
+  a pipeline and the approval runner are refused: `approval.answer-person-only`); the decision proposed and the record
+  pending and before its Expires On (`approval.answer-closed`, `approval.answer-expired`,
+  `approval.answer-already-given`); the person must hold the record's role now, or its owner role on the decision's
+  application now, a deputy's included (`approval.answer-not-asked`; AN-03, RA-02); the person's approval must not
+  already count for the same requirement (one person counts once); no C40 Separation Rule may keep the answer from
+  counting (`approval.answer-separation`), judged by OP-03's own code, so an "allow and flag" rule lets it through with
+  a warning; and a typed reason is needed to reject, and to approve where the rule asks (AN-08;
+  `approval.answer-reason-required`). D-40 keeps Balanced's self-approval as it is: a proposer may answer their own
+  request below tier 3.
+- **The write.** The answer is the person's own update of the record, with the check's basis, which no request carries.
+  OP-08's G-06 accepts it only from that same person, acting directly as a user, on a pending record, with approved or
+  rejected, naming the caller as approver, as person and user (a Principal Reference that says otherwise refuses it), in
+  the app, with no run link. The guard writes Responded On and Approver Holds Required Role itself. The recompute is the
+  approval runner's: OP-03 counts, the decision is accepted or rejected, requests still pending are cancelled, the next
+  step or a restart opens, and the approval outbox row settles in the same transaction.
+- **Row-level security (Azure).** The host names the answered record in `SESSION_CONTEXT` as `AnsweredApprovalId`, for
+  that request only. `fn_ApprovalPending` lets a final record of the named record's own decision change in such a request
+  too (the recompute rewrites what counts), and `fn_ApprovalOutcomeWriter` lets it write an answer only on that decision's
+  records, stamped with the caller's principal, and only on the record it names (the person's own write) or on a record
+  the engine rewrote. Records of every other decision stay locked: the named ID is the caller's argument, read before the
+  engine checks it. A block predicate sees one side of an update (item 10 of
+  src/adapters/azure/ENGINE-CHANGES-NEEDED.md), so the engine's guard stays the control.
+- **Step-up sign-in (built since, B26-9).** The proposal here, a C04 Setting `approval-step-up`, was replaced by a host
+  setting: see B26-9.
+- **Not built yet:** answering inside a card as a per-install option. The decision page and step-up sign-in are built
+  (B26-9).
+  Document 23, S1 still describes the card path; document 23, B23-7 records the page path as built.
+
+### B26-8 The demo persona switch (built 2026-11-24, D-39)
+
+- **What D-39 says.** In a Demo install only, the signed-in operator may act as any fictional persona; every write is
+  stamped with the persona and "demo operator"; the server refuses to start with it in any environment but Demo.
+- **Who and where.** Only the person signed in to the web app with Microsoft Entra ID (the person entry), in a host
+  that runs in the environment named `Demo` and names demo personas in `Product:WebApp:DemoPersonas` or a persona file.
+  The page sends `X-Product-Demo-Persona` with a persona's name. On the MCP endpoint, for an AI client on the REST API,
+  for an agent identity or agent user, and for a workload the header is ignored, so RA-06 and "AI never approves" hold
+  as before. Outside the Demo environment the header is ignored, and a host that names demo personas refuses to start
+  (both hosts check before they build, and the web app settings check runs again at startup).
+- **What the persona is.** A name, a label, a fictional object ID and fictional groups. Both IDs must be patterned
+  placeholders (`00000000-0000-4000-8000-` and twelve digits), which a random Entra object ID never is, so no real person
+  or group can be acted as. The persona's ID and groups replace the operator's for the request, before the Tool Policy,
+  the engine and `SESSION_CONTEXT` read them; the operator's own groups, app roles and directory roles do not carry over.
+  The shipped personas (one per human role) are people of the demo estate, and the demo binding binds all fourteen human
+  roles to fictional groups.
+- **The stamp.** The data model has no operator column, so the mark is the Client App label: "Web app, demo operator"
+  on every row and audit entry the request writes, with the persona as the actor and the actor kind `person`. The
+  operator's own object ID is never written. A header that names no persona of the install is refused (validation),
+  so an operator never acts as themselves by mistake.
+- **Limits.** Anyone who can sign in to a demo install's web app can act as any persona, the configuration admin among
+  them; the install's notes ask for "Assignment required" on the API app registration so only demo operators sign in.
+  Live directory reads refuse a persona: the bearer token on the request is the operator's own, so it is never
+  exchanged on the persona's behalf (a demo install uses the recorded mode). The web app offers the switch as an
+  "Acting as" menu marked Demo, only when config.json lists demo personas (src/ui/harness/src/app/DemoPersonaMenu.tsx),
+  and never sends a name the install does not list.
+
+### B26-9 Step-up sign-in for an approval answer, and who may answer (built 2026-11-24, D-38, D-41)
+
+- **What D-38 says.** "Step-up sign-in is a setting, off in the demo." AN-01 names tier 3 and configuration changes.
+- **Choice (D-41): a host setting, not a configuration row.** `Product:WebApp:StepUp` on the API host, with `Mode` Off
+  (the default, and the demo's), FreshSignIn or AuthenticationContext, `MaxAgeMinutes` (1 to 1440, default 10) and
+  `AuthenticationContextId` (`c1` to `c99`). Why: the check reads the sign-in (the token's `auth_time` or `acrs` claim),
+  which the host sees and the engine never does; a C04 Setting would change every preset's snapshot hash (V38) for a
+  value the engine cannot evaluate. The host refuses to start with an invalid value (ProductWebAppOptionsValidator).
+- **Choice (D-41): every answer, not only tier 3 and configuration changes.** With the setting on, every
+  `answer_approval` call needs the fresh sign-in. An approval answer is a governance act at any tier, the person meets the
+  check at most once per sign-in frequency that Conditional Access sets, and a per-tier scope would need the host to read
+  the decision before the engine does. A narrower scope is a later refinement if adopters ask for it.
+- **The check.** FreshSignIn: the token's `auth_time` is within `MaxAgeMinutes` (a sign-in more than five minutes in
+  the future is refused too); a token without `auth_time` is refused, so the API's app registration adds it as an
+  optional claim. AuthenticationContext: the token's `acrs` claim (one value per claim, or a JSON array) names the
+  context; Conditional Access ties the context to the organization's own policy. A check (validateOnly) writes nothing,
+  so it needs no fresh sign-in. Code: `src/adapters/azure/Product.Azure.Host/Identity/StepUp.cs`, called by
+  `ApiEndpoints.HandleTool` for `answer_approval` on the person entry before the tool runs.
+- **The refusal.** The twelfth fixed error code, `step_up_required` (HTTP 401; document 24, B24-9): nothing is recorded,
+  `WWW-Authenticate` carries `error="insufficient_claims"`, and for an authentication context the claims challenge, also
+  in `error.claimsChallenge` (base64 JSON, `{"access_token":{"acrs":{"essential":true,"value":"c1"}}}`). The web app
+  does not sign the person out: the action sheet offers "Sign in again", which asks MSAL for a token with a login prompt
+  and the claims challenge, and the person answers again when they are back. A development persona cannot step up.
+- **Who may answer, before the answer.** `list_approvals` and `get_decision` run the engine's approval answer check as
+  a read-only pre-check for each pending record that asks the caller (document 24, B24-9). The page shows Approve and
+  Reject only when it allows, and otherwise names the separation rule that refuses (Balanced's
+  `no-self-approval-tier-3`, which D-40 keeps). The check is the one the answer runs, so the page and the engine never
+  disagree; the engine still checks the answer itself.
+- **Not built yet:** answering inside a card as a per-install option.
+
+### B26-10 Completing a review and closing a change are a person's acts (built 2026-11-24, D-41)
+
+- **Person-only tools.** `complete_review` and `complete_change` (document 24, B24-10) are served only on the web app's person entry, as `answer_approval` is. The MCP endpoint never lists them, and an AI client calling them on any entry gets `ai_cannot_do_this`. On the REST API an AI client's token reaches the core, which refuses it the same way.
+- **The engine backs it.** OP-08 refuses an AI actor's done on a review and completed on a change on every path (G-08, widened in document 25, B25-12), so a direct table write through another AI path is refused too.
+- **No step-up.** Step-up sign-in (B26-9) stays with approval answers. Completing a review records an accepted decision's consequence, and closing a change records how it ended; neither grants or approves anything.
+- **Visibility.** `get_review` follows the read rules of `list_reviews`: any role reads a review. Who may complete it is checked by role (the review type's lead owner, the decision right, or an approval rule), so a reader sees the page and never the Complete button.
+
+### B26-11 Who reads the audit trail, the evidence and the AI activity (built 2026-11-24, D-41)
+
+- **Audit entries** (`get_audit_trail`) are read by the auditor and the platform admin, as sections 3.2 and 5.3 say. Document 22's `fn_CanReadAudit` also names the configuration admin; the tool follows this document, and the configuration admin reads the configuration's own history through `get_configuration` and the configuration drafts. The Azure SQL policy filters audit rows only by a signed-in caller, so the tool layer holds the role check.
+- **The AI activity** (`get_ai_activity`) is any role's, scoped: the AI lead (who oversees AI use, D-20), the security reviewer (who owns the AI rules' security side), the platform admin and the auditor see every person's AI work; anyone else sees the AI work done for them. It reads two facts from O24, the refused calls and the call history markers (who took a draft forward, whether a person edited it first), and never returns Changed Values Json.
+- **The evidence pack** (`get_evidence`) is any role's: it holds what the decision log, the approval status and the deployment reads already show every role, and it follows `intake-visibility`.
+- **Gap check runs** (`list_gap_check_runs`) follow `claim-visibility` (section 5.3: O22 with O23): under admins-and-claimant only the platform admin, the AI lead and the auditor see them; anyone else gets them counted in `couldNotRead`.
+- **Restricted read on O15.** `list_deployment_targets` returns External Id and Url as null to a caller who holds only the reader role (section 6.2).
+- **Refused calls are product events** (section 9.2: "refused write (who, what, which rule, which client)"), written in a separate transaction (section 9.4). The server records an AI client's or agent's refusal by a rule, a role or the AI rules on any tool, its call to a tool that does not exist, and a person's refused write; never a check, and never a caller who holds no product role: an outsider, an agent identity or a demo operator acting as nobody is refused at the door and left to the request logs, so the append-only ledger holds no one who is not a participant (section 9.5).
+- **Person-only writes.** `save_deployment_target` (platform admin) and `save_portfolio` (platform admin; the PMO for the name, description and level) are served only on the web app's person entry: a target's stage and change path, and a portfolio's place and accountable person, decide which rules apply. They need no step-up: they grant or approve nothing.
+
+### B26-12 A record that asks a person by name, and consent (built 2026-11-24, D-41)
+
+- **Who may answer.** A record with an Asked Principal (document 22, B22-12) is answered only by that person, on the decision page or through the approval runner: holding the role or owner role the record names does not let anyone else answer it (`approval.answer-not-asked`). The runner sends the card to that person only, and the product keeps the fact that the responder is the named person, as it keeps owner role facts (AN-04).
+- **Consent.** A proposed owner's own yes (Balanced's `ownership-proposed-owners`) is consent to take the role, not a check on the proposal, so no separation rule applies to it. The business owner's card, or its fallback, is the check, and `no-self-approval-tier-3` applies to it as before.
+- **D-40 holds.** No separation row changed. Tier and ownership decisions now require approval (document 21, B21-9), so at tier 3 the rule that nobody approves their own proposal covers them too, as it covers every type that requires approval. The processes give the work to another person (the builder proposes a tier, the deputy or the platform admin a hand-over), so the designed path is never blocked by it.
+
+### B26-13 Who finds a record by its number (built 2026-11-24, D-41)
+
+- **`find_records`** (tool 75, document 24, B24-13) is any role's, like the lists it stands beside. It reads the six numbered entities by Record Number only. Intake requests follow `intake-visibility`: a request the caller may not read is never found, and never counted, so a guessed number says nothing about a hidden request. The other numbered rows (O02, O09, O11, O21, C46) are read by any role (section 5.3), and the Azure SQL filter predicates apply underneath as for every read.
+
+### B26-14 Fixes from the wave 2 security review (built 2026-11-24, D-41)
+
+- **Step-up cannot be skipped through a card.** With `Product:WebApp:StepUp:Mode` other than Off, the approval runner's outcome route refuses a person's answer relayed from Teams or Outlook (`rule_violation`, nothing written); expired and cancelled outcomes still pass. A card then only links to the decision page (D-38), where the fresh sign-in is checked. Test: `ApprovalResponderTests.WithStepUpOnTheRunnerCannotRelayAPersonsAnswer`. Not built: the runner's link-only notification when step-up is on.
+- **The demo operator's AI client may act as a persona** on the MCP endpoint, in the Demo environment only, with the same header as the web app (D-39). It acts as an AI client for the persona: the persona's roles, every AI rule, and the stamp "Claude Code, demo operator", never the operator's ID. A name the install does not list is refused. Reason: the story's AI build loop (step 2) and the configuration change (step 10) run on the Demo install. Test: `DemoPersonaTests.InTheDemoTheHeaderCountsForThePersonOnTheWebAppAndForTheirAiClientOnMcp`.
+- **Intake visibility, refused calls, leave dates and demand fields** follow document 24, B24-14: the people a request involves read it, a hidden request's title never shows through a decision or the AI activity, at most 60 refused calls per caller and hour enter the ledger, a review's due date never carries a leave date, and Score and Expected Benefit are restricted reads.
+- **Linking and naming at intake** (document 24, B24-14; document 25, B25-15): a request is linked only to an application its requester owns or a draft they created, the requester never names themselves business owner, a request about a registered application always goes to a person, and the named owner is assigned only on what the request creates.
+
+### B26-15 The data taxonomy, slice 1 (built 2026-11-24, D-37 and D-41)
+
+- **Product role `data-governance-lead`** (D-41, question 4, option B): the business appoints the owners of business data.
+  It belongs to the business party, reads what any role reads, may propose an owner change, propose, submit and withdraw a
+  decision and save a link. It becomes accountable for top-level domain ownership with the decision rights of data
+  taxonomy slice 2 (Balanced and Regulated; Starter keeps the platform admin). The small team overlay may bind it to the
+  platform admin's group. The demo binds it to a fictional group of its own, played by Hana Lindqvist (question 8).
+- **Owner role `data-steward`**: held on data domains only, inherits down, needs no deputy, approves nothing by default.
+  The tools refuse it as an application's owner role.
+- **Access rows** for the new records. O25 Data Location: read by all roles; created and
+  changed by the platform admin, architect, application owner, the location's technical owner and the data governance
+  lead (an AI client's row as draft); retired, not deleted. O26 Data Mapping: the same readers; written by the location's
+  technical owner, the domain's effective owner or steward, the platform admin and the data governance lead. O27 Data Use:
+  read by all roles; written by the owners of the application, the maker, the application owner and the platform admin.
+  The tools that apply these rows come with data taxonomy slice 3.
+- **Restricted column.** O25 External Id is a restricted-read column, like O15's (section 6.2): it may name a server or a
+  tenant. Connection strings, keys and tokens are never stored: `forbidden-url-patterns` gains four connection string
+  markers, and G-22 (slice 2) applies them to External Id, Url and Containers.
+- **Owner assignments.** O06 rows with a data domain or data location subject are written, like the others, only by the
+  engine from an accepted ownership decision. RA-02 ("own apps") reads only rows whose subject is an application.
+
+### B26-16 The data tools apply the access rows (built 2026-11-24, D-36, D-37 and D-41)
+
+Data taxonomy slice 3 ([data taxonomy](../../architecture/data-taxonomy.md#mcp-tools-and-rest); document 24, B24-16).
+
+- **The access rows of B26-15 are applied by the tools.** Tool Policy names the product roles; the handler checks the
+  relation on the row: a data mapping needs the platform admin, the data governance lead, the domain's effective data
+  owner or steward (OP-15), or the location's technical owner (or its instance's); changing a registered location needs
+  the platform admin, an architect, the data governance lead, its technical owner or the person who created it; a data
+  use needs an owner of its application unless the caller is a maker or the platform admin; moving rows off a domain
+  needs the platform admin or the data governance lead.
+- **External IDs and URLs of locations are restricted read** on every data read, as for deployment targets: null for a
+  caller who holds only the reader role. A domain owner's leave date is never returned by a data read (`isLeaving` only).
+- **AI drafts, a person confirms (D-36).** An AI client's data use, location and mapping start as drafts, and the
+  engine refuses an AI client's confirm (G-21). Only a person's confirmed row sends its decision to the approvers; an AI
+  client never submits a copy or retention decision, and previews a move only (`validateOnly`).
+- **The never rule is refused for everyone (G-25).** A person on the REST API and an AI client on the MCP endpoint get
+  the same `rule_violation`, which names the rule and where it is set.
+- **Owner changes of data.** `propose_owner_change` takes a data domain (proposed by the platform admin, the data
+  governance lead, or a data owner of the domain or above it) or a data location (the platform admin, the data
+  governance lead, or its technical owner). For an application, the roles data-owner and data-governance-lead in the
+  tool's Tool Policy row do not pass the owner relation: they stand for the data subjects only.
+
+### B26-17 The engine's own caller, the link-only card and the named owner's consent (built 2026-11-24, D-38 and D-41)
+
+- **The engine's own caller** (document 25, B25-18). The daily due-state refresh runs as the engine, a caller only the host
+  builds in process: no token, header or request maps to it. It holds no role and writes only engine-nested writes, each
+  judged by OP-08 and audited. A person runs the refresh now only with the platform admin role, on the person entry
+  (`run_due_state_refresh`, person-only); the engine refuses AI clients, agents, pipelines, the approval runner and anyone
+  else (`due-state.refresh-not-allowed`). Its notices hold IDs and keys only.
+- **With step-up sign-in on, the runner sends a link only** (D-38; B26-9 and B26-14). The approval runner's claim answer
+  carries `delivery`: `card` while step-up is off, `link-only` while it is on, on the claim and on every item. A link-only
+  item's details say the message takes no answer and point to the decision page. The flow template sends each person an
+  email (Office 365 Outlook, a new connection reference) whose subject is the product's title and whose body holds only
+  fixed words and the product's link, reports it as sent, and stops: it creates no approval and waits for nothing. The
+  outcome route still refuses a relayed answer while step-up is on, so even an old card's answer writes nothing. Not tried
+  in a tenant.
+- **Consent of a named owner.** A person named as business owner on an intake becomes an owner only through their own
+  answer on their own approval request (document 25, B25-18). The requester cannot name themselves (B24-14), and no AI
+  client answers for them: `answer_approval` is person-only.
+- **Record links on loopback only.** A record link follows the request's own address only when the host names no public
+  base URL and the request came to a loopback address; outside Development the host requires an https public base URL.
+- **Residual risk.** The Azure SQL row security for a final Approval Record does not name the actor kind engine, so a
+  timer refresh can never change a final record's count there; that is safer than it needs to be, and is checked only as
+  text (no live database).
+
+### B26-18 Who reads the screens still missing (built 2026-11-24, D-41)
+
+The eight tools of document 24, B24-18.
+
+- **Any role** reads `list_configuration_changes`, `get_configuration_draft`, `get_role_access` and `list_guidelines`:
+  configuration rows, C02 versions and C46 drafts are read by all roles (section 5.3). `get_role_access` reads the members
+  of the bound groups live from Microsoft Graph as the signed-in person, as `get_role_holders` does, and lists people only:
+  an agent identity, a service principal or a nested group holds no product role through a group (RA-06).
+- **Any role** reads `get_measures` and `list_agents`: every number and row comes from records every role reads already.
+  A drill row is an ID, a label and a link; an intake the caller may not read is left out and counted
+  (`intake-visibility`), a claim follows `claim-visibility`, and an agent's Microsoft resource URLs are restricted read
+  (section 6.2), null for a caller who holds only the reader role.
+- **`get_admin_status`** is the platform admin's, the configuration admin's and the auditor's. It shows only the host
+  settings that are safe to show: no URL, key, connection string, client ID or tenant ID. The notices of the daily refresh
+  come from audit entries and name people, so only the platform admin and the auditor see them listed; the configuration
+  admin sees their counts (B26-11).
+- **`request_security_review`** writes a review request: the owner of the application, or the AI lead, the security
+  reviewer, an architect or the platform admin. An AI client may send it for the person, as an architecture review
+  request (working default, open design question 9); it is a request, never a decision, and grants or approves nothing.
+- **Retiring a target** stays on the person entry with `save_deployment_target` (platform admin): a target's state decides
+  which deployments are taken, so a person retires it.
+- **Every `ai_cannot_do_this` names G17** in `error.guideline`, and other refusals the guideline their reason applies
+  (document 24, B24-18): the refusal says which rule of the playbook it keeps, never more than the error already said.
+
+### B26-19 Fixes from the wave 3 security review (built 2026-11-25, D-41)
+
+The adversarial review of wave 3 proved eight weaknesses with throwaway tests. Each is fixed; document 25, B25-20,
+records the engine choices.
+
+| Finding | Fix |
+|---|---|
+| G-25 was skipped by any End On, a future one included | Every create is judged; a row with a future End On is open in G-25, OP-16, OP-17 and every read |
+| A data-use card with no domain owner was answered through the application's data owner | No counting record that names nobody for a data owner subject; the submit is refused (DC-06), and such a record takes only the named person's answer |
+| One person met "restricted data to AI needs two approvals" | One person counts once across a data-use decision's counting requirements |
+| A domain move counted as touches | A new parent loosens the domain and its subtree; domains in use are passed to the diff. Balanced keeps one admin able to accept (Regulated and strict-separation require a second); the docs no longer claim otherwise |
+| `move_data_references` kept another owner's allow | A decided row moving to another owner's domain is ended and declared again; pending requests are asked again of the new owner. Since the wave 4 carry-over the engine opens the decision each moved row needs as its own write for the mover, so a data governance lead's move asks the new owner too, and an AI client's preview is the person's own dry run, so it never promises a move the engine refuses (a choice under D-41) |
+| An AI client ended or changed confirmed data rows | G-21 on update: an AI actor changes no confirmed data row except Last Seen On |
+| A mapping's creator could repoint it anywhere | The creator exemption holds only while the domain and the location stay the same |
+| External Id leaked through labels and `resolve_data` | A location has a generic label when none is given; a guessed External Id or Url answers as unknown to a reader; components fall back to "Unnamed component" |
+| Two refresh runs could open the same review | The opening audit entry carries a request key, so the unique index refuses the second |
+| `submit_record` returned a data row's status | It reports the decision it sends, as proposed |
+| Record links followed any https Host header | Only a loopback request's own address is used |
+
+Also: the call-refused audit entry now keeps the engine's message for a rule refusal (`rule_violation` with an engine
+reason), never for any other refusal, because rule messages are built from configuration and stored rows, not from the
+call's arguments. A demo install (and a local run with the directory mode Demo) reads role holders from the fictional
+demo personas, never from Entra, and holds no token for it.
+
+### B26-20 Who reads the teams and committees (built 2026-11-25, D-41)
+
+The two reads of document 24, B24-20.
+
+- **Any role** reads `list_teams` and `get_team`, and an AI client reads them for the person (read only). The Tool Policy
+  rows can tighten either; a caller with no product role is refused (`not_authorized`), as for every other read.
+- **Members are read live, never stored**, from the same directory reader as `get_role_holders`: Microsoft Graph as the
+  signed-in person, so Graph decides which members the person may see, or the fictional demo personas on a demo install
+  and a local run. A team's members are names any role already reads through `get_role_holders` and `get_role_access`.
+  With the directory reads off nothing is read, and the page says membership is managed in Entra. A leave date or an
+  account state other than the group's own is never returned.
+- **What waits on a team** follows the read rules of `list_approvals`: a request on an intake request the caller may not
+  read (`intake-visibility`) is counted in `couldNotRead`, never shown, and so is an answer on one.
+- **A persona's teams give no role.** A demo persona's `teams` are fictional groups that bind no role; a request as the
+  persona carries only its role groups, so the Tool Policy and the engine see the same roles as before. The startup
+  check refuses a team that is not a fictional ID, and the adapter tests check that no team is a bound group.
+- **The estate's other people are members, never logins** (fix round 1 of wave 4, D-41). The persona file's `members`
+  (the Change board's Ines Varga, Marcus Oyelaran and Felix Arendt, the data owners Greta Lund and Wren Abernathy, and
+  others) join their groups and teams in the demo directory, on a demo install and on a local run, so a committee shows
+  more than its one persona. Nobody signs in as them: the persona switch and the development sign-in never offer them,
+  and a request's roles still come only from its own token's groups. Why: eight of the nine committees showed one member
+  and the Change board only Tomas Rendel, which did not read as a committee; a member's group membership changes only
+  what the Teams page, Roles and access and the binding check show. The harness logins of the development sign-in
+  (nadia-web, mateo-web and the others) are left out of the demo directory, so their groups make no persona a member of
+  a team it is not in.
+- **`get_team` names what its members are asked and own** (fix round 1): the pending requests asked of a member by name
+  or as an owner role holder, and the owner roles its members hold. Both follow the reads they repeat: a request on an
+  intake request the caller may not read is left out, and owner roles are what `list_owner_assignments` already shows
+  any role. `list_teams` with `memberObjectId` asks the directory once for that person (Graph: the person's transitive
+  groups), not once per team, and a team's label is read from the directory for the rows a call shows only, so one read
+  never turns into a Graph call per team.
+
+### B26-21 The list reads, the sign-in order, HSTS, the demo limit and the logs (built 2026-11-25, D-41)
+
+The security side of document 24, B24-21, and document 25, B25-23.
+
+- **The two new reads** (`list_data_uses`, `list_data_mappings`) are read by any role, as `get_data_domain` is, and by an
+  AI client for the person (read only). They list the rows `get_data_domain` already lists, in the same shape; a location
+  in an item is its name, platform and stage, never its External Id (section 6.2). The new filters change no visibility: the
+  audit trail stays for the auditor and the platform admin, a gap check run read by ID still follows claim-visibility,
+  and a document link read by ID is one more row of `list_documents`, which any role reads.
+- **The MCP endpoint checks the token before the message.** Any message without a valid token, whatever its shape, is
+  answered 401 with `WWW-Authenticate: Bearer resource_metadata="..."` (403 with `insufficient_scope` for a token without
+  the scope), on both transports; nothing about the message is judged or logged as a call for a caller who is not signed
+  in. Before, `{}` was answered 200 and a notification 202 before sign-in.
+- **Strict-Transport-Security** is on every answer to a request that came over https, directly or through the
+  platform's front end (`X-Forwarded-Proto: https`), unless the request names a loopback host, and, as before, on every
+  answer of a host whose public URL is https outside Development. The header only pins a browser to https, so a forged
+  `X-Forwarded-Proto` can at most add it to an answer.
+- **The demo operator's limit** (`Product:Limits:DemoOperatorPerMinute`, default 1,200 a minute) applies only while a
+  demo persona acts, which only a demo install allows (D-39). The operator is still the one counted, so switching
+  personas never resets the count, and the operator's own requests keep the per-person limits. 0 keeps the group's own
+  limit.
+- **Logs.** A request the client canceled or cut off is one information line with the correlation ID, with no exception,
+  message or stack. Telemetry names a caller only by a salted hash; with no `Product:TelemetrySalt` the host makes a
+  random salt for its process, kept in memory only and never logged, so the hash still never shows an object ID.
+- **The local day header** (`X-Product-Local-Day`) is a caller's statement about its own calendar day. The backend uses
+  it only for the date-only defaults of a write, and only within a day of the UTC day, so a caller can move such a date
+  by one day at most; no rule, gate, expiry or open-or-ended test of a data row reads it.
+- **The read cache** lives for one read call and holds only rows that call was allowed to read; it is never shared
+  between callers or calls, so it changes nothing about who reads what.
+
+### B26-22 Who asks again, who retries a card, the demo's read and the import (built 2026-11-25, D-41)
+
+The security side of document 24, B24-22, and document 25, B25-24.
+
+- **"Ask again" is a person's act.** `renew_approval_request` is served only on the person entry, never to an AI client,
+  and the engine accepts only a person who proposed the decision or holds platform-admin. It asks the same role again
+  and never answers anything; the new request goes through OP-08 like every engine-nested write, the separation rules
+  judge its answer as before, and the call's Audit Entry names the person. Asking early is limited to the last 48 hours of
+  a request, so a proposer cannot keep a request young to hide a slow answer: decisions on time count the answer
+  against its own request.
+- **The outbox retry is the platform admin's, and it is on the record.** Tool Policy gives `retry_approval_card` to
+  platform-admin only, on the person entry, and the handler checks the role again. It changes only the outbox row's
+  state and attempts (a compare and set), never an Approval Record, so it cannot answer or reopen a request: a request
+  that is settled has its card closed. The Audit Entry lists the host row with the person as actor.
+- **The demo's freshness read is not there on a real install.** `get_demo_freshness` answers not_found unless the host
+  says it holds the demo estate (`Product:WebApp:Demo`) and runs as Demo or as a local Development run. On a demo install
+  it lists decision statements and who is asked, which any role reads on the decision pages there anyway, and hides an
+  intake the reader may not see.
+- **The import never makes anyone an owner.** `import_data_taxonomy` writes a configuration draft as
+  `propose_configuration_change` does (configuration-admin, candidate), so nothing is in force until a person accepts its
+  decision. Owners named in the file come back as prepared `propose_owner_change` steps, which go through the owner rules
+  like any other; the product reads no directory by name, and stores neither the file nor the catalog's owner list
+  (DC-15 is computed for the answer only). A user principal name from the file is returned to the caller who sent it and
+  stored nowhere.
+- **The impact walk, the Places link, the implied answer and the clean-up list** read rows every role already reads (data
+  uses, locations, mappings, owner assignments); a location in them is its label, platform and ID, never its External Id
+  for a reader (section 6.2).

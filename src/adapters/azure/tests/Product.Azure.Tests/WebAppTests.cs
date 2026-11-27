@@ -137,8 +137,11 @@ public sealed class WebAppTests
         Assert.Empty(config["development"]!["personas"]!.AsArray());
         Assert.False(config["demo"]!.GetValue<bool>());
 
+        // The demo personas (D-39) are listed only in the Demo environment.
+        Assert.Empty(config["demoPersonas"]!.AsArray());
+
         // Nothing in it is a secret or a token: only these members.
-        Assert.Equal(new[] { "apiBase", "auth", "demo", "development", "schemaVersion" }, config.AsObject().Select(m => m.Key).OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(new[] { "apiBase", "auth", "demo", "demoPersonas", "development", "schemaVersion" }, config.AsObject().Select(m => m.Key).OrderBy(k => k, StringComparer.Ordinal));
         Assert.Equal(new[] { "apiScope", "authority", "clientId", "mode" }, config["auth"]!.AsObject().Select(m => m.Key).OrderBy(k => k, StringComparer.Ordinal));
     }
 
@@ -170,7 +173,10 @@ public sealed class WebAppTests
             Assert.Equal("development", config["auth"]!["mode"]!.GetValue<string>());
             Assert.Null(config["auth"]!["clientId"]);
             string[] names = config["development"]!["personas"]!.AsArray().Select(p => p!["name"]!.GetValue<string>()).ToArray();
-            Assert.Equal(new[] { "nadia-web", "priya-web", "owen-web", "mateo-web", "config-admin-web" }, names);
+            // Fix round 1 (product review): the seventeen demo personas in the persona file's order (Marcus Oyelaran after Tomas
+            // Rendel, wave 4b), then the harness logins, which the sign-in page lists only with ?all=1.
+            Assert.Equal(new[] { "demo-lena", "demo-priya", "demo-nadia", "demo-kai", "demo-elif", "demo-hugo", "demo-tomas", "demo-marcus", "demo-mateo", "demo-dmitri", "demo-noor", "demo-owen", "demo-yusuf", "demo-bianca", "demo-theo", "demo-hana", "demo-jonah", "nadia-web", "priya-web", "owen-web", "mateo-web", "config-admin-web" }, names);
+            Assert.Equal(new[] { "nadia-web", "priya-web", "owen-web", "mateo-web", "config-admin-web" }, config["development"]!["personas"]!.AsArray().Where(p => p!["harness"]?.GetValue<bool>() == true).Select(p => p!["name"]!.GetValue<string>()));
         }
 
         HostSettings off = Enabled(root);

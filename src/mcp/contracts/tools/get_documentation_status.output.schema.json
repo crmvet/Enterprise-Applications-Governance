@@ -85,6 +85,7 @@
                     "documentLinkId",
                     "documentTypeKey",
                     "url",
+                    "linkKindKey",
                     "status",
                     "owner",
                     "lastUpdatedOn",
@@ -102,6 +103,18 @@
                     },
                     "url": {
                       "$ref": "../common.schema.json#/$defs/url"
+                    },
+                    "linkKindKey": {
+                      "description": "The Link Kind (C37) the link was recorded with. A form that updates the link sends it back unchanged.",
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/key",
+                          "x-entity": "C37 Link Kind"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "status": {
                       "$ref": "../common.schema.json#/$defs/statusValue",
@@ -207,6 +220,7 @@
                 "documentLinkId": "e0000000-0000-4000-8000-000000000001",
                 "documentTypeKey": "design-notes",
                 "url": "https://wiki.example.org/visit-planner/design",
+                "linkKindKey": "ado-wiki-page",
                 "status": {
                   "label": "Current",
                   "meaning": "current"

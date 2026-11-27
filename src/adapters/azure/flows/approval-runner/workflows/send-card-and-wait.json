@@ -36,6 +36,15 @@
         "api": {
           "name": "shared_commondataserviceforapps"
         }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "{{prefix}}_RunnerOutlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
       }
     },
     "definition": {
@@ -383,10 +392,190 @@
             "actions": {}
           }
         },
+        "Check_link_only": {
+          "description": "Step-up sign-in is on (D-38): the claim says delivery link-only, so each person gets an email that links to the decision page and takes no answer. A person answers on the page, where the fresh sign-in is checked; no approval is created and nothing waits here.",
+          "runAfter": {
+            "Check_someone_to_ask": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": "@equals(outputs('Item')?['delivery'], 'link-only')",
+          "actions": {
+            "For_each_asked_user": {
+              "runAfter": {},
+              "type": "Foreach",
+              "foreach": "@variables('AskedUsers')",
+              "actions": {
+                "Get_asked_user": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_office365users",
+                      "operationId": "UserProfile_V2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
+                    },
+                    "parameters": {
+                      "id": "@items('For_each_asked_user')"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Send_link_email": {
+                  "description": "The subject is the product title; the body holds only fixed words and the product link, so nothing a person or an AI client wrote reaches the HTML.",
+                  "runAfter": {
+                    "Get_asked_user": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_office365",
+                      "operationId": "SendEmailV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                    },
+                    "parameters": {
+                      "emailMessage/To": "@body('Get_asked_user')?['mail']",
+                      "emailMessage/Subject": "@outputs('Item')?['title']",
+                      "emailMessage/Body": "<p>An approval request waits for your answer. This message takes no answer: open the decision page, sign in again when it asks, and answer there.</p><p><a href=\"@{outputs('Item')?['recordUrl']}\">Open the decision page</a></p>",
+                      "emailMessage/Importance": "Normal"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 5
+                }
+              }
+            },
+            "Report_link_sent": {
+              "runAfter": {
+                "For_each_asked_user": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/sent",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "claimId": "@outputs('Item')?['claimId']",
+                  "cardRef": "@concat('link-only:', outputs('Item')?['approvalRecordId'])",
+                  "runnerRunUrl": "@outputs('Run_link')"
+                },
+                "authentication": {
+                  "type": "ActiveDirectoryOAuth",
+                  "authority": "https://login.microsoftonline.com",
+                  "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+                  "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+                  "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+                  "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+                  "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+                }
+              },
+              "runtimeConfiguration": {
+                "secureData": {
+                  "properties": [
+                    "inputs"
+                  ]
+                }
+              }
+            },
+            "Release_link_failed": {
+              "runAfter": {
+                "For_each_asked_user": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('Approval API base URL ({{prefix}}_ApiBaseUrl)')}/engine/v1/approval-runner/items/@{outputs('Item')?['approvalRecordId']}/release",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "claimId": "@outputs('Item')?['claimId']",
+                  "reason": "send-failed"
+                },
+                "authentication": {
+                  "type": "ActiveDirectoryOAuth",
+                  "authority": "https://login.microsoftonline.com",
+                  "tenant": "@parameters('Tenant ID ({{prefix}}_TenantId)')",
+                  "audience": "@parameters('Approval API audience ({{prefix}}_ApiAudience)')",
+                  "clientId": "@parameters('Runner client ID ({{prefix}}_RunnerClientId)')",
+                  "pfx": "@body('Get_runner_certificate')?['EnvironmentVariableSecretValue']",
+                  "password": "@body('Get_certificate_password')?['EnvironmentVariableSecretValue']"
+                }
+              },
+              "runtimeConfiguration": {
+                "secureData": {
+                  "properties": [
+                    "inputs"
+                  ]
+                }
+              }
+            },
+            "Respond_link_sent": {
+              "runAfter": {
+                "Report_link_sent": [
+                  "Succeeded",
+                  "Failed",
+                  "Skipped"
+                ],
+                "Release_link_failed": [
+                  "Succeeded",
+                  "Failed",
+                  "Skipped"
+                ]
+              },
+              "type": "Response",
+              "kind": "PowerApp",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "sent"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "title": "status",
+                      "x-ms-dynamically-added": true,
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "Stop_link_sent": {
+              "runAfter": {
+                "Respond_link_sent": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
         "Create_an_approval": {
           "description": "First to respond: each Approval Record holds one answer. Reassignment is off, so only the people asked can answer.",
           "runAfter": {
-            "Check_someone_to_ask": [
+            "Check_link_only": [
               "Succeeded"
             ]
           },

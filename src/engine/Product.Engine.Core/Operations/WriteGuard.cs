@@ -96,6 +96,116 @@ public sealed class PrincipalReferenceFact
     }
 }
 
+// What a person's own answer to an Approval Record rests on (G-06, the person path; D-38). The runtime fills it from the
+// approval answer check it just ran for the signed-in person, as it fills WriteAcceptance from OP-03 (G-17). It is bound
+// to what the check judged: the person, the record and the answer, so it lets through only that one answer on that one
+// record. Without it a person's write of an answer is refused, as before D-38. The wire form (facts.approvalAnswer) is for
+// the fixtures that test this rule; no request a caller sends carries it.
+public sealed class ApprovalAnswerBasis
+{
+    public ApprovalAnswerBasis(string checkOutcome, string responderPrincipalId, string approvalRecordId, string answer)
+    {
+        if (string.IsNullOrEmpty(checkOutcome))
+        {
+            throw new ArgumentException("The basis names the approval answer check's outcome.", nameof(checkOutcome));
+        }
+
+        if (string.IsNullOrEmpty(responderPrincipalId))
+        {
+            throw new ArgumentException("The basis names the person the check judged.", nameof(responderPrincipalId));
+        }
+
+        if (string.IsNullOrEmpty(approvalRecordId))
+        {
+            throw new ArgumentException("The basis names the Approval Record the check judged.", nameof(approvalRecordId));
+        }
+
+        if (answer != "approved" && answer != "rejected")
+        {
+            throw new ArgumentException("The basis names the answer the check judged: approved or rejected.", nameof(answer));
+        }
+
+        CheckOutcome = checkOutcome;
+        ResponderPrincipalId = responderPrincipalId;
+        ApprovalRecordId = approvalRecordId;
+        Answer = answer;
+    }
+
+    // The approval answer check's outcome word. Only allowed lets the answer through.
+    public string CheckOutcome { get; }
+
+    // The person the check judged: the signed-in person, as the token names them.
+    public string ResponderPrincipalId { get; }
+
+    // The Approval Record the check judged. The answer is written to this record only.
+    public string ApprovalRecordId { get; }
+
+    // The answer the check judged, as an outcome meaning: approved or rejected. The write must store this answer.
+    public string Answer { get; }
+
+    internal static ApprovalAnswerBasis? FromJson(WireObject? wire)
+    {
+        return wire == null ? null : new ApprovalAnswerBasis(wire.RequiredString("checkOutcome"), wire.RequiredString("responderPrincipalId"), wire.RequiredString("approvalRecordId"), wire.RequiredString("answer"));
+    }
+}
+
+// The outcome decision a review names, as the store holds it (O21 Outcome Decision; document 25, B25-12). The runtime
+// fetches it when a write would set a review done, so OP-08 can check that the review ends with an accepted decision of
+// the type its review type records, about the review's own application. A proposal of this build: document 25 names no
+// fact for O21.
+public sealed class ReviewOutcomeFact
+{
+    public ReviewOutcomeFact(string decisionId, string? statusMeaning, string? decisionTypeKey, string? subjectApplicationId, string? usedByReviewId = null, string? decidedOn = null, string? cycleStartedOn = null)
+    {
+        if (string.IsNullOrEmpty(decisionId))
+        {
+            throw new ArgumentException("The fact names the decision.", nameof(decisionId));
+        }
+
+        DecisionId = decisionId;
+        StatusMeaning = string.IsNullOrEmpty(statusMeaning) ? null : statusMeaning;
+        DecisionTypeKey = string.IsNullOrEmpty(decisionTypeKey) ? null : decisionTypeKey;
+        SubjectApplicationId = string.IsNullOrEmpty(subjectApplicationId) ? null : subjectApplicationId;
+        UsedByReviewId = string.IsNullOrEmpty(usedByReviewId) ? null : usedByReviewId;
+        DecidedOn = string.IsNullOrEmpty(decidedOn) ? null : decidedOn;
+        CycleStartedOn = string.IsNullOrEmpty(cycleStartedOn) ? null : cycleStartedOn;
+    }
+
+    // The O09 row the review names as its Outcome Decision.
+    public string DecisionId { get; }
+
+    // O09 Status Meaning: proposed, accepted, rejected, superseded or withdrawn.
+    public string? StatusMeaning { get; }
+
+    // O09 Decision Type.
+    public string? DecisionTypeKey { get; }
+
+    // O09 Subject Application: the application the decision is about.
+    public string? SubjectApplicationId { get; }
+
+    // Another done review that already names the decision as its Outcome Decision (security review 2026-11-24, B25-15).
+    public string? UsedByReviewId { get; }
+
+    // O09 Decided On of the decision (a date or a moment).
+    public string? DecidedOn { get; }
+
+    // When the review's cycle started: the latest Done On of an earlier done review of the same type and application.
+    // A decision decided before it belongs to an earlier cycle (B25-15).
+    public string? CycleStartedOn { get; }
+
+    internal static ReviewOutcomeFact? FromJson(WireObject? wire)
+    {
+        return wire == null ? null : new ReviewOutcomeFact(
+            wire.RequiredString("decisionId"),
+            wire.OptionalString("statusMeaning"),
+            wire.OptionalString("decisionTypeKey"),
+            wire.OptionalString("subjectApplicationId"),
+            wire.OptionalString("usedByReviewId"),
+            wire.OptionalString("decidedOn"),
+            wire.OptionalString("cycleStartedOn"));
+    }
+}
+
 // OP-08 input (document 25, section 5.10, WriteRequest), with the facts the adapter fetches.
 public sealed class WriteRequest
 {
@@ -112,7 +222,11 @@ public sealed class WriteRequest
         WriteAcceptance? acceptance = null,
         JsonTreeNode? gateReadiness = null,
         string? priorRequestHash = null,
-        PrincipalReferenceFact? approverPrincipalReference = null)
+        PrincipalReferenceFact? approverPrincipalReference = null,
+        ApprovalAnswerBasis? approvalAnswer = null,
+        SubjectFacts? subject = null,
+        ReviewOutcomeFact? reviewOutcome = null,
+        DataWriteFacts? data = null)
     {
         if (string.IsNullOrEmpty(entity))
         {
@@ -142,6 +256,10 @@ public sealed class WriteRequest
         GateReadiness = gateReadiness;
         PriorRequestHash = string.IsNullOrEmpty(priorRequestHash) ? null : priorRequestHash;
         ApproverPrincipalReference = approverPrincipalReference;
+        ApprovalAnswer = approvalAnswer;
+        Subject = subject;
+        ReviewOutcome = reviewOutcome;
+        Data = data;
     }
 
     // ---- What the caller sends ----
@@ -188,6 +306,22 @@ public sealed class WriteRequest
     // approver kind rule). Null when the directory holds no reference for the responder. A proposal of this build.
     public PrincipalReferenceFact? ApproverPrincipalReference { get; }
 
+    // For a person's own approval answer: the approval answer check the runtime ran for the signed-in person (G-06, the
+    // person path; D-38). Null for every other write. A proposal of this build.
+    public ApprovalAnswerBasis? ApprovalAnswer { get; }
+
+    // For an accept-decision write: the decision's subject as the store holds it, for the update-subject effect (document
+    // 25, B25-8). Null for every other write. A proposal of this build.
+    public SubjectFacts? Subject { get; }
+
+    // For a write that sets a review done: the decision the review names as its Outcome Decision, as the store holds it
+    // (document 25, B25-12). Null for every other write, and when the review names no decision. A proposal of this build.
+    public ReviewOutcomeFact? ReviewOutcome { get; }
+
+    // For a write of a data use, mapping or location, or a data-use decision: the facts G-20, G-23, G-24 and G-25 read
+    // (docs/architecture/data-taxonomy.md, Guard rules). Null for every other write. A proposal of this build.
+    public DataWriteFacts? Data { get; }
+
     // The Request Hash of this request: SHA-256 over the canonical form of what the caller sends.
     public string RequestHash()
     {
@@ -231,13 +365,20 @@ public sealed class WriteRequest
             "acceptance",
             "gateReadiness",
             "priorRequestHash",
-            "approverPrincipalReference");
+            "approverPrincipalReference",
+            "approvalAnswer",
+            "subject",
+            "reviewOutcome",
+            "dataFacts");
 
         EffectKind? nested = wire.Has("nestedEffect") ? wire.Contract("nestedEffect", EngineContract.EffectKinds) : null;
         ConfigurationSetKind? setKind = wire.Has("configurationSetKind") ? wire.Contract("configurationSetKind", EngineContract.ConfigurationSetKinds) : null;
         PrincipalKind? bindingKind = wire.Has("bindingPrincipalKind") ? wire.Contract("bindingPrincipalKind", EngineContract.PrincipalKinds) : null;
         WriteAcceptance? acceptance = WriteAcceptance.FromJson(wire.OptionalObject("acceptance", "basis", "approvalStatusOutcome", "requiredApprovalsOutcome", "condition", "noVersionExists"));
         PrincipalReferenceFact? approverReference = PrincipalReferenceFact.FromJson(wire.OptionalObject("approverPrincipalReference", "principalKind", "isErased"));
+        ApprovalAnswerBasis? approvalAnswer = ApprovalAnswerBasis.FromJson(wire.OptionalObject("approvalAnswer", "checkOutcome", "responderPrincipalId", "approvalRecordId", "answer"));
+        SubjectFacts? subject = SubjectFacts.FromJson(wire.OptionalObject("subject", SubjectFacts.WireMembers));
+        ReviewOutcomeFact? reviewOutcome = ReviewOutcomeFact.FromJson(wire.OptionalObject("reviewOutcome", "decisionId", "statusMeaning", "decisionTypeKey", "subjectApplicationId", "usedByReviewId", "decidedOn", "cycleStartedOn"));
 
         return new WriteRequest(
             wire.RequiredKey("entity"),
@@ -252,7 +393,11 @@ public sealed class WriteRequest
             acceptance,
             wire.OptionalRawObject("gateReadiness"),
             wire.OptionalString("priorRequestHash"),
-            approverReference);
+            approverReference,
+            approvalAnswer,
+            subject,
+            reviewOutcome,
+            DataWriteFacts.FromJson(wire.OptionalObject("dataFacts", DataWriteFacts.Members)));
     }
 }
 
@@ -393,7 +538,7 @@ public sealed class WritePlan : IOperationPayload
 // WORKING DEFAULT (open design question 9): an erasure is a person's act; an AI client cannot perform one.
 // WORKING DEFAULT (open design question 12): the approval runner writes outcomes as the holder of the approval writer
 // workload role, a service principal or managed identity with a workload grant.
-public static class WriteGuardOperation
+public static partial class WriteGuardOperation
 {
     public static EvaluationResult<WritePlan?> Evaluate(ConfigurationSnapshot snapshot, EvaluationContext context, WriteRequest request)
     {
@@ -410,9 +555,11 @@ public static class WriteGuardOperation
         return OperationShell.Run(context, snapshot, needsSnapshot: true, () => new GuardRun(snapshot, context, WriteRequest.FromJson(input)).Run());
     }
 
-    private sealed class GuardRun
+    private sealed partial class GuardRun
     {
-        private static readonly string[] PositiveMeanings = { "accepted", "registered", "approved", "completed" };
+        // G-08 as this build widens it (document 25, B25-12): done, a review's positive end, joins the list, so an AI actor
+        // never marks a review done either; the reviewer is a person.
+        private static readonly string[] PositiveMeanings = { "accepted", "registered", "approved", "completed", "done" };
         private static readonly TimeSpan PatternTimeout = TimeSpan.FromSeconds(1);
 
         private readonly ConfigurationSnapshot _snapshot;
@@ -944,6 +1091,19 @@ public static class WriteGuardOperation
             {
                 case "decision":
                     Decision(newMeaning);
+                    DataDecision(newMeaning);
+                    break;
+                case "data-use":
+                    DataUse(newMeaning);
+                    break;
+                case "data-mapping":
+                    DataMapping(newMeaning);
+                    break;
+                case "data-location":
+                    DataLocation();
+                    break;
+                case "owner-assignment":
+                    OwnerAssignment();
                     break;
                 case "approval-record":
                     ApprovalRecord(newMeaning, statusKey);
@@ -954,8 +1114,14 @@ public static class WriteGuardOperation
                 case "document-link":
                     AiDocumentCurrent(newMeaning, statusKey);
                     break;
+                case "review":
+                    Review(newMeaning);
+                    break;
                 case "gap-check-run":
                     EstatesCovered();
+                    break;
+                case "dependency":
+                    Dependency();
                     break;
             }
 
@@ -1023,15 +1189,65 @@ public static class WriteGuardOperation
                 return _entity.DraftMeaning;
             }
 
-            if (newMeaning != null && Array.IndexOf(PositiveMeanings, newMeaning) >= 0)
+            if (newMeaning != null && Array.IndexOf(PositiveMeanings, newMeaning) >= 0 && IsDataRow)
+            {
+                // G-21: an AI client drafts data locations, mappings and uses; a person confirms them (docs/architecture/data-taxonomy.md, Guard rules).
+                Refuse(
+                    ReasonCodes.AiDataRowDraftOnly,
+                    "An AI actor cannot set " + EntityName + " to " + Quote(statusKey!) + " (" + newMeaning + "). An AI client drafts data rows, and a person confirms them on the web page.",
+                    statusKey);
+            }
+            else if (newMeaning != null && Array.IndexOf(PositiveMeanings, newMeaning) >= 0)
             {
                 Refuse(
                     ReasonCodes.AiStatusNotAllowed,
                     "An AI actor cannot set " + EntityName + " to " + Quote(statusKey!) + " (" + newMeaning + "). A person must confirm it.",
                     statusKey);
             }
+            else if (Op == WriteOperation.Update && IsDataRow && Text(_before, "statusMeaning") == "registered" && ChangesBeyondRefresh())
+            {
+                // G-21 on update (security review, major): a data row a person confirmed is changed or ended by a person
+                // only. An AI client may refresh when it last saw a location, nothing more (D-36: AI drafts, a person
+                // accepts).
+                Refuse(
+                    ReasonCodes.AiDataRowDraftOnly,
+                    "An AI actor cannot change or end this " + EntityName + ", because a person confirmed it. A person changes it on the web page; an AI client may draft a new one.",
+                    _request.RowId);
+            }
 
             return newMeaning;
+        }
+
+        // True when an update changes a column other than Last Seen On, compared with the row as stored.
+        private bool ChangesBeyondRefresh()
+        {
+            foreach (KeyValuePair<string, JsonTreeNode> member in _after.Members)
+            {
+                if (string.Equals(member.Key, "lastSeenOn", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                JsonTreeNode? was = null;
+                if (_before != null && _before.TryGetMember(member.Key, out JsonTreeNode? found))
+                {
+                    was = found;
+                }
+
+                bool emptyNow = member.Value == null || member.Value.Kind == JsonTreeKind.Null;
+                bool emptyBefore = was == null || was.Kind == JsonTreeKind.Null;
+                if (emptyNow && emptyBefore)
+                {
+                    continue;
+                }
+
+                if (emptyNow || emptyBefore || !member.Value!.Equals(was))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // ---- O19 Document Link (RA-03) ----
@@ -1065,6 +1281,113 @@ public static class WriteGuardOperation
             }
         }
 
+        // ---- O21 Review (document 25, B25-12) ----
+
+        // A review ends done only with what the model requires when done (document 22, O21): Done On, the Reviewer and an
+        // Outcome Decision, and that decision must be accepted, of the decision type the review type records (C24 Produces
+        // Decision Type), about the review's own application. A done or cancelled review stays so: its status and its done
+        // columns never change again. An AI actor never sets done (G-08). The decision's state comes from
+        // facts.reviewOutcome, which the runtime fetches.
+        private static readonly string[] ReviewDoneColumns = { "doneOn", "reviewer", "outcomeDecision", "nextDueOn" };
+
+        private void Review(string? newMeaning)
+        {
+            string? oldMeaning = Text(_before, "statusMeaning");
+            if (Op == WriteOperation.Update && (oldMeaning == "done" || oldMeaning == "cancelled"))
+            {
+                bool statusMoves = newMeaning != null && !string.Equals(newMeaning, oldMeaning, StringComparison.Ordinal);
+                string[] doneColumns = oldMeaning == "done"
+                    ? ReviewDoneColumns.Where(c => _after.TryGetMember(c, out JsonTreeNode? value) && !(_before.TryGetMember(c, out JsonTreeNode? old) && old.Equals(value))).ToArray()
+                    : Array.Empty<string>();
+                if (statusMoves || doneColumns.Length > 0)
+                {
+                    Refuse(
+                        ReasonCodes.RecordFinal,
+                        "This " + EntityName + " is " + oldMeaning + ", so " + (statusMoves ? "its status" : "its " + string.Join(", ", doneColumns)) + " never changes again. A new review is opened instead.",
+                        _request.RowId);
+                }
+
+                return;
+            }
+
+            if (!string.Equals(newMeaning, "done", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            string[] missing = new[] { "doneOn", "reviewer", "outcomeDecision" }.Where(c => Text(Column(c), null) == null).ToArray();
+            if (missing.Length > 0)
+            {
+                Refuse(
+                    ReasonCodes.ReviewDoneIncomplete,
+                    "A " + EntityName + " is done only with its Done On, Reviewer and Outcome Decision, and this write leaves " + string.Join(", ", missing) + " empty.",
+                    _request.RowId);
+                return;
+            }
+
+            string outcomeId = Text(Column("outcomeDecision"), null)!;
+            ReviewOutcomeFact fact = _request.ReviewOutcome
+                ?? throw OperationStop.Input(ReasonCodes.InputRequired, "facts.reviewOutcome (the Outcome Decision as the store holds it) is required to set a review done.");
+            if (!string.Equals(fact.DecisionId, outcomeId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw OperationStop.Input(ReasonCodes.InputMalformed, "facts.reviewOutcome names decision " + Quote(fact.DecisionId) + ", and the review names " + Quote(outcomeId) + " as its Outcome Decision.");
+            }
+
+            string? reviewType = Text(Column("reviewType"), null);
+            SnapshotRow? type = reviewType == null ? null : SnapshotRead.Find(_snapshot, "review-type", reviewType);
+            string? produces = type == null ? null : SnapshotRead.Text(type, "producesDecisionTypeKey");
+            string? application = Text(Column("businessApplication"), null);
+            _trace.Add(new RuleTrace("Decision", outcomeId, RuleTraceRole.Matched));
+            if (type != null)
+            {
+                _trace.Add(new RuleTrace("Review Type", type.KeyPath, RuleTraceRole.Matched));
+            }
+
+            if (!string.Equals(fact.StatusMeaning, "accepted", StringComparison.Ordinal))
+            {
+                Refuse(
+                    ReasonCodes.ReviewOutcomeNotAccepted,
+                    "The review's Outcome Decision is " + (fact.StatusMeaning ?? "in no known state") + ", and a review is done only once its outcome decision is accepted.",
+                    outcomeId);
+            }
+            else if (produces != null && !string.Equals(fact.DecisionTypeKey, produces, StringComparison.Ordinal))
+            {
+                Refuse(
+                    ReasonCodes.ReviewOutcomeNotAccepted,
+                    "The review's Outcome Decision is of type " + Quote(fact.DecisionTypeKey ?? "none") + ", and review type " + Quote(reviewType!) + " records a decision of type " + Quote(produces) + ".",
+                    outcomeId);
+            }
+            else if (application != null && !string.Equals(fact.SubjectApplicationId, application, StringComparison.OrdinalIgnoreCase))
+            {
+                Refuse(
+                    ReasonCodes.ReviewOutcomeNotAccepted,
+                    "The review's Outcome Decision is about another application than the review.",
+                    outcomeId);
+            }
+            else if (fact.UsedByReviewId != null && !string.Equals(fact.UsedByReviewId, _request.RowId, StringComparison.OrdinalIgnoreCase))
+            {
+                // Security review 2026-11-24 (B25-15): one decision closes one review. A recurring review needs a decision
+                // of its own cycle, so an old decision cannot close every later review.
+                Refuse(
+                    ReasonCodes.ReviewOutcomeNotAccepted,
+                    "The review's Outcome Decision already closed another review (" + fact.UsedByReviewId + "). Each review is closed by a decision of its own.",
+                    outcomeId);
+            }
+            else if (fact.DecidedOn != null && fact.CycleStartedOn != null && string.CompareOrdinal(DayOf(fact.DecidedOn), DayOf(fact.CycleStartedOn)) < 0)
+            {
+                Refuse(
+                    ReasonCodes.ReviewOutcomeNotAccepted,
+                    "The review's Outcome Decision was decided on " + DayOf(fact.DecidedOn) + ", before this review's cycle started on " + DayOf(fact.CycleStartedOn) + ". A review is closed by a decision of its own cycle.",
+                    outcomeId);
+            }
+        }
+
+        // The yyyy-MM-dd part of a date or a moment.
+        private static string DayOf(string value)
+        {
+            return value.Length >= 10 ? value.Substring(0, 10) : value;
+        }
+
         // ---- O22 Gap Check Run (document 22, sections 2.2 and 9.1) ----
 
         // Estates Covered holds keys of the estates the run read, never a copy of the inventory (document 22, section 2.2,
@@ -1084,6 +1407,44 @@ public static class WriteGuardOperation
             if (!keys)
             {
                 throw OperationStop.Input(ReasonCodes.InputMalformed, "input.after.estatesCovered must be a list of distinct estate keys, such as [\"power-platform-inventory\"]. It never holds inventory items or their properties.", "estatesCovered");
+            }
+        }
+
+        // ---- O04 Dependency (document 22, O04 rules; document 25, B25-13) ----
+
+        // A dependency points from an application to exactly one of another application or a component, never to its own
+        // application. Class E: it is ended with Ended On instead of a delete, and an ended dependency never changes again,
+        // so the history of who depended on what stays as it was; a new dependency is added instead. The shape is judged
+        // on a create and on any write that names an end of the link, against the row as it would stand.
+        private void Dependency()
+        {
+            if (Op == WriteOperation.Update && HasValue(_before, "endedOn"))
+            {
+                Refuse(ReasonCodes.RecordFinal, "This " + EntityName + " ended on " + Text(_before, "endedOn") + ", so it never changes again. Add a new dependency instead.", _request.RowId);
+                return;
+            }
+
+            bool namesAnEnd = _after.TryGetMember("fromApplication", out _) || _after.TryGetMember("toApplication", out _) || _after.TryGetMember("toComponent", out _);
+            if (Op != WriteOperation.Create && !namesAnEnd)
+            {
+                return;
+            }
+
+            string? from = Text(Column("fromApplication"), null);
+            string? toApplication = Text(Column("toApplication"), null);
+            string? toComponent = Text(Column("toComponent"), null);
+            if (from == null)
+            {
+                throw OperationStop.Input(ReasonCodes.InputRequired, "fromApplication is required on " + EntityName + ".", "fromApplication");
+            }
+
+            if ((toApplication == null) == (toComponent == null))
+            {
+                Refuse(ReasonCodes.DependencyTargetInvalid, "A " + EntityName + " points to exactly one of To Application and To Component, and this write leaves " + (toApplication == null ? "neither" : "both") + ".", _request.RowId);
+            }
+            else if (toApplication != null && string.Equals(toApplication, from, StringComparison.OrdinalIgnoreCase))
+            {
+                Refuse(ReasonCodes.DependencyTargetInvalid, "A " + EntityName + " never points to its own application: To Application is the From Application.", _request.RowId);
             }
         }
 
@@ -1120,6 +1481,9 @@ public static class WriteGuardOperation
                 }
             }
 
+            // A final decision is refused above (G-05) before its proposed changes are read.
+            ProposedChangesShape();
+            ExceptionShape();
             switch (newMeaning)
             {
                 case "accepted":
@@ -1237,6 +1601,9 @@ public static class WriteGuardOperation
             {
                 _effects.Add(new PlannedEffect(EffectKind.SupersedeDecision, "Decision", WriteOperation.Update, supersedes, null, Columns(("supersededBy", JsonTreeNode.FromString(_request.RowId)))));
             }
+
+            // The decision's effect on its subject record, in the same transaction (document 25, B25-8).
+            UpdateSubject(acceptance);
         }
 
         private string? EngineAcceptRefusal(WriteAcceptance acceptance, string? decisionType)
@@ -1291,7 +1658,7 @@ public static class WriteGuardOperation
             _trace.Add(new RuleTrace("Gate", gateKey, RuleTraceRole.Matched));
             if (ready.Kind == JsonTreeKind.False)
             {
-                Refuse(ReasonCodes.GateNotReady, "Gate " + Quote(gateKey) + " is not ready (OP-07), so its gate decision cannot be accepted.", gateKey);
+                Refuse(ReasonCodes.GateNotReady, "Gate " + Quote(gateKey) + " is not ready (OP-07), so its gate decision stays proposed until the gate is ready.", gateKey);
             }
         }
 
@@ -1303,6 +1670,8 @@ public static class WriteGuardOperation
         //   a pending record, and computes Counts Toward Requirement;
         // - the approval runner writes its answer once, on a pending record: the outcome, the responder columns and
         //   Approver Holds Required Role (a proposed column, the runner's record of the responder's role);
+        // - a person writes their own answer once, on a pending record, only with the basis of the approval answer check the
+        //   runtime ran for that person (D-38; PersonApprovalWrite);
         // - no other caller writes any O10 column, and nothing changes once Outcome Meaning leaves pending (class F), but
         //   Counts Toward Requirement, which the engine computes when the outcome is written, and the same outcome again,
         //   a no-op.
@@ -1353,12 +1722,16 @@ public static class WriteGuardOperation
             }
 
             bool writer = IsApprovalWriter(out string why);
+
+            // D-38: a person writes their own answer only with the approval answer check's basis, which the runtime adds
+            // after the check allowed it for that person. A request never carries it.
+            bool personAnswer = !writer && _request.ApprovalAnswer != null;
             if (engineColumns.Length > 0)
             {
                 Refuse(
                     ReasonCodes.EngineEffectOnly,
                     "Approval Record " + string.Join(", ", engineColumns) + (engineColumns.Length == 1 ? " is" : " are") + " written only by the engine, when it creates the record from the approval rules"
-                    + (writer ? ". The approval runner writes only its answer." : "."),
+                    + (writer ? ". The approval runner writes only its answer." : personAnswer ? ". A person writes only their own answer." : "."),
                     _request.RowId);
             }
 
@@ -1373,9 +1746,9 @@ public static class WriteGuardOperation
                         _handled.Add(member.Key);
                     }
 
-                    if (writer)
+                    if (writer || personAnswer)
                     {
-                        Refuse(ReasonCodes.ApprovalOutcomeWriter, "The approval runner writes an Approval Record only with its answer, which names the outcome.", _request.RowId);
+                        Refuse(ReasonCodes.ApprovalOutcomeWriter, (writer ? "The approval runner" : "A person") + " writes an Approval Record only with an answer, which names the outcome.", _request.RowId);
                     }
                     else
                     {
@@ -1389,9 +1762,19 @@ public static class WriteGuardOperation
             string beforeMeaning = Text(_before, "outcomeMeaning")
                 ?? throw OperationStop.Input(ReasonCodes.InputRequired, "facts.before.outcomeMeaning is required to write an approval outcome.");
 
+            if (personAnswer)
+            {
+                PersonApprovalWrite(newMeaning, statusKey, beforeMeaning);
+                return;
+            }
+
             if (!writer)
             {
-                Refuse(ReasonCodes.ApprovalOutcomeWriter, "Only the approval runner, holding the approval writer workload role, records an approval outcome: " + why + ".", _request.RowId);
+                Refuse(
+                    ReasonCodes.ApprovalOutcomeWriter,
+                    "Only the approval runner, holding the approval writer workload role, records an approval outcome from a card, and a person answers their own approval request only through the product's decision page (answer_approval): "
+                    + why + ".",
+                    _request.RowId);
                 return;
             }
 
@@ -1528,7 +1911,7 @@ public static class WriteGuardOperation
             {
                 Refuse(
                     ReasonCodes.ApprovalOutcomeWriter,
-                    "The engine never writes who answered an Approval Record, or when, where or why (" + string.Join(", ", responder) + " given). Only the approval runner writes the responder columns, with the answer.",
+                    "The engine never writes who answered an Approval Record, or when, where or why (" + string.Join(", ", responder) + " given). Only the approval runner, or the person answering their own request, writes the responder columns, with the answer.",
                     _request.RowId);
                 return;
             }
@@ -1625,6 +2008,108 @@ public static class WriteGuardOperation
             {
                 _noOp = true;
             }
+        }
+
+        // G-06, the person path (D-38; document 26, AN-01 and AN-02 as D-38 rewrites them). A person writes their own
+        // answer to a pending Approval Record, on the product's decision page, only after the approval answer check allowed
+        // it for that same person: the runtime adds the check's basis to the request, and no request carries one. The guard
+        // checks what the write itself shows: the check allowed it; the caller is the person it judged, acting directly and
+        // signed in as a user; the record is still pending; the outcome is approved or rejected; the responder columns name
+        // the caller, as a person and a user (and the caller's Principal Reference, when there is one, says user); there is
+        // no run link, which is the approval runner's. The guard writes Responded On (the moment of the call) and Approver
+        // Holds Required Role (true: the check found the role or owner role held now) itself, and the recompute follows as
+        // for the runner's answer. Anything else is refused, so a direct write without the check stays refused.
+        private void PersonApprovalWrite(string? newMeaning, string? statusKey, string beforeMeaning)
+        {
+            ApprovalAnswerBasis basis = _request.ApprovalAnswer!;
+            string? problem = !string.Equals(basis.CheckOutcome, ApprovalAnswerOperation.Allowed, StringComparison.Ordinal)
+                ? "the approval answer check did not allow it (" + basis.CheckOutcome + ")"
+                : _actor.IsEngineNested ? "an engine write never answers an approval"
+                : !ContractFacts.IsPerson(_actor.ActorKind) ? "the caller is " + EngineContract.ActorKindMeanings.ToWire(_actor.ActorKind) + ", not a person acting directly"
+                : !ContractFacts.CanApprove(_actor.PrincipalKind) ? "the caller is a " + EngineContract.PrincipalKinds.ToWire(_actor.PrincipalKind) + ", not a user"
+                : !SamePrincipal(basis.ResponderPrincipalId, _actor.PrincipalId) ? "the check judged another person"
+                : !string.Equals(basis.ApprovalRecordId, _request.RowId, StringComparison.OrdinalIgnoreCase) ? "the check judged another approval record"
+                : null;
+            if (problem != null)
+            {
+                Refuse(ReasonCodes.ApprovalOutcomeWriter, "A person records only their own approval answer, after the approval answer check: " + problem + ".", _request.RowId);
+                return;
+            }
+
+            if (!string.Equals(beforeMeaning, "pending", StringComparison.Ordinal))
+            {
+                Refuse(ReasonCodes.ApprovalOutcomeFinal, "The Approval Record already has the final outcome " + beforeMeaning + ". An answer is written once and never changes.", _request.RowId);
+                return;
+            }
+
+            if (statusKey == null || newMeaning == null)
+            {
+                throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.outcome is required with the responder columns.");
+            }
+
+            if (newMeaning != "approved" && newMeaning != "rejected")
+            {
+                Refuse(ReasonCodes.ApprovalOutcomeWriter, "A person answers approved or rejected; " + newMeaning + " is not an answer a person gives.", statusKey);
+                return;
+            }
+
+            if (!string.Equals(newMeaning, basis.Answer, StringComparison.Ordinal))
+            {
+                Refuse(ReasonCodes.ApprovalOutcomeWriter, "A person records the answer the approval answer check judged (" + basis.Answer + "), not " + newMeaning + ".", statusKey);
+                return;
+            }
+
+            string approver = Text(_after, "approver") ?? throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.approver is required with an answer.");
+            if (!SamePrincipal(approver, _actor.PrincipalId))
+            {
+                Refuse(ReasonCodes.ApprovalOutcomeWriter, "A person answers only for themselves: the approver must be the person signed in, as the token names them.", "approver");
+                return;
+            }
+
+            string actorKindKey = Text(_after, "approverActorKind") ?? throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.approverActorKind is required with an answer.");
+            SnapshotRow actorRow = SnapshotRead.RequireActive(_snapshot, "actor-kind", actorKindKey, "input.after.approverActorKind");
+            if (!EngineContract.ActorKindMeanings.TryParse(actorRow.EngineMeaning, out ActorKindMeaning actorMeaning))
+            {
+                throw OperationStop.Broken(ReasonCodes.MeaningMissing, "Actor Kind " + Quote(actorKindKey) + " has no engine meaning, so the configuration is broken.", "Actor Kind", actorKindKey);
+            }
+
+            string principalText = Text(_after, "approverPrincipalKind") ?? throw OperationStop.Input(ReasonCodes.InputRequired, "input.after.approverPrincipalKind is required with an answer.");
+            if (!EngineContract.PrincipalKinds.TryParse(principalText, out PrincipalKind principalKind))
+            {
+                throw OperationStop.Input(ReasonCodes.InputContractValueUnknown, "input.after.approverPrincipalKind is \"" + principalText + "\", which is not one of " + string.Join(", ", EngineContract.PrincipalKinds.WireValues) + ".");
+            }
+
+            PrincipalReferenceFact? reference = _request.ApproverPrincipalReference;
+            if (!ContractFacts.IsPerson(actorMeaning) || !ContractFacts.CanApprove(principalKind) || (reference != null && !ContractFacts.CanApprove(reference.PrincipalKind)))
+            {
+                Refuse(
+                    ReasonCodes.ApprovalOutcomeWriter,
+                    "A person's own answer is recorded only as a person signed in as a user (approverActorKind " + Quote(actorKindKey) + ", approverPrincipalKind " + Quote(principalText)
+                    + (reference != null ? ", Principal Reference " + EngineContract.PrincipalKinds.ToWire(reference.PrincipalKind) : string.Empty) + ").",
+                    "approver");
+                return;
+            }
+
+            if (_after.TryGetMember("flowRunUrl", out JsonTreeNode? run) && run.Kind != JsonTreeKind.Null)
+            {
+                Refuse(ReasonCodes.ApprovalOutcomeWriter, "A run link is the approval runner's; a person's answer on the product's page has none.", "flowRunUrl");
+                return;
+            }
+
+            Set("respondedOn", JsonTreeNode.FromUtcDateTime(_context.AsOfUtc));
+            Set("approverActorMeaning", JsonTreeNode.FromString(EngineContract.ActorKindMeanings.ToWire(actorMeaning)));
+            Set(WriteGuardEntities.ApproverHoldsRequiredRole, JsonTreeNode.True);
+            _trace.Add(new RuleTrace("Actor Kind", actorRow.KeyPath, RuleTraceRole.Matched));
+
+            string decisionId = Text(Column("decision"), null) ?? throw OperationStop.Input(ReasonCodes.InputRequired, "facts.before.decision (the Decision of the Approval Record) is required to write an outcome.");
+            _effects.Add(new PlannedEffect(EffectKind.RecomputeApprovals, "Decision", WriteOperation.Update, decisionId, null, Columns()));
+            _effects.Add(Audit("approval-outcome-written", "Approval Record", _request.RowId, Columns(("outcomeMeaning", JsonTreeNode.FromString(newMeaning)))));
+        }
+
+        // Two principal IDs name the same principal (the comparison OP-03 and the separation rules use).
+        private static bool SamePrincipal(string a, string b)
+        {
+            return string.Equals(ApprovalStatusOperation.PrincipalKey(a), ApprovalStatusOperation.PrincipalKey(b), StringComparison.Ordinal);
         }
 
         // The approval runner: actor kind approval runner, a workload principal, holding the active approval writer
@@ -2111,6 +2596,14 @@ public static class WriteGuardOperation
                 if (operational)
                 {
                     stamps["configurationSetVersion"] = JsonTreeNode.FromInt64(_context.ConfigurationVersion);
+                }
+
+                // The drafted by pair (document 22, B22-15): the AI client that created an operational row and the person it
+                // acted for, set once on create and never changed, so a person's later edit keeps the AI mark.
+                if (_entity.Kind == GuardEntityKind.Operational && !Nested && _actor.ActorKind == ActorKindMeaning.AiClientForPerson)
+                {
+                    stamps["draftedByClientApp"] = _context.ClientApp == null ? JsonTreeNode.Null : JsonTreeNode.FromString(_context.ClientApp);
+                    stamps["draftedForPrincipal"] = JsonTreeNode.FromString(_actor.OnBehalfOfPrincipalId ?? _actor.PrincipalId);
                 }
             }
 

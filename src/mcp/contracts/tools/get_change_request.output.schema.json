@@ -29,7 +29,9 @@
         "affected",
         "deployments",
         "result",
-        "links"
+        "links",
+        "closable",
+        "postChangeReviews"
       ],
       "properties": {
         "change": {
@@ -47,7 +49,10 @@
             "windowEnd",
             "plannedTargetId",
             "externalChangeNumber",
-            "externalChangeUrl"
+            "externalChangeUrl",
+            "createdBy",
+            "isAiCreated",
+            "performedBy"
           ],
           "properties": {
             "changeRequestId": {
@@ -141,6 +146,32 @@
                   "type": "null"
                 }
               ]
+            },
+            "createdBy": {
+              "description": "Who created the change request (Created By Principal). Null for a seeded record.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/principalRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isAiCreated": {
+              "type": "boolean",
+              "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+            },
+            "performedBy": {
+              "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/stampedBy"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "additionalProperties": false
@@ -151,7 +182,8 @@
             "decisionId",
             "status",
             "approvalsSummary",
-            "linkedSource"
+            "linkedSource",
+            "settledBy"
           ],
           "properties": {
             "decisionId": {
@@ -188,6 +220,22 @@
                     "itsm-step",
                     "attestation",
                     "none"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "settledBy": {
+              "description": "How a settled decision was settled: answers (it holds approval records), engine (the engine accepted it under the locked list, with no approval request), person (its proposer or decider withdrew it), or recorded (no approval record and no engine stamp: recorded as settled outside the engine, such as the seeded demo estate or an import). Null while the decision is proposed.",
+              "anyOf": [
+                {
+                  "enum": [
+                    "answers",
+                    "engine",
+                    "person",
+                    "recorded"
                   ]
                 },
                 {
@@ -323,6 +371,53 @@
             "additionalProperties": false
           },
           "description": "Delivery and evidence links of the change."
+        },
+        "closable": {
+          "type": "boolean",
+          "description": "True when complete_change would close the change now: it is in progress (authorized and scheduled), or submitted with a change type that allows authorization after."
+        },
+        "postChangeReviews": {
+          "type": "array",
+          "description": "The post-change reviews (O21) of this change, found by the change named in their description.",
+          "items": {
+            "type": "object",
+            "required": [
+              "reviewId",
+              "status",
+              "dueOn",
+              "doneOn"
+            ],
+            "properties": {
+              "reviewId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O21 Review"
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue"
+              },
+              "dueOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "doneOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -352,7 +447,26 @@
           "windowEnd": "2026-12-02T20:00:00Z",
           "plannedTargetId": "d4000000-0000-4000-8000-000000000002",
           "externalChangeNumber": null,
-          "externalChangeUrl": null
+          "externalChangeUrl": null,
+          "createdBy": {
+            "objectId": "20000000-0000-4000-8000-000000000002",
+            "displayLabel": "Owner (sample)"
+          },
+          "isAiCreated": true,
+          "performedBy": {
+            "actorKind": "ai-client-for-person",
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Owner (sample)"
+            },
+            "onBehalfOf": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Owner (sample)"
+            },
+            "clientAppLabel": "Claude Code",
+            "stampedOn": "2026-11-21T10:00:00Z",
+            "draftedBy": null
+          }
         },
         "authorization": {
           "decisionId": "60000000-0000-4000-8000-000000000015",
@@ -366,7 +480,8 @@
             "rejected": 0,
             "pending": 1
           },
-          "linkedSource": null
+          "linkedSource": null,
+          "settledBy": null
         },
         "affected": [],
         "deployments": [],
@@ -382,7 +497,9 @@
             "url": "https://devops.example.org/items/101",
             "label": "Photo upload story"
           }
-        ]
+        ],
+        "closable": false,
+        "postChangeReviews": []
       },
       "links": {
         "recordUrl": "https://product.example.org/records/d0000000-0000-4000-8000-000000000002"

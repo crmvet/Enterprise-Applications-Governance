@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "retry_approval_card output",
+  "description": "The response envelope. On success, data says what happened to the card: sent again, or closed because the request needs none.",
+  "x-tool": "retry_approval_card",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "approvalRecordId",
+        "decision",
+        "action",
+        "stateBefore",
+        "stateAfter",
+        "attemptsBefore",
+        "performedBy",
+        "dryRun"
+      ],
+      "properties": {
+        "approvalRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O10 Approval Record"
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "decisionId",
+                "recordNumber",
+                "statement",
+                "recordUrl"
+              ],
+              "properties": {
+                "decisionId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision"
+                },
+                "recordNumber": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "statement": {
+                  "type": "string",
+                  "x-untrusted": true
+                },
+                "recordUrl": {
+                  "$ref": "../common.schema.json#/$defs/recordUrl"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action": {
+          "enum": [
+            "sent-again",
+            "closed"
+          ]
+        },
+        "stateBefore": {
+          "enum": [
+            "pending",
+            "claimed",
+            "sent",
+            "answered",
+            "expired",
+            "cancelled",
+            "failed"
+          ]
+        },
+        "stateAfter": {
+          "enum": [
+            "pending",
+            "claimed",
+            "sent",
+            "answered",
+            "expired",
+            "cancelled",
+            "failed"
+          ]
+        },
+        "attemptsBefore": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "performedBy": {
+          "$ref": "../envelope.schema.json#/$defs/performedBy"
+        },
+        "dryRun": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

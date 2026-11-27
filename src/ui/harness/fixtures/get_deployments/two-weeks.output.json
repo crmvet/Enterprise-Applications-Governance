@@ -29,7 +29,16 @@
         },
         "gateLevelApplied": "record",
         "runUrl": "https://pipelines.example.org/finance/supplier-onboarding/runs/97",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000010"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000009",
@@ -57,7 +66,16 @@
         },
         "gateLevelApplied": "off",
         "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1872",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000009"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000008",
@@ -85,7 +103,16 @@
         },
         "gateLevelApplied": "flag",
         "runUrl": null,
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000008"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000007",
@@ -113,7 +140,16 @@
         },
         "gateLevelApplied": "record",
         "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1861",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000007"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000006",
@@ -141,7 +177,16 @@
         },
         "gateLevelApplied": "off",
         "runUrl": null,
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000006"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000005",
@@ -169,7 +214,16 @@
         },
         "gateLevelApplied": "flag",
         "runUrl": "https://pipelines.example.org/finance/invoice-matching/runs/311",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000005"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000004",
@@ -197,7 +251,16 @@
         },
         "gateLevelApplied": "flag",
         "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1846",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000004"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000003",
@@ -225,7 +288,16 @@
         },
         "gateLevelApplied": "off",
         "runUrl": "https://pipelines.example.org/field-ops/inspection-scheduler/runs/1840",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000003"
       },
       {
         "deploymentRecordId": "80000000-0000-4000-8000-000000000002",
@@ -253,9 +325,27 @@
         },
         "gateLevelApplied": "record",
         "runUrl": "https://pipelines.example.org/field-ops/crew-roster/runs/2207",
-        "correctsRecordId": null
+        "correctsRecordId": null,
+        "changeRequestId": null,
+        "pipelineReferenceId": null,
+        "versionBefore": null,
+        "versionAfter": null,
+        "startedByAiClient": null,
+        "isAiCreated": false,
+        "performedBy": null,
+        "configurationSetVersion": 3,
+        "recordUrl": "https://product.example.org/app/records/deployment-record/80000000-0000-4000-8000-000000000002"
       }
-    ]
+    ],
+    "counts": {
+      "records": 9,
+      "flagged": 3,
+      "outsideWindow": 1,
+      "otherPath": 1,
+      "missingApproval": 1,
+      "aiOnlyCodeApproval": 1
+    },
+    "totalCount": 9
   },
   "asOf": "2026-11-22T09:00:00Z",
   "configurationSetVersion": 7,

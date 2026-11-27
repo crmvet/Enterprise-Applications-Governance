@@ -17,6 +17,7 @@ using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
 using Product.Engine.Core.Operations;
 using Product.Engine.Core.Reasons;
+using Product.Engine.Core.Snapshots;
 
 namespace Product.Engine.Testing;
 
@@ -26,8 +27,9 @@ namespace Product.Engine.Testing;
 // Each fixture is checked against fixture.schema.json first. Then its operation runs and the result is compared
 // with "expected": the outcome word, the payload (subset or exact), the reasons (exact or includes) and the rule
 // trace (includes or exact). OP-09, rebase, activate and bootstrap run through the configuration assembly; OP-01 to OP-08
-// and OP-10 to OP-14 run through the core's OperationJson, the same wire path an adapter uses. An operation that is not
-// built is skipped.
+// and OP-10 to OP-14 run through the core's OperationJson, the same wire path an adapter uses, proposal-right through
+// the core's ProposalRightsOperation wire form, and approval-answer through the core's ApprovalAnswerOperation wire form.
+// An operation that is not built is skipped.
 public sealed class FixtureRunner
 {
     // The outcome words that mean a case breaks something, and the words that mean it passes, per operation.
@@ -60,6 +62,9 @@ public sealed class FixtureRunner
         { "OP-12", EngineOperation.EvaluateStandardChange },
         { "OP-13", EngineOperation.CompareGapCheckResult },
         { "OP-14", EngineOperation.EvaluateLinkedAuthorization },
+        { "OP-15", EngineOperation.ResolveDataDomain },
+        { "OP-16", EngineOperation.EvaluateDataUse },
+        { "OP-17", EngineOperation.RunDataChecks },
     };
 
     private readonly ConfigurationValidator _validator;
@@ -159,6 +164,10 @@ public sealed class FixtureRunner
                     return RunActivate(name, fixture!, caseName!);
                 case "bootstrap":
                     return RunBootstrap(name, fixture!, caseName!);
+                case "proposal-right":
+                    return RunEvaluation(name, fixture!, caseName!, operation, ProposalRight, guard: false);
+                case "approval-answer":
+                    return RunEvaluation(name, fixture!, caseName!, operation, ApprovalAnswer, guard: false);
                 case string op when EvaluationOperations.TryGetValue(op, out EngineOperation evaluation) && OperationJson.IsBuilt(evaluation):
                     return RunEvaluation(name, fixture!, caseName!, op, evaluation);
                 default:
@@ -354,6 +363,26 @@ public sealed class FixtureRunner
     // sends) together make the operation's wire input; the fixture schema keeps each field on its side.
     private FixtureResult RunEvaluation(string name, JsonTreeNode fixture, string caseName, string operation, EngineOperation evaluation)
     {
+        return RunEvaluation(name, fixture, caseName, operation, (snapshot, context, input) => OperationJson.Evaluate(evaluation, snapshot, context, input), evaluation == EngineOperation.GuardWrite);
+    }
+
+    // The proposal right check (document 24, tool 17; B24-5) through its wire form, with the answer as JSON.
+    private static EvaluationResult<JsonTreeNode?> ProposalRight(ConfigurationSnapshot? snapshot, EvaluationContext context, JsonTreeNode input)
+    {
+        EvaluationResult<ProposalRightResult?> result = ProposalRightsOperation.Evaluate(snapshot!, context, input);
+        return EvaluationResult.Create<JsonTreeNode?>(context, result.Outcome, result.Payload?.ToJson(), result.Reasons, result.Trace);
+    }
+
+    // The approval answer check (D-38; document 26, AN-01 and AN-02) through its wire form, with the answer as JSON. The
+    // responder is the fixture context's actor.
+    private static EvaluationResult<JsonTreeNode?> ApprovalAnswer(ConfigurationSnapshot? snapshot, EvaluationContext context, JsonTreeNode input)
+    {
+        EvaluationResult<ApprovalAnswerResult?> result = ApprovalAnswerOperation.Evaluate(snapshot!, context, input);
+        return EvaluationResult.Create<JsonTreeNode?>(context, result.Outcome, result.Payload?.ToJson(), result.Reasons, result.Trace);
+    }
+
+    private FixtureResult RunEvaluation(string name, JsonTreeNode fixture, string caseName, string operation, Func<ConfigurationSnapshot?, EvaluationContext, JsonTreeNode, EvaluationResult<JsonTreeNode?>> evaluate, bool guard)
+    {
         JsonTreeNode snapshot = JsonNodes.Get(fixture, "snapshot")!;
         JsonTreeNode input = JsonNodes.Get(fixture, "input") ?? JsonNodes.EmptyObject;
         JsonTreeNode facts = JsonNodes.Get(fixture, "facts") ?? JsonNodes.EmptyObject;
@@ -396,8 +425,7 @@ public sealed class FixtureRunner
         }
 
         EvaluationContext context = BuildContext(JsonNodes.Get(fixture, "context")!, snapshot, snapshotHash, caseName);
-        EvaluationResult<JsonTreeNode?> result = OperationJson.Evaluate(evaluation, compiled?.Snapshot, context, merged);
-        bool guard = evaluation == EngineOperation.GuardWrite;
+        EvaluationResult<JsonTreeNode?> result = evaluate(compiled?.Snapshot, context, merged);
         List<ActualReason> reasons = result.Reasons.Select(r => new ActualReason(r.Code, r.Severity, r.Entity, r.Ref, guard ? GuardRuleId(r.Code) : null, r.Message)).ToList();
         return Judge(name, operation, fixture, snapshot, caseName, result.Outcome, result.Payload ?? JsonTreeNode.Null, snapshotHash, reasons, result.Trace);
     }
@@ -756,13 +784,15 @@ public sealed class FixtureRunner
         public string Message { get; }
 
         // Code must match. Severity, entity, ref and ruleId must match when the expected reason gives them.
+        // messageContains (wave 4b): a part of the reason's sentence, for a case about the words a person reads.
         public bool Matches(JsonTreeNode expected)
         {
             return string.Equals(JsonNodes.GetString(expected, "code"), Code, StringComparison.Ordinal)
                 && Optional(expected, "severity", ValidationIssue.SeverityWire(Severity))
                 && Optional(expected, "entity", Entity)
                 && Optional(expected, "ref", Ref)
-                && Optional(expected, "ruleId", RuleId);
+                && Optional(expected, "ruleId", RuleId)
+                && (JsonNodes.GetString(expected, "messageContains") is not string part || (Message ?? string.Empty).IndexOf(part, StringComparison.Ordinal) >= 0);
         }
 
         public override string ToString()

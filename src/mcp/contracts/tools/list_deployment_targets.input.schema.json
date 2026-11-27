@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_deployment_targets input",
+  "description": "The places deployments land (O15), by stage: each target with its kind, change path and link, when it was last seen, the latest version of each application deployed there, the pipelines mapped to it and how many of its records are flagged. Writes nothing.",
+  "x-tool": "list_deployment_targets",
+  "type": "object",
+  "properties": {
+    "targetKindKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      },
+      "description": "Only these target kinds, from the target-kind list."
+    },
+    "targetStageKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C34 Target Stage"
+      },
+      "description": "Only these stages."
+    },
+    "state": {
+      "enum": [
+        "all",
+        "active",
+        "retired"
+      ],
+      "default": "all",
+      "description": "active: targets in service, the ones record_deployment takes; retired: retired targets; all: both."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Only targets whose name holds this text."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "targetStageKeys": [
+        "production"
+      ]
+    }
+  ]
+}

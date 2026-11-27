@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "submit_record input",
-  "description": "Sends a draft or proposed record on: an intake request to triage, a change request to authorization, a decision to acceptance, a configuration draft to acceptance. It starts the approval cards the rules require. It never approves. For a configuration draft the engine freezes the draft and records a Proposed configuration change decision (or a gate policy change decision).",
-  "$comment": "WORKING DEFAULT (open design question 9). An AI client may submit only where the Tool Policy row says AI May Submit = yes for the subject kind. Shipped yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
+  "description": "Sends a draft or proposed record on: an intake request to triage, a change request to authorization, a decision to acceptance, a configuration draft to acceptance. It opens the approval requests the rules require, which people answer on the decision page. It never approves. For a configuration draft the engine freezes the draft and records a Proposed configuration change decision (or a gate policy change decision).",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may submit only where the Tool Policy row says AI May Submit = yes for the subject kind. Shipped yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without an approval request only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
   "x-tool": "submit_record",
   "type": "object",
   "required": [
@@ -15,9 +15,11 @@
         "intake-request",
         "change-request",
         "decision",
-        "configuration-draft"
+        "configuration-draft",
+        "data-use",
+        "data-mapping"
       ],
-      "description": "The kind of record to submit."
+      "description": "The kind of record to submit. data-use and data-mapping send the row's data-use decision (opened when it has none) to its approvers; the row must be confirmed. An AI client never submits a copy or retention decision."
     },
     "subjectId": {
       "$ref": "../common.schema.json#/$defs/id",

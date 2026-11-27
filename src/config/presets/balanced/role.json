@@ -1,6 +1,6 @@
 {
   "$comment": [
-    "Fourteen human roles and the two adopted workload roles, as agreed in document 28, issue 7.",
+    "Fifteen human roles and the two adopted workload roles: the fourteen agreed in document 28, issue 7, and the data governance lead the data taxonomy adds (D-41, question 4: it appoints the owners of top-level data domains in Balanced and Regulated; the platform admin does it in Starter).",
     "WORKING DEFAULT (open design question 12): deployment-recorder and approval-writer are workload roles, held only through a Workload Grant (C42), never through a group.",
     "Proposal, not adopted yet: authorization-reporter and consistency-checker are two more workload roles. They also rest on WORKING DEFAULT (open design question 12)."
   ],
@@ -23,7 +23,7 @@
       "key": "data-owner",
       "label": "Data owner",
       "partyKey": "business",
-      "duties": "Decides data use for a data area."
+      "duties": "Decides data use for the data domains they own or steward, and for applications that declare no data use."
     },
     {
       "key": "architect",
@@ -82,6 +82,12 @@
       "partyKey": "business",
       "duties": "Reads the register, decisions and the change schedule. No audit entries, no restricted columns. Never writes.",
       "isReadOnly": true
+    },
+    {
+      "key": "data-governance-lead",
+      "label": "Data governance lead",
+      "partyKey": "business",
+      "duties": "Appoints the owners of top-level data domains, keeps data locations and mappings current, and sees every data gap (data taxonomy, D-41, question 4)."
     },
     {
       "key": "deployment-recorder",

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "unknown-classification-invalid-input",
+  "description": "A classification key the configuration does not hold is invalid input.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-use",
+    "subjectKind": "data-use",
+    "classificationKey": "top-secret",
+    "aiUse": true
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.unknown-key",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

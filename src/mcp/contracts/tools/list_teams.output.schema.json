@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_teams output",
+  "description": "The response envelope. On success, data lists the teams, committees first, then support teams, role groups and other groups, each by name, with the counts of every kind under the other filters.",
+  "x-tool": "list_teams",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "counts",
+        "membersReadFrom",
+        "membership",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/team"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "description": "How many teams match the text, role and member filters, in all and per kind. A team of two kinds counts in both. The kind filter does not change these, so each count opens its rows.",
+          "required": [
+            "all",
+            "committee",
+            "supportTeam",
+            "roleGroup",
+            "other"
+          ],
+          "properties": {
+            "all": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "committee": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "supportTeam": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "roleGroup": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "other": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "membersReadFrom": {
+          "$ref": "#/$defs/membersReadFrom"
+        },
+        "membership": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Where membership comes from, in one sentence, when it is not read live from Entra: managed in Entra and not read here, or the demo personas."
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The teams that match every filter, the kind too."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    },
+    "membersReadFrom": {
+      "enum": [
+        "entra-live",
+        "demo-personas",
+        "not-read"
+      ],
+      "description": "Where this install reads a team's members: Entra, read live as the signed-in person and never stored; the demo personas and their fictional groups (a demo install or a local run); or nowhere, when the directory reads are off and membership is managed in Entra. get_role_access names the same source in holdersReadFrom."
+    },
+    "teamKind": {
+      "enum": [
+        "committee",
+        "support-team",
+        "role-group",
+        "other"
+      ]
+    },
+    "team": {
+      "type": "object",
+      "required": [
+        "teamId",
+        "team",
+        "kinds",
+        "roles",
+        "directoryState",
+        "memberCount",
+        "waitingCount",
+        "applicationCount",
+        "assignmentCount",
+        "ownerGapCount",
+        "recordUrl"
+      ],
+      "properties": {
+        "teamId": {
+          "$ref": "../common.schema.json#/$defs/guid",
+          "description": "The group's Entra object ID, the key get_team takes."
+        },
+        "team": {
+          "$ref": "../common.schema.json#/$defs/directoryObject"
+        },
+        "kinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/teamKind"
+          },
+          "description": "Derived when read, never stored. Committee, support team and role group in that order; other alone."
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/labelledKey"
+          },
+          "description": "The product roles bound to the group in the configuration in force."
+        },
+        "directoryState": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/directoryState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The group's state as the owner check last read it, or null for a group the product holds no reference to."
+        },
+        "memberCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "The people in the group, read for this page's rows only. Null when the members are not read."
+        },
+        "waitingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Pending approval requests that ask the group by name, a role it holds, or an owner role it holds on the decision's application."
+        },
+        "applicationCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Applications, not archived, the group holds a current owner role on."
+        },
+        "assignmentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Current owner assignments the group holds, on applications, data domains and data locations."
+        },
+        "ownerGapCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Owner gaps on its registered applications, counted as the Overview and the Owners page count them."
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The team's page link (record entity team, opened at /app/teams/<teamId>)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,579 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_data_domain output",
+  "description": "The response envelope. On success, data is the domain, its owners, mappings, uses, decisions, matches and findings.",
+  "x-tool": "get_data_domain",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "domain",
+        "owners",
+        "mappings",
+        "uses",
+        "decisions",
+        "matches",
+        "gaps"
+      ],
+      "properties": {
+        "domain": {
+          "type": "object",
+          "required": [
+            "key",
+            "label",
+            "path",
+            "pathKeys",
+            "parentKey",
+            "level",
+            "isActive",
+            "declarable",
+            "ownerRequired",
+            "description",
+            "examples",
+            "classification",
+            "rules",
+            "retention",
+            "impliedAnswer",
+            "children",
+            "counts",
+            "recordUrl"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C49 Data Domain"
+            },
+            "label": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string",
+              "description": "The labels from the top, joined by \" / \"."
+            },
+            "pathKeys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "level"
+                ],
+                "properties": {
+                  "key": {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "level": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "The domains from the top down to this one."
+            },
+            "parentKey": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/key"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "level": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isActive": {
+              "type": "boolean"
+            },
+            "declarable": {
+              "type": "boolean"
+            },
+            "ownerRequired": {
+              "type": "boolean",
+              "description": "True when this domain's level needs an owner of its own (DC-02)."
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "examples": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "What belongs here, in plain words. Untrusted text.",
+                  "x-untrusted": true
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "classification": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/dataClassificationValue"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "rules": {
+              "$ref": "../common.schema.json#/$defs/dataRules"
+            },
+            "retention": {
+              "description": "The effective retention class and where it is set.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "retentionClass",
+                    "setOn"
+                  ],
+                  "properties": {
+                    "retentionClass": {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    "setOn": {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "impliedAnswer": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/impliedAnswer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "isActive"
+                ],
+                "properties": {
+                  "key": {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "counts": {
+              "$ref": "../common.schema.json#/$defs/dataCounts"
+            },
+            "recordUrl": {
+              "$ref": "../common.schema.json#/$defs/recordUrl"
+            }
+          },
+          "additionalProperties": false
+        },
+        "owners": {
+          "description": "One item per owner role held on data domains.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "ownerRole",
+                  "inheritsDown",
+                  "holder",
+                  "otherHolders",
+                  "deputies",
+                  "inheritedFrom",
+                  "acting"
+                ],
+                "properties": {
+                  "ownerRole": {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  "inheritsDown": {
+                    "type": "boolean",
+                    "description": "True when a holder answers for the domains below."
+                  },
+                  "holder": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "ownerAssignmentId",
+                          "principal",
+                          "directoryState",
+                          "isLeaving"
+                        ],
+                        "properties": {
+                          "ownerAssignmentId": {
+                            "$ref": "../common.schema.json#/$defs/id",
+                            "x-entity": "O06 Owner Assignment"
+                          },
+                          "principal": {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          "directoryState": {
+                            "description": "As the last owner check read it.",
+                            "anyOf": [
+                              {
+                                "$ref": "../common.schema.json#/$defs/directoryState"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "isLeaving": {
+                            "type": "boolean",
+                            "description": "True when a leave date is recorded. The date itself is read only in list_owner_assignments."
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "otherHolders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "ownerAssignmentId",
+                        "principal",
+                        "directoryState",
+                        "isLeaving"
+                      ],
+                      "properties": {
+                        "ownerAssignmentId": {
+                          "$ref": "../common.schema.json#/$defs/id",
+                          "x-entity": "O06 Owner Assignment"
+                        },
+                        "principal": {
+                          "$ref": "../common.schema.json#/$defs/principalRef"
+                        },
+                        "directoryState": {
+                          "description": "As the last owner check read it.",
+                          "anyOf": [
+                            {
+                              "$ref": "../common.schema.json#/$defs/directoryState"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "isLeaving": {
+                          "type": "boolean",
+                          "description": "True when a leave date is recorded. The date itself is read only in list_owner_assignments."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "deputies": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "ownerAssignmentId",
+                        "principal",
+                        "directoryState",
+                        "isLeaving"
+                      ],
+                      "properties": {
+                        "ownerAssignmentId": {
+                          "$ref": "../common.schema.json#/$defs/id",
+                          "x-entity": "O06 Owner Assignment"
+                        },
+                        "principal": {
+                          "$ref": "../common.schema.json#/$defs/principalRef"
+                        },
+                        "directoryState": {
+                          "description": "As the last owner check read it.",
+                          "anyOf": [
+                            {
+                              "$ref": "../common.schema.json#/$defs/directoryState"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "isLeaving": {
+                          "type": "boolean",
+                          "description": "True when a leave date is recorded. The date itself is read only in list_owner_assignments."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "inheritedFrom": {
+                    "description": "The domain above whose holder answers.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "acting": {
+                    "description": "Who answers now: the first holder who can act, else a deputy.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mappings": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/dataMappingItem"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uses": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/dataUseItem"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisions": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "decisionId",
+                  "recordNumber",
+                  "decisionType",
+                  "subjectKind",
+                  "subjectId",
+                  "statement",
+                  "status",
+                  "outcome",
+                  "decidedOn",
+                  "recordUrl"
+                ],
+                "properties": {
+                  "decisionId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  "recordNumber": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "decisionType": {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  "subjectKind": {
+                    "$ref": "../common.schema.json#/$defs/decisionSubjectKind"
+                  },
+                  "subjectId": {
+                    "type": "string",
+                    "description": "The domain key, or the row ID of the use or mapping."
+                  },
+                  "statement": {
+                    "type": "string",
+                    "description": "What is decided.",
+                    "x-untrusted": true
+                  },
+                  "status": {
+                    "$ref": "../common.schema.json#/$defs/statusValue"
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "decidedOn": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "recordUrl": {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "matches": {
+          "description": "Matches to Fabric or Purview domains (C11 rows). The product never copies the catalog.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "vocabularyKey",
+                  "term",
+                  "url",
+                  "checkedOn"
+                ],
+                "properties": {
+                  "vocabularyKey": {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  "term": {
+                    "type": "string",
+                    "description": "The matching domain's name in the outside catalog."
+                  },
+                  "url": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/url"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "checkedOn": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gaps": {
+          "description": "The findings about this domain and what points at it (OP-17).",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/dataFinding"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

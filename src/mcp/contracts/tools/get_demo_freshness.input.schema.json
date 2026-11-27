@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_demo_freshness input",
+  "description": "On a demo install: which of the story's approval requests expired, or expire within the next hours, so the Demo guide can say \"run demo refresh\". Any other install answers not_found. Writes nothing.",
+  "x-tool": "get_demo_freshness",
+  "type": "object",
+  "properties": {
+    "withinHours": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 168,
+      "default": 48,
+      "description": "How far ahead to look."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "withinHours": 72
+    }
+  ]
+}

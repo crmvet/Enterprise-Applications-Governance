@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_data_locations input",
+  "description": "Which data locations match a platform, a stage, a parent, words in the name, unmapped or stale? With locationId, the full detail of that one location. External IDs and URLs are restricted read. Writes nothing.",
+  "x-tool": "find_data_locations",
+  "type": "object",
+  "properties": {
+    "locationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "One location, in full."
+    },
+    "platformKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C50 Data Platform"
+      },
+      "description": "Only locations of these platforms.",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true
+    },
+    "stageKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C34 Target Stage"
+      },
+      "description": "Only locations whose effective stage is one of these.",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true
+    },
+    "parentLocationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "Only the stores inside this instance."
+    },
+    "text": {
+      "type": "string",
+      "description": "Words in the name, or in the external ID for a caller who may read it.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "unmappedOnly": {
+      "type": "boolean",
+      "description": "Only locations no open mapping names."
+    },
+    "staleOnly": {
+      "type": "boolean",
+      "description": "Only locations not seen for data-location-stale-days, or never seen."
+    },
+    "includeRetired": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include retired locations."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "platformKeys": [
+        "ibm-i"
+      ]
+    }
+  ]
+}

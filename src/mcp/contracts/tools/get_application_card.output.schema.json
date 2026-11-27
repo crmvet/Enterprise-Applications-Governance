@@ -114,6 +114,108 @@
             "$ref": "#/$defs/deliveryLink"
           },
           "description": "Delivery links."
+        },
+        "data": {
+          "type": "object",
+          "description": "The Data panel (docs/architecture/data-taxonomy.md, Screens): the open data uses with their computed state, the derived data owners and the findings about the application.",
+          "required": [
+            "summary",
+            "holdsNoBusinessData",
+            "highestClassification",
+            "uses",
+            "dataOwners",
+            "findings"
+          ],
+          "properties": {
+            "summary": {
+              "type": "string",
+              "description": "One line, such as \"Reads 3 domains, writes 1. Highest class: Restricted.\""
+            },
+            "holdsNoBusinessData": {
+              "description": "O02 Holds No Business Data.",
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "highestClassification": {
+              "description": "The highest classification among the domains the application uses.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "uses": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/dataUseItem"
+              }
+            },
+            "dataOwners": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "domain",
+                  "principal",
+                  "inheritedFrom",
+                  "dataUseIds"
+                ],
+                "properties": {
+                  "domain": {
+                    "$ref": "../common.schema.json#/$defs/dataDomainRef"
+                  },
+                  "principal": {
+                    "description": "The domain's effective data owner. Null when nobody owns the domain or a domain above it.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "inheritedFrom": {
+                    "description": "The domain above whose owner answers.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "dataUseIds": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O27 Data Use"
+                    },
+                    "description": "The application's open uses of the domain."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/dataFinding"
+              },
+              "description": "The data findings about the application and its uses (OP-17), such as DC-09 and DC-10."
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -131,7 +233,10 @@
         "buildPath",
         "usesAi",
         "agreedAutonomyLevel",
-        "nextReviewOn"
+        "nextReviewOn",
+        "isAiCreated",
+        "performedBy",
+        "portfolio"
       ],
       "properties": {
         "businessApplicationId": {
@@ -284,6 +389,44 @@
               "type": "null"
             }
           ]
+        },
+        "portfolio": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "portfolioId",
+              "name"
+            ],
+            "properties": {
+              "portfolioId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O01 Portfolio"
+              },
+              "name": {
+                "type": "string",
+                "description": "The portfolio name.",
+                "x-untrusted": true
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The application's portfolio path, from the top of the tree down to its own portfolio. Empty when it sits in none."
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -312,7 +455,15 @@
           "description": "The tool's own ID."
         },
         "url": {
-          "$ref": "../common.schema.json#/$defs/url"
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A link that opens the item, or null when the product holds none (an item claimed from a list that gave no link)."
         },
         "labelAsSeen": {
           "anyOf": [
@@ -335,6 +486,10 @@
               "type": "null"
             }
           ]
+        },
+        "vanishedInGapCheck": {
+          "type": "boolean",
+          "description": "True when an open vanished claim names the component: the last gap check no longer saw it."
         }
       },
       "additionalProperties": false
@@ -409,7 +564,9 @@
         "statement",
         "outcome",
         "status",
-        "decidedOn"
+        "decidedOn",
+        "isAiCreated",
+        "performedBy"
       ],
       "properties": {
         "decisionId": {
@@ -447,6 +604,21 @@
               "type": "null"
             }
           ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -459,7 +631,9 @@
         "changeType",
         "status",
         "windowStart",
-        "windowEnd"
+        "windowEnd",
+        "isAiCreated",
+        "performedBy"
       ],
       "properties": {
         "changeRequestId": {
@@ -496,6 +670,21 @@
               "type": "null"
             }
           ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client drafted the change."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -510,7 +699,12 @@
         "artifactName",
         "artifactVersion",
         "result",
-        "finishedOn"
+        "finishedOn",
+        "route",
+        "flags",
+        "gateLevelApplied",
+        "isAiCreated",
+        "performedBy"
       ],
       "properties": {
         "deploymentRecordId": {
@@ -552,6 +746,30 @@
               "type": "null"
             }
           ]
+        },
+        "route": {
+          "$ref": "../common.schema.json#/$defs/deploymentRoute"
+        },
+        "flags": {
+          "$ref": "../common.schema.json#/$defs/deploymentFlags"
+        },
+        "gateLevelApplied": {
+          "$ref": "../common.schema.json#/$defs/gateLevel"
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client reported the record."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -563,6 +781,7 @@
         "status",
         "documentLinkId",
         "url",
+        "linkKindKey",
         "lastCheckedOn",
         "staleOn"
       ],
@@ -591,6 +810,18 @@
           "anyOf": [
             {
               "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "linkKindKey": {
+          "description": "The Link Kind (C37) the link was recorded with. Null when the document is missing.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C37 Link Kind"
             },
             {
               "type": "null"
@@ -737,7 +968,10 @@
           },
           "usesAi": false,
           "agreedAutonomyLevel": null,
-          "nextReviewOn": "2027-03-01"
+          "nextReviewOn": "2027-03-01",
+          "isAiCreated": false,
+          "performedBy": null,
+          "portfolio": []
         },
         "owners": [
           {
@@ -767,6 +1001,7 @@
             },
             "documentLinkId": "e0000000-0000-4000-8000-000000000001",
             "url": "https://wiki.example.org/field-visit-planner",
+            "linkKindKey": "ado-wiki-page",
             "lastCheckedOn": "2026-10-01",
             "staleOn": "2027-04-01"
           },
@@ -781,6 +1016,7 @@
             },
             "documentLinkId": null,
             "url": null,
+            "linkKindKey": null,
             "lastCheckedOn": null,
             "staleOn": null
           }

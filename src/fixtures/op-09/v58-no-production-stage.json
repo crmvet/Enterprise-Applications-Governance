@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v58-no-production-stage",
+  "description": "With no production stage, the copy rule cannot tell production from a copy.",
+  "ruleIds": [
+    "V58"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "target-stage",
+        "key": "production",
+        "values": {
+          "isProduction": false
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "data.platform",
+        "severity": "error",
+        "ruleId": "V58"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

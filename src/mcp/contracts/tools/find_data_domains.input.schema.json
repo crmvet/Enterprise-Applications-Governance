@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_data_domains input",
+  "description": "Which data domains match, and who owns them? Lists the business data tree (C49) with each domain's path, level, effective classification, owner, deputy and steward (own or inherited from a domain above), the three handling rules with where each is set, the counts of mappings, uses and open decisions, and the owner gaps. Writes nothing.",
+  "x-tool": "find_data_domains",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "Words that must appear in the label, the path or the examples.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "levelKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C48 Data Domain Level"
+      },
+      "description": "Only domains at these levels.",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true
+    },
+    "classificationKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C47 Data Classification"
+      },
+      "description": "Only domains whose effective classification is one of these.",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true
+    },
+    "ownerObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only domains whose effective data owner, deputy or data steward is this person."
+    },
+    "gapsOnly": {
+      "type": "boolean",
+      "description": "Only domains with an owner gap (DC-01 to DC-04)."
+    },
+    "includeRetired": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include retired domains."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "text": "payroll"
+    }
+  ]
+}

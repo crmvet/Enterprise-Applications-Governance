@@ -128,6 +128,25 @@ public sealed partial class EngineRuntime
                 "The deployment target " + (report.TargetId ?? report.TargetExternalId ?? "(none named)") + " is not registered.",
                 "Deployment Target",
                 report.TargetId ?? report.TargetExternalId);
+
+            // A retired target keeps its records and takes no new one (document 24, B24-18; document 25, B25-19). A replay
+            // of a record made before the target retired is answered above, from the record itself, and a deployment that
+            // finished before the retirement day is still history, so a late report of it is taken.
+            if (RuntimeJson.Text(target.Columns, "retiredOn") is string retiredOn
+                && (!DateTime.TryParse(retiredOn, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out DateTime retiredDay)
+                    || report.FinishedOnUtc.Date >= retiredDay.Date))
+            {
+                string? why = RuntimeJson.Text(target.Columns, "retiredReason");
+                throw CallFailure.Of(
+                    OperationOutcomes.Refused,
+                    ReasonCodes.DeploymentTargetRetired,
+                    "The deployment target " + (RuntimeJson.Text(target.Columns, "labelAsSeen") ?? target.Id) + " was retired on " + (DateTime.TryParse(retiredOn, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out DateTime day) ? day.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : retiredOn)
+                        + (string.IsNullOrWhiteSpace(why) ? string.Empty : " (" + why!.Trim().TrimEnd('.') + ")")
+                        + ", so it takes no new deployment. Record the deployment on the target that is in service now.",
+                    "Deployment Target",
+                    target.Id);
+            }
+
             if (facts.One("application") == null)
             {
                 throw CallFailure.Of(RuntimeOutcome.NotFound, ReasonCodes.RefNotFound, "Business Application " + report.ApplicationId + " does not exist.", "Business Application", report.ApplicationId);
@@ -252,7 +271,8 @@ public sealed partial class EngineRuntime
             ("gateLevelApplied", RuntimeJson.Text(RuntimeJson.Text(payload, "gateLevel"))),
             ("isOutsideWindow", JsonTreeNode.FromBoolean(RuntimeJson.Flag(payload, "isOutsideWindow"))),
             ("isOtherPath", JsonTreeNode.FromBoolean(RuntimeJson.Flag(payload, "isOtherPath"))),
-            ("isMissingApproval", JsonTreeNode.FromBoolean(RuntimeJson.Flag(payload, "isMissingApproval"))));
+            ("isMissingApproval", JsonTreeNode.FromBoolean(RuntimeJson.Flag(payload, "isMissingApproval"))),
+            ("isAiOnlyCodeApproval", JsonTreeNode.FromBoolean(RuntimeJson.Flag(payload, "isAiOnlyCodeApproval"))));
     }
 
     private static IEnumerable<FactPlan> DeploymentPlan(FactSet facts, string? appId, string? targetId, string? changeId)
@@ -303,6 +323,7 @@ public sealed partial class EngineRuntime
             ("flags", RuntimeJson.Object(
                 ("isOutsideWindow", JsonTreeNode.FromBoolean(record.Flag("isOutsideWindow"))),
                 ("isOtherPath", JsonTreeNode.FromBoolean(record.Flag("isOtherPath"))),
-                ("isMissingApproval", JsonTreeNode.FromBoolean(record.Flag("isMissingApproval"))))));
+                ("isMissingApproval", JsonTreeNode.FromBoolean(record.Flag("isMissingApproval"))),
+                ("isAiOnlyCodeApproval", JsonTreeNode.FromBoolean(record.Flag("isAiOnlyCodeApproval"))))));
     }
 }

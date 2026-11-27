@@ -76,7 +76,7 @@ public sealed class FlowTemplateTests
             Assert.Equal("application/json", inputs["headers"]!["Content-Type"]!.GetValue<string>());
         }
 
-        Assert.Equal(7, calls);
+        Assert.Equal(9, calls);
     }
 
     [Fact]
@@ -212,6 +212,29 @@ public sealed class FlowTemplateTests
             string[] types = AllActions(definition).Select(a => a.Action["type"]!.GetValue<string>()).Distinct().ToArray();
             Assert.All(types, t => Assert.Contains(t, new[] { "OpenApiConnection", "OpenApiConnectionWebhook", "Http", "Workflow", "Foreach", "If", "Compose", "Select", "Query", "InitializeVariable", "SetVariable", "Response", "Terminate" }));
         }
+    }
+
+    // With step-up sign-in on, the claim says delivery link-only (D-38; document 26, B26-17): the child sends each person
+    // an email with the decision page link, reports it as sent, and stops. It creates no approval and waits for nothing,
+    // and the email body holds only fixed words and the product link.
+    [Fact]
+    public void ALinkOnlyItemGetsAnEmailWithTheDecisionPageLinkAndNoApproval()
+    {
+        JsonObject child = Definitions().Single(d => d.File.EndsWith("send-card-and-wait.json", StringComparison.Ordinal)).Definition;
+        Dictionary<string, JsonObject> actions = AllActions(child).ToDictionary(a => a.Name, a => a.Action);
+        JsonObject check = actions["Check_link_only"];
+        Assert.Equal("If", check["type"]!.GetValue<string>());
+        Assert.Equal("@equals(outputs('Item')?['delivery'], 'link-only')", check["expression"]!.GetValue<string>());
+        Assert.Equal(ApprovalRequestCards.LinkOnlyDelivery, "link-only");
+        string[] inside = AllActions(new JsonObject { ["actions"] = JsonNode.Parse(check["actions"]!.ToJsonString()) }).Select(a => a.Name).ToArray();
+        Assert.Contains("Send_link_email", inside);
+        Assert.Contains("Report_link_sent", inside);
+        Assert.Contains("Stop_link_sent", inside);
+        Assert.DoesNotContain(inside, n => n.Contains("approval", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("SendEmailV2", actions["Send_link_email"]["inputs"]!["host"]!["operationId"]!.GetValue<string>());
+        string body = actions["Send_link_email"]["inputs"]!["parameters"]!["emailMessage/Body"]!.GetValue<string>();
+        Assert.Equal(new[] { "@{outputs('Item')?['recordUrl']}" }, Regex.Matches(body, @"@\{[^}]*\}").Select(m => m.Value).ToArray());
+        Assert.Equal("Check_link_only", Assert.Single(actions["Create_an_approval"]["runAfter"]!.AsObject()).Key);
     }
 
     // ---- Reading the workflows ----

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "ownership-proposed-owners-and-business-owner",
+  "description": "Balanced aligned with P08: an ownership decision needs each proposed owner by name and the business owner, everyone must approve, and the business owner rule names the sponsor as its fallback for when the business owner leaves.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "ownership",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "ownership-business-owner",
+          "approverOwnerRoleKey": "business-owner",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": false,
+          "fallbackOwnerRoleKey": "sponsor"
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "ownership-proposed-owners",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": false,
+          "guidelineKey": "g2",
+          "approverProposedOwners": true
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "ownership-proposed-owners",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "ownership-business-owner",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

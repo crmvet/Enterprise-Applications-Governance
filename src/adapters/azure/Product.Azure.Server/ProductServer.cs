@@ -25,12 +25,16 @@ namespace Product.Azure.Server;
 /// </summary>
 public static class ProductServer
 {
-    /// <summary>Builds the server. The development identity guard runs before the host is built.</summary>
+    /// <summary>
+    /// Builds the server. The development identity guard and the demo persona guard (D-39: demo personas only in the Demo
+    /// environment) run before the host is built; the options validators check them again when it starts.
+    /// </summary>
     public static WebApplication Build(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         AddBaseDirectorySettings(builder.Configuration, builder.Environment);
         DevIdentityGuard.Validate(builder.Environment, builder.Configuration);
+        ProductDemo.Validate(builder.Environment, builder.Configuration);
 
         builder.WebHost.ConfigureKestrel(kestrel => kestrel.AddServerHeader = false);
         builder.Services.AddProduct(builder.Configuration);

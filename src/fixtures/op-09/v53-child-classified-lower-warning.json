@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v53-child-classified-lower-warning",
+  "description": "A child classified lower than its parent is a warning the approver acknowledges.",
+  "ruleIds": [
+    "V53"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "data-domains-starter"
+    ],
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "fixture-public",
+        "values": {
+          "label": "fixture-public",
+          "parentKey": "customers",
+          "levelKey": "subdomain",
+          "classificationKey": "public"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    },
+    "reasons": [
+      {
+        "code": "data.classification-lower",
+        "severity": "warning",
+        "ruleId": "V53",
+        "ref": "fixture-public"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

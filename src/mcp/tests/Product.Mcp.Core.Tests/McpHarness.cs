@@ -56,6 +56,9 @@ internal sealed class McpHarness
     public const string ReaderGroup = "00000000-0000-4000-8000-000000000107";
     public const string ArchitectGroup = "00000000-0000-4000-8000-000000000108";
 
+    // The data governance lead's group (D-41, question 4), bound only in the data world (DataWorld).
+    public const string DataLeadGroup = "00000000-0000-4000-8000-000000000109";
+
     // The owner requests, makes, owns and manages changes; the admin is a platform admin; the configuration admin; a
     // reader; a person with no role; the owner's deputy (no role); an agent user.
     public const string Owner = "00000000-0000-4000-8000-000000000201";
@@ -68,6 +71,9 @@ internal sealed class McpHarness
     public const string Runner = "00000000-0000-4000-8000-000000000301";
     public const string Pipeline = "00000000-0000-4000-8000-000000000302";
     public const string AgentUser = "00000000-0000-4000-8000-000000000401";
+
+    // The data governance lead: a person in the data lead group (the data world binds the role).
+    public const string DataLead = "00000000-0000-4000-8000-000000000208";
 
     public const string Portfolio = "00000000-0000-4000-8000-000000000501";
     public const string Expense = "00000000-0000-4000-8000-000000000511";
@@ -84,6 +90,11 @@ internal sealed class McpHarness
     public const string TokenReader = "mock-reader";
     public const string TokenNoRole = "mock-no-role";
     public const string TokenArchitect = "mock-architect";
+    public const string TokenDataLead = "mock-data-lead";
+    public const string TokenDataLeadWeb = "mock-data-lead-web";
+
+    // The owner's deputy signed in with the requester role only: a deputy business owner of the expense app.
+    public const string TokenDeputy = "mock-deputy";
     public const string TokenAgent = "mock-agent-user";
     public const string TokenOtherClient = "mock-owner-other-client";
     public const string TokenExpired = "mock-expired";
@@ -96,12 +107,16 @@ internal sealed class McpHarness
     public const string TokenOwnerWeb = "mock-owner-web";
     public const string TokenReaderWeb = "mock-reader-web";
     public const string TokenAgentWeb = "mock-agent-user-web";
+    public const string TokenAdminWeb = "mock-admin-web";
+    public const string TokenDeputyWeb = "mock-deputy-web";
+    public const string TokenArchitectWeb = "mock-architect-web";
 
     private static readonly Lazy<string> LazyRoot = new(FindRoot);
     private static readonly Lazy<PresetCatalog> LazyCatalog = new(() => PresetCatalog.Load(new[] { Path.Combine(Root, "config", "presets") }));
 
-    private McpHarness(InMemoryStore store, GuidIdRecordStore records, ManualClock clock, EngineRuntime runtime, InProcessBackend backend, McpServerCore server, RecordingTelemetry telemetry, FakeDirectory directory, FakeInventory inventory)
+    private McpHarness(InMemoryStore store, GuidIdRecordStore records, ManualClock clock, EngineRuntime runtime, InProcessBackend backend, McpServerCore server, RecordingTelemetry telemetry, FakeDirectory directory, FakeInventory inventory, FakeOutbox outbox)
     {
+        Outbox = outbox;
         Store = store;
         Records = records;
         Clock = clock;
@@ -135,34 +150,46 @@ internal sealed class McpHarness
 
     public FakeInventory Inventory { get; }
 
+    // The host's approval outbox, as the platform admin's retry sees it (retry_approval_card; B24-22).
+    public FakeOutbox Outbox { get; }
+
     // Every envelope the harness received, by tool, for checks across the whole suite.
     public List<(string Tool, JsonTreeNode Envelope)> Envelopes { get; } = new();
 
-    public static McpHarness Create(string? extraOperationsJson = null, bool withPorts = true, bool seedVersion = true)
+    // withData adds the data world (DataWorld): a small data domain tree in version 1, the data governance lead's
+    // binding, and data locations, mappings, a use and domain owners in the store (data taxonomy slice 3).
+    public static McpHarness Create(string? extraOperationsJson = null, bool withPorts = true, bool seedVersion = true, bool withData = false)
     {
         var store = new InMemoryStore("mcp-fixture-store");
         var records = new GuidIdRecordStore(store);
         var clock = new ManualClock(AsOf);
         if (seedVersion)
         {
-            store.SeedVersion(Compile(1, extraOperationsJson));
+            store.SeedVersion(Compile(1, extraOperationsJson, withData));
         }
 
         var runtime = new EngineRuntime(records, store, Catalog, clock: clock);
         var directory = new FakeDirectory();
         var inventory = new FakeInventory();
+        var outbox = new FakeOutbox();
         var backend = new InProcessBackend(runtime, records, store, Catalog, new InMemoryRateLimitStore(), ContractSet.Embedded, new InProcessBackendOptions
         {
             RecordUrlBase = "https://product.example.org/records",
             Directory = withPorts ? directory : null,
             Inventory = withPorts ? inventory : null,
             Playbook = PlaybookIndex.FromFolder(Path.Combine(Root, "content", "playbook")),
+            ApprovalOutbox = outbox,
         });
         var telemetry = new RecordingTelemetry();
         McpServerCore server = NewServer(backend, telemetry, clock);
-        var harness = new McpHarness(store, records, clock, runtime, backend, server, telemetry, directory, inventory);
+        var harness = new McpHarness(store, records, clock, runtime, backend, server, telemetry, directory, inventory, outbox);
         harness.SeedDirectory();
         harness.SeedEstate();
+        if (withData)
+        {
+            DataWorld.Seed(harness);
+        }
+
         return harness;
     }
 
@@ -210,6 +237,7 @@ internal sealed class McpHarness
             .Add(TokenReader, new MockToken(Reader, Audience, Tenant, ClaudeCode, expires) { GroupObjectIds = new[] { ReaderGroup } })
             .Add(TokenNoRole, new MockToken(NoRole, Audience, Tenant, ClaudeCode, expires))
             .Add(TokenArchitect, new MockToken(Architect, Audience, Tenant, ClaudeCode, expires) { GroupObjectIds = new[] { ArchitectGroup } })
+            .Add(TokenDeputy, new MockToken(Deputy, Audience, Tenant, ClaudeCode, expires) { GroupObjectIds = new[] { RequesterGroup } })
             .Add(TokenAgent, new MockToken(AgentUser, Audience, Tenant, ClaudeCode, expires) { PrincipalKind = PrincipalKind.AgentUser, GroupObjectIds = new[] { OwnerGroup } })
             .Add(TokenOtherClient, new MockToken(Owner, Audience, Tenant, OtherClient, expires) { GroupObjectIds = new[] { RequesterGroup, MakerGroup, OwnerGroup, ChangeManagerGroup } })
             .Add(TokenExpired, new MockToken(Owner, Audience, Tenant, ClaudeCode, AsOf.AddMinutes(-1)))
@@ -219,14 +247,25 @@ internal sealed class McpHarness
             .Add(TokenAppOnly, new MockToken(Pipeline, Audience, Tenant, ClaudeCode, expires) { PrincipalKind = PrincipalKind.ServicePrincipal, IsAppOnly = true })
             .Add(TokenOwnerWeb, new MockToken(Owner, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { RequesterGroup, MakerGroup, OwnerGroup, ChangeManagerGroup } })
             .Add(TokenReaderWeb, new MockToken(Reader, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { ReaderGroup } })
-            .Add(TokenAgentWeb, new MockToken(AgentUser, Audience, Tenant, WebApp, expires) { PrincipalKind = PrincipalKind.AgentUser, GroupObjectIds = new[] { OwnerGroup } });
+            .Add(TokenAgentWeb, new MockToken(AgentUser, Audience, Tenant, WebApp, expires) { PrincipalKind = PrincipalKind.AgentUser, GroupObjectIds = new[] { OwnerGroup } })
+            .Add(TokenAdminWeb, new MockToken(Admin, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { PlatformAdminGroup } })
+            .Add(TokenDeputyWeb, new MockToken(Deputy, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { RequesterGroup } })
+            .Add(TokenDataLead, new MockToken(DataLead, Audience, Tenant, ClaudeCode, expires) { GroupObjectIds = new[] { DataLeadGroup } })
+            .Add(TokenDataLeadWeb, new MockToken(DataLead, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { DataLeadGroup } })
+            .Add(TokenArchitectWeb, new MockToken(Architect, Audience, Tenant, WebApp, expires) { GroupObjectIds = new[] { ArchitectGroup } });
     }
 
     // Balanced plus the client binding patch (and any extra draft operations), validated in activation mode on the
     // harness date and compiled: the version activation would leave in force.
-    public static CompiledSnapshot Compile(int versionNumber, string? extraOperationsJson = null)
+    public static CompiledSnapshot Compile(int versionNumber, string? extraOperationsJson = null, bool withData = false)
     {
-        ContentSource source = ContentSource.Preset("balanced").WithPatch(ConfigurationPatch.FromOperations(CanonicalJson.Parse("[" + ClientBindingOperations + "]"), PatchKind.ClientBinding, "client binding patch"));
+        string binding = ClientBindingOperations + (withData ? "," + Binding("data-governance-lead", DataLeadGroup) : string.Empty);
+        ContentSource source = ContentSource.Preset("balanced").WithPatch(ConfigurationPatch.FromOperations(CanonicalJson.Parse("[" + binding + "]"), PatchKind.ClientBinding, "client binding patch"));
+        if (withData)
+        {
+            source = source.WithPatch(ConfigurationPatch.FromOperations(CanonicalJson.Parse(DataWorld.ConfigurationOperations), PatchKind.Draft, "data world"));
+        }
+
         if (extraOperationsJson != null)
         {
             source = source.WithPatch(ConfigurationPatch.FromOperations(CanonicalJson.Parse(extraOperationsJson), PatchKind.Draft, "test operations"));
@@ -256,7 +295,14 @@ internal sealed class McpHarness
         yield return new KeyValuePair<string, PrincipalKind>(Runner, PrincipalKind.ServicePrincipal);
         yield return new KeyValuePair<string, PrincipalKind>(Pipeline, PrincipalKind.ServicePrincipal);
         yield return new KeyValuePair<string, PrincipalKind>(AgentUser, PrincipalKind.AgentUser);
+
+        // Last, so the Principal Reference IDs above stay as they were before the data world.
+        yield return new KeyValuePair<string, PrincipalKind>(DataLeadGroup, PrincipalKind.Group);
+        yield return new KeyValuePair<string, PrincipalKind>(DataLead, PrincipalKind.User);
     }
+
+    // A role group binding operation, for a test that binds one more role through extra operations.
+    public static string BindingOperation(string role, string group) => Binding(role, group);
 
     private static string Binding(string role, string group)
     {
@@ -400,6 +446,41 @@ internal sealed class RecordingTelemetry : ITelemetrySink
     public void Track(TelemetryEvent telemetryEvent)
     {
         Events.Add(telemetryEvent);
+    }
+}
+
+// The host's approval outbox for tests: rows by Approval Record, changed as the Azure host's outbox changes them.
+internal sealed class FakeOutbox : IApprovalOutboxPort
+{
+    public Dictionary<string, OutboxAttention> Rows { get; } = new(StringComparer.Ordinal);
+
+    public TimeSpan LongSent => TimeSpan.FromDays(2);
+
+    public OutboxAttention? Get(string approvalRecordId)
+    {
+        return Rows.TryGetValue(approvalRecordId, out OutboxAttention? row) ? row : null;
+    }
+
+    public bool Retry(string approvalRecordId, DateTime nowUtc)
+    {
+        if (!Rows.TryGetValue(approvalRecordId, out OutboxAttention? row) || !(row.State == "failed" || (row.State == "sent" && nowUtc - row.UpdatedOnUtc > LongSent)))
+        {
+            return false;
+        }
+
+        Rows[approvalRecordId] = new OutboxAttention(row.ApprovalRecordId, row.DecisionId, "pending", 0, row.EnqueuedOnUtc, nowUtc);
+        return true;
+    }
+
+    public bool Settle(string approvalRecordId, string state, DateTime nowUtc)
+    {
+        if (!Rows.TryGetValue(approvalRecordId, out OutboxAttention? row))
+        {
+            return false;
+        }
+
+        Rows[approvalRecordId] = new OutboxAttention(row.ApprovalRecordId, row.DecisionId, state, row.Attempts, row.EnqueuedOnUtc, nowUtc);
+        return true;
     }
 }
 

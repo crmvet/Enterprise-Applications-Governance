@@ -60,23 +60,18 @@ Requirement, the two writes the engine still makes on those rows (G-05, G-06).
 - **Change.** None needed in the engine for correctness: its guard is the control. A later store could keep the
   allowed transitions in a stored procedure the app identity calls instead of a table update.
 - **Workaround here.** `fn_DecisionOpen` lets a final Decision change while its Superseded By is empty, and
-  `fn_ApprovalPending` lets a final Approval Record change in the approval runner's request (the only requests that
-  recompute approvals: an answer on the approval outcome endpoint, and the approval refresh a claim runs). Both still
-  refuse everything the engine never writes from any other request. The engine's own expired and cancelled outcomes,
-  and the restarts it opens, change pending rows or add new ones, which the predicate allows from any request.
-
-### 15. A person answering their own approval on the product's page (design needed)
-
-The four pages are read-only, and an approval answer reaches the engine only through the approval runner (document 26,
-AN-01 and AN-02; document 23, S1). Working default Q19 offers the product's own page as the place to answer only where a
-client's security review asks for token-level evidence of who answered.
-
-- **Change.** A guarded engine path for a person answering their own Approval Record (the responder is the signed-in
-  person, as the token proves), a change to the `fn_ApprovalPending` predicate for that path, a page specification,
-  step-up sign-in for the answer, and a product owner decision on AN-02's wording. This goes to the next design pass as
-  a proposal.
-- **Workaround here.** None: the REST API serves the read tools only, and the approval outcome endpoint takes only the
-  approval runner's app-only token.
+  `fn_ApprovalPending` lets a final Approval Record change in the approval runner's request or in a person's own answer
+  request (the only requests that recompute approvals: an answer on the approval outcome endpoint, the approval refresh
+  a claim runs, and `answer_approval` on the person entry, which names its record in `SESSION_CONTEXT` as
+  `AnsweredApprovalId`). In a person's answer request both are tied to the decision of the record the request names:
+  `fn_ApprovalPending` opens only that decision's records, and `fn_ApprovalOutcomeWriter` lets an answer stand only on
+  that decision's records, stamped with the caller's own principal, and only on the record the request names (the
+  person's own write) or on a record the engine rewrote (Performed By Actor Kind engine: the recompute's Counts Toward
+  Requirement). `AnsweredApprovalId` is the caller's argument, read before the engine checks it, so the predicates never
+  open anything beyond that one decision on its strength. Both still refuse everything the engine never writes from any
+  other request.
+  The engine's own expired and cancelled outcomes, and the restarts it opens, change pending rows or add new ones, which
+  the predicate allows from any request.
 
 ### 16. Approver Holds Required Role checked by the engine for an owner role, and workload responders (optional)
 
@@ -144,8 +139,9 @@ The engine stamps the person, with no On Behalf Of; an agent user or agent ident
 
 - **Used here.** `POST /api/{tool}` and `GET /api/me` use the person entry when the token's `azp` is one of
   `Product:WebApp:ClientIds`, and the AI client entry for any other client. `/api/me` answers the actor kind and the
-  person's name. The MCP endpoint is always the AI client entry. The REST API still serves the read tools only, because
-  the four pages are read-only; a write tool there answers `not_found`.
+  person's name. The MCP endpoint is always the AI client entry. On the person entry the REST API serves the write tools
+  too (D-36), checked by the core and the engine as on the MCP endpoint; for an AI client on the REST API a write tool
+  answers `not_found`, because an AI client writes through the MCP endpoint.
 
 ### 2. The record tools' data (done)
 
@@ -213,6 +209,26 @@ new record for the requirement in the same transaction, and so does the next ste
   the decision's status (`decisionStatus`). For a product role the runner lists the group's members and cannot leave
   out who already answered, so such a person may get the next card too; their second answer does not count, and the
   engine asks again.
+
+### 15. A person answering their own approval on the product's page (done, D-38)
+
+D-38 makes the product's decision page the one place a person answers, with the token proving who answered; Teams and
+Outlook only link to it. The engine now has the approval answer check (`ApprovalAnswerOperation`, a pure operation
+with fixtures under `fixtures/approval-answer`) and `EngineRuntime.AnswerApproval` (`ComposedCall.AnswerApproval` in
+a composed call): the responder is the caller, a person signed in as a user; the check refuses, before anything is
+written, an answer from anyone the request does not ask, one a separation rule would not count, one to a request that
+is answered, expired, cancelled or whose decision is settled, and one without a typed reason where needed. OP-08's G-06
+gains a person path that accepts the person's own write only with the check's basis, which no request carries. The
+recompute is the approval runner's. The MCP core serves the new tool `answer_approval` only on the person entry.
+
+- **Used here.** `POST /api/answer_approval` on the person entry serves it; an AI client gets `ai_cannot_do_this` on the
+  REST API and on the MCP endpoint (which does not list the tool), and an app-only token is refused before any tool runs.
+  For that request only, the host enters a store call context with `AnsweredApprovalId`, and the Azure SQL store writes
+  it to `SESSION_CONTEXT`; `fn_ApprovalPending` and `fn_ApprovalOutcomeWriter` take that request as they take the
+  runner's (item 10). The commit hook settles the record's outbox row in the same transaction, so a card the runner
+  already sent is answered for the outbox too. Still open: step-up sign-in for tier 3 and configuration changes (a
+  setting, off in the demo; document 26, B26-7 proposes `approval-step-up`), the web app's decision page, and document
+  23, S1, which D-38 rewrites.
 
 ### 14. Approval expiry and restarts (done)
 

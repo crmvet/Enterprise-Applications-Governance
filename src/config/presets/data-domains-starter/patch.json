@@ -1,0 +1,274 @@
+{
+  "$comment": [
+    "The data domains starter tree (data taxonomy, D-37; docs/architecture/data-taxonomy.md): six domains at level domain, fifteen subdomains at level subdomain, flat rows with a parent key (V03).",
+    "Every top-level domain sets a classification (V52). A subdomain with no classification inherits the one above it; the subdomains that hold personal, contract or pay data are classified restricted, higher than their domain, never lower (V53).",
+    "No handling rule is set on a domain, so each follows its classification's defaults. An install tightens a branch, such as AI use of payroll set to never, through a configuration change.",
+    "Examples tell an AI client what belongs in each domain, so it can suggest mappings. They are untrusted text."
+  ],
+  "schemaVersion": "1.0",
+  "manifest": {
+    "kind": "patch",
+    "presetKey": "data-domains-starter",
+    "presetKind": "overlay",
+    "extends": null,
+    "conflictsWith": []
+  },
+  "operations": [
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "customers",
+      "values": {
+        "label": "Customers",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "Who the customers are and how the business serves them: accounts, contacts, cases.",
+        "sortOrder": 1
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-accounts",
+      "values": {
+        "label": "Client accounts",
+        "parentKey": "customers",
+        "levelKey": "subdomain",
+        "examples": "Customer organizations, their addresses, segments and account managers.",
+        "sortOrder": 2
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-contacts",
+      "values": {
+        "label": "Client contacts",
+        "parentKey": "customers",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "examples": "Named people at customers: names, emails, phone numbers and their roles.",
+        "sortOrder": 3
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "service-cases",
+      "values": {
+        "label": "Service cases",
+        "parentKey": "customers",
+        "levelKey": "subdomain",
+        "examples": "Customer questions, complaints and support cases with their history.",
+        "sortOrder": 4
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "commercial",
+      "values": {
+        "label": "Commercial",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "How the business sells: proposals, contracts and orders.",
+        "sortOrder": 5
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "proposals",
+      "values": {
+        "label": "Proposals",
+        "parentKey": "commercial",
+        "levelKey": "subdomain",
+        "examples": "Quotes, bids and opportunities with their prices and status.",
+        "sortOrder": 6
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "contracts",
+      "values": {
+        "label": "Contracts",
+        "parentKey": "commercial",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "examples": "Signed agreements with customers and suppliers, their terms and prices.",
+        "sortOrder": 7
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "client-orders",
+      "values": {
+        "label": "Client orders",
+        "parentKey": "commercial",
+        "levelKey": "subdomain",
+        "examples": "Orders, order lines, delivery dates and order status.",
+        "sortOrder": 8
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "people",
+      "values": {
+        "label": "People",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "Everything about the people who work for the business.",
+        "sortOrder": 9
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "personnel-records",
+      "values": {
+        "label": "Personnel records",
+        "parentKey": "people",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "examples": "Employee files: contracts of employment, job history, reviews and absence.",
+        "sortOrder": 10
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "payroll",
+      "values": {
+        "label": "Payroll",
+        "parentKey": "people",
+        "levelKey": "subdomain",
+        "classificationKey": "restricted",
+        "examples": "Salary, deductions, tax codes and bank details for pay.",
+        "sortOrder": 11
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "timesheets",
+      "values": {
+        "label": "Timesheets",
+        "parentKey": "people",
+        "levelKey": "subdomain",
+        "examples": "Hours worked per person, project and day, with approvals.",
+        "sortOrder": 12
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "operations",
+      "values": {
+        "label": "Operations",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "How the business delivers its work in the field and in its sites.",
+        "sortOrder": 13
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "field-operations",
+      "values": {
+        "label": "Field operations",
+        "parentKey": "operations",
+        "levelKey": "subdomain",
+        "examples": "Work orders, visits, inspections and findings in the field.",
+        "sortOrder": 14
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "warehouse",
+      "values": {
+        "label": "Warehouse",
+        "parentKey": "operations",
+        "levelKey": "subdomain",
+        "examples": "Stock levels, parts, locations and movements of goods.",
+        "sortOrder": 15
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "finance",
+      "values": {
+        "label": "Finance",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "The money of the business: ledgers, invoices and payments.",
+        "sortOrder": 16
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "general-ledger",
+      "values": {
+        "label": "General ledger",
+        "parentKey": "finance",
+        "levelKey": "subdomain",
+        "examples": "Accounts, journals, cost centers and period closes.",
+        "sortOrder": 17
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "supplier-invoices",
+      "values": {
+        "label": "Supplier invoices",
+        "parentKey": "finance",
+        "levelKey": "subdomain",
+        "examples": "Invoices from suppliers, their approvals and payment status.",
+        "sortOrder": 18
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "workplace",
+      "values": {
+        "label": "Workplace",
+        "levelKey": "domain",
+        "classificationKey": "internal",
+        "examples": "The places people work and the services there.",
+        "sortOrder": 19
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "facilities",
+      "values": {
+        "label": "Facilities",
+        "parentKey": "workplace",
+        "levelKey": "subdomain",
+        "examples": "Buildings, floors, maintenance requests and contractors on site.",
+        "sortOrder": 20
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain",
+      "key": "room-bookings",
+      "values": {
+        "label": "Room bookings",
+        "parentKey": "workplace",
+        "levelKey": "subdomain",
+        "examples": "Meeting room and desk reservations.",
+        "sortOrder": 21
+      }
+    }
+  ]
+}

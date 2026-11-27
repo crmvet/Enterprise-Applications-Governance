@@ -26,6 +26,7 @@
       "required": [
         "buckets",
         "ownerGaps",
+        "applicationsWithOwnerGap",
         "reviewsOverdue",
         "documentsMissingOrStale",
         "draftsOlderThanDays"
@@ -40,7 +41,12 @@
         "ownerGaps": {
           "type": "integer",
           "minimum": 0,
-          "description": "How many owner roles have no holder or no deputy."
+          "description": "The one owner gap count (document 24, B24-17): owner roles on registered applications with no holder where a gate requires one, no deputy where the role requires one, or a holder whose account is disabled or deleted. One per application and role. Owners and Portfolios show the same number for the same scope."
+        },
+        "applicationsWithOwnerGap": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Registered applications with at least one owner gap, as list_portfolios counts them."
         },
         "reviewsOverdue": {
           "type": "integer",
@@ -132,6 +138,37 @@
         },
         "skipToken": {
           "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        },
+        "dataGaps": {
+          "type": "object",
+          "description": "The data findings (OP-17, DC-01 to DC-14): every finding, or those about the portfolio's applications when a portfolio is named. Zero while the install has no data taxonomy.",
+          "required": [
+            "total",
+            "high",
+            "counts"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "high": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Findings of high weight."
+            },
+            "counts": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^DC-[0-9]{2}$"
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -155,6 +192,7 @@
           }
         ],
         "ownerGaps": 1,
+        "applicationsWithOwnerGap": 1,
         "reviewsOverdue": 0,
         "documentsMissingOrStale": 2,
         "draftsOlderThanDays": 1,

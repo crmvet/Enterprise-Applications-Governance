@@ -1,7 +1,9 @@
 {
   "$comment": [
     "The change manager authorizes tier 3 changes and emergencies, with a combined group for a tier 3 emergency. The change board decides exceptions about a change (document 28, issues 2 and 4).",
-    "WORKING DEFAULT (open design question 4): one configuration admin accepts a configuration change on one card, and that person may be the admin who instructed it. Regulated and the strict separation overlay require a second admin through a separation rule."
+    "WORKING DEFAULT (open design question 4): one configuration admin accepts a configuration change on one card, and that person may be the admin who instructed it. Regulated and the strict separation overlay require a second admin through a separation rule.",
+    "Aligned with the process documents (document 21, B21-9). Tier: the platform admin, and at tier 3 the platform admin and the security reviewer (P02). Data use at tier 3: the data owner and the security reviewer, because restricted data is a tier 3 answer and approval rules have no data scope yet (P02; the data taxonomy later scopes it by classification). Ownership: each proposed owner by name, and the business owner, or the sponsor and then the portfolio's accountable person when the business owner leaves or is missing (P08). Intake and autonomy level get their consultation cards (P01 step 5, P02). Retirement complete is first to respond (P09). The AI lead decides on a flagged agent (P06, P08).",
+    "Intake keeps no counting rule, so the lowest-tier intake stays on the locked engine acceptance list and every other intake goes to the platform admin on the accountable card (P01 step 6)."
   ],
   "entity": "approval-rule",
   "rows": [
@@ -13,6 +15,110 @@
       "approvalMode": "everyone-must-approve",
       "timeoutDays": 10,
       "requiresTypedReason": true
+    },
+    {
+      "key": "data-use-tier-3-data-owner",
+      "label": "Tier 3 data use: data owner",
+      "decisionTypeKey": "data-use",
+      "tierKey": "tier-3",
+      "subjectKind": "business-application",
+      "approverOwnerRoleKey": "data-owner",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "data-use-tier-3-security",
+      "label": "Tier 3 data use: security reviewer",
+      "decisionTypeKey": "data-use",
+      "tierKey": "tier-3",
+      "subjectKind": "business-application",
+      "approverRoleKey": "security-reviewer",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "tier-platform-admin",
+      "label": "Platform admin confirms the tier",
+      "decisionTypeKey": "tier",
+      "approverRoleKey": "platform-admin",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10
+    },
+    {
+      "key": "tier-tier-3-platform-admin",
+      "label": "Tier 3: platform admin confirms the tier",
+      "decisionTypeKey": "tier",
+      "tierKey": "tier-3",
+      "approverRoleKey": "platform-admin",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10
+    },
+    {
+      "key": "tier-tier-3-security",
+      "label": "Tier 3: security reviewer agrees the tier",
+      "decisionTypeKey": "tier",
+      "tierKey": "tier-3",
+      "approverRoleKey": "security-reviewer",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "ownership-proposed-owners",
+      "label": "Each proposed owner accepts",
+      "decisionTypeKey": "ownership",
+      "approverProposedOwners": true,
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "ownership-business-owner",
+      "label": "Business owner approves, or the sponsor when the business owner leaves",
+      "decisionTypeKey": "ownership",
+      "approverOwnerRoleKey": "business-owner",
+      "fallbackOwnerRoleKey": "sponsor",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10
+    },
+    {
+      "key": "intake-consult-architect",
+      "label": "Intake: architect consulted on reuse",
+      "decisionTypeKey": "intake",
+      "approverRoleKey": "architect",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 5,
+      "isConsultation": true
+    },
+    {
+      "key": "intake-consult-pmo",
+      "label": "Intake: PMO consulted on demand",
+      "decisionTypeKey": "intake",
+      "approverRoleKey": "pmo",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 5,
+      "isConsultation": true
+    },
+    {
+      "key": "intake-consult-security",
+      "label": "Intake: security reviewer consulted on first risk",
+      "decisionTypeKey": "intake",
+      "approverRoleKey": "security-reviewer",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 5,
+      "isConsultation": true
+    },
+    {
+      "key": "intake-business-owner-consent",
+      "label": "Intake: the business owner the request names accepts the role",
+      "decisionTypeKey": "intake",
+      "approverProposedOwners": true,
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "guidelineKey": "g2",
+      "description": "A consent, not a decision (document 25, B25-18): the person the requester names as business owner accepts the role before the Accept gate counts them and before the accepted intake assigns them. A lowest-tier request is still accepted by the engine with no other card, once the consent is given."
     },
     {
       "key": "risk-acceptance-approval",
@@ -142,10 +248,10 @@
     },
     {
       "key": "retirement-approval",
-      "label": "Business owner approves retirement",
+      "label": "Business owner approves retirement complete",
       "decisionTypeKey": "retirement",
       "approverOwnerRoleKey": "business-owner",
-      "approvalMode": "everyone-must-approve"
+      "approvalMode": "first-to-respond"
     },
     {
       "key": "autonomy-level-approval",
@@ -155,6 +261,25 @@
       "approverRoleKey": "security-reviewer",
       "approvalMode": "first-to-respond",
       "requiresTypedReason": true
+    },
+    {
+      "key": "autonomy-level-consult-ai-lead",
+      "label": "Autonomy: AI lead consulted",
+      "decisionTypeKey": "autonomy-level",
+      "applicationKindKey": "agent",
+      "approverRoleKey": "ai-lead",
+      "approvalMode": "first-to-respond",
+      "isConsultation": true
+    },
+    {
+      "key": "flagged-agent-ai-lead",
+      "label": "AI lead decides on a flagged agent",
+      "decisionTypeKey": "flagged-agent",
+      "approverRoleKey": "ai-lead",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10,
+      "requiresTypedReason": true,
+      "guidelineKey": "g17"
     },
     {
       "key": "configuration-change-approval",
@@ -179,6 +304,195 @@
       "approverRoleKey": "change-manager",
       "approvalMode": "first-to-respond",
       "isConsultation": true
+    },
+    {
+      "key": "data-use-domain",
+      "label": "Data use: the domain's data owner approves",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "data-domain",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "data-use-domain-steward",
+      "label": "Data use: the domain's data steward consulted",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "approverOwnerRoleKey": "data-steward",
+      "ownerSubject": "data-domain",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10,
+      "isConsultation": true
+    },
+    {
+      "key": "data-use-restricted-ai-owner",
+      "label": "Restricted data to AI: the domain's data owner approves",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "classificationKey": "restricted",
+      "aiUse": true,
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "data-domain",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "data-use-restricted-ai-security",
+      "label": "Restricted data to AI: the security reviewer approves",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "classificationKey": "restricted",
+      "aiUse": true,
+      "approverRoleKey": "security-reviewer",
+      "approvalMode": "first-to-respond",
+      "minimumCount": 1,
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "data-use-restricted-ai-steward",
+      "label": "Restricted data to AI: the domain's data steward consulted",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "classificationKey": "restricted",
+      "aiUse": true,
+      "approverOwnerRoleKey": "data-steward",
+      "ownerSubject": "data-domain",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10,
+      "isConsultation": true
+    },
+    {
+      "key": "data-copy",
+      "label": "Copy outside production: the domain's data owner approves",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-mapping",
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "data-domain",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "data-retention-owner",
+      "label": "Retention: the domain's data owner approves",
+      "decisionTypeKey": "data-retention",
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "data-domain",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10
+    },
+    {
+      "key": "data-retention-business-owner",
+      "label": "Retention: the application's business owner consulted",
+      "decisionTypeKey": "data-retention",
+      "approverOwnerRoleKey": "business-owner",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10,
+      "isConsultation": true
+    },
+    {
+      "key": "config-data-touches-admin",
+      "label": "Data taxonomy change: a configuration admin accepts",
+      "decisionTypeKey": "configuration-change",
+      "dataTaxonomyChange": "touches",
+      "approverRoleKey": "configuration-admin",
+      "approvalMode": "first-to-respond",
+      "requiresTypedReason": true
+    },
+    {
+      "key": "config-data-touches-owners",
+      "label": "Data taxonomy change: the touched domains' data owners consulted",
+      "decisionTypeKey": "configuration-change",
+      "dataTaxonomyChange": "touches",
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "touched-data-domains",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10,
+      "isConsultation": true
+    },
+    {
+      "key": "config-data-loosens-admin",
+      "label": "Data rule loosened: a configuration admin accepts",
+      "decisionTypeKey": "configuration-change",
+      "dataTaxonomyChange": "loosens",
+      "approverRoleKey": "configuration-admin",
+      "approvalMode": "first-to-respond",
+      "requiresTypedReason": true
+    },
+    {
+      "key": "config-data-loosens-owners",
+      "label": "Data rule loosened: the touched domains' data owners approve",
+      "decisionTypeKey": "configuration-change",
+      "dataTaxonomyChange": "loosens",
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "touched-data-domains",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "requiresTypedReason": true
+    },
+    {
+      "key": "ownership-domain-proposed-owners",
+      "label": "Domain owner: each proposed owner accepts",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "approverProposedOwners": true,
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "ownership-domain-parent-owner",
+      "label": "Domain owner: the parent domain's data owner approves",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "approverOwnerRoleKey": "data-owner",
+      "ownerSubject": "parent-data-domain",
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10
+    },
+    {
+      "key": "ownership-top-domain-proposed-owners",
+      "label": "Top-level domain owner: each proposed owner accepts",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "dataDomainLevelKey": "domain",
+      "approverProposedOwners": true,
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10,
+      "guidelineKey": "g2"
+    },
+    {
+      "key": "ownership-top-domain-lead",
+      "label": "Top-level domain owner: the data governance lead approves",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "dataDomainLevelKey": "domain",
+      "approverRoleKey": "data-governance-lead",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10
+    },
+    {
+      "key": "ownership-location-proposed-owners",
+      "label": "Location owner: each proposed owner accepts",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-location",
+      "approverProposedOwners": true,
+      "approvalMode": "everyone-must-approve",
+      "timeoutDays": 10
+    },
+    {
+      "key": "ownership-location-platform-admin",
+      "label": "Location owner: the platform admin approves",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-location",
+      "approverRoleKey": "platform-admin",
+      "approvalMode": "first-to-respond",
+      "timeoutDays": 10
     }
   ]
 }

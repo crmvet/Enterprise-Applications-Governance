@@ -448,6 +448,36 @@ public sealed class ApprovalOutbox
         return new ApprovalOutboxResult(ApprovalOutboxResultKind.StaleClaim, Get(approvalRecordId));
     }
 
+    // A platform admin sends a stuck card again (retry_approval_card; document 24, B24-22): a failed row, or a row sent
+    // before sentBefore with no answer, goes back to pending with its attempts at zero, so the runner claims it again on
+    // its next pull. The card reference and run link stay for history, as a release keeps them. Done when the row moved;
+    // NotFound when there is none; StaleClaim when it is in another state, or another call changed it first.
+    public ApprovalOutboxResult Retry(string approvalRecordId, DateTime nowUtc, DateTime sentBefore)
+    {
+        for (int i = 0; i < Retries; i++)
+        {
+            ApprovalOutboxItem? item = Get(approvalRecordId);
+            if (item == null)
+            {
+                return new ApprovalOutboxResult(ApprovalOutboxResultKind.NotFound, null);
+            }
+
+            bool retryable = item.State == ApprovalOutboxStates.Failed || (item.State == ApprovalOutboxStates.Sent && item.UpdatedOnUtc < sentBefore);
+            if (!retryable)
+            {
+                return new ApprovalOutboxResult(ApprovalOutboxResultKind.StaleClaim, item);
+            }
+
+            ApprovalOutboxItem next = item.Next(ApprovalOutboxStates.Pending, nowUtc, null, null, 0, item.CardRef, item.RunnerRunUrl);
+            if (_store.TrySetOutboxItem(next))
+            {
+                return new ApprovalOutboxResult(ApprovalOutboxResultKind.Done, next);
+            }
+        }
+
+        return new ApprovalOutboxResult(ApprovalOutboxResultKind.StaleClaim, Get(approvalRecordId));
+    }
+
     // Settles a row the host found settled: its record expired, or its decision is no longer proposed. A row that is
     // settled already stays as it is. False when the row does not exist.
     public bool Settle(string approvalRecordId, string state, DateTime nowUtc)

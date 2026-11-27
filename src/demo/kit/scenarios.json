@@ -1,0 +1,2618 @@
+{
+  "description": "The demo scenarios and the preconditions \"demo check\" proves before a demo. The catalog is src/docs/demo/scenarios.md, and each scenario's presenter script is in src/docs/demo/scenarios (script). S-01 to S-16 are the guided story of src/docs/demo/run-15-minutes.md, in its order of IDs; story is the time slot in that run. S-17 to S-23 are the deep-dive scenarios of run-45-minutes.md (story null); S-22 and S-23 play last, after every other scenario, because each of their steps writes. spec is the end-to-end spec in src/tests/e2e, whose test titles start with the step IDs of the script. Each precondition is what must hold on a fresh store after the demo director, before anyone plays the scenario. Every name is fictional.",
+  "personaCount": 17,
+  "scenarios": [
+    {
+      "id": "S-01",
+      "title": "PMO: the portfolio at a glance",
+      "story": "0:00-0:45",
+      "personas": [
+        "mateo"
+      ],
+      "useCases": [
+        "UC-05",
+        "UC-06",
+        "UC-02",
+        "UC-03"
+      ],
+      "screens": [
+        "/app/overview",
+        "/app/owners?view=gaps",
+        "/app/reviews?state=overdue"
+      ],
+      "spec": "specs/S-01-portfolio-overview.spec.ts",
+      "script": "src/docs/demo/scenarios/S-01-portfolio-overview.md",
+      "section": "W2 Owners, teams and committees",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "Field operations shows two owner gaps",
+          "as": "mateo",
+          "tool": "get_portfolio_summary",
+          "input": {
+            "portfolioId": {
+              "$lookup": {
+                "tool": "list_portfolios",
+                "where": {
+                  "name": "Field operations"
+                },
+                "pick": "portfolioId"
+              }
+            },
+            "includeOwnerGaps": true
+          },
+          "value": "data.ownerGaps",
+          "expect": 2
+        },
+        {
+          "label": "Inspection Scheduler has no deputy business owner",
+          "as": "mateo",
+          "tool": "get_portfolio_summary",
+          "input": {
+            "portfolioId": {
+              "$lookup": {
+                "tool": "list_portfolios",
+                "where": {
+                  "name": "Field operations"
+                },
+                "pick": "portfolioId"
+              }
+            },
+            "includeOwnerGaps": true
+          },
+          "value": "data.ownerGapList",
+          "expect": {
+            "some": {
+              "name": "Inspection Scheduler",
+              "ownerRoleKey": "business-owner",
+              "missing": "deputy"
+            }
+          }
+        },
+        {
+          "label": "Safety Findings Tracker has no business owner",
+          "as": "mateo",
+          "tool": "get_portfolio_summary",
+          "input": {
+            "portfolioId": {
+              "$lookup": {
+                "tool": "list_portfolios",
+                "where": {
+                  "name": "Field operations"
+                },
+                "pick": "portfolioId"
+              }
+            },
+            "includeOwnerGaps": true
+          },
+          "value": "data.ownerGapList",
+          "expect": {
+            "some": {
+              "name": "Safety Findings Tracker",
+              "ownerRoleKey": "business-owner",
+              "missing": "holder"
+            }
+          }
+        },
+        {
+          "label": "Reviews are overdue, for the Reviews overdue tile",
+          "as": "mateo",
+          "tool": "list_reviews",
+          "input": {
+            "state": "overdue"
+          },
+          "count": {
+            "min": 1
+          }
+        },
+        {
+          "label": "Approvals wait in the estate, for the Approvals waiting tile",
+          "as": "mateo",
+          "tool": "list_approvals",
+          "input": {
+            "view": "open"
+          },
+          "count": {
+            "min": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-02",
+      "title": "Maker and Claude Code: governance inside the AI build loop",
+      "story": "0:45-3:00",
+      "personas": [
+        "priya"
+      ],
+      "useCases": [
+        "P01",
+        "P02",
+        "P10",
+        "UC-05",
+        "UC-10",
+        "A-AI-BUILD-POLICY"
+      ],
+      "screens": [
+        "/app/work",
+        "/app/records/intake-request",
+        "/app/ai-activity",
+        "/app/ai-activity?view=refused"
+      ],
+      "spec": "specs/S-02-ai-build-loop.spec.ts",
+      "script": "src/docs/demo/scenarios/S-02-ai-build-loop.md",
+      "section": "W1 Governance inside the AI build loop",
+      "reset": "A fresh store (demo local up), or on a demo install the sandbox rebuild: the crew overtime tracker is drafted and submitted in the scenario.",
+      "preconditions": [
+        {
+          "label": "Crew Roster is in the register, for the reuse step",
+          "as": "priya",
+          "tool": "find_applications",
+          "input": {
+            "text": "Crew Roster"
+          },
+          "where": {
+            "name": "Crew Roster"
+          }
+        },
+        {
+          "label": "The crew overtime tracker is not drafted yet (the scenario has not been played)",
+          "as": "priya",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "mine",
+            "text": "crew overtime"
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "Guideline G17 (AI drafts, people approve) is in force",
+          "as": "priya",
+          "tool": "list_guidelines",
+          "input": {
+            "number": "G17"
+          },
+          "list": "data.guidelines",
+          "page": false,
+          "count": {
+            "equals": 1
+          }
+        },
+        {
+          "label": "AI activity shows Claude Code's earlier work for Priya: taken forward, edited first, withdrawn, waiting, refused and an AI-only code approval",
+          "as": "priya",
+          "tool": "get_ai_activity",
+          "input": {},
+          "value": "data.counts",
+          "where": {
+            "takenForwardByPerson": {
+              "min": 2
+            },
+            "editedByPersonFirst": {
+              "min": 1
+            },
+            "withdrawn": {
+              "min": 1
+            },
+            "waiting": {
+              "min": 2
+            },
+            "refused": {
+              "min": 3
+            },
+            "codeApprovals": {
+              "min": 1
+            }
+          },
+          "needs": "ai-client"
+        },
+        {
+          "label": "The refused approval answer carries guideline G17",
+          "as": "priya",
+          "tool": "get_ai_activity",
+          "input": {
+            "view": "refused"
+          },
+          "where": {
+            "refusal.tool": "answer_approval",
+            "refusal.guideline": "G17"
+          },
+          "needs": "ai-client"
+        }
+      ]
+    },
+    {
+      "id": "S-03",
+      "title": "Platform admin: triage, the gap check, places and leavers",
+      "story": "3:00-4:15",
+      "personas": [
+        "owen"
+      ],
+      "useCases": [
+        "P01",
+        "A-DELIVERY",
+        "P06",
+        "A-PLACES",
+        "P08"
+      ],
+      "screens": [
+        "/app/intake?view=triage",
+        "/app/gap-check?view=open",
+        "/app/gap-check?view=vanished",
+        "/app/places?view=targets",
+        "/app/owners?view=leavers"
+      ],
+      "spec": "specs/S-03-triage-gap-check-places-leavers.spec.ts",
+      "script": "src/docs/demo/scenarios/S-03-triage-gap-check-places-leavers.md",
+      "section": "W7 From request to retirement",
+      "reset": "A fresh store: the triage answer, the claim and the dismissal are made in the scenario.",
+      "preconditions": [
+        {
+          "label": "Two requests wait for triage",
+          "as": "owen",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "triage"
+          },
+          "count": {
+            "min": 2
+          }
+        },
+        {
+          "label": "Weather alerts for outdoor jobs waits for the platform admin's answer",
+          "as": "owen",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": "Accept the intake request: Weather alerts for outdoor jobs"
+          }
+        },
+        {
+          "label": "The photo copy flow is open and suggested to Priya Castell",
+          "as": "owen",
+          "tool": "list_claims",
+          "input": {
+            "statusMeanings": [
+              "open"
+            ]
+          },
+          "where": {
+            "labelAsSeen": "Copy visit photos to SharePoint",
+            "suggestedClaimant.displayLabel": "Priya Castell"
+          }
+        },
+        {
+          "label": "The personal test flow is open, to dismiss",
+          "as": "owen",
+          "tool": "list_claims",
+          "input": {
+            "statusMeanings": [
+              "open"
+            ]
+          },
+          "where": {
+            "labelAsSeen": "Test reminder flow (personal)"
+          }
+        },
+        {
+          "label": "One item claimed and one dismissed before the demo",
+          "as": "owen",
+          "tool": "list_claims",
+          "input": {
+            "statusMeanings": [
+              "claimed",
+              "dismissed"
+            ]
+          },
+          "count": {
+            "min": 2
+          }
+        },
+        {
+          "label": "The Timesheets canvas app has vanished",
+          "as": "owen",
+          "tool": "list_claims",
+          "input": {
+            "findingKinds": [
+              "vanished"
+            ],
+            "statusMeanings": [
+              "open"
+            ]
+          },
+          "where": {
+            "labelAsSeen": "Timesheets"
+          }
+        },
+        {
+          "label": "People Test is registered in Places",
+          "as": "owen",
+          "tool": "list_deployment_targets",
+          "input": {
+            "text": "People Test"
+          },
+          "where": {
+            "label": "People Test"
+          }
+        },
+        {
+          "label": "Wren Abernathy leaves, and still holds Claims Triage Agent",
+          "as": "owen",
+          "tool": "list_owner_assignments",
+          "input": {
+            "leaversOnly": true,
+            "state": "all"
+          },
+          "where": {
+            "principal.displayLabel": "Wren Abernathy",
+            "applicationName": "Claims Triage Agent",
+            "holder.leavesOn": {
+              "exists": true
+            }
+          }
+        },
+        {
+          "label": "Amara Quist (disabled) left Travel Requests",
+          "as": "owen",
+          "tool": "list_owner_assignments",
+          "input": {
+            "leaversOnly": true,
+            "state": "all"
+          },
+          "where": {
+            "principal.displayLabel": "Amara Quist",
+            "applicationName": "Travel Requests",
+            "holder.directoryState": "disabled"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-04",
+      "title": "Business owner: approvals, owners and the lifecycle",
+      "story": "4:15-6:00",
+      "personas": [
+        "nadia",
+        "mateo"
+      ],
+      "useCases": [
+        "UC-01",
+        "P03",
+        "UC-02",
+        "UC-14",
+        "P08",
+        "P07",
+        "A-LIFECYCLE",
+        "A-GRADUATION"
+      ],
+      "screens": [
+        "/app/approvals?view=mine",
+        "/app/records/decision",
+        "/app/records/business-application/00000000-0000-4000-8000-000000000511?tab=lifecycle",
+        "/app/owners?view=gaps"
+      ],
+      "spec": "specs/S-04-business-owner-approvals.spec.ts",
+      "script": "src/docs/demo/scenarios/S-04-business-owner-approvals.md",
+      "section": "W3 People answer every approval",
+      "reset": "A fresh store: the answers, the runbook check, the hand over and the deputy proposal are made in the scenario.",
+      "preconditions": [
+        {
+          "label": "Nadia is asked to authorize the change \"Retire the old export flow\"",
+          "as": "nadia",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": "Authorize the change: Retire the old export flow"
+          }
+        },
+        {
+          "label": "Nadia is asked to answer the risk acceptance she proposed herself, which Balanced lets a proposer answer at tier 2",
+          "as": "nadia",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": "Accept that inspection photos stay on devices for up to 7 days while offline.",
+            "isOwnProposal": true
+          }
+        },
+        {
+          "label": "Nadia is asked, by name, to become business owner of Claims Triage Agent",
+          "as": "nadia",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "make Nadia Ferreira business owner"
+            },
+            "decision.decisionType.key": "ownership"
+          }
+        },
+        {
+          "label": "Nadia, as data owner of Customers, is asked about Claims Triage Agent's data use",
+          "as": "nadia",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": "Allow Claims Triage Agent to send damage claims to the approved AI model to route them."
+          }
+        },
+        {
+          "label": "Mateo, sponsor of Claims Triage Agent, is asked about the owner change too",
+          "as": "mateo",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "make Nadia Ferreira business owner"
+            }
+          }
+        },
+        {
+          "label": "Inspection Scheduler's runbook is stale, so its Go-live gate is not met",
+          "as": "nadia",
+          "tool": "list_documents",
+          "input": {
+            "state": "stale"
+          },
+          "where": {
+            "applicationName": "Inspection Scheduler",
+            "documentType.key": "runbook"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-05",
+      "title": "Change manager: changes and flagged deployments",
+      "story": "6:00-7:00",
+      "personas": [
+        "hugo"
+      ],
+      "useCases": [
+        "P03",
+        "P05",
+        "A-EXCEPTIONS",
+        "A-DEPENDENCIES"
+      ],
+      "screens": [
+        "/app/changes/new?app=00000000-0000-4000-8000-000000000513",
+        "/app/timeline",
+        "/app/changes?view=list",
+        "/app/deployments?view=flagged&flag=ai-only-code-approval"
+      ],
+      "spec": "specs/S-05-changes-and-deployments.spec.ts",
+      "script": "src/docs/demo/scenarios/S-05-changes-and-deployments.md",
+      "section": "W4 Changes, releases and what they touch",
+      "reset": "A fresh store: the new Crew Roster change is submitted in the scenario.",
+      "preconditions": [
+        {
+          "label": "Crew Roster is in the register, for the new change",
+          "as": "hugo",
+          "tool": "find_applications",
+          "input": {
+            "text": "Crew Roster"
+          },
+          "where": {
+            "name": "Crew Roster"
+          }
+        },
+        {
+          "label": "The Legacy Timesheet App removal change is closed",
+          "as": "hugo",
+          "tool": "get_change_schedule",
+          "input": {
+            "from": "2025-01-01",
+            "to": "2028-12-31",
+            "statusMeanings": [
+              "completed"
+            ]
+          },
+          "where": {
+            "title": "Remove the Timesheets canvas app",
+            "applicationName": "Legacy Timesheet App"
+          }
+        },
+        {
+          "label": "The completed emergency change on Crew Roster is in the list",
+          "as": "hugo",
+          "tool": "get_change_schedule",
+          "input": {
+            "from": "2025-01-01",
+            "to": "2028-12-31",
+            "statusMeanings": [
+              "completed"
+            ]
+          },
+          "where": {
+            "applicationName": "Crew Roster",
+            "changeType.key": "emergency"
+          }
+        },
+        {
+          "label": "Invoice Matching 1.12.0 and 1.12.1 carry the AI-only code approval flag",
+          "as": "hugo",
+          "tool": "get_deployments",
+          "input": {
+            "flagKeys": [
+              "ai-only-code-approval"
+            ],
+            "latestOnly": false
+          },
+          "where": {
+            "applicationName": "Invoice Matching",
+            "artifactVersion": {
+              "in": [
+                "1.12.0",
+                "1.12.1"
+              ]
+            }
+          },
+          "count": {
+            "min": 2
+          }
+        },
+        {
+          "label": "Route Planner 2.0.0-rc.1, made from Claude Code, carries the AI-only code approval flag",
+          "as": "hugo",
+          "tool": "get_deployments",
+          "input": {
+            "flagKeys": [
+              "ai-only-code-approval"
+            ],
+            "latestOnly": false
+          },
+          "where": {
+            "applicationName": "Route Planner",
+            "artifactVersion": "2.0.0-rc.1"
+          },
+          "needs": "ai-client"
+        },
+        {
+          "label": "The exception for the 1.12.1 hotfix waits for the architect",
+          "as": "elif",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "1.12.1 hotfix"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-06",
+      "title": "Architect: reviews and exceptions",
+      "story": "7:00-7:45",
+      "personas": [
+        "elif",
+        "marcus"
+      ],
+      "useCases": [
+        "P04",
+        "UC-03",
+        "UC-04",
+        "A-LIFECYCLE",
+        "A-EXCEPTIONS"
+      ],
+      "screens": [
+        "/app/reviews?state=due&type=architecture",
+        "/app/records/decision",
+        "/app/reviews?state=done",
+        "/app/decisions?view=exceptions"
+      ],
+      "spec": "specs/S-06-reviews-and-exceptions.spec.ts",
+      "script": "src/docs/demo/scenarios/S-06-reviews-and-exceptions.md",
+      "section": "W3 People answer every approval",
+      "reset": "A fresh store: the design decision is approved and the review completed in the scenario.",
+      "preconditions": [
+        {
+          "label": "Claims Triage Agent's architecture review is due",
+          "as": "elif",
+          "tool": "list_reviews",
+          "input": {
+            "state": "due",
+            "reviewTypeKeys": [
+              "architecture"
+            ]
+          },
+          "where": {
+            "applicationName": "Claims Triage Agent"
+          }
+        },
+        {
+          "label": "The design decision on claim routing waits for the architect",
+          "as": "elif",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": "Route claims with a Copilot Studio agent and keep claim photos in the claims system."
+          }
+        },
+        {
+          "label": "Quote Builder's architecture review was completed before the demo",
+          "as": "elif",
+          "tool": "list_reviews",
+          "input": {
+            "state": "done",
+            "reviewTypeKeys": [
+              "architecture"
+            ]
+          },
+          "where": {
+            "applicationName": "Quote Builder"
+          }
+        },
+        {
+          "label": "Two standing exceptions (Contractor Portal, Travel Requests)",
+          "as": "elif",
+          "tool": "get_decision_log",
+          "input": {
+            "decisionTypeKeys": [
+              "exception"
+            ],
+            "statusMeanings": [
+              "accepted"
+            ]
+          },
+          "count": {
+            "min": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-07",
+      "title": "Data: domains, a data-use card, the never rule and copies",
+      "story": "7:45-9:15",
+      "personas": [
+        "hana",
+        "kai",
+        "noor",
+        "priya",
+        "owen"
+      ],
+      "useCases": [
+        "P02-DATA",
+        "UC-13",
+        "P10",
+        "A-AI-BUILD-POLICY"
+      ],
+      "screens": [
+        "/app/data",
+        "/app/data/uses",
+        "/app/data/mapping",
+        "/app/data/locations",
+        "/app/data/gaps",
+        "/app/records/decision"
+      ],
+      "spec": "specs/S-07-data-taxonomy.spec.ts",
+      "script": "src/docs/demo/scenarios/S-07-data-taxonomy.md",
+      "section": "W5 Know the data",
+      "reset": "A fresh store: Kai's and Noor's answers and Owen's declared use are made in the scenario.",
+      "preconditions": [
+        {
+          "label": "Commercial has no data owner",
+          "as": "hana",
+          "tool": "find_data_domains",
+          "input": {},
+          "where": {
+            "key": "commercial",
+            "owner": {
+              "exists": false
+            }
+          }
+        },
+        {
+          "label": "Payroll's AI use rule is never",
+          "as": "hana",
+          "tool": "find_data_domains",
+          "input": {},
+          "where": {
+            "key": "payroll",
+            "rules.ai.value": "never"
+          }
+        },
+        {
+          "label": "Kai Ostrowski is asked about Visit Report Agent's use of safety findings with AI",
+          "as": "kai",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "Visit Report Agent to send the open safety findings"
+            }
+          }
+        },
+        {
+          "label": "Noor Safadi, security reviewer, is asked about the same use",
+          "as": "noor",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "Visit Report Agent to send the open safety findings"
+            }
+          }
+        },
+        {
+          "label": "The masked copy of supplier contracts in Finance Test waits for Clara Voss",
+          "as": "hana",
+          "tool": "list_approvals",
+          "input": {
+            "view": "open"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "masked copy of supplier contracts in Finance Test"
+            },
+            "askedPrincipal.displayLabel": "Clara Voss"
+          }
+        },
+        {
+          "label": "Customer Test holds an unmasked copy that breaks the copy rule",
+          "as": "hana",
+          "tool": "list_data_mappings",
+          "input": {
+            "copyStates": [
+              "breaks-rule"
+            ]
+          },
+          "where": {
+            "location.label": "Customer Test"
+          }
+        },
+        {
+          "label": "PAYR01 has no technical owner, and TIMESQL01 was last seen long ago",
+          "as": "hana",
+          "tool": "find_data_locations",
+          "input": {},
+          "where": {
+            "label": {
+              "in": [
+                "PAYR01",
+                "TIMESQL01"
+              ]
+            }
+          },
+          "count": {
+            "equals": 2
+          }
+        },
+        {
+          "label": "Route Planner reads data of another application and declares none (DC-10)",
+          "as": "owen",
+          "tool": "get_data_gaps",
+          "input": {
+            "checks": [
+              "DC-10"
+            ]
+          },
+          "where": {
+            "applicationName": "Route Planner"
+          }
+        },
+        {
+          "label": "Mileage Claims holds the draft data use Claude Code made for Priya",
+          "as": "priya",
+          "tool": "list_data_uses",
+          "input": {
+            "text": "Mileage"
+          },
+          "where": {
+            "applicationName": "Mileage Claims",
+            "isAiCreated": true,
+            "status.meaning": "draft"
+          },
+          "needs": "ai-client"
+        }
+      ]
+    },
+    {
+      "id": "S-08",
+      "title": "AI lead and security reviewer: agents",
+      "story": "9:15-10:00",
+      "personas": [
+        "dmitri",
+        "noor"
+      ],
+      "useCases": [
+        "A-AGENTS",
+        "P02",
+        "P10"
+      ],
+      "screens": [
+        "/app/agents?view=register",
+        "/app/agents?view=flagged",
+        "/app/reviews?state=due",
+        "/app/ai-activity"
+      ],
+      "spec": "specs/S-08-agents.spec.ts",
+      "script": "src/docs/demo/scenarios/S-08-agents.md",
+      "section": "W6 Agents with an agreed autonomy",
+      "reset": "A fresh store: the autonomy level of Supplier Price Agent is proposed in the scenario.",
+      "preconditions": [
+        {
+          "label": "Supplier Price Agent has no autonomy level and none proposed",
+          "as": "dmitri",
+          "tool": "list_agents",
+          "input": {},
+          "where": {
+            "name": "Supplier Price Agent",
+            "autonomy.agreed": {
+              "exists": false
+            },
+            "autonomy.waiting": {
+              "exists": false
+            }
+          }
+        },
+        {
+          "label": "Customer Feedback Bot's security review is due for the security reviewer",
+          "as": "noor",
+          "tool": "list_reviews",
+          "input": {
+            "state": "due",
+            "reviewTypeKeys": [
+              "security-review"
+            ]
+          },
+          "where": {
+            "applicationName": "Customer Feedback Bot"
+          }
+        },
+        {
+          "label": "The decision on the flagged Onboarding Buddy Agent waits for the AI lead",
+          "as": "dmitri",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": {
+              "contains": "Keep Onboarding Buddy Agent"
+            }
+          }
+        },
+        {
+          "label": "The Finance Approvals Agent's answer is recorded as a recommendation only",
+          "as": "dmitri",
+          "tool": "get_ai_activity",
+          "input": {
+            "view": "answers"
+          },
+          "value": "data.counts.answers",
+          "expect": {
+            "min": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-09",
+      "title": "PMO, business owner and platform admin: demand, the portfolio and retirement",
+      "story": "10:00-11:15",
+      "personas": [
+        "mateo",
+        "nadia",
+        "owen"
+      ],
+      "useCases": [
+        "A-DEMAND",
+        "UC-06",
+        "P09"
+      ],
+      "screens": [
+        "/app/demand",
+        "/app/records/decision",
+        "/app/portfolios/00000000-0000-4000-8000-000000000501",
+        "/app/retirement",
+        "/app/retirement/00000000-0000-4000-8000-000000001323",
+        "/app/data/gaps?app=00000000-0000-4000-8000-000000001323"
+      ],
+      "spec": "specs/S-09-demand-portfolio-retirement.spec.ts",
+      "script": "src/docs/demo/scenarios/S-09-demand-portfolio-retirement.md",
+      "section": "W7 From request to retirement",
+      "reset": "A fresh store: the score, the priority, the retirement steps and the archive answer are made in the scenario.",
+      "preconditions": [
+        {
+          "label": "Four requests are scored",
+          "as": "mateo",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "all",
+            "scored": true
+          },
+          "count": {
+            "min": 4
+          }
+        },
+        {
+          "label": "Weather alerts for outdoor jobs is not scored yet",
+          "as": "mateo",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "all",
+            "text": "Weather alerts for outdoor jobs"
+          },
+          "where": {
+            "title": "Weather alerts for outdoor jobs",
+            "score": {
+              "exists": false
+            }
+          }
+        },
+        {
+          "label": "The priority of Supplier rebate tracking waits",
+          "as": "mateo",
+          "tool": "get_decision_log",
+          "input": {
+            "decisionTypeKeys": [
+              "priority"
+            ],
+            "statusMeanings": [
+              "proposed"
+            ]
+          },
+          "where": {
+            "statement": "Fund supplier rebate tracking this quarter."
+          }
+        },
+        {
+          "label": "Crew Shift Mobile's replace decision waits for its business owner",
+          "as": "mateo",
+          "tool": "get_decision_log",
+          "input": {
+            "decisionTypeKeys": [
+              "portfolio"
+            ],
+            "statusMeanings": [
+              "proposed"
+            ]
+          },
+          "where": {
+            "statement": {
+              "contains": "Replace Crew Shift Mobile"
+            }
+          }
+        },
+        {
+          "label": "Legacy Timesheet App is on its way out (stage Review)",
+          "as": "owen",
+          "tool": "find_applications",
+          "input": {
+            "text": "Legacy Timesheet App"
+          },
+          "where": {
+            "name": "Legacy Timesheet App",
+            "stage.key": "review"
+          }
+        },
+        {
+          "label": "The vanished Timesheets canvas app waits to be confirmed retired",
+          "as": "owen",
+          "tool": "list_claims",
+          "input": {
+            "findingKinds": [
+              "vanished"
+            ],
+            "statusMeanings": [
+              "open"
+            ]
+          },
+          "where": {
+            "labelAsSeen": "Timesheets"
+          }
+        },
+        {
+          "label": "The archive decision on the timesheet entries waits for Hana Lindqvist",
+          "as": "hana",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.statement": "Archive the timesheet entries of the old app and keep them for seven years."
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-10",
+      "title": "Configuration admins: change the rules safely",
+      "story": "11:15-12:00",
+      "personas": [
+        "yusuf",
+        "jonah"
+      ],
+      "useCases": [
+        "P11",
+        "UC-11"
+      ],
+      "screens": [
+        "/app/configuration?view=rules",
+        "/app/configuration?view=drafts",
+        "/app/records/configuration-draft",
+        "/app/configuration?view=versions"
+      ],
+      "spec": "specs/S-10-configuration.spec.ts",
+      "script": "src/docs/demo/scenarios/S-10-configuration.md",
+      "section": "W8 Rules that change safely",
+      "reset": "A fresh store: Jonah accepts the change in the scenario, which puts version 2 in force.",
+      "preconditions": [
+        {
+          "label": "Version 1 of the configuration is in force",
+          "as": "yusuf",
+          "tool": "list_configuration_changes",
+          "input": {
+            "view": "versions"
+          },
+          "value": "data.configurationSet.activeVersion",
+          "expect": 1
+        },
+        {
+          "label": "Yusuf's configuration change is submitted",
+          "as": "yusuf",
+          "tool": "list_configuration_changes",
+          "input": {
+            "view": "drafts"
+          },
+          "list": "data.drafts",
+          "page": false,
+          "where": {
+            "state.key": "submitted"
+          }
+        },
+        {
+          "label": "Jonah Pereira, the second configuration admin, is asked to accept it",
+          "as": "jonah",
+          "tool": "list_approvals",
+          "input": {
+            "view": "mine"
+          },
+          "where": {
+            "decision.decisionType.key": "configuration-change"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-11",
+      "title": "Platform admin: roles and access",
+      "story": "12:45-13:15",
+      "personas": [
+        "owen"
+      ],
+      "useCases": [
+        "A-ROLES",
+        "UC-07"
+      ],
+      "screens": [
+        "/app/roles",
+        "/app/roles?role=data-governance-lead",
+        "/app/roles?role=configuration-admin"
+      ],
+      "spec": "specs/S-11-roles-and-access.spec.ts",
+      "script": "src/docs/demo/scenarios/S-11-roles-and-access.md",
+      "section": "W8 Rules that change safely",
+      "reset": "Nothing to reset: the binding check writes nothing.",
+      "preconditions": [
+        {
+          "label": "The holders come from the fictional demo personas",
+          "as": "owen",
+          "tool": "get_role_access",
+          "input": {},
+          "value": "data.holdersReadFrom",
+          "expect": "demo-personas"
+        },
+        {
+          "label": "The configuration admin role has two people, Yusuf and Jonah",
+          "as": "owen",
+          "tool": "get_role_access",
+          "input": {
+            "roleKey": "configuration-admin",
+            "includeHolders": true
+          },
+          "list": "data.roles",
+          "page": false,
+          "where": {
+            "holders": {
+              "length": {
+                "equals": 2
+              }
+            }
+          }
+        },
+        {
+          "label": "Every human role is bound to a group that exists",
+          "as": "owen",
+          "tool": "check_role_bindings",
+          "input": {},
+          "list": "data.bindings",
+          "page": false,
+          "where": {
+            "groupExists": false
+          },
+          "count": {
+            "equals": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-12",
+      "title": "Maker: guidelines and the playbook",
+      "story": "13:15-13:30",
+      "personas": [
+        "priya"
+      ],
+      "useCases": [
+        "UC-11",
+        "A-AI-BUILD-POLICY"
+      ],
+      "screens": [
+        "/app/ai-activity?view=refused",
+        "/app/guidelines?g=G17"
+      ],
+      "spec": "specs/S-12-guidelines.spec.ts",
+      "script": "src/docs/demo/scenarios/S-12-guidelines.md",
+      "section": "W1 Governance inside the AI build loop",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "Guideline G17 is in force, with its playbook chapters",
+          "as": "priya",
+          "tool": "list_guidelines",
+          "input": {
+            "number": "G17"
+          },
+          "list": "data.guidelines",
+          "page": false,
+          "count": {
+            "equals": 1
+          }
+        },
+        {
+          "label": "Guideline G2 is in force",
+          "as": "priya",
+          "tool": "list_guidelines",
+          "input": {
+            "number": "G2"
+          },
+          "list": "data.guidelines",
+          "page": false,
+          "count": {
+            "equals": 1
+          }
+        },
+        {
+          "label": "A refused call on AI activity carries a guideline chip",
+          "as": "priya",
+          "tool": "get_ai_activity",
+          "input": {
+            "view": "refused"
+          },
+          "where": {
+            "refusal.guideline": {
+              "exists": true
+            }
+          },
+          "needs": "ai-client"
+        }
+      ]
+    },
+    {
+      "id": "S-13",
+      "title": "PMO: measures and slide-back signals",
+      "story": "13:30-13:45",
+      "personas": [
+        "mateo"
+      ],
+      "useCases": [
+        "A-MEASURES"
+      ],
+      "screens": [
+        "/app/measures"
+      ],
+      "spec": "specs/S-13-measures.spec.ts",
+      "script": "src/docs/demo/scenarios/S-13-measures.md",
+      "section": "W9 Run it and measure it",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "The nine measures",
+          "as": "mateo",
+          "tool": "get_measures",
+          "input": {},
+          "value": "data.measures",
+          "expect": {
+            "length": {
+              "equals": 9
+            }
+          }
+        },
+        {
+          "label": "The ten slide-back signals",
+          "as": "mateo",
+          "tool": "get_measures",
+          "input": {},
+          "value": "data.signals",
+          "expect": {
+            "length": {
+              "equals": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-14",
+      "title": "Platform admin: run the product",
+      "story": "13:45-14:00",
+      "personas": [
+        "owen"
+      ],
+      "useCases": [
+        "A-ADMIN",
+        "UC-08"
+      ],
+      "screens": [
+        "/app/admin"
+      ],
+      "spec": "specs/S-14-admin.spec.ts",
+      "script": "src/docs/demo/scenarios/S-14-admin.md",
+      "section": "W9 Run it and measure it",
+      "reset": "Nothing to reset: a second daily check the same day changes nothing.",
+      "preconditions": [
+        {
+          "label": "The daily check ran before the demo and opened the access check of Identity Directory Sync",
+          "as": "owen",
+          "tool": "list_reviews",
+          "input": {
+            "state": "all",
+            "reviewTypeKeys": [
+              "access-check"
+            ]
+          },
+          "where": {
+            "applicationName": "Identity Directory Sync",
+            "dueOn": "2026-11-23"
+          }
+        },
+        {
+          "label": "The daily check's notices name Identity Directory Sync",
+          "as": "owen",
+          "tool": "get_admin_status",
+          "input": {},
+          "value": "data.notices.items",
+          "expect": {
+            "some": {
+              "applicationName": "Identity Directory Sync"
+            }
+          }
+        },
+        {
+          "label": "The approval outbox is shown",
+          "as": "owen",
+          "tool": "get_admin_status",
+          "input": {},
+          "value": "data.outbox",
+          "expect": {
+            "exists": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-15",
+      "title": "Auditor: answer from the record",
+      "story": "14:00-15:00",
+      "personas": [
+        "bianca"
+      ],
+      "useCases": [
+        "UC-09",
+        "A-EVIDENCE",
+        "UC-11",
+        "P10"
+      ],
+      "screens": [
+        "/app/evidence/business-application/00000000-0000-4000-8000-000000001306",
+        "/app/audit?actor=ai-client-for-person"
+      ],
+      "spec": "specs/S-15-auditor.spec.ts",
+      "script": "src/docs/demo/scenarios/S-15-auditor.md",
+      "section": "W10 Answer the auditor",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "Invoice Matching's evidence pack holds its decisions, both approval answers and its flagged deployments",
+          "as": "bianca",
+          "tool": "get_evidence",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Invoice Matching"
+                },
+                "where": {
+                  "name": "Invoice Matching"
+                },
+                "pick": "businessApplicationId"
+              }
+            }
+          },
+          "value": "data.counts",
+          "where": {
+            "decisions": {
+              "min": 1
+            },
+            "approvalAnswers": {
+              "min": 2
+            },
+            "flaggedDeployments": {
+              "min": 2
+            }
+          }
+        },
+        {
+          "label": "The audit trail holds the calls an AI client made for a person",
+          "as": "bianca",
+          "tool": "get_audit_trail",
+          "input": {
+            "actorKinds": [
+              "ai-client-for-person"
+            ]
+          },
+          "count": {
+            "min": 1
+          },
+          "needs": "ai-client"
+        }
+      ]
+    },
+    {
+      "id": "S-16",
+      "title": "Teams and committees: who answers, who supports, what waits",
+      "story": "12:00-12:45",
+      "personas": [
+        "owen",
+        "tomas",
+        "marcus"
+      ],
+      "useCases": [
+        "UC-07",
+        "UC-02",
+        "A-ROLES"
+      ],
+      "screens": [
+        "/app/teams",
+        "/app/teams?kind=committee",
+        "/app/teams?kind=support-team",
+        "/app/teams/00000000-0000-4000-8000-000000000111",
+        "/app/teams/00000000-0000-4000-8000-000000001121"
+      ],
+      "spec": "specs/S-16-teams-and-committees.spec.ts",
+      "script": "src/docs/demo/scenarios/S-16-teams-and-committees.md",
+      "section": "W2 Owners, teams and committees",
+      "reset": "Nothing to reset while nobody answers the waiting cards; answering them on the decision page empties the team's Waiting now.",
+      "preconditions": [
+        {
+          "label": "The members are the fictional demo personas",
+          "as": "owen",
+          "tool": "list_teams",
+          "input": {},
+          "value": "data.membersReadFrom",
+          "expect": "demo-personas"
+        },
+        {
+          "label": "Something waits on the Change board",
+          "as": "owen",
+          "tool": "list_teams",
+          "input": {
+            "kind": "committee"
+          },
+          "where": {
+            "team.displayLabel": "Change board",
+            "waitingCount": {
+              "min": 1
+            },
+            "memberCount": {
+              "min": 1
+            }
+          }
+        },
+        {
+          "label": "Something waits on the Architects",
+          "as": "owen",
+          "tool": "list_teams",
+          "input": {
+            "kind": "committee"
+          },
+          "where": {
+            "team.displayLabel": "Architects",
+            "waitingCount": {
+              "min": 1
+            }
+          }
+        },
+        {
+          "label": "Something waits on the Security reviewers",
+          "as": "owen",
+          "tool": "list_teams",
+          "input": {
+            "kind": "committee"
+          },
+          "where": {
+            "team.displayLabel": "Security reviewers",
+            "waitingCount": {
+              "min": 1
+            }
+          }
+        },
+        {
+          "label": "A support team has an owner gap on its applications",
+          "as": "owen",
+          "tool": "list_teams",
+          "input": {
+            "kind": "support-team"
+          },
+          "where": {
+            "ownerGapCount": {
+              "min": 1
+            }
+          }
+        },
+        {
+          "label": "Every support team has its personas as members",
+          "as": "owen",
+          "tool": "list_teams",
+          "input": {
+            "kind": "support-team"
+          },
+          "where": {
+            "memberCount": 0
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "Tomas Rendel is in the Change board, and its page shows what waits on it",
+          "as": "tomas",
+          "tool": "get_team",
+          "input": {
+            "teamId": {
+              "$lookup": {
+                "tool": "list_teams",
+                "input": {
+                  "kind": "committee"
+                },
+                "where": {
+                  "team.displayLabel": "Change board"
+                },
+                "pick": "teamId"
+              }
+            }
+          },
+          "value": "data",
+          "where": {
+            "members": {
+              "some": {
+                "displayLabel": "Tomas Rendel"
+              }
+            },
+            "waiting": {
+              "length": {
+                "min": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-17",
+      "title": "Architect: the dependency map and what breaks",
+      "story": null,
+      "personas": [
+        "elif"
+      ],
+      "useCases": [
+        "A-DEPENDENCIES",
+        "P03",
+        "P09",
+        "UC-13"
+      ],
+      "screens": [
+        "/app/records/business-application/00000000-0000-4000-8000-000000000511/map",
+        "/app/records/business-application/00000000-0000-4000-8000-000000000511",
+        "/app/records/business-application/00000000-0000-4000-8000-000000001317?tab=lifecycle",
+        "/app/records/data-location/00000000-0000-4000-8000-000000006017"
+      ],
+      "spec": "specs/S-17-dependency-map.spec.ts",
+      "script": "src/docs/demo/scenarios/S-17-dependency-map.md",
+      "section": "W4 Changes, releases and what they touch",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "Inspection Scheduler has 9 or more dependants within 3 hops",
+          "as": "elif",
+          "tool": "get_dependency_impact",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Inspection Scheduler"
+                },
+                "where": {
+                  "name": "Inspection Scheduler"
+                },
+                "pick": "businessApplicationId"
+              }
+            },
+            "direction": "dependants",
+            "depth": 3
+          },
+          "list": "data.nodes",
+          "page": false,
+          "count": {
+            "min": 9
+          }
+        },
+        {
+          "label": "Route Planner reads data from Inspection Scheduler, one hop away",
+          "as": "elif",
+          "tool": "get_dependency_impact",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Inspection Scheduler"
+                },
+                "where": {
+                  "name": "Inspection Scheduler"
+                },
+                "pick": "businessApplicationId"
+              }
+            },
+            "direction": "dependants",
+            "depth": 3
+          },
+          "list": "data.nodes",
+          "page": false,
+          "where": {
+            "name": "Route Planner",
+            "depth": 1
+          }
+        },
+        {
+          "label": "Finance Ledger has 14 or more dependants within 3 hops, for the retirement impact",
+          "as": "elif",
+          "tool": "get_dependency_impact",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Finance Ledger"
+                },
+                "where": {
+                  "name": "Finance Ledger"
+                },
+                "pick": "businessApplicationId"
+              }
+            },
+            "direction": "dependants",
+            "depth": 3
+          },
+          "list": "data.nodes",
+          "page": false,
+          "count": {
+            "min": 14
+          }
+        },
+        {
+          "label": "Finance Ledger has a data use at PAYLIB, so the data location walk starts there",
+          "as": "elif",
+          "tool": "get_dependency_impact",
+          "input": {
+            "dataLocationId": {
+              "$lookup": {
+                "tool": "find_data_locations",
+                "input": {
+                  "text": "PAYLIB"
+                },
+                "where": {
+                  "label": "PAYLIB"
+                },
+                "pick": "dataLocationId"
+              }
+            },
+            "direction": "dependants"
+          },
+          "list": "data.nodes",
+          "page": false,
+          "where": {
+            "name": "Finance Ledger"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-18",
+      "title": "Reader: search, filters and what a reader may do",
+      "story": null,
+      "personas": [
+        "theo"
+      ],
+      "useCases": [
+        "UC-05",
+        "UC-07",
+        "UC-02"
+      ],
+      "screens": [
+        "/app/search?q=invoice",
+        "/app/search?q=Wren",
+        "/app/applications?ai=yes",
+        "/app/records/business-application/00000000-0000-4000-8000-000000000511",
+        "/app/teams?q=change"
+      ],
+      "spec": "specs/S-18-search-and-lists.spec.ts",
+      "script": "src/docs/demo/scenarios/S-18-search-and-lists.md",
+      "section": "W11 Find anything",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "Searching invoice finds Invoice Matching",
+          "as": "theo",
+          "tool": "find_applications",
+          "input": {
+            "text": "invoice"
+          },
+          "where": {
+            "name": "Invoice Matching"
+          }
+        },
+        {
+          "label": "Searching Wren finds Wren Abernathy",
+          "as": "theo",
+          "tool": "find_people",
+          "input": {
+            "text": "Wren"
+          },
+          "page": false,
+          "where": {
+            "displayLabel": "Wren Abernathy"
+          }
+        },
+        {
+          "label": "The register holds 14 or more applications that use AI",
+          "as": "theo",
+          "tool": "find_applications",
+          "input": {
+            "usesAi": true
+          },
+          "count": {
+            "min": 14
+          }
+        },
+        {
+          "label": "Searching the teams for change finds the Change board",
+          "as": "theo",
+          "tool": "list_teams",
+          "input": {
+            "text": "change"
+          },
+          "where": {
+            "team.displayLabel": "Change board"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-19",
+      "title": "Auditor: the decision log and the documents",
+      "story": null,
+      "personas": [
+        "bianca"
+      ],
+      "useCases": [
+        "UC-04",
+        "UC-09",
+        "P07",
+        "UC-14"
+      ],
+      "screens": [
+        "/app/decisions",
+        "/app/decisions?view=exceptions",
+        "/app/documents",
+        "/app/documents?state=stale"
+      ],
+      "spec": "specs/S-19-decision-log-and-documents.spec.ts",
+      "script": "src/docs/demo/scenarios/S-19-decision-log-and-documents.md",
+      "section": "W10 Answer the auditor",
+      "reset": "Nothing to reset: the scenario only reads.",
+      "preconditions": [
+        {
+          "label": "The decision log holds four or more exceptions",
+          "as": "bianca",
+          "tool": "get_decision_log",
+          "input": {
+            "decisionTypeKeys": [
+              "exception"
+            ]
+          },
+          "count": {
+            "min": 4
+          }
+        },
+        {
+          "label": "Safety Findings Tracker has a stale wiki page",
+          "as": "bianca",
+          "tool": "list_documents",
+          "input": {
+            "state": "stale"
+          },
+          "where": {
+            "applicationName": "Safety Findings Tracker",
+            "documentType.key": "wiki-page"
+          }
+        },
+        {
+          "label": "Some required documents are missing",
+          "as": "bianca",
+          "tool": "list_documents",
+          "input": {
+            "state": "missing"
+          },
+          "count": {
+            "min": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-20",
+      "title": "Requester: a request from the web app, with no AI",
+      "story": null,
+      "personas": [
+        "lena",
+        "nadia"
+      ],
+      "useCases": [
+        "P01",
+        "P02",
+        "UC-05",
+        "UC-07"
+      ],
+      "screens": [
+        "/app/intake?view=mine",
+        "/app/records/intake-request",
+        "/app/approvals?view=mine",
+        "/app/records/decision"
+      ],
+      "spec": "specs/S-20-requester.spec.ts",
+      "script": "src/docs/demo/scenarios/S-20-requester.md",
+      "section": "W7 From request to retirement",
+      "reset": "A fresh store: Lena finishes and submits her draft, and Nadia accepts the role, in the scenario.",
+      "preconditions": [
+        {
+          "label": "Lena Okoro's draft \"Depot first-aid kit checks\" is not submitted yet",
+          "as": "lena",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "mine",
+            "text": "first-aid"
+          },
+          "where": {
+            "title": "Depot first-aid kit checks",
+            "status.meaning": "draft"
+          }
+        },
+        {
+          "label": "Lena Okoro's request \"Spare parts returns from field vans\" is submitted",
+          "as": "lena",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "mine",
+            "text": "Spare parts"
+          },
+          "where": {
+            "title": "Spare parts returns from field vans"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-21",
+      "title": "Claude Code over MCP: what an AI client may do, and what it may not",
+      "story": null,
+      "personas": [
+        "priya",
+        "owen"
+      ],
+      "useCases": [
+        "UC-10",
+        "P10",
+        "A-AI-BUILD-POLICY",
+        "UC-11"
+      ],
+      "screens": [
+        "/app/ai-activity?view=refused",
+        "/app/admin"
+      ],
+      "spec": "specs/S-21-claude-code-refusals.spec.ts",
+      "script": "src/docs/demo/scenarios/S-21-claude-code-refusals.md",
+      "section": "W1 Governance inside the AI build loop",
+      "reset": "Nothing to reset: the reads write nothing, and a refused call writes no row (it stays on the audit trail).",
+      "preconditions": [
+        {
+          "label": "Inspection Scheduler has dependants for Claude Code to name",
+          "as": "priya",
+          "tool": "get_dependency_impact",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Inspection Scheduler"
+                },
+                "where": {
+                  "name": "Inspection Scheduler"
+                },
+                "pick": "businessApplicationId"
+              }
+            },
+            "direction": "dependants"
+          },
+          "list": "data.nodes",
+          "page": false,
+          "count": {
+            "min": 9
+          }
+        },
+        {
+          "label": "The Change board is a committee Priya can read",
+          "as": "priya",
+          "tool": "list_teams",
+          "input": {
+            "kind": "committee"
+          },
+          "where": {
+            "team.displayLabel": "Change board"
+          }
+        },
+        {
+          "label": "Guideline G16 (record AI use) is in force, for the never-rule refusal",
+          "as": "priya",
+          "tool": "list_guidelines",
+          "input": {
+            "number": "G16"
+          },
+          "list": "data.guidelines",
+          "page": false,
+          "count": {
+            "equals": 1
+          }
+        },
+        {
+          "label": "AI activity holds a refused risk acceptance (not_authorized, G4)",
+          "as": "priya",
+          "tool": "get_ai_activity",
+          "input": {
+            "view": "refused"
+          },
+          "where": {
+            "refusal.tool": "save_decision_proposal",
+            "refusal.code": "not_authorized",
+            "refusal.guideline": "G4"
+          },
+          "needs": "ai-client"
+        },
+        {
+          "label": "AI activity holds a refused never-rule data use (rule_violation, G16)",
+          "as": "priya",
+          "tool": "get_ai_activity",
+          "input": {
+            "view": "refused"
+          },
+          "where": {
+            "refusal.tool": "save_data_use",
+            "refusal.code": "rule_violation",
+            "refusal.guideline": "G16"
+          },
+          "needs": "ai-client"
+        }
+      ]
+    },
+    {
+      "id": "S-22",
+      "title": "Everyday records: the work between the decisions",
+      "story": null,
+      "personas": [
+        "priya",
+        "elif",
+        "nadia",
+        "owen",
+        "hugo",
+        "hana",
+        "lena",
+        "dmitri",
+        "mateo"
+      ],
+      "useCases": [
+        "UC-05",
+        "A-DEPENDENCIES",
+        "P04",
+        "P08",
+        "P05",
+        "P03",
+        "P07",
+        "UC-14",
+        "P06",
+        "A-PLACES",
+        "P02-DATA",
+        "UC-13",
+        "P01",
+        "UC-06",
+        "UC-01"
+      ],
+      "screens": [
+        "/app/applications",
+        "/app/records/business-application",
+        "/app/owners",
+        "/app/deployments/new",
+        "/app/records/change-request",
+        "/app/documents",
+        "/app/gap-check",
+        "/app/places",
+        "/app/data/locations",
+        "/app/records/data-location",
+        "/app/records/intake-request",
+        "/app/portfolios",
+        "/app/approvals?view=mine",
+        "/app/records/data-domain",
+        "/app/gap-check?view=vanished",
+        "/app/owners?view=leavers",
+        "/app/records/deployment-record",
+        "/app/places?view=pipelines",
+        "/app/records/data-mapping",
+        "/app/records/decision"
+      ],
+      "spec": "specs/S-22-everyday-records.spec.ts",
+      "script": "src/docs/demo/scenarios/S-22-everyday-records.md",
+      "section": "W12 Everyday records",
+      "reset": "A fresh store: every step writes a record (demo local reset on a local run). It plays last, so no earlier count changes.",
+      "preconditions": [
+        {
+          "label": "Depot key register is not in the register yet",
+          "as": "priya",
+          "tool": "find_applications",
+          "input": {
+            "text": "Depot key register"
+          },
+          "where": {
+            "name": "Depot key register"
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "Visit Report Agent and Field Knowledge MCP Server are both registered",
+          "as": "elif",
+          "tool": "find_applications",
+          "input": {
+            "text": "Field Knowledge MCP Server"
+          },
+          "where": {
+            "name": "Field Knowledge MCP Server"
+          }
+        },
+        {
+          "label": "Contractor Portal is a tier 3 application with no open architecture review",
+          "as": "nadia",
+          "tool": "list_reviews",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Contractor Portal"
+                },
+                "where": {
+                  "name": "Contractor Portal"
+                },
+                "pick": "businessApplicationId"
+              }
+            }
+          },
+          "where": {
+            "reviewType.key": "architecture",
+            "status.meaning": "due"
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "The standard change \"Rotate the reminder flow connection\" is in progress, for Hugo to close",
+          "as": "hugo",
+          "tool": "get_change_schedule",
+          "input": {
+            "from": "2026-11-01",
+            "to": "2026-12-31"
+          },
+          "where": {
+            "title": "Rotate the reminder flow connection",
+            "status.meaning": "in-progress"
+          }
+        },
+        {
+          "label": "Lena Okoro's request \"Spare parts returns from field vans\" is submitted, for her to withdraw",
+          "as": "lena",
+          "tool": "list_intake_requests",
+          "input": {
+            "view": "mine",
+            "text": "Spare parts"
+          },
+          "where": {
+            "title": "Spare parts returns from field vans",
+            "status.meaning": "submitted"
+          }
+        },
+        {
+          "label": "No portfolio \"Depot services\" yet",
+          "as": "owen",
+          "tool": "list_portfolios",
+          "input": {},
+          "where": {
+            "name": "Depot services"
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "Supplier Onboarding has no runbook link yet, for Dmitri to link (S-22.7)",
+          "as": "dmitri",
+          "tool": "get_documentation_status",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Supplier Onboarding"
+                },
+                "where": {
+                  "name": "Supplier Onboarding"
+                },
+                "pick": "businessApplicationId"
+              }
+            }
+          },
+          "list": "data.applications",
+          "where": {
+            "missing.0": "runbook"
+          }
+        },
+        {
+          "label": "Customers / Client cases and feedback holds 2 mappings and 2 uses, for Hana to move (S-22.14)",
+          "as": "hana",
+          "tool": "find_data_domains",
+          "input": {
+            "text": "Client cases"
+          },
+          "where": {
+            "key": "client-cases",
+            "counts.mappings": 2,
+            "counts.uses": 2
+          }
+        },
+        {
+          "label": "No claim for the Depot fuel log yet: the gap check run opens it (S-22.15)",
+          "as": "owen",
+          "tool": "list_claims",
+          "input": {
+            "statusMeanings": [
+              "open",
+              "claimed",
+              "dismissed"
+            ]
+          },
+          "where": {
+            "labelAsSeen": "Depot fuel log"
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "Owen may answer tier questions: the claim of S-22.17 starts its request as a draft (S-22.38)",
+          "as": "owen",
+          "tool": "get_tier_questions",
+          "input": {
+            "applicationKindKey": "power-platform-app"
+          },
+          "list": "data.questions",
+          "page": false,
+          "count": {
+            "min": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "S-23",
+      "title": "Every other action: drafts, answers, rules and records",
+      "story": null,
+      "personas": [
+        "priya",
+        "owen",
+        "hugo",
+        "elif",
+        "nadia",
+        "kai",
+        "hana",
+        "yusuf",
+        "dmitri",
+        "mateo",
+        "lena",
+        "noor"
+      ],
+      "useCases": [
+        "P10",
+        "UC-10",
+        "UC-01",
+        "P04",
+        "UC-04",
+        "P03",
+        "P02",
+        "A-LIFECYCLE",
+        "P08",
+        "P02-DATA",
+        "UC-13",
+        "P11",
+        "A-AGENTS",
+        "UC-03",
+        "P07",
+        "UC-14",
+        "A-MEASURES",
+        "UC-06",
+        "P09",
+        "P01",
+        "UC-08"
+      ],
+      "screens": [
+        "/app/ai-activity?view=waiting",
+        "/app/work",
+        "/app/records/decision",
+        "/app/records/change-request",
+        "/app/records/data-use",
+        "/app/records/data-location",
+        "/app/approvals?view=mine",
+        "/app/records/business-application",
+        "/app/data/gaps",
+        "/app/data/mapping",
+        "/app/data/locations",
+        "/app/records/data-domain",
+        "/app/configuration",
+        "/app/roles",
+        "/app/agents",
+        "/app/records/review",
+        "/app/documents",
+        "/app/decisions",
+        "/app/measures",
+        "/app/portfolios",
+        "/app/retirement",
+        "/app/intake/new",
+        "/app/admin",
+        "/app/records/document-link",
+        "/app/evidence/business-application"
+      ],
+      "spec": "specs/S-23-every-other-action.spec.ts",
+      "script": "src/docs/demo/scenarios/S-23-every-other-action.md",
+      "section": "W12 Everyday records",
+      "reset": "A fresh store: every step writes (demo local reset on a local run). It plays after S-22, so no earlier count changes.",
+      "preconditions": [
+        {
+          "label": "Claude Code's Shift Swap Requests tier draft waits for Priya (S-23.4)",
+          "as": "priya",
+          "tool": "get_decision_log",
+          "input": {},
+          "where": {
+            "statement": "Confirm tier 1 for Shift Swap Requests: it only swaps shifts inside one crew, and a supervisor approves each swap.",
+            "status.meaning": "proposed"
+          }
+        },
+        {
+          "label": "The commercial domain has no data owner, for Hana to name one (S-23.19)",
+          "as": "hana",
+          "tool": "find_data_domains",
+          "input": {
+            "text": "Commercial"
+          },
+          "where": {
+            "key": "commercial",
+            "gaps.0": "data.no-owner"
+          }
+        },
+        {
+          "label": "No data domain \"Desk bookings\" yet (S-23.20)",
+          "as": "yusuf",
+          "tool": "find_data_domains",
+          "input": {
+            "text": "Desk bookings"
+          },
+          "where": {
+            "label": "Desk bookings"
+          },
+          "count": {
+            "equals": 0
+          }
+        },
+        {
+          "label": "The support guide of Identity Directory Sync is a draft, owned by Noor (S-23.29)",
+          "as": "noor",
+          "tool": "get_documentation_status",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Identity Directory Sync"
+                },
+                "where": {
+                  "name": "Identity Directory Sync"
+                },
+                "pick": "businessApplicationId"
+              }
+            }
+          },
+          "list": "data.applications.0.documents",
+          "page": false,
+          "where": {
+            "documentTypeKey": "support-guide",
+            "status.meaning": "draft",
+            "owner.displayLabel": "Noor Safadi"
+          }
+        },
+        {
+          "label": "The architecture decision record of Supplier Price Agent is a draft, owned by Dmitri (S-23.30)",
+          "as": "dmitri",
+          "tool": "get_documentation_status",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Supplier Price Agent"
+                },
+                "where": {
+                  "name": "Supplier Price Agent"
+                },
+                "pick": "businessApplicationId"
+              }
+            }
+          },
+          "list": "data.applications.0.documents",
+          "page": false,
+          "where": {
+            "documentTypeKey": "architecture-decision-record",
+            "status.meaning": "draft",
+            "owner.displayLabel": "Dmitri Halloran"
+          }
+        },
+        {
+          "label": "Invoice Matching has decisions on record for its evidence pack (S-23.31)",
+          "as": "owen",
+          "tool": "get_decision_log",
+          "input": {
+            "businessApplicationId": {
+              "$lookup": {
+                "tool": "find_applications",
+                "input": {
+                  "text": "Invoice Matching"
+                },
+                "where": {
+                  "name": "Invoice Matching"
+                },
+                "pick": "businessApplicationId"
+              }
+            }
+          },
+          "where": {
+            "status.meaning": "accepted"
+          }
+        }
+      ]
+    }
+  ],
+  "runs": {
+    "run-5": {
+      "title": "The 5-minute run",
+      "doc": "src/docs/demo/run-5-minutes.md",
+      "steps": [
+        "S-01.1",
+        "S-02.1",
+        "S-02.2",
+        "S-02.3",
+        "S-02.7",
+        "S-04.2",
+        "S-04.3",
+        "S-17.1",
+        "S-15.1",
+        "S-15.2"
+      ]
+    },
+    "run-15": {
+      "title": "The 15-minute run",
+      "doc": "src/docs/demo/run-15-minutes.md",
+      "steps": [
+        "S-01.2",
+        "S-01.3",
+        "S-01.4",
+        "S-02.1",
+        "S-02.2",
+        "S-02.3",
+        "S-02.5",
+        "S-02.7",
+        "S-02.8",
+        "S-03.2",
+        "S-03.3",
+        "S-03.6",
+        "S-03.9",
+        "S-04.2",
+        "S-04.3",
+        "S-04.5",
+        "S-04.7",
+        "S-04.8",
+        "S-04.9",
+        "S-05.2",
+        "S-05.3",
+        "S-05.6",
+        "S-06.3",
+        "S-06.4",
+        "S-06.6",
+        "S-07.1",
+        "S-07.2",
+        "S-07.3",
+        "S-07.4",
+        "S-07.6",
+        "S-07.8",
+        "S-08.1",
+        "S-08.2",
+        "S-08.4",
+        "S-09.2",
+        "S-09.3",
+        "S-09.4",
+        "S-09.8",
+        "S-09.9",
+        "S-09.11",
+        "S-10.3",
+        "S-10.4",
+        "S-10.5",
+        "S-16.1",
+        "S-16.2",
+        "S-16.4",
+        "S-11.1",
+        "S-11.4",
+        "S-12.1",
+        "S-13.1",
+        "S-14.2",
+        "S-15.1",
+        "S-15.2",
+        "S-15.4"
+      ]
+    },
+    "cio-cto": {
+      "title": "Track: CIO and CTO",
+      "doc": "src/docs/demo/tracks.md",
+      "steps": [
+        "S-01.1",
+        "S-01.2",
+        "S-02.1",
+        "S-02.2",
+        "S-02.7",
+        "S-04.2",
+        "S-04.3",
+        "S-17.1",
+        "S-17.4",
+        "S-13.1",
+        "S-13.3",
+        "S-15.1",
+        "S-15.2"
+      ]
+    },
+    "it-platform": {
+      "title": "Track: IT and platform",
+      "doc": "src/docs/demo/tracks.md",
+      "steps": [
+        "S-03.1",
+        "S-03.2",
+        "S-03.3",
+        "S-03.4",
+        "S-03.5",
+        "S-03.6",
+        "S-03.7",
+        "S-03.8",
+        "S-03.9",
+        "S-05.1",
+        "S-05.2",
+        "S-05.3",
+        "S-05.4",
+        "S-05.5",
+        "S-05.6",
+        "S-17.1",
+        "S-17.2",
+        "S-17.3",
+        "S-17.4",
+        "S-17.5",
+        "S-11.1",
+        "S-11.2",
+        "S-11.3",
+        "S-11.4",
+        "S-14.1",
+        "S-14.2",
+        "S-14.3",
+        "S-14.4",
+        "S-14.5",
+        "S-16.1",
+        "S-16.2",
+        "S-16.3",
+        "S-21.1",
+        "S-21.3",
+        "S-21.4"
+      ]
+    },
+    "security": {
+      "title": "Track: security",
+      "doc": "src/docs/demo/tracks.md",
+      "steps": [
+        "S-21.1",
+        "S-21.5",
+        "S-21.6",
+        "S-21.7",
+        "S-21.8",
+        "S-07.2",
+        "S-07.3",
+        "S-07.4",
+        "S-07.5",
+        "S-07.6",
+        "S-08.1",
+        "S-08.2",
+        "S-08.5",
+        "S-08.6",
+        "S-05.6",
+        "S-11.2",
+        "S-11.4",
+        "S-15.4"
+      ]
+    },
+    "data-governance": {
+      "title": "Track: data governance",
+      "doc": "src/docs/demo/tracks.md",
+      "before": [
+        "S-09.8",
+        "S-09.9"
+      ],
+      "steps": [
+        "S-07.1",
+        "S-07.2",
+        "S-07.3",
+        "S-07.4",
+        "S-07.5",
+        "S-07.6",
+        "S-07.8",
+        "S-07.9",
+        "S-07.10",
+        "S-07.11",
+        "S-17.5",
+        "S-10.1",
+        "S-10.2",
+        "S-10.3",
+        "S-10.4",
+        "S-10.5",
+        "S-09.10"
+      ]
+    },
+    "makers": {
+      "title": "Track: makers building with AI",
+      "doc": "src/docs/demo/tracks.md",
+      "steps": [
+        "S-02.1",
+        "S-02.2",
+        "S-02.3",
+        "S-02.4",
+        "S-02.5",
+        "S-02.6",
+        "S-02.7",
+        "S-02.8",
+        "S-21.2",
+        "S-21.3",
+        "S-07.6",
+        "S-07.7",
+        "S-12.1",
+        "S-12.2",
+        "S-12.3",
+        "S-20.1",
+        "S-20.2",
+        "S-20.3",
+        "S-20.4"
+      ]
+    },
+    "pmo": {
+      "title": "Track: PMO",
+      "doc": "src/docs/demo/tracks.md",
+      "before": [
+        "S-03.3",
+        "S-04.5"
+      ],
+      "steps": [
+        "S-01.1",
+        "S-01.2",
+        "S-01.3",
+        "S-01.4",
+        "S-01.5",
+        "S-09.1",
+        "S-09.2",
+        "S-09.3",
+        "S-09.4",
+        "S-09.5",
+        "S-09.6",
+        "S-09.7",
+        "S-04.7",
+        "S-04.8",
+        "S-17.4",
+        "S-13.1",
+        "S-13.2",
+        "S-13.3",
+        "S-16.1",
+        "S-16.2"
+      ]
+    },
+    "auditor": {
+      "title": "Track: auditor",
+      "doc": "src/docs/demo/tracks.md",
+      "steps": [
+        "S-15.1",
+        "S-15.2",
+        "S-15.3",
+        "S-15.4",
+        "S-19.1",
+        "S-19.2",
+        "S-19.3",
+        "S-19.4",
+        "S-15.3",
+        "S-14.2",
+        "S-18.5"
+      ]
+    }
+  }
+}

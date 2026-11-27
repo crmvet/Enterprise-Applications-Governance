@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "record-number-change-by-caller-dropped-allowed",
+  "description": "A record number never changes: a caller's new number on a decision is dropped, and only the rest of the change is written.",
+  "tags": [
+    "record-number"
+  ],
+  "ruleIds": [
+    "G-09"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-54",
+    "after": {
+      "recordNumber": "DEC-0001",
+      "statement": "Retire the travel planner next quarter"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "retirement",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "recordNumber": "DEC-0145",
+      "createdByPrincipal": "fixture-person-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "removedColumns": [
+        "recordNumber"
+      ]
+    },
+    "reasons": [
+      {
+        "code": "engine.column-overwritten",
+        "severity": "info",
+        "ref": "recordNumber"
+      }
+    ]
+  }
+}

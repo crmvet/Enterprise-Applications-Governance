@@ -205,6 +205,28 @@ public sealed partial class EngineRuntime
         }
     }
 
+    // The statement of a configuration change decision in plain words (product review 2026-11-24): what the draft changes
+    // and the version it moves from, never the draft's ID. "Accept the configuration change: add standard change model
+    // Monthly content refresh, version 1 to 2."
+    private static string ConfigurationStatement(StoredRow draft, CompiledSnapshot inForce)
+    {
+        // Labels, not keys (wave 2 recheck QA8): "the AI use rule of Workplace / Visitor log changes from decision to never".
+        string[] plain = ChangeWords.Describe(inForce.Snapshot, draft.Column("changeJson")).Select(l => l.TrimEnd('.')).ToArray();
+        string[] lines = plain.Length > 0
+            ? plain.Select(l => l.Length > 1 && !l.StartsWith("AI ", StringComparison.Ordinal) ? char.ToLowerInvariant(l[0]) + l.Substring(1) : l).ToArray()
+            : (draft.Text("changeSummary") ?? string.Empty).Split('\n').Select(l => l.Trim().TrimEnd('.')).Where(l => l.Length > 0).ToArray();
+        long from = draft.Number("baseVersionNumber") ?? 0;
+        string what = lines.Length == 0 ? "a configuration change" : lines.Length == 1 ? lines[0] : lines[0] + ", and " + (lines.Length - 1) + " more change" + (lines.Length == 2 ? string.Empty : "s");
+        return "Accept the configuration change: " + what + ", version " + from + " to " + (from + 1) + ".";
+    }
+
+    // The outcome key when the configuration in force holds it active for the decision type, else null.
+    private static string? OutcomeIfActive(CompiledSnapshot snapshot, string decisionType, string outcome)
+    {
+        return snapshot.Snapshot.TryGetEntity("decision-outcome", out Core.Snapshots.SnapshotEntity? outcomes)
+            && outcomes.ActiveRows.Any(r => r.KeyPath == decisionType + "/" + outcome) ? outcome : null;
+    }
+
     // submit_record for a configuration draft (document 24, tool 18; document 25, section 6.4, step 3): the draft is
     // frozen, the engine records a configuration change decision (a gate policy change decision when the draft touches a
     // Gate Policy row) as proposed, and requests its approvals. A draft whose validation has errors still submits in this
@@ -236,8 +258,9 @@ public sealed partial class EngineRuntime
                     ("decisionType", JsonTreeNode.FromString(decisionType)),
                     ("subjectKind", JsonTreeNode.FromString("configuration-draft")),
                     ("subjectConfigurationDraft", JsonTreeNode.FromString(configurationDraftId)),
-                    ("statement", JsonTreeNode.FromString("Accept Configuration Draft " + configurationDraftId + " on version " + (draft.Number("baseVersionNumber") ?? 0) + ".")),
+                    ("statement", JsonTreeNode.FromString(ConfigurationStatement(draft, call.Snapshot))),
                     ("context", RuntimeJson.OptionalText(draft.Text("proposalRationale"))),
+                    ("outcome", RuntimeJson.OptionalText(OutcomeIfActive(call.Snapshot, decisionType, "accept"))),
                     ("status", JsonTreeNode.FromString(DefaultStatus(call.Snapshot, "decision", "proposed")))),
                 Nested = true,
             })!;
@@ -280,7 +303,9 @@ public sealed partial class EngineRuntime
         SnapshotLoad baseLoad = Cache.LoadVersion(_configuration, active.ConfigurationSetKey, baseNumber);
         CompiledSnapshot baseVersion = baseLoad.Snapshot ?? throw new CallFailure(OperationOutcomes.Unavailable, new[] { baseLoad.Problem! });
 
-        JsonTreeNode changeJson = draft.Column("changeJson") ?? throw CallFailure.Of(OperationOutcomes.InvalidInput, ReasonCodes.InputRequired, "Configuration Draft " + draftId + " holds no change.", "Configuration Draft", draftId);
+        JsonTreeNode changeJson = WithModelApprovals(
+            draft.Column("changeJson") ?? throw CallFailure.Of(OperationOutcomes.InvalidInput, ReasonCodes.InputRequired, "Configuration Draft " + draftId + " holds no change.", "Configuration Draft", draftId),
+            decisionId);
         var request = new ActivationRequest(
             draftId,
             draftStatus,
@@ -315,6 +340,38 @@ public sealed partial class EngineRuntime
             default:
                 throw new CallFailure(outcome.Outcome == ActivationOutcome.InvalidInput ? OperationOutcomes.InvalidInput : OperationOutcomes.Refused, outcome.Reasons);
         }
+    }
+
+    // A standard change model counts only once a person approved it (C21 Approved By Decision, a working set field; OP-12).
+    // The accepted configuration change decision that lists or changes a model is that approval (document 21, B21-9;
+    // document 25, B25-14), so activation names it on every model the draft upserts without naming one itself. A changed
+    // model is approved again by the decision that changed it. The draft's own Change Json stays as the admin wrote it.
+    private static JsonTreeNode WithModelApprovals(JsonTreeNode changeJson, string decisionId)
+    {
+        if (changeJson.Kind != JsonTreeKind.Object || !changeJson.TryGetMember("operations", out JsonTreeNode? operations) || operations.Kind != JsonTreeKind.Array)
+        {
+            return changeJson;
+        }
+
+        bool changed = false;
+        var stamped = new List<JsonTreeNode>();
+        foreach (JsonTreeNode operation in operations.Items)
+        {
+            bool model = RuntimeJson.Text(operation, "op") == "upsert" && RuntimeJson.Text(operation, "entity") == "standard-change-model"
+                && operation.TryGetMember("values", out JsonTreeNode? values) && values.Kind == JsonTreeKind.Object && !values.TryGetMember("approvedByDecisionId", out _);
+            if (model)
+            {
+                operation.TryGetMember("values", out JsonTreeNode? before);
+                stamped.Add(RuntimeJson.With(operation, "values", RuntimeJson.With(before!, "approvedByDecisionId", JsonTreeNode.FromString(decisionId))));
+                changed = true;
+            }
+            else
+            {
+                stamped.Add(operation);
+            }
+        }
+
+        return changed ? RuntimeJson.With(changeJson, "operations", JsonTreeNode.CreateArray(stamped)) : changeJson;
     }
 
     // <prefix>_GetEngineInfo: the engine version, the snapshot schema version and the hash of the version in force.

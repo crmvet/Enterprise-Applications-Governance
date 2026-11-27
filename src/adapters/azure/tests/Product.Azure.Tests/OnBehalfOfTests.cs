@@ -153,6 +153,7 @@ public sealed class OnBehalfOfTests
             ("agent user", Context("Production", Principal(With(person, ("oid", Personas.AgentUserId)))), new BackendCaller(Personas.AgentUserId, PrincipalKind.AgentUser, Personas.ClaudeCode), "Agent identities, agent users and workloads never do"),
             ("password claims", Context("Production", Principal(With(person, ("xms_username", "fictional"), ("xms_password", "fictional")))), owen, "claims the product does not accept"),
             ("no bearer token", Context("Production", Principal(person), bearer: false), owen, "no bearer token"),
+            ("demo persona", AsDemoPersona(Context("Demo", Principal(person))), new BackendCaller(Personas.NadiaId, PrincipalKind.User, Personas.WebApp), "A demo persona is fictional"),
         };
 
         foreach ((string name, HttpContext context, BackendCaller caller, string expected) in cases)
@@ -289,6 +290,21 @@ public sealed class OnBehalfOfTests
             context.Request.Headers.Authorization = "Bearer fictional-incoming-token";
         }
 
+        return context;
+    }
+
+    // The same request after the demo persona switch (D-39) put Nadia in place of the signed-in operator: the bearer
+    // token is still the operator's own, so it must never be exchanged for the persona.
+    private static HttpContext AsDemoPersona(HttpContext context)
+    {
+        CallerClaims signedIn = new CallerMapper(new FixedEnvironment("Demo")).Map(context.User)!;
+        ProductRequest.SetCaller(context, signedIn.ForDemoPersona(new ProductDemoPersona
+        {
+            Name = "nadia",
+            Label = "Nadia Ferreira, application owner",
+            ObjectId = Personas.NadiaId,
+            Groups = new[] { Personas.OwnerGroup },
+        }));
         return context;
     }
 

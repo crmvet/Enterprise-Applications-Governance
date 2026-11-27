@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "propose_configuration_change output",
   "description": "The response envelope. On success, data is the write result for the Configuration Draft (C46), always draft, with the validation result, the engine's diff, the effect on live applications and the approvals the change will need. impact comes back also with validateOnly. Nothing is in force.",
-  "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on one card. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
+  "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on the decision page. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
   "x-tool": "propose_configuration_change",
   "x-ai-write-states": [
     "candidate"
@@ -145,7 +145,7 @@
             },
             "additionalProperties": false
           },
-          "description": "The diff the engine computed. The card shows this diff, never the AI's description."
+          "description": "The diff the engine computed. The configuration draft's page shows this diff, never the AI's description."
         },
         "contentHash": {
           "description": "The hash of the previewed snapshot. Null when the draft does not validate.",
@@ -164,7 +164,8 @@
             "applicationsAffected",
             "byChange",
             "gateChanges",
-            "recordsInFlight"
+            "recordsInFlight",
+            "dataUses"
           ],
           "properties": {
             "applicationsAffected": {
@@ -258,6 +259,105 @@
               "type": "integer",
               "minimum": 0,
               "description": "Records already submitted. They keep the requirements frozen at their submission."
+            },
+            "dataUses": {
+              "type": "array",
+              "description": "The live data uses and copies on the domains the change touches, with their state under the configuration in force and under the change (docs/architecture/data-taxonomy.md, Changing the taxonomy), so the proposal shows what the stored draft will show. Empty when the change touches no domain.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "id",
+                  "recordNumber",
+                  "application",
+                  "domain",
+                  "stateBefore",
+                  "stateAfter",
+                  "breaksRule",
+                  "needsNewDecision",
+                  "recordUrl"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "data-use",
+                      "data-mapping"
+                    ]
+                  },
+                  "id": {
+                    "$ref": "../common.schema.json#/$defs/id"
+                  },
+                  "recordNumber": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "application": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "businessApplicationId",
+                          "name"
+                        ],
+                        "properties": {
+                          "businessApplicationId": {
+                            "$ref": "../common.schema.json#/$defs/id"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "domain": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "key",
+                      "path"
+                    ],
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "stateBefore": {
+                    "type": "string",
+                    "description": "The OP-16 state: not-needed, needed, proposed, allowed, denied, re-decide, no-one-to-ask or breaks-rule."
+                  },
+                  "stateAfter": {
+                    "type": "string",
+                    "description": "The OP-16 state: not-needed, needed, proposed, allowed, denied, re-decide, no-one-to-ask or breaks-rule."
+                  },
+                  "breaksRule": {
+                    "type": "boolean",
+                    "description": "True when the use or copy would break a rule under the change and does not today."
+                  },
+                  "needsNewDecision": {
+                    "type": "boolean",
+                    "description": "True when a use that is allowed or needs no decision today would need a decision under the change."
+                  },
+                  "recordUrl": {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  }
+                }
+              }
             }
           },
           "additionalProperties": false,
@@ -271,7 +371,7 @@
           "description": "The approvals the configuration change decision will need, judged by the active rules."
         },
         "activation": {
-          "const": "Submit the draft. A person accepts the decision on an approval card. Nothing changes until then."
+          "const": "Submit the draft. A person accepts the decision on its decision page. Nothing changes until then."
         }
       },
       "required": [
@@ -348,7 +448,8 @@
             }
           ],
           "gateChanges": [],
-          "recordsInFlight": 1
+          "recordsInFlight": 1,
+          "dataUses": []
         },
         "approvalsNeeded": [
           {
@@ -358,7 +459,7 @@
             "minimumCount": 1
           }
         ],
-        "activation": "Submit the draft. A person accepts the decision on an approval card. Nothing changes until then."
+        "activation": "Submit the draft. A person accepts the decision on its decision page. Nothing changes until then."
       },
       "asOf": "2026-11-22T09:00:00Z",
       "configurationSetVersion": 3,

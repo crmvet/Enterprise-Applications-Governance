@@ -57,7 +57,7 @@ public sealed class TelemetryEvent
     // is "(unknown)", for the same reason.
     public string? ToolName { get; }
 
-    // "ok", one of the 11 fixed error codes, or a JSON-RPC error kind such as "invalid-request" or "internal-error".
+    // "ok", one of the 12 fixed error codes, or a JSON-RPC error kind such as "invalid-request" or "internal-error".
     public string Outcome { get; }
 
     public long LatencyMilliseconds { get; }

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "holds-no-business-data-ready",
+  "description": "An application that holds no business data, such as meeting room signage, meets data-uses-declared with no uses.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "design",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "dataUses": {
+      "declaredCount": 0,
+      "holdsNoBusinessData": true,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "ready",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

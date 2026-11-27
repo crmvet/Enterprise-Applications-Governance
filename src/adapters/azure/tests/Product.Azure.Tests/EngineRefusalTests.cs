@@ -97,8 +97,13 @@ public sealed class EngineRefusalTests
         Assert.Equal(403, unknown.Status);
         Assert.Equal("not_authorized", unknown.Json!["error"]!["code"]!.GetValue<string>());
 
-        // Nothing changed: the card is still pending and the decision still proposed.
-        Assert.Equal(before, Dump(host));
+        // Nothing changed but the record of the refused MCP call, an audit entry in a transaction of its own (document 25,
+        // B25-13): the card is still pending and the decision still proposed. The route and the table door are not the
+        // server's tools, so only the call to approve_decision is recorded.
+        Assert.Equal(StoreDumps.WithoutAudit(before), StoreDumps.WithoutAudit(host));
+        StoredRow refusal = Assert.Single(StoreDumps.Refusals(host));
+        Assert.Equal("approve_decision", refusal.Text("entityName"));
+        Assert.Equal("ai-client-for-person", refusal.Text("actorKind"));
         Assert.Equal("pending", host.Get<IRecordStore>().Get("approval-record", approvalId)!.Text("outcomeMeaning"));
         Assert.Equal("proposed", host.Get<IRecordStore>().Get("decision", decisionId)!.Text("statusMeaning"));
 
@@ -203,7 +208,8 @@ public sealed class EngineRefusalTests
         string intake = draft["data"]!["recordId"]!.GetValue<string>();
         JsonNode submitted = await host.Call(Personas.Priya, "submit_record", "{\"subjectKind\":\"intake-request\",\"subjectId\":\"" + intake + "\"}");
         Assert.True(submitted["ok"]!.GetValue<bool>(), submitted.ToJsonString());
-        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray())!;
+        // The triage card; Balanced also opens three consultation cards on an intake (document 21, B21-9).
+        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray(), c => !c!["isConsultation"]!.GetValue<bool>())!;
         Assert.Equal("platform-admin", card["requiredRoleKey"]!.GetValue<string>());
         return (card["approvalRecordId"]!.GetValue<string>(), submitted["data"]!["decisionId"]!.GetValue<string>());
     }

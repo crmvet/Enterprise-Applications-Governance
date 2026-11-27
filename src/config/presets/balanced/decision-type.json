@@ -1,6 +1,8 @@
 {
   "$comment": [
-    "WORKING DEFAULT (open design question 8): the six types with requiresApproval false (intake, priority, design, tier, ownership, portfolio) still go on one card to their accountable holder. Only lowest-tier intake is on the locked engine acceptance list."
+    "WORKING DEFAULT (open design question 8): the four types with requiresApproval false (intake, priority, design, portfolio) still go on one card to their accountable holder. Only lowest-tier intake is on the locked engine acceptance list.",
+    "Aligned with the process documents (document 21, B21-9): tier and ownership require approval, so a tier 3 tier decision asks the platform admin and the security reviewer (P02) and an ownership decision asks each proposed owner and the business owner (P08). Data use gains retain (P09 step 3), retirement ends with complete (P09 step 7), and flagged-agent records the AI lead's decision on an agent Microsoft flags (P06 step 9, P08 step 7).",
+    "D-41 (2026-11-24, document 21, B21-10): the gate decisions before go-live move the application on, as document 23 says (P01 step 7, P01 step 9, P02): an accepted intake to Prioritize and fund, a funded priority to Design and architecture review, an approved design to Build. A stage only moves forward."
   ],
   "entity": "decision-type",
   "rows": [
@@ -10,7 +12,7 @@
       "defaultSubjectKind": "intake-request",
       "requiresApproval": false,
       "outcomes": [
-        { "key": "accept", "label": "Accept" },
+        { "key": "accept", "label": "Accept", "nextLifecycleStageKey": "prioritize-and-fund" },
         { "key": "park", "label": "Park" },
         { "key": "redirect", "label": "Redirect to reuse" },
         { "key": "decline", "label": "Decline" }
@@ -22,7 +24,7 @@
       "defaultSubjectKind": "intake-request",
       "requiresApproval": false,
       "outcomes": [
-        { "key": "fund", "label": "Fund" },
+        { "key": "fund", "label": "Fund", "nextLifecycleStageKey": "design-and-review" },
         { "key": "defer", "label": "Defer" },
         { "key": "stop", "label": "Stop" }
       ]
@@ -33,20 +35,20 @@
       "defaultSubjectKind": "business-application",
       "requiresApproval": false,
       "needsOptionsConsidered": true,
-      "outcomes": [{ "key": "approve", "label": "Approve" }, { "key": "rework", "label": "Rework" }]
+      "outcomes": [{ "key": "approve", "label": "Approve", "nextLifecycleStageKey": "build" }, { "key": "rework", "label": "Rework" }]
     },
     {
       "key": "data-use",
       "label": "Data use",
       "defaultSubjectKind": "business-application",
       "requiresApproval": true,
-      "outcomes": [{ "key": "allow", "label": "Allow" }, { "key": "deny", "label": "Deny" }]
+      "outcomes": [{ "key": "allow", "label": "Allow" }, { "key": "deny", "label": "Deny" }, { "key": "retain", "label": "Retain" }]
     },
     {
       "key": "tier",
       "label": "Tier",
       "defaultSubjectKind": "business-application",
-      "requiresApproval": false,
+      "requiresApproval": true,
       "outcomes": [
         { "key": "confirm", "label": "Confirm" },
         { "key": "raise", "label": "Raise" },
@@ -88,7 +90,7 @@
       "key": "ownership",
       "label": "Ownership",
       "defaultSubjectKind": "business-application",
-      "requiresApproval": false,
+      "requiresApproval": true,
       "outcomes": [{ "key": "assign", "label": "Assign" }, { "key": "end", "label": "End" }]
     },
     {
@@ -117,7 +119,7 @@
       "defaultSubjectKind": "business-application",
       "requiresApproval": true,
       "outcomes": [
-        { "key": "retire", "label": "Retire", "nextLifecycleStageKey": "retire" },
+        { "key": "complete", "label": "Complete", "nextLifecycleStageKey": "retire" },
         { "key": "keep", "label": "Keep" }
       ]
     },
@@ -127,6 +129,18 @@
       "defaultSubjectKind": "business-application",
       "requiresApproval": true,
       "outcomes": [{ "key": "agree", "label": "Agree" }, { "key": "decline", "label": "Decline" }]
+    },
+    {
+      "key": "flagged-agent",
+      "label": "Flagged agent",
+      "defaultSubjectKind": "business-application",
+      "requiresApproval": true,
+      "outcomes": [
+        { "key": "keep", "label": "Keep" },
+        { "key": "reassign", "label": "Reassign" },
+        { "key": "consolidate", "label": "Consolidate" },
+        { "key": "retire", "label": "Retire" }
+      ]
     },
     {
       "key": "configuration-change",
@@ -141,6 +155,19 @@
       "defaultSubjectKind": "configuration-draft",
       "requiresApproval": true,
       "outcomes": [{ "key": "accept", "label": "Accept" }, { "key": "reject", "label": "Reject" }]
+    },
+    {
+      "key": "data-retention",
+      "label": "Data retention",
+      "description": "What happens to the data a retiring application wrote on its system of record. One decision per write use.",
+      "defaultSubjectKind": "data-use",
+      "requiresApproval": true,
+      "outcomes": [
+        { "key": "keep", "label": "Keep" },
+        { "key": "archive", "label": "Archive" },
+        { "key": "delete", "label": "Delete" },
+        { "key": "transfer", "label": "Transfer" }
+      ]
     }
   ]
 }

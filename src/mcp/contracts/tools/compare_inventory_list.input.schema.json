@@ -63,6 +63,10 @@
           "suggestedClaimantObjectId": {
             "$ref": "../common.schema.json#/$defs/guid",
             "description": "Who probably owns it."
+          },
+          "url": {
+            "$ref": "../common.schema.json#/$defs/url",
+            "description": "A link that opens the item in its tool, when the list gives one. Stored on the claim (O23 Url) and on the component a claim creates."
           }
         },
         "additionalProperties": false

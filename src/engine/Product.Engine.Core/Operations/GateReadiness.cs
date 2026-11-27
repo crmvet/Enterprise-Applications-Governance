@@ -47,6 +47,57 @@ public sealed class DocumentStatusFact
     }
 }
 
+// What OP-07 reads about the subject's data uses (docs/architecture/data-taxonomy.md, Gate requirements), as the runtime counts them with OP-16.
+// A proposal of this build: the counts, never the rows, so the gate stays one small read.
+public sealed class DataUseReadinessFact
+{
+    public DataUseReadinessFact(int declaredCount, bool holdsNoBusinessData, int undecidedCount, int retentionOpenCount)
+    {
+        if (declaredCount < 0 || undecidedCount < 0 || retentionOpenCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(declaredCount), "Counts are never negative.");
+        }
+
+        DeclaredCount = declaredCount;
+        HoldsNoBusinessData = holdsNoBusinessData;
+        UndecidedCount = undecidedCount;
+        RetentionOpenCount = retentionOpenCount;
+    }
+
+    // Open data uses (O27 not ended, draft or registered).
+    public int DeclaredCount { get; }
+
+    // O02 Holds No Business Data.
+    public bool HoldsNoBusinessData { get; }
+
+    // Open registered uses whose OP-16 state is not not-needed or allowed.
+    public int UndecidedCount { get; }
+
+    // Open write uses on a system of record without an accepted data-retention decision.
+    public int RetentionOpenCount { get; }
+
+    internal static DataUseReadinessFact? FromJson(WireObject? wire)
+    {
+        if (wire == null)
+        {
+            return null;
+        }
+
+        int Count(string name)
+        {
+            int value = wire.OptionalInt(name) ?? 0;
+            if (value < 0)
+            {
+                throw OperationStop.Input(ReasonCodes.InputMalformed, wire.Where + "." + name + " must not be negative.");
+            }
+
+            return value;
+        }
+
+        return new DataUseReadinessFact(Count("declaredCount"), wire.Bool("holdsNoBusinessData", false), Count("undecidedCount"), Count("retentionOpenCount"));
+    }
+}
+
 // OP-07 input (document 25, section 5.9).
 public sealed class ReadinessRequest
 {
@@ -58,7 +109,8 @@ public sealed class ReadinessRequest
         IEnumerable<DocumentStatusFact>? documentation = null,
         IEnumerable<string>? doneReviewTypeKeys = null,
         IEnumerable<string>? assignedOwnerRoleKeys = null,
-        IEnumerable<string>? triggeredGateRequirementKeys = null)
+        IEnumerable<string>? triggeredGateRequirementKeys = null,
+        DataUseReadinessFact? dataUses = null)
     {
         if (!ConfigurationKey.IsValid(gateKey))
         {
@@ -83,7 +135,12 @@ public sealed class ReadinessRequest
         DoneReviewTypeKeys = Keys(doneReviewTypeKeys, nameof(doneReviewTypeKeys));
         AssignedOwnerRoleKeys = Keys(assignedOwnerRoleKeys, nameof(assignedOwnerRoleKeys));
         TriggeredGateRequirementKeys = Keys(triggeredGateRequirementKeys, nameof(triggeredGateRequirementKeys));
+        DataUses = dataUses;
     }
+
+    // The subject's data uses, for the requirement kinds data-uses-declared and data-uses-decided (fetched). Null when not
+    // fetched; needed only when such a requirement applies and data-taxonomy-mode is not off.
+    public DataUseReadinessFact? DataUses { get; }
 
     // The lifecycle gate (C13).
     public string GateKey { get; }
@@ -125,7 +182,8 @@ public sealed class ReadinessRequest
             "documentation",
             "doneReviewTypeKeys",
             "assignedOwnerRoleKeys",
-            "triggeredGateRequirementKeys");
+            "triggeredGateRequirementKeys",
+            "dataUses");
 
         List<DocumentStatusFact>? documentation = null;
         WireObject? result = wire.OptionalObject("documentation", "complete", "items", "missingCount", "draftCount", "staleCount", "staleOnByLink");
@@ -156,7 +214,8 @@ public sealed class ReadinessRequest
             documentation,
             wire.Keys("doneReviewTypeKeys"),
             wire.Keys("assignedOwnerRoleKeys"),
-            wire.Keys("triggeredGateRequirementKeys"));
+            wire.Keys("triggeredGateRequirementKeys"),
+            DataUseReadinessFact.FromJson(wire.OptionalObject("dataUses", "declaredCount", "holdsNoBusinessData", "undecidedCount", "retentionOpenCount")));
     }
 
     private static IReadOnlyList<string> Keys(IEnumerable<string>? keys, string name)
@@ -174,7 +233,7 @@ public sealed class ReadinessRequest
 // One applicable Gate Requirement (C14) and whether it is met.
 public sealed class ReadinessItem
 {
-    public ReadinessItem(string requirementKey, RequirementKind requirementKind, string requiredKey, bool met, string? reasonCode, string? guidelineKey, bool triggered)
+    public ReadinessItem(string requirementKey, RequirementKind requirementKind, string? requiredKey, bool met, string? reasonCode, string? guidelineKey, bool triggered)
     {
         RequirementKey = requirementKey;
         RequirementKind = requirementKind;
@@ -189,8 +248,8 @@ public sealed class ReadinessItem
 
     public RequirementKind RequirementKind { get; }
 
-    // The decision type, document type, review type or owner role the kind asks for.
-    public string RequiredKey { get; }
+    // The decision type, document type, review type or owner role the kind asks for. Null for data-uses-declared.
+    public string? RequiredKey { get; }
 
     public bool Met { get; }
 
@@ -207,7 +266,7 @@ public sealed class ReadinessItem
         return new WireWriter()
             .Add("requirementKey", RequirementKey)
             .Add("requirementKind", EngineContract.RequirementKinds.ToWire(RequirementKind))
-            .Add(RequiredField(RequirementKind), RequiredKey)
+            .Add(RequiredField(RequirementKind) ?? "requiredKey", RequiredKey)
             .Add("met", Met)
             .Add("reasonCode", ReasonCode)
             .Add("guidelineKey", GuidelineKey)
@@ -215,13 +274,16 @@ public sealed class ReadinessItem
             .Build();
     }
 
-    // The C14 column that names the target of each requirement kind.
-    internal static string RequiredField(RequirementKind kind)
+    // The C14 column that names the target of each requirement kind. Null for data-uses-declared, which has none.
+    internal static string? RequiredField(RequirementKind kind)
     {
         switch (kind)
         {
             case RequirementKind.DecisionAccepted:
+            case RequirementKind.DataUsesDecided:
                 return "requiredDecisionTypeKey";
+            case RequirementKind.DataUsesDeclared:
+                return null;
             case RequirementKind.DocumentCurrent:
                 return "requiredDocumentTypeKey";
             case RequirementKind.ReviewDone:
@@ -319,15 +381,15 @@ public static class GateReadinessOperation
             }
 
             RequirementKind kind = KindOf(row);
-            string requiredKey = RequiredKeyOf(row, kind);
-            bool met = IsMet(row, kind, requiredKey, request);
+            string? requiredKey = RequiredKeyOf(row, kind);
+            bool met = IsMet(snapshot, row, kind, requiredKey, request);
             string? code = met ? null : UnmetCode(kind);
             items.Add(new ReadinessItem(row.Key, kind, requiredKey, met, code, SnapshotRead.Text(row, "guidelineKey"), !byScope));
             trace.Add(new RuleTrace("Gate Requirement", row.Key, RuleTraceRole.Required));
             if (code != null)
             {
                 ReasonCodeInfo info = ReasonCatalog.Get(code);
-                reasons.Add(new Reason(code, info.DefaultSeverity, UnmetMessage(row.Key, kind, requiredKey), "Gate Requirement", row.Key));
+                reasons.Add(new Reason(code, info.DefaultSeverity, UnmetMessage(snapshot, row, kind, requiredKey), "Gate Requirement", row.Key));
             }
         }
 
@@ -360,20 +422,19 @@ public static class GateReadinessOperation
         return kind;
     }
 
-    // V10: a gate requirement sets the one target its kind needs, and no other.
-    private static string RequiredKeyOf(SnapshotRow row, RequirementKind kind)
+    // V10: a gate requirement sets the one target its kind needs, and no other. data-uses-declared sets none.
+    private static string? RequiredKeyOf(SnapshotRow row, RequirementKind kind)
     {
-        string field = ReadinessItem.RequiredField(kind);
-        string? key = SnapshotRead.Text(row, field);
-        string[] others = new[] { RequirementKind.DecisionAccepted, RequirementKind.DocumentCurrent, RequirementKind.ReviewDone, RequirementKind.OwnerAssigned }
-            .Where(other => other != kind && SnapshotRead.HasValue(row, ReadinessItem.RequiredField(other)))
-            .Select(ReadinessItem.RequiredField)
+        string? field = ReadinessItem.RequiredField(kind);
+        string? key = field == null ? null : SnapshotRead.Text(row, field);
+        string[] others = new[] { "requiredDecisionTypeKey", "requiredDocumentTypeKey", "requiredReviewTypeKey", "requiredOwnerRoleKey" }
+            .Where(other => other != field && SnapshotRead.HasValue(row, other))
             .ToArray();
-        if (key == null || others.Length > 0)
+        if ((field != null && key == null) || others.Length > 0)
         {
             throw OperationStop.Broken(
                 ReasonCodes.RefExactlyOne,
-                "Gate Requirement " + SnapshotRead.Quote(row.Key) + " of kind " + EngineContract.RequirementKinds.ToWire(kind) + " must set " + field + " and no other target, so the configuration is broken.",
+                "Gate Requirement " + SnapshotRead.Quote(row.Key) + " of kind " + EngineContract.RequirementKinds.ToWire(kind) + (field == null ? " sets no target" : " must set " + field + " and no other target") + ", so the configuration is broken.",
                 "Gate Requirement",
                 row.Key);
         }
@@ -381,16 +442,42 @@ public static class GateReadinessOperation
         return key;
     }
 
-    private static bool IsMet(SnapshotRow row, RequirementKind kind, string requiredKey, ReadinessRequest request)
+    // D-41, question 3 (option A), as built after the data design review: with data domains on, "a data owner is named"
+    // is answered by the data the application declares. An application with a declared use, or marked as holding no
+    // business data, meets an owner-assigned data-owner requirement through the derived owners of its domains, so the
+    // app-level data owner is only the route for an application that declares nothing (D-41).
+    // Under domains-required the app-level data owner does not count at all, and propose_owner_change refuses a new one.
+    private static bool DerivedDataOwner(ConfigurationSnapshot snapshot, string requiredKey, ReadinessRequest request)
     {
+        if (!string.Equals(requiredKey, EngineKeys.DataOwnerRole, StringComparison.Ordinal) || request.DataUses == null)
+        {
+            return false;
+        }
+
+        DataTaxonomyMode mode = new DataTree(snapshot).Mode;
+        return mode != DataTaxonomyMode.Off && (request.DataUses.DeclaredCount > 0 || request.DataUses.HoldsNoBusinessData);
+    }
+
+    private static bool IsMet(ConfigurationSnapshot snapshot, SnapshotRow row, RequirementKind kind, string? requiredKey, ReadinessRequest request)
+    {
+        if (kind == RequirementKind.DataUsesDeclared || kind == RequirementKind.DataUsesDecided)
+        {
+            return DataUsesMet(snapshot, row, kind, requiredKey, request);
+        }
+
         switch (kind)
         {
             case RequirementKind.DecisionAccepted:
-                return request.AcceptedDecisionTypeKeys.Contains(requiredKey, StringComparer.Ordinal);
+                return request.AcceptedDecisionTypeKeys.Contains(requiredKey!, StringComparer.Ordinal);
             case RequirementKind.ReviewDone:
-                return request.DoneReviewTypeKeys.Contains(requiredKey, StringComparer.Ordinal);
+                return request.DoneReviewTypeKeys.Contains(requiredKey!, StringComparer.Ordinal);
             case RequirementKind.OwnerAssigned:
-                return request.AssignedOwnerRoleKeys.Contains(requiredKey, StringComparer.Ordinal);
+                if (string.Equals(requiredKey, EngineKeys.DataOwnerRole, StringComparison.Ordinal) && new DataTree(snapshot).Mode == DataTaxonomyMode.DomainsRequired)
+                {
+                    return DerivedDataOwner(snapshot, requiredKey!, request);
+                }
+
+                return request.AssignedOwnerRoleKeys.Contains(requiredKey!, StringComparer.Ordinal) || DerivedDataOwner(snapshot, requiredKey!, request);
             default:
                 // The document statuses must have been fetched or computed (OP-06): without them the engine cannot
                 // tell, and it never guesses.
@@ -406,10 +493,42 @@ public static class GateReadinessOperation
         }
     }
 
+    // The data taxonomy's two requirement kinds (docs/architecture/data-taxonomy.md, Gate requirements), judged by
+    // data-taxonomy-mode (a choice under D-41): with the mode off they are met, because the install keeps the behavior before data domains. With
+    // domains-optional, an application-level data owner also meets data-uses-declared, as the fallback route of D-41,
+    // question 3. With domains-required only a declared use or Holds No Business Data does. data-uses-decided is met when
+    // no open registered use is anything but not needed or allowed (data-use), or when every write use on a system of
+    // record has an accepted retention decision (data-retention).
+    private static bool DataUsesMet(ConfigurationSnapshot snapshot, SnapshotRow row, RequirementKind kind, string? requiredKey, ReadinessRequest request)
+    {
+        DataTaxonomyMode mode = new DataTree(snapshot).Mode;
+        if (mode == DataTaxonomyMode.Off)
+        {
+            return true;
+        }
+
+        DataUseReadinessFact facts = request.DataUses
+            ?? throw OperationStop.Input(
+                ReasonCodes.InputRequired,
+                "input.dataUses (the counts of the subject's data uses) is required, because Gate Requirement " + SnapshotRead.Quote(row.Key) + " needs data uses " + (kind == RequirementKind.DataUsesDeclared ? "declared" : "decided") + ".",
+                row.Key);
+        if (kind == RequirementKind.DataUsesDeclared)
+        {
+            return facts.DeclaredCount > 0 || facts.HoldsNoBusinessData
+                || (mode == DataTaxonomyMode.DomainsOptional && request.AssignedOwnerRoleKeys.Contains(EngineKeys.DataOwnerRole, StringComparer.Ordinal));
+        }
+
+        return string.Equals(requiredKey, EngineKeys.DataRetentionDecisionType, StringComparison.Ordinal) ? facts.RetentionOpenCount == 0 : facts.UndecidedCount == 0;
+    }
+
     private static string UnmetCode(RequirementKind kind)
     {
         switch (kind)
         {
+            case RequirementKind.DataUsesDeclared:
+                return ReasonCodes.GateRequirementDataUsesUndeclared;
+            case RequirementKind.DataUsesDecided:
+                return ReasonCodes.GateRequirementDataUsesUndecided;
             case RequirementKind.DecisionAccepted:
                 return ReasonCodes.GateRequirementDecisionMissing;
             case RequirementKind.DocumentCurrent:
@@ -421,25 +540,33 @@ public static class GateReadinessOperation
         }
     }
 
-    private static string UnmetMessage(string requirementKey, RequirementKind kind, string requiredKey)
+    // The unmet requirement in the words people read: the requirement's label and the label of what it needs, never a
+    // key (product review: the design decision page quoted design-data-uses-decided-tier-2).
+    private static string UnmetMessage(ConfigurationSnapshot snapshot, SnapshotRow row, RequirementKind kind, string? requiredKey)
     {
+        string name = "The requirement \"" + (SnapshotRead.Text(row, "label") ?? row.Key) + "\"";
+        string Label(string entity) => requiredKey == null ? "?" : (SnapshotRead.Find(snapshot, entity, requiredKey) is SnapshotRow target ? SnapshotRead.Text(target, "label") : null)?.ToLowerInvariant() ?? requiredKey.Replace('-', ' ');
         string what;
         switch (kind)
         {
+            case RequirementKind.DataUsesDeclared:
+                return name + " needs the application's data uses declared, or the application marked as holding no business data, and it has neither.";
+            case RequirementKind.DataUsesDecided:
+                return name + " needs every " + (requiredKey == EngineKeys.DataRetentionDecisionType ? "write use on a system of record to have an accepted retention decision" : "open data use to be decided (not needed or allowed)") + ", and at least one is not.";
             case RequirementKind.DecisionAccepted:
-                what = "an accepted decision of type " + SnapshotRead.Quote(requiredKey);
+                what = "an accepted " + Label("decision-type") + " decision";
                 break;
             case RequirementKind.DocumentCurrent:
-                what = "a current document of type " + SnapshotRead.Quote(requiredKey);
+                what = "a current " + Label("document-type");
                 break;
             case RequirementKind.ReviewDone:
-                what = "a done review of type " + SnapshotRead.Quote(requiredKey);
+                what = "a done " + Label("review-type");
                 break;
             default:
-                what = "an active assignment of owner role " + SnapshotRead.Quote(requiredKey);
+                what = "a holder of the " + Label("owner-role") + " role";
                 break;
         }
 
-        return "Gate Requirement " + SnapshotRead.Quote(requirementKey) + " needs " + what + ", and the subject has none.";
+        return name + " needs " + what + ", and the subject has none.";
     }
 }

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-person-answer-reference-agent-user-refused",
+  "description": "The approver's Principal Reference records an agent user. Only a user answers an approval, so the person path refuses it (the approval runner's path would store it as recommendation only).",
+  "ruleIds": [
+    "G-06"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-2",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverPrincipalKind": "user",
+      "respondedOn": "2026-11-23T09:00:00Z",
+      "channel": "in-app"
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "outcome": "approval-pending",
+      "decision": "fixture-decision-1"
+    },
+    "approvalAnswer": {
+      "checkOutcome": "allowed",
+      "responderPrincipalId": "fixture-person-2",
+      "approvalRecordId": "fixture-approval-1",
+      "answer": "approved"
+    },
+    "approverPrincipalReference": {
+      "principalKind": "agent-user"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "approval.outcome-writer",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

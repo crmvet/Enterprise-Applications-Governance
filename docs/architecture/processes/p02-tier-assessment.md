@@ -1,6 +1,6 @@
 # P02 Tier assessment and required approvals
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenarios [S-02](../../../src/docs/demo/scenarios/S-02-ai-build-loop.md) and [S-08](../../../src/docs/demo/scenarios/S-08-agents.md) play it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -8,7 +8,7 @@ This process is designed to turn plain answers into a tier that a person decides
 
 The product is designed to ship three tiers by default. An organization can set any number. Each tier is a configuration record, and the engine never branches on a tier number.
 
-![Intake, triage and the tier: the tier is a stored value, set by a decision on a card, never a formula. The bottom band shows what the tier sets.](../img/s2-process-2-intake-tier.png)
+![Intake, triage and the tier, drawn before D-38 moved the default answer to the decision page: the tier is a stored value, set by a decision on a card, never a formula. The bottom band shows what the tier sets.](../img/s2-process-2-intake-tier.png)
 
 ## Trigger
 
@@ -26,7 +26,7 @@ The product is designed to ship three tiers by default. An organization can set 
 | Approve restricted data reaching an AI model | Platform admin | Data owner, and the security reviewer must agree | Architect, AI lead | Builder, business owner | none |
 | Set an agent's autonomy level | Platform admin | Security reviewer | Business owner, data owner, architect, AI lead | Builder | none |
 
-The restricted-data row needs two yeses. Only one role can answer for a decision, so the default configuration sends one card to two approver roles with the mode "everyone must approve". The AI lead is consulted on autonomy levels. An organization can rename the AI lead role, map it to another group, or drop it.
+The restricted-data row needs two yeses. Only one role can answer for a decision, so the default configuration sends one approval request to two approver roles with the mode "everyone must approve". The AI lead is consulted on autonomy levels. An organization can rename the AI lead role, map it to another group, or drop it.
 
 ## Steps
 
@@ -34,7 +34,7 @@ The restricted-data row needs two yeses. Only one role can answer for a decision
 2. **Compute.** The engine maps each answer to the tier it implies and takes the most serious one. It also collects what each answer triggers, for example "add a security review", "add an architecture review" or "add a responsible AI review".
 3. **Explain.** The product says which answer drove the result, and can show the engine's rule trace. It also shows the Microsoft words for the tier: the Power Platform support tier, the Copilot Studio zone and the agent risk tier. That mapping is the product's own default configuration. No Microsoft page joins the three.
 4. **Propose the tier decision.** The engine opens a tier decision with the status Proposed and the computed tier as its outcome. A person may raise the tier on the same decision. Lowering it below the computed tier needs a typed reason and the full set of approvals.
-5. **Approve.** Cards go out under the approval rules for tier decisions at this scope. At the highest default tier, the engine also opens a residual risk decision for the business owner.
+5. **Approve.** Approval requests go out under the approval rules for tier decisions at this scope. At the highest default tier, the engine also opens a residual risk decision for the business owner.
 6. **Store.** On acceptance, the engine stores the tier on the business application. The tier is a stored value set by a decision, never a formula.
 7. **Work out what the tier needs.** From configuration, for this application, the engine works out:
    - the approval rule that now applies to each kind of decision and stage (the most specific rule wins);
@@ -56,7 +56,7 @@ The restricted-data row needs two yeses. Only one role can answer for a decision
 | Document link | None created here. New requirements show as missing until a link is recorded |
 | Review | Due reviews scheduled from the cadence |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
 | Decision | Default tiers 1 and 2 | Default tier 3 |
 |---|---|---|
@@ -77,7 +77,7 @@ The restricted-data row needs two yeses. Only one role can answer for a decision
 - The gate level per tier, kind of change and target stage.
 - A starting preset. The design includes a preset that lines its tiers up with Microsoft's three agent risk tiers, re-checked against Microsoft's guidance with each release.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 
@@ -102,12 +102,12 @@ Every tool runs as the signed-in person.
 |---|---|
 | Compute the tier and work out what it needs | The rules engine inside the one Azure Functions app, on each answer and on each acceptance |
 | Missing documents | Worked out by the rules engine when read. No row is stored |
-| Tier cards | The approval runner ([approval cards](README.md#approval-cards)) |
+| Tier notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
 | The stored tier | A column on the business application in Azure SQL Database. Tier decisions and approval records are ledger tables |
 
 ## Example (fictional people and apps)
 
-Priya Castell answers four tier questions with Claude Code for a field inspections app. In the design, the engine would compute tier 2 as a suggestion only. A platform admin would confirm the tier on a card. Only then would the app carry tier 2, with its approvals, documents and review dates.
+Priya Castell answers four tier questions with Claude Code for a field inspections app. In the design, the engine would compute tier 2 as a suggestion only. A platform admin would confirm the tier on the decision page. Only then would the app carry tier 2, with its approvals, documents and review dates.
 
 ## Microsoft sources
 

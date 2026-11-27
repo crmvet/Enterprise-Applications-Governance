@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "data-use-domain-owner",
+  "description": "A data-use decision about a use of confidential data without AI matches the data use group: the domain's data owner, resolved on the data domain.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-use",
+    "tierKey": "tier-3",
+    "subjectKind": "data-use",
+    "classificationKey": "confidential",
+    "aiUse": false,
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "data-use-domain",
+          "approverOwnerRoleKey": "data-owner",
+          "ownerSubject": "data-domain"
+        }
+      ]
+    }
+  }
+}

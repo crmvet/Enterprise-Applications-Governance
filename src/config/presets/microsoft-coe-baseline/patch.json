@@ -9,7 +9,8 @@
     "An upsert merges fields and cannot clear one. Where a decision right moves from an owner role to a role, or the reverse, the Balanced row is retired and a new key takes its place: go-live-a, risk-acceptance-a and retirement-r.",
     "The decision rights follow Microsoft's RACI. The approval rules stay Balanced's, except the tier 2 go-live group: document 21 does not say whether the security reviewer should also approve go-live and risk acceptance.",
     "Gate policy: tier 1 record in test and production; tiers 2 and 3 flag in test; production tier 2 advise and tier 3 enforce with fail closed, as in Balanced; emergencies flag in production with the emergency rule, as in Balanced. In test every change follows its tier (document 21, section 7.6), so gp-emergency-test-tier-1 keeps tier 1 emergencies at record and breaks the tie between gp-test-tier-1 and gp-emergency-test (V09).",
-    "Every gate value is a preset value, not a decision: the change gate (D-03) is still open."
+    "Every gate value is a preset value, not a decision: the change gate (D-03) is still open.",
+    "Data taxonomy (D-37; docs/architecture/data-taxonomy.md): like Balanced, plus C11 rows that map the domain levels to the Purview governance domain types (Functional unit, Line of business, Data domain, Regulatory, Project; checked 2026-11-24). A top-level domain is a functional unit and a subdomain a data domain. Data set has no matching type: Purview groups data under a domain as data products, which stay in the catalog (principle 4)."
   ],
   "schemaVersion": "1.0",
   "manifest": {
@@ -539,6 +540,18 @@
         "sourceUrl": "https://learn.microsoft.com/agents/center-of-excellence/roles-responsibilities",
         "checkedOn": "2026-11-22"
       }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "domain-level-governance-domain-type",
+      "values": { "label": "Domain level as a Purview governance domain type", "sourceEntity": "data-domain-level", "sourceKey": "domain", "vocabularyKey": "purview-governance-domain", "term": "Functional unit", "sourceUrl": "https://learn.microsoft.com/purview/unified-catalog-governance-domains-create-manage", "checkedOn": "2026-11-24" }
+    },
+    {
+      "op": "upsert",
+      "entity": "vocabulary-mapping",
+      "key": "subdomain-level-governance-domain-type",
+      "values": { "label": "Subdomain level as a Purview governance domain type", "sourceEntity": "data-domain-level", "sourceKey": "subdomain", "vocabularyKey": "purview-governance-domain", "term": "Data domain", "sourceUrl": "https://learn.microsoft.com/purview/unified-catalog-governance-domains-create-manage", "checkedOn": "2026-11-24" }
     }
   ]
 }

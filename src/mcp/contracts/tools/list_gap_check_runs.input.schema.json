@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_gap_check_runs input",
+  "description": "The gap check's run history (O22), newest first: who ran it, with which admin role, over which estates, when it started and finished, and what it found. claim-visibility keeps runs to the platform admin, the AI lead and the auditor by default. Writes nothing.",
+  "x-tool": "list_gap_check_runs",
+  "type": "object",
+  "properties": {
+    "runByObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only the runs of this admin."
+    },
+    "gapCheckRunId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O22 Gap Check Run",
+      "description": "Only this run (a run's record page). claim-visibility still applies."
+    },
+    "from": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Started on or after this date."
+    },
+    "to": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Started on or before this date."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "top": 10
+    }
+  ]
+}

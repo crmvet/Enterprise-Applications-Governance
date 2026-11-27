@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_role_access input",
+  "description": "Who holds each product role and through which group binding (people only through groups) or workload grant, what each role may do (the Tool Policy rows, decision rights and approval rules that name it), and the separation rules. A read for any role: every part is a configuration row, and the holders come from Microsoft Graph as the signed-in person.",
+  "x-tool": "get_role_access",
+  "type": "object",
+  "properties": {
+    "roleKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "One role. Leave out for every role.",
+      "x-entity": "C29 Role"
+    },
+    "includeHolders": {
+      "type": "boolean",
+      "description": "True lists the people in each bound group, read live from Entra. Default: true for one role, false for all."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "roleKey": "change-manager"
+    },
+    {}
+  ]
+}

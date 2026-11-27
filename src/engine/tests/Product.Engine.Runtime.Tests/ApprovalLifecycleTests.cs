@@ -78,7 +78,7 @@ public sealed class ApprovalLifecycleTests
     {
         Harness h = Harness.Create(TwoSteps);
         string decision = AcceptanceDecision(h);
-        string stepOne = Assert.Single(RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds"));
+        string stepOne = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
         Assert.Equal("acceptance-step-one", Harness.Text(h.Row("approval-record", stepOne), "approvalRule"));
         Assert.Single(h.Store.Rows("approval-record"));
 
@@ -143,7 +143,7 @@ public sealed class ApprovalLifecycleTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = Assert.Single(RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds"));
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         RuntimeOutcome ai = Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2, actorKind: "ai-client"));
         Assert.Equal("recommendation-only", Harness.Text(h.Row("approval-record", record), "outcomeMeaning"));
@@ -241,7 +241,7 @@ public sealed class ApprovalLifecycleTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = Assert.Single(RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds"));
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
         Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));
         Assert.Equal("accepted", Harness.Text(h.Row("decision", decision), "statusMeaning"));
         string stray = h.Store.Seed("approval-record", "{\"decision\":\"" + decision + "\",\"decisionRight\":\"intake-a\",\"requiredRole\":\"platform-admin\",\"isConsultation\":false,"
@@ -287,7 +287,7 @@ public sealed class ApprovalLifecycleTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = Assert.Single(RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds"));
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
         Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));
         string after = h.Store.Dump();
 

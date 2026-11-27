@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "renew_approval_request output",
+  "description": "The response envelope. On success, data names the decision, the request it asks now and when that request expires.",
+  "x-tool": "renew_approval_request",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "approvalRecordId",
+        "renewed",
+        "previousOutcome",
+        "decision",
+        "request",
+        "openedRecordIds",
+        "status",
+        "performedBy",
+        "dryRun"
+      ],
+      "properties": {
+        "approvalRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O10 Approval Record"
+        },
+        "renewed": {
+          "type": "boolean",
+          "description": "False when the request was asked again already (by a person or by the daily refresh): nothing changed."
+        },
+        "previousOutcome": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/approvalOutcomeMeaning"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision": {
+          "type": "object",
+          "required": [
+            "decisionId",
+            "recordNumber",
+            "statement",
+            "decisionType",
+            "status",
+            "recordUrl"
+          ],
+          "properties": {
+            "decisionId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            "recordNumber": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "statement": {
+              "type": "string",
+              "x-untrusted": true
+            },
+            "decisionType": {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/statusValue"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recordUrl": {
+              "$ref": "../common.schema.json#/$defs/recordUrl"
+            }
+          },
+          "additionalProperties": false
+        },
+        "request": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "approvalRecordId",
+                "askedRole",
+                "askedOwnerRole",
+                "askedPerson",
+                "isConsultation",
+                "requestedOn",
+                "expiresOn"
+              ],
+              "properties": {
+                "approvalRecordId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O10 Approval Record"
+                },
+                "askedRole": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "askedOwnerRole": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "askedPerson": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/principalRef"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "isConsultation": {
+                  "type": "boolean"
+                },
+                "requestedOn": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dateTime"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "expiresOn": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dateTime"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "One approval request: who it asks and when it expires."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "openedRecordIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id"
+          }
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/statusValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "performedBy": {
+          "$ref": "../envelope.schema.json#/$defs/performedBy"
+        },
+        "dryRun": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

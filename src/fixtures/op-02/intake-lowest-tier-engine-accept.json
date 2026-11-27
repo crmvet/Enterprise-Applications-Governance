@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-02",
   "case": "intake-lowest-tier-engine-accept",
-  "description": "Intake at the lowest tier with no counting approval rule group is on the locked list, so the engine accepts it with no card.",
+  "description": "Intake at the lowest tier with no counting approval rule group is on the locked list, so the engine accepts it with no card. Balanced consults the architect, the PMO and the security reviewer on intake (P01 step 5), but the consultation group holds no counting rule, so the fast path stays. The consent of the business owner the request names (intake-business-owner-consent, document 25, B25-18) stays a requirement: the engine accepts once it is given, and the runtime drops it when the request names nobody new.",
   "workingDefaults": [
     8
   ],
@@ -20,8 +20,51 @@
   "expected": {
     "outcome": "engine-accept",
     "payload": {
-      "requirements": [],
-      "consultations": [],
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-business-owner-consent",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": false,
+          "guidelineKey": "g2",
+          "approverProposedOwners": true
+        }
+      ],
+      "consultations": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-consult-architect",
+          "approverRoleKey": "architect",
+          "isConsultation": true,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-consult-pmo",
+          "approverRoleKey": "pmo",
+          "isConsultation": true,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-consult-security",
+          "approverRoleKey": "security-reviewer",
+          "isConsultation": true,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 5,
+          "requiresTypedReason": false
+        }
+      ],
       "acceptanceBasis": {
         "decisionTypeKey": "intake",
         "condition": "lowest-tier"
@@ -47,6 +90,26 @@
         "entity": "Tier",
         "key": "tier-1",
         "role": "matched"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-consult-architect",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-consult-pmo",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-consult-security",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "intake-business-owner-consent",
+        "role": "won"
       }
     ],
     "traceMatch": "exact"

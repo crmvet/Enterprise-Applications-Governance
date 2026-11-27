@@ -3,9 +3,9 @@
 - **Version:** 0.2 draft, 2026-11-22
 - **Status:** design. The product it describes is in design, so every product line says what the product **is designed to** do.
 
-**Govern AI development of your apps: people build with AI at speed, and every app stays owned, tiered and decided by a person.**
+**Govern AI development of your apps: the product is designed so people can build with AI while each app stays owned, tiered and decided by a person.**
 
-People now build working apps with AI in days, and governance built for slow builds either blocks them or gets skipped. This playbook governs AI development of the apps instead of slowing it down: the organization says who may build with AI, who decides and what each risk tier needs, and IT builds a paved road with identities for people, agents and pipelines. The product is designed to put governance inside the AI build loop, so the AI builder asks the governance questions while it builds, a person decides on an approval card, and the organization's own pipeline deploys.
+People now build working apps with AI in days, and governance built for slow builds either blocks them or gets skipped. This playbook governs AI development of the apps instead of slowing it down: the organization says who may build with AI, who decides and what each risk tier needs, and IT builds a paved road with identities for people, agents and pipelines. The product is designed to put governance inside the AI build loop, so the AI builder asks the governance questions while it builds, a person decides on the decision page in the web app, and the organization's own pipeline deploys.
 
 Start with [chapter 0](00-govern-ai-development-of-the-apps.md).
 

@@ -1,0 +1,632 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_review output",
+  "description": "The response envelope. On success, data is one Review (O21) as list_reviews gives it, with its description, the Evidence Links (O20) on it, its outcome decision, its cadence, the gates it feeds and whether the caller may complete it now.",
+  "x-tool": "get_review",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "review",
+        "yourPart",
+        "evidence",
+        "outcomeDecision",
+        "cadence",
+        "nextDueIfDoneToday",
+        "gates",
+        "canComplete",
+        "cannotComplete"
+      ],
+      "properties": {
+        "review": {
+          "type": "object",
+          "required": [
+            "reviewId",
+            "recordNumber",
+            "reviewType",
+            "businessApplicationId",
+            "applicationName",
+            "portfolio",
+            "status",
+            "trigger",
+            "dueOn",
+            "doneOn",
+            "nextDueOn",
+            "isOverdue",
+            "reviewer",
+            "leadOwnerRole",
+            "leadOwner",
+            "producesDecisionType",
+            "outcomeDecisionId",
+            "isMine",
+            "isAiCreated",
+            "performedBy",
+            "recordUrl",
+            "description"
+          ],
+          "properties": {
+            "reviewId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O21 Review"
+            },
+            "recordNumber": {
+              "description": "The review's number, such as REV-0042. Null for a review written before the engine numbered reviews.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reviewType": {
+              "$ref": "../common.schema.json#/$defs/labelledKey",
+              "description": "The Review Type (C24)."
+            },
+            "businessApplicationId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O02 Business Application"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "applicationName": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "portfolio": {
+              "description": "The application's portfolio.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "portfolioId",
+                    "name"
+                  ],
+                  "properties": {
+                    "portfolioId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O01 Portfolio"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The portfolio name."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "$ref": "../common.schema.json#/$defs/statusValue",
+              "description": "The review status by meaning."
+            },
+            "trigger": {
+              "description": "Why the review became due.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/reviewTrigger"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "dueOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "doneOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "nextDueOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isOverdue": {
+              "type": "boolean",
+              "description": "True when the review is due and its due date is before today."
+            },
+            "reviewer": {
+              "description": "Who reviewed, once recorded.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/principalRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "leadOwnerRole": {
+              "description": "The owner role that usually leads this review type (C24 Default Owner Role).",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "leadOwner": {
+              "description": "The current holder of that owner role on the application.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/principalRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "producesDecisionType": {
+              "description": "The decision type a finished review records (C24 Produces Decision Type).",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "outcomeDecisionId": {
+              "description": "The decision that closed the review, once recorded.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isMine": {
+              "type": "boolean",
+              "description": "True when the review is the caller's to do: they own the application, or they may propose the decision it records (their Decision Right, C31, through a product role)."
+            },
+            "isAiCreated": {
+              "type": "boolean",
+              "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+            },
+            "performedBy": {
+              "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/stampedBy"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recordUrl": {
+              "$ref": "../common.schema.json#/$defs/recordUrl"
+            },
+            "description": {
+              "description": "Details of the review: the trigger key, the requester's reason, or the change a post-change review is about.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "yourPart": {
+          "description": "Why the review is the caller's to do: lead (they hold its lead owner role, or any owner role when nobody holds that), decides (they may propose the decision it records), approves (their role approves that decision or the gate it feeds). Null when it is not theirs.",
+          "anyOf": [
+            {
+              "enum": [
+                "lead",
+                "decides",
+                "approves"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "description": "The Evidence Links (O20) on the review, oldest first.",
+          "items": {
+            "type": "object",
+            "required": [
+              "evidenceLinkId",
+              "linkKind",
+              "url",
+              "label",
+              "evidenceLevel",
+              "capturedOn",
+              "isAiCreated",
+              "performedBy"
+            ],
+            "properties": {
+              "evidenceLinkId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O20 Evidence Link"
+              },
+              "linkKind": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "url": {
+                "description": "The link, or null when it is not an https link.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "evidenceLevel": {
+                "description": "The evidence level (I-44).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "capturedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+              },
+              "performedBy": {
+                "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "outcomeDecision": {
+          "description": "The decision the review names as its Outcome Decision.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "decisionId",
+                "recordNumber",
+                "statement",
+                "decisionType",
+                "status",
+                "decidedOn"
+              ],
+              "properties": {
+                "decisionId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O09 Decision"
+                },
+                "recordNumber": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "statement": {
+                  "type": "string"
+                },
+                "decisionType": {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                "status": {
+                  "$ref": "../common.schema.json#/$defs/statusValue"
+                },
+                "decidedOn": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cadence": {
+          "description": "The cadence row (C25) of the review type at the application's tier. Null for an event review.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "cadenceKey",
+                "intervalDays",
+                "leadDays"
+              ],
+              "properties": {
+                "cadenceKey": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C25 Review Cadence"
+                },
+                "intervalDays": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "leadDays": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextDueIfDoneToday": {
+          "description": "The next due date if the review were done today. Null when done, or with no cadence.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "gateKey",
+              "gateLabel",
+              "feedsBy",
+              "requirementKey",
+              "met",
+              "guideline"
+            ],
+            "properties": {
+              "gateKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C13 Gate"
+              },
+              "gateLabel": {
+                "type": "string",
+                "minLength": 1
+              },
+              "feedsBy": {
+                "enum": [
+                  "gate-decision",
+                  "requirement"
+                ],
+                "description": "gate-decision: the review records the gate's gate decision, which passes the gate once accepted. requirement: a review-done gate requirement (C14) of the review's type."
+              },
+              "requirementKey": {
+                "description": "The gate requirement, for feedsBy requirement.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C14 Gate Requirement"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "met": {
+                "type": "boolean",
+                "description": "True when the gate decision is accepted, or the requirement is met now (OP-07)."
+              },
+              "guideline": {
+                "description": "The guideline number of the requirement, when it names one.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "guidelineRef": {
+                "description": "The guideline as a chip: key, number, title and link.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/guidelineRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The gates the review feeds on its application."
+        },
+        "canComplete": {
+          "type": "boolean",
+          "description": "True when complete_review would take the caller's call now."
+        },
+        "cannotComplete": {
+          "description": "Why not, in plain words, when canComplete is false.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The architecture review of Claims Triage Agent is due.",
+      "data": {
+        "review": {
+          "reviewId": "90000000-0000-4000-8000-000000000001",
+          "recordNumber": "REV-0042",
+          "reviewType": {
+            "key": "architecture",
+            "label": "Architecture review"
+          },
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "applicationName": "Field visit planner",
+          "portfolio": {
+            "portfolioId": "50000000-0000-4000-8000-000000000001",
+            "name": "Field operations"
+          },
+          "status": {
+            "label": "Due",
+            "meaning": "due"
+          },
+          "trigger": "tier-answer-trigger",
+          "dueOn": "2026-11-15",
+          "doneOn": null,
+          "nextDueOn": null,
+          "isOverdue": true,
+          "reviewer": null,
+          "leadOwnerRole": {
+            "key": "technical-owner",
+            "label": "Technical owner"
+          },
+          "leadOwner": {
+            "objectId": "20000000-0000-4000-8000-000000000002",
+            "displayLabel": "Owner (sample)"
+          },
+          "producesDecisionType": {
+            "key": "design",
+            "label": "Design"
+          },
+          "outcomeDecisionId": null,
+          "isMine": true,
+          "isAiCreated": false,
+          "performedBy": null,
+          "recordUrl": "https://product.example.org/records/review/90000000-0000-4000-8000-000000000001",
+          "description": "Please review the routing design."
+        },
+        "yourPart": "decides",
+        "evidence": [],
+        "outcomeDecision": null,
+        "cadence": null,
+        "nextDueIfDoneToday": null,
+        "gates": [
+          {
+            "gateKey": "design",
+            "gateLabel": "Design",
+            "feedsBy": "gate-decision",
+            "requirementKey": null,
+            "met": false,
+            "guideline": null
+          }
+        ],
+        "canComplete": false,
+        "cannotComplete": "The review has no outcome decision yet. Propose it, submit it, and complete the review once it is accepted."
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/review/60000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "correlationId": "corr-0001",
+      "nextSteps": []
+    }
+  ]
+}

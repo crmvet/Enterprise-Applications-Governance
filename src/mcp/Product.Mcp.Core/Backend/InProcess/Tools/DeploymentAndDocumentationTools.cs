@@ -126,57 +126,65 @@ internal static partial class ToolHandlers
 
     // ---- 28. get_deployments ----
 
+    // What runs where, and the Deployments list (document 24, B24-11): the latest record per application and target, or
+    // the history with latestOnly false. Filters: application, target, change request, result, dates, any flag
+    // (flaggedOnly) or named flags (flagKeys). counts are for the same filters, before paging.
     private static JsonTreeNode GetDeployments(ToolScope s)
     {
         string? app = s.Text("businessApplicationId");
         string? target = s.Text("deploymentTargetId");
+        string? change = s.Text("changeRequestId");
         bool latest = s.Flag("latestOnly") ?? true;
         bool flagged = s.Flag("flaggedOnly") ?? false;
+        IReadOnlyList<string> flagKeys = s.Strings("flagKeys");
+        IReadOnlyList<string> results = s.Strings("resultMeanings");
         DateTime? from = Js.ParseMoment(s.Text("from"));
         DateTime? to = Js.ParseMoment(s.Text("to"));
+        bool HasFlag(StoredRow r, string key) => key switch
+        {
+            "outside-window" => r.Flag("isOutsideWindow"),
+            "other-path" => r.Flag("isOtherPath"),
+            "missing-approval" => r.Flag("isMissingApproval"),
+            "ai-only-code-approval" => r.Flag("isAiOnlyCodeApproval"),
+            _ => false,
+        };
+
+        HashSet<string>? inPortfolio = PortfolioApplications(s, s.Text("portfolioId"), "portfolioId");
         var all = s.Rows.Query(RowQuery.For("deployment-record")).ToList();
         var corrected = new HashSet<string>(all.Select(r => r.Text("correctsRecord")).Where(c => c != null).Select(c => c!), StringComparer.Ordinal);
         IEnumerable<StoredRow> rows = all
             .Where(r => app == null || Same(r.Text("businessApplication"), app))
+            .Where(r => inPortfolio == null || inPortfolio.Contains(r.Text("businessApplication") ?? string.Empty))
             .Where(r => target == null || Same(r.Text("deploymentTarget"), target))
+            .Where(r => change == null || Same(r.Text("changeRequest"), change))
+            .Where(r => results.Count == 0 || results.Contains(r.Text("resultMeaning") ?? string.Empty, StringComparer.Ordinal))
             .Where(r => !latest || !corrected.Contains(r.Id))
             .Where(r =>
             {
                 DateTime? finished = Js.ParseMoment(r.Text("finishedOn"));
                 return (!from.HasValue || (finished.HasValue && finished.Value.Date >= from.Value.Date)) && (!to.HasValue || (finished.HasValue && finished.Value.Date <= to.Value.Date));
-            })
-            .Where(r => !flagged || r.Flag("isOutsideWindow") || r.Flag("isOtherPath") || r.Flag("isMissingApproval"));
+            });
         if (latest)
         {
             rows = rows.GroupBy(r => (r.Text("businessApplication") ?? string.Empty) + "|" + (r.Text("deploymentTarget") ?? string.Empty), StringComparer.Ordinal)
                 .Select(g => g.OrderByDescending(r => r.Text("finishedOn") ?? string.Empty, StringComparer.Ordinal).ThenByDescending(r => r.Id, StringComparer.Ordinal).First());
         }
 
-        var ordered = rows.OrderByDescending(r => r.Text("finishedOn") ?? string.Empty, StringComparer.Ordinal).ThenBy(r => r.Id, StringComparer.Ordinal).ToList();
+        var inScope = rows.ToList();
+        var ordered = inScope
+            .Where(r => !flagged || IsFlagged(r))
+            .Where(r => flagKeys.Count == 0 || flagKeys.Any(k => HasFlag(r, k)))
+            .OrderByDescending(r => r.Text("finishedOn") ?? string.Empty, StringComparer.Ordinal).ThenBy(r => r.Id, StringComparer.Ordinal).ToList();
         List<StoredRow> page = s.Page(ordered, out string? next);
-        JsonTreeNode items = Arr(page.Select(r =>
-        {
-            StoredRow? application = s.Rows.Get("business-application", r.Text("businessApplication") ?? string.Empty);
-            StoredRow? targetRow = s.Rows.Get("deployment-target", r.Text("deploymentTarget") ?? string.Empty);
-            StoredRow? artifact = s.Rows.Get("artifact-version", r.Text("artifactVersion") ?? string.Empty);
-            return Js.Obj(
-                ("deploymentRecordId", JsonTreeNode.FromString(r.Id)),
-                ("businessApplicationId", Js.Str(application?.Id)),
-                ("applicationName", Js.Str(application == null ? null : AppName(application))),
-                ("deploymentTargetId", Js.Str(targetRow?.Id)),
-                ("targetLabel", Js.Str(targetRow?.Text("labelAsSeen"))),
-                ("targetStageKey", Js.Str(targetRow?.Text("targetStage"))),
-                ("artifactName", JsonTreeNode.FromString(artifact?.Text("artifactName") ?? string.Empty)),
-                ("artifactVersion", JsonTreeNode.FromString(artifact?.Text("version") ?? string.Empty)),
-                ("result", s.StatusValue(r, "result", "resultMeaning")),
-                ("finishedOn", ToolScope.MomentOrNull(r.Text("finishedOn"))),
-                ("route", Route(s, r)),
-                ("flags", RecordFlags(s, r, null)),
-                ("gateLevelApplied", JsonTreeNode.FromString(r.Text("gateLevelApplied") ?? "record")),
-                ("runUrl", Js.Str(r.Text("runUrl"))),
-                ("correctsRecordId", Js.Str(r.Text("correctsRecord"))));
-        }));
-        return s.Answer(Js.Obj(("items", items), ("skipToken", Js.OptStr(next))), ordered.Count + " deployment records match.");
+        JsonTreeNode items = Arr(page.Select(r => DeploymentItem(s, r)));
+        JsonTreeNode counts = Js.Obj(
+            ("records", JsonTreeNode.FromInt64(inScope.Count)),
+            ("flagged", JsonTreeNode.FromInt64(inScope.Count(IsFlagged))),
+            ("outsideWindow", JsonTreeNode.FromInt64(inScope.Count(r => HasFlag(r, "outside-window")))),
+            ("otherPath", JsonTreeNode.FromInt64(inScope.Count(r => HasFlag(r, "other-path")))),
+            ("missingApproval", JsonTreeNode.FromInt64(inScope.Count(r => HasFlag(r, "missing-approval")))),
+            ("aiOnlyCodeApproval", JsonTreeNode.FromInt64(inScope.Count(r => HasFlag(r, "ai-only-code-approval")))));
+        return s.Answer(Js.Obj(("items", items), ("counts", counts), ("totalCount", JsonTreeNode.FromInt64(ordered.Count)), ("skipToken", Js.OptStr(next))), ordered.Count + " deployment records match.");
     }
 
     // ---- 29. map_pipeline ----
@@ -194,7 +202,13 @@ internal static partial class ToolHandlers
         foreach (JsonTreeNode entry in entries)
         {
             StoredRow app = s.RequireRow("business-application", Js.Text(entry, "businessApplicationId"), "entries.businessApplicationId");
-            s.RequireRow("deployment-target", Js.Text(entry, "deploymentTargetId"), "entries.deploymentTargetId");
+            StoredRow target = s.RequireRow("deployment-target", Js.Text(entry, "deploymentTargetId"), "entries.deploymentTargetId");
+            if (target.Text("retiredOn") is string retiredOn)
+            {
+                // A retired target takes no pipeline mapping (document 24, B24-18); its old entries stay as history.
+                throw s.Refused(McpErrorCodes.RuleViolation, "The deployment target " + (target.Text("labelAsSeen") ?? target.Id) + " was retired on " + DayText(retiredOn) + ", so no pipeline is mapped to it. Map the pipeline to the target that replaced it.");
+            }
+
             RequireOwnerRelation(s, app.Id);
         }
 
@@ -225,23 +239,32 @@ internal static partial class ToolHandlers
             s.WriteResult("pipeline-reference", write, hasStatus: false),
             ("pipelineReferenceId", s.Call.IsDryRun && write.Created ? JsonTreeNode.Null : JsonTreeNode.FromString(write.RowId)),
             ("entries", Arr(written)));
-        return s.Answer(data, "The pipeline is mapped to " + entries.Count + " application and target pair(s). The product never runs the pipeline.");
+        return s.Answer(data, "The pipeline is mapped to " + Count(entries.Count, "application and target pair", "application and target pairs") + ". The product never runs the pipeline.");
     }
 
     // ---- 30. get_pipeline_map ----
 
+    // With an application, the pipelines mapped to it; with a pipeline, that one; with neither, every pipeline the product
+    // holds (the Places screen's pipeline list, wave 4), a pipeline mapped to no target included, with no entries.
     private static JsonTreeNode GetPipelineMap(ToolScope s)
     {
         string? app = s.Text("businessApplicationId");
+        string? one = s.Text("pipelineReferenceId");
         IEnumerable<string> pipelineIds;
         if (app != null)
         {
             RequireApplication(s);
             pipelineIds = s.Query("pipeline-map-entry", ("businessApplication", app)).Select(e => e.Text("pipelineReference")).Where(p => p != null).Select(p => p!).Distinct(StringComparer.Ordinal);
         }
+        else if (one != null)
+        {
+            pipelineIds = new[] { s.RequireRow("pipeline-reference", one, "pipelineReferenceId").Id };
+        }
         else
         {
-            pipelineIds = new[] { s.RequireRow("pipeline-reference", s.Text("pipelineReferenceId"), "pipelineReferenceId").Id };
+            s.Call.PrefetchAll("pipeline-map-entry");
+            s.Call.PrefetchAll("deployment-target");
+            pipelineIds = s.Rows.Query(RowQuery.For("pipeline-reference")).Select(p => p.Id).ToList();
         }
 
         var pipelines = new List<JsonTreeNode>();
@@ -277,7 +300,12 @@ internal static partial class ToolHandlers
                 ("entries", Arr(entries))));
         }
 
-        return s.Answer(Js.Obj(("pipelines", Arr(pipelines))), pipelines.Count + " pipeline(s) are mapped.");
+        int unmapped = pipelines.Count(p => Js.Items(p, "entries").Count == 0);
+        return s.Answer(
+            Js.Obj(("pipelines", Arr(pipelines))),
+            app == null && one == null
+                ? Count(pipelines.Count, "pipeline is", "pipelines are") + " known" + (unmapped == 0 ? "." : "; " + Count(unmapped, "is", "are") + " mapped to no target.")
+                : Count(pipelines.Count, "pipeline is", "pipelines are") + " mapped.");
     }
 
     // ---- 32. get_documentation_status (OP-06) ----
@@ -310,6 +338,7 @@ internal static partial class ToolHandlers
                     ("documentLinkId", JsonTreeNode.FromString(l.Id)),
                     ("documentTypeKey", JsonTreeNode.FromString(l.Text("documentType") ?? "unknown")),
                     ("url", JsonTreeNode.FromString(l.Text("url")!)),
+                    ("linkKindKey", Js.Str(l.Text("linkKind"))),
                     ("status", s.StatusValue(l)),
                     ("owner", s.PrincipalRef(l.Text("documentOwner"))),
                     ("lastUpdatedOn", ToolScope.DateOrNull(l.Text("lastUpdatedOn"))),
@@ -320,7 +349,7 @@ internal static partial class ToolHandlers
         }
 
         int missing = result.Sum(a => Js.Items(a, "missing").Count);
-        return s.Answer(Js.Obj(("applications", Arr(result)), ("skipToken", Js.OptStr(next))), missing + " required document(s) are missing across " + result.Count + " application(s). Missing is computed from configuration, never stored.");
+        return s.Answer(Js.Obj(("applications", Arr(result)), ("skipToken", Js.OptStr(next))), Count(missing, "required document is", "required documents are") + " missing across " + Count(result.Count, "application", "applications") + ". Missing is computed from configuration, never stored.");
     }
 
     // One required document of an application and its status, from OP-06 (missing is computed, never stored).
@@ -363,7 +392,10 @@ internal static partial class ToolHandlers
                 ("status", JsonTreeNode.FromString(l.Text("statusMeaning")!)),
                 ("hasUrl", JsonTreeNode.FromBoolean(l.Text("url") != null)),
                 ("lastCheckedOnUtc", Js.Moment(l.Columns, "lastCheckedOn") is DateTime c ? Js.Utc(c) : null),
-                ("lastUpdatedOnUtc", Js.Moment(l.Columns, "lastUpdatedOn") is DateTime u ? Js.Utc(u) : null))))));
+                ("lastUpdatedOnUtc", Js.Moment(l.Columns, "lastUpdatedOn") is DateTime u ? Js.Utc(u) : null))))),
+            // A retired application (its stage means retired, or its registration is archived) owes no document; its links
+            // stay as history (wave 4b review).
+            ("isRetired", IsRetiredApplication(s, app) ? JsonTreeNode.True : null));
         EvaluationResult<JsonTreeNode?> result = s.Call.Evaluate(EngineOperation.EvaluateDocumentationCompleteness, input);
         if (result.Payload == null)
         {
@@ -392,6 +424,7 @@ internal static partial class ToolHandlers
                     ("status", link == null ? ToolScope.StatusValue(meaning, null) : s.StatusValue(link)),
                     ("documentLinkId", Js.Str(linkId)),
                     ("url", link?.Text("url") is string url && url.StartsWith("https://", StringComparison.Ordinal) ? JsonTreeNode.FromString(url) : JsonTreeNode.Null),
+                    ("linkKindKey", Js.Str(link?.Text("linkKind"))),
                     ("lastCheckedOn", ToolScope.DateOrNull(link?.Text("lastCheckedOn"))),
                     ("staleOn", ToolScope.DateOrNull(staleOn))),
             });
@@ -410,7 +443,12 @@ internal static partial class ToolHandlers
         StoredRow app = RequireApplication(s);
         RequireOwnerRelation(s, app.Id);
         SnapshotRow type = s.RequireKey("document-type", s.Text("documentTypeKey"), "documentTypeKey");
-        string? linkKind = s.Text("linkKindKey") ?? Js.Text(type.Columns, "defaultLinkKindKey");
+        string? existing = s.Text("documentLinkId");
+        StoredRow? stored = existing == null ? null : s.RequireRow("document-link", existing, "documentLinkId");
+
+        // An update that names no link kind keeps the kind the link was recorded with, so confirming or editing a link
+        // never checks its stored address against another kind's pattern. A new link takes the type's default.
+        string? linkKind = s.Text("linkKindKey") ?? stored?.Text("linkKind") ?? Js.Text(type.Columns, "defaultLinkKindKey");
         if (linkKind == null)
         {
             throw s.Invalid("linkKindKey", "The document type has no default link kind, so linkKindKey is required.");
@@ -428,6 +466,24 @@ internal static partial class ToolHandlers
 
         string owner = s.Text("documentOwnerObjectId") ?? s.PersonId;
         string? requirement = s.ActiveRows("documentation-requirement").Where(r => Js.Text(r.Columns, "documentTypeKey") == type.KeyPath && (Js.Text(r.Columns, "tierKey") is not string t || t == app.Text("tier"))).Select(r => r.KeyPath).OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
+
+        // One link meets a documentation requirement of an application (the store's key). A second new link for it is
+        // refused with the link to update, never sent to the store to fail there (fix round 2: "Link a document" on an
+        // application that had its runbook answered HTTP 500).
+        if (stored == null && requirement != null)
+        {
+            StoredRow? taken = s.Rows.Query(RowQuery.For("document-link")).FirstOrDefault(l => Same(l.Text("businessApplication"), app.Id) && l.Text("documentationRequirement") == requirement);
+            if (taken != null)
+            {
+                // A person reads the sentence and opens the record from the link beside it; an AI client also gets the ID in
+                // the words, and the record's link (wave 4b QA walk).
+                throw s.Refused(
+                    McpErrorCodes.RuleViolation,
+                    (app.Text("name") ?? "The application") + " already has its " + s.Label("document-type", type.KeyPath).ToLowerInvariant() + " linked. Update that link instead"
+                        + (s.IsAiCaller ? " (documentLinkId " + taken.Id + ")" : string.Empty) + ": one link meets the requirement, and its history stays on one record.",
+                    recordUrl: s.RecordUrl("document-link", taken.Id));
+            }
+        }
         var columns = Js.Obj(
             ("businessApplication", JsonTreeNode.FromString(app.Id)),
             ("documentType", JsonTreeNode.FromString(type.KeyPath)),
@@ -437,10 +493,9 @@ internal static partial class ToolHandlers
             ("status", JsonTreeNode.FromString(s.StatusFor("document-link", meaning))),
             ("documentOwner", JsonTreeNode.FromString(owner)),
             ("lastUpdatedOn", Js.OptStr(s.Text("lastUpdatedOn"))));
-        string? existing = s.Text("documentLinkId");
-        ComposedWrite write = existing == null
+        ComposedWrite write = stored == null
             ? s.Create("document-link", columns)
-            : s.Update("document-link", s.RequireRow("document-link", existing, "documentLinkId").Id, Js.Without(columns, "businessApplication"));
+            : s.Update("document-link", stored.Id, Js.Without(columns, "businessApplication"));
         StoredRow link = s.Rows.Get("document-link", write.RowId)!;
         JsonTreeNode data = ToolScope.Merge(
             s.WriteResult(link, write.Created),
@@ -480,12 +535,12 @@ internal static partial class ToolHandlers
         }
 
         ComposedWrite write = s.Update("document-link", link.Id, Js.Obj(
-            ("lastCheckedOn", JsonTreeNode.FromString(s.Today)),
+            ("lastCheckedOn", JsonTreeNode.FromString(s.PersonToday)),
             ("status", JsonTreeNode.FromString(s.StatusFor("document-link", meaning == "missing" ? "draft" : meaning)))));
         StoredRow written = s.Rows.Get("document-link", write.RowId)!;
         JsonTreeNode data = ToolScope.Merge(
             s.WriteResult(written, false),
-            ("lastCheckedOn", JsonTreeNode.FromString(s.Today)),
+            ("lastCheckedOn", JsonTreeNode.FromString(s.PersonToday)),
             ("staleOn", type == null ? JsonTreeNode.Null : StaleOn(s, type, written)),
             ("confirmationCardSent", JsonTreeNode.False));
         return s.Answer(data, stillTrue ? "The check is recorded, as reported." : "The document is marked stale, as reported.", s.RecordUrl("document-link", link.Id));

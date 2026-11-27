@@ -23,6 +23,15 @@ public interface IRowDatabase : IDisposable
     // the result with RowQuery.Matches. No condition returns every row of the entity.
     IReadOnlyList<StoredRowData> Query(EntityInfo entity, IReadOnlyList<KeyValuePair<string, string>> textConditions);
 
+    // The committed rows of an entity with these IDs, in one database read (document 25, B25-23), by ID (ordinal). An ID
+    // with no row is left out.
+    IReadOnlyList<StoredRowData> GetMany(EntityInfo entity, IReadOnlyList<string> ids);
+
+    // The committed rows of an entity whose string column (a plain name, RowStore checks it) equals one of the values, in
+    // one database read, by ID (ordinal). As with Query, the provider may return more rows than match but never fewer:
+    // RowStore filters the result exactly.
+    IReadOnlyList<StoredRowData> QueryIn(EntityInfo entity, string column, IReadOnlyList<string> values);
+
     // The first Configuration Set row (by ID) with Is In Force true and a key path, or null: the version probe.
     StoredRowData? ProbeInForce();
 
@@ -54,6 +63,11 @@ public interface IRowDatabase : IDisposable
 
     // ICounterStore.Increment, in one atomic statement.
     long Increment(string counterKey, DateTime windowStartUtc, TimeSpan windowLength);
+
+    // IStoreTransaction.NextRecordNumber, committed on its own: in one locked database transaction, one above the larger
+    // of the entity's record number counter and the highest number with this prefix its committed rows hold; the counter
+    // keeps the new number, so no other call gets it.
+    long NextRecordNumber(EntityInfo entity, string prefix);
 
     // Creates the schema (SQLite) or checks that the migrations it needs are applied (Azure SQL).
     void EnsureSchema(EntityCatalog catalog);

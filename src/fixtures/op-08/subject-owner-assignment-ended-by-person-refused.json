@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-owner-assignment-ended-by-person-refused",
+  "description": "A platform admin ends an Owner Assignment directly. An owner leaves the role only through an accepted ownership decision (document 26, RA-08). Refused.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "owner-assignment",
+    "operation": "update",
+    "rowId": "fixture-owner-1",
+    "after": {
+      "endOn": "2026-11-22"
+    }
+  },
+  "facts": {
+    "before": {
+      "businessApplication": "fixture-app-1",
+      "ownerRole": "business-owner",
+      "principal": "fixture-person-1",
+      "isDeputy": false,
+      "startOn": "2026-01-05"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error",
+        "entity": "Owner Assignment"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

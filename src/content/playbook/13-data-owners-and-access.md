@@ -22,8 +22,8 @@
 
 ## How it works
 
-1. **Name the data owner.** At registration, with a deputy (chapter 2).
-2. **Decide data use at design.** When a design review or a tier answer shows a new data use, the data owner decides on an approval card. Restricted data to an AI model also needs the security reviewer's agreement.
+1. **Declare the data uses.** At registration, say which business data the app reads or writes. Every data domain has a data owner and a deputy, who decides about each use (chapter 2).
+2. **Decide data use at design.** When a design review or a tier answer shows a new data use, the data owner decides on the decision page. Restricted data to an AI model also needs the security reviewer's agreement.
 3. **Choose the access approach.** For each connection, the technical owner chooses: as the signed-in person, as the app's own identity, or read-only for the person. The data owner agrees. Prefer the person's identity, so their security roles apply.
 4. **Narrow the identity.** An app or integration that runs unattended gets its own identity, with the smallest role that works, only in the environments it needs.
 5. **Group the roles.** One Entra group per role, mapped to the role in each environment. Review membership on the cadence your tier sets.
@@ -57,7 +57,7 @@
 
 ## How the product is designed to support it
 
-- It is designed to name a data owner on every application and to send data use decisions to that person on approval cards.
+- It is designed to name a data owner on every application and to send data use decisions to that person, who answers on the decision page.
 - It is designed to express a second yes, such as the security reviewer's agreement, as an approval rule with two approvers, so each decision keeps one accountable role.
 - It is designed to record each app's identities and access approach on the application record.
 - It is designed to map each of its own roles to an Entra group, flag any role given to a person directly, and remind owners when an access review is due.

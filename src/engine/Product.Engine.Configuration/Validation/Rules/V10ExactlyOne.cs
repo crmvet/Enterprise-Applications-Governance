@@ -10,19 +10,23 @@ namespace Product.Engine.Configuration.Validation.Rules;
 
 // V10: exactly-one fields hold.
 // A gate requirement sets the one target its kind needs; an approval rule names exactly one approver
-// (owner role or role); a decision right names exactly one holder, or none for supports.
+// (owner role, role, or the proposed owners); a decision right names exactly one holder, or none for supports. A fallback
+// owner role (document 21, B21-9) stands only beside an owner role, and differs from it.
 public sealed class V10ExactlyOne : ValidationRule, IContentRule
 {
     public static readonly V10ExactlyOne Instance = new();
 
     // The target field each requirement kind needs (document 21, C14; the four kinds of the requirement-kind contract).
     // WORKING DEFAULT (open design question 1): requirement kinds are fixed engine meanings.
-    private static readonly Dictionary<RequirementKind, string> TargetByKind = new()
+    // The data taxonomy adds data-uses-declared, which sets no target, and data-uses-decided, which names the decision type.
+    private static readonly Dictionary<RequirementKind, string?> TargetByKind = new()
     {
         { RequirementKind.DecisionAccepted, "requiredDecisionTypeKey" },
         { RequirementKind.DocumentCurrent, "requiredDocumentTypeKey" },
         { RequirementKind.ReviewDone, "requiredReviewTypeKey" },
         { RequirementKind.OwnerAssigned, "requiredOwnerRoleKey" },
+        { RequirementKind.DataUsesDeclared, null },
+        { RequirementKind.DataUsesDecided, "requiredDecisionTypeKey" },
     };
 
     private V10ExactlyOne()
@@ -34,7 +38,21 @@ public sealed class V10ExactlyOne : ValidationRule, IContentRule
     {
         foreach (ContentRow row in context.Content.RowsFor("approval-rule"))
         {
-            CheckOneOf(row, "an approver", new[] { "approverOwnerRoleKey", "approverRoleKey" }, issues);
+            // approverProposedOwners counts as named only when true: false is the same as leaving it out.
+            string[] approvers = Present(row, "approverOwnerRoleKey", "approverRoleKey")
+                .Concat(RowFacts.IsTrue(row, "approverProposedOwners") ? new[] { "approverProposedOwners" } : Array.Empty<string>())
+                .ToArray();
+            if (approvers.Length != 1)
+            {
+                issues.Add(Issue(
+                    "Approval Rule " + Q(row.KeyPath) + (approvers.Length == 0 ? " names no approver" : " names more than one approver (" + string.Join(", ", approvers.Select(Q)) + ")")
+                    + ". Set exactly one of \"approverOwnerRoleKey\", \"approverRoleKey\" and \"approverProposedOwners\" (true).",
+                    row.Entity,
+                    row.KeyPath,
+                    row.Pointer));
+            }
+
+            CheckFallback(row, "approverOwnerRoleKey", issues);
         }
 
         foreach (ContentRow row in context.Content.RowsFor("decision-right"))
@@ -56,6 +74,7 @@ public sealed class V10ExactlyOne : ValidationRule, IContentRule
             }
 
             CheckOneOf(row, "a holder", new[] { "ownerRoleKey", "roleKey" }, issues);
+            CheckFallback(row, "ownerRoleKey", issues);
         }
 
         foreach (ContentRow row in context.Content.RowsFor("gate-requirement"))
@@ -67,8 +86,8 @@ public sealed class V10ExactlyOne : ValidationRule, IContentRule
                 continue;
             }
 
-            string needed = TargetByKind[parsed];
-            if (!JsonNodes.HasMember(row.Node, needed))
+            string? needed = TargetByKind[parsed];
+            if (needed != null && !JsonNodes.HasMember(row.Node, needed))
             {
                 issues.Add(Issue(
                     "Gate Requirement " + Q(row.KeyPath) + " of kind " + Q(kind) + " has no " + Q(needed) + ". Set it to the row the requirement checks.",
@@ -77,7 +96,8 @@ public sealed class V10ExactlyOne : ValidationRule, IContentRule
                     row.Pointer));
             }
 
-            string[] extra = TargetByKind.Values.Where(field => !string.Equals(field, needed, StringComparison.Ordinal) && JsonNodes.HasMember(row.Node, field)).ToArray();
+            string[] extra = TargetByKind.Values.Where(field => field != null).Select(field => field!).Distinct(StringComparer.Ordinal)
+                .Where(field => !string.Equals(field, needed, StringComparison.Ordinal) && JsonNodes.HasMember(row.Node, field)).ToArray();
             if (extra.Length > 0)
             {
                 issues.Add(Issue(
@@ -86,6 +106,34 @@ public sealed class V10ExactlyOne : ValidationRule, IContentRule
                     row.KeyPath,
                     row.Pointer));
             }
+        }
+    }
+
+    // A fallback owner role needs the owner role it stands in for, and is another role.
+    private void CheckFallback(ContentRow row, string ownerRoleField, ValidationIssues issues)
+    {
+        string? fallback = RowFacts.Text(row, "fallbackOwnerRoleKey");
+        if (fallback == null)
+        {
+            return;
+        }
+
+        string? ownerRole = RowFacts.Text(row, ownerRoleField);
+        if (ownerRole == null)
+        {
+            issues.Add(Issue(
+                row.LogicalName + " " + Q(row.KeyPath) + " sets \"fallbackOwnerRoleKey\" but no " + Q(ownerRoleField) + ". A fallback owner role stands in for an owner role: name the owner role, or remove the fallback.",
+                row.Entity,
+                row.KeyPath,
+                row.Pointer));
+        }
+        else if (string.Equals(ownerRole, fallback, StringComparison.Ordinal))
+        {
+            issues.Add(Issue(
+                row.LogicalName + " " + Q(row.KeyPath) + " names " + Q(fallback) + " as both its owner role and its fallback. Name another owner role as the fallback, or remove it.",
+                row.Entity,
+                row.KeyPath,
+                row.Pointer));
         }
     }
 

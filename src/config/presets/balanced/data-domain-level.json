@@ -1,0 +1,34 @@
+{
+  "$comment": [
+    "C48 Data Domain Level (data taxonomy, D-37; docs/architecture/data-taxonomy.md). Balanced has three levels.",
+    "A top-level domain has no parent to inherit an owner from, so the top level requires its own owner. Lower levels inherit the owner of the nearest domain above them (OP-15).",
+    "Balanced holds no domains: the tree is the client's own. The overlay data-domains-starter holds a generic tree to rename."
+  ],
+  "entity": "data-domain-level",
+  "rows": [
+    {
+      "key": "domain",
+      "label": "Domain",
+      "description": "A business area, such as Customers or People.",
+      "rank": 1,
+      "ownerRequired": true,
+      "declarable": true
+    },
+    {
+      "key": "subdomain",
+      "label": "Subdomain",
+      "description": "A body of data inside a business area, such as Payroll under People.",
+      "rank": 2,
+      "ownerRequired": false,
+      "declarable": true
+    },
+    {
+      "key": "data-set",
+      "label": "Data set",
+      "description": "A narrower set inside a subdomain, such as Bank details under Payroll.",
+      "rank": 3,
+      "ownerRequired": false,
+      "declarable": true
+    }
+  ]
+}

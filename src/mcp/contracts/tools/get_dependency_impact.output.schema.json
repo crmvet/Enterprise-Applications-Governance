@@ -26,6 +26,7 @@
       "required": [
         "root",
         "nodes",
+        "dataLocation",
         "counts",
         "truncatedAtDepth"
       ],
@@ -35,6 +36,8 @@
           "required": [
             "businessApplicationId",
             "technicalComponentId",
+            "dataLocationId",
+            "kind",
             "name"
           ],
           "properties": {
@@ -60,6 +63,25 @@
                 }
               ]
             },
+            "dataLocationId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O25 Data Location"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "kind": {
+              "enum": [
+                "application",
+                "component",
+                "data-location"
+              ],
+              "description": "What the walk starts at."
+            },
             "name": {
               "type": "string",
               "description": "The start of the walk.",
@@ -80,6 +102,7 @@
               "businessOwner",
               "technicalOwner",
               "dependencyTypeKey",
+              "via",
               "criticalityKey",
               "depth",
               "path"
@@ -135,8 +158,26 @@
                 ]
               },
               "dependencyTypeKey": {
-                "$ref": "../common.schema.json#/$defs/key",
-                "x-entity": "C17 Dependency Type"
+                "description": "The counted dependency type on the last hop. Null for a node that joined the walk through a data use, a component it is built from or uses as its AI component, or the location it is (see via).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C17 Dependency Type"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "via": {
+                "enum": [
+                  "dependency",
+                  "part-of",
+                  "ai-component",
+                  "data-use",
+                  "hosts-location"
+                ],
+                "description": "How the node joined the walk: a dependency (O04), or, in the first ring of a component or data location start, the application built from the component, one using it as its AI component, one with an open data use at the location, or the application the location is."
               },
               "criticalityKey": {
                 "description": "From the criticality value list.",
@@ -158,14 +199,109 @@
               "path": {
                 "type": "array",
                 "items": {
-                  "$ref": "../common.schema.json#/$defs/id",
-                  "x-entity": "O02 Business Application"
+                  "$ref": "../common.schema.json#/$defs/id"
                 },
-                "description": "The applications from the root to this node."
+                "description": "The IDs from the root (an application, a component or a data location) to this node."
               }
             },
             "additionalProperties": false
           }
+        },
+        "dataLocation": {
+          "description": "For a data location start: what the location holds. Null otherwise.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "label",
+                "platform",
+                "hostedBy",
+                "childLocationIds",
+                "domainsHeld",
+                "dataUseCount"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "x-untrusted": true
+                },
+                "platform": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "hostedBy": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "businessApplicationId",
+                        "name"
+                      ],
+                      "properties": {
+                        "businessApplicationId": {
+                          "$ref": "../common.schema.json#/$defs/id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "x-untrusted": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "childLocationIds": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../common.schema.json#/$defs/id"
+                  }
+                },
+                "domainsHeld": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "key",
+                      "path",
+                      "origins"
+                    ],
+                    "properties": {
+                      "key": {
+                        "$ref": "../common.schema.json#/$defs/key"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "origins": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "../common.schema.json#/$defs/dataOrigin"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "dataUseCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "counts": {
           "type": "object",
@@ -205,6 +341,8 @@
         "root": {
           "businessApplicationId": "10000000-0000-4000-8000-000000000001",
           "technicalComponentId": null,
+          "dataLocationId": null,
+          "kind": "application",
           "name": "Field visit planner"
         },
         "nodes": [
@@ -222,6 +360,7 @@
             },
             "technicalOwner": null,
             "dependencyTypeKey": "reads-data-from",
+            "via": "dependency",
             "criticalityKey": "high",
             "depth": 1,
             "path": [
@@ -240,6 +379,7 @@
             "businessOwner": null,
             "technicalOwner": null,
             "dependencyTypeKey": "calls-api-of",
+            "via": "dependency",
             "criticalityKey": null,
             "depth": 2,
             "path": [
@@ -249,6 +389,7 @@
             ]
           }
         ],
+        "dataLocation": null,
         "counts": {
           "byTier": [
             {

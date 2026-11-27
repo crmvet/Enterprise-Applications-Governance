@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Product.Engine.Core.Canonical;
+using Product.Engine.Core.Contract;
 using Product.Engine.Core.Operations;
 using Product.Engine.Core.Reasons;
 using Product.Engine.Runtime.Ports;
@@ -140,7 +141,7 @@ public sealed class ComposeTests
         // Cancelling pending cards: engine-nested writes of the cancelled outcome, nothing else.
         RuntimeOutcome cancelled = Harness.Ok(h.Runtime.Compose(Harness.AiClientOf1, new ComposeRequest("withdraw_record"), call =>
             RuntimeJsonTestHelpers.Object(("cancelled", JsonTreeNode.CreateArray(call.CancelPendingApprovals(decision).Select(JsonTreeNode.FromString))))));
-        StoredRow record = h.Store.Rows("approval-record").Single();
+        StoredRow record = h.Store.Rows("approval-record").Single(r => !r.Flag("isConsultation"));
         Assert.Equal("cancelled", record.Text("outcomeMeaning"));
         Assert.Equal("engine", record.Text("performedByActorKind"));
         Assert.Null(record.Text("respondedOn"));
@@ -160,5 +161,30 @@ public sealed class ComposeTests
             return null;
         }));
         Assert.Equal("2026-12-31", h.Store.Get("principal-reference", person.Id)!.Text("leavesOn"));
+    }
+
+    // The proposal right check (document 24, tool 17; B24-5) over a recorded decision's scope, as the person behind the
+    // call: a product role holding a letter, or an owner role the person holds on the decision's application. A refusal
+    // ends the call.
+    [Fact]
+    public void TheProposalRightCheckRunsAsThePersonBehindTheCall()
+    {
+        Harness h = Harness.Create();
+
+        // Intake: the platform admin is accountable (Balanced intake-a); person 1 holds requester and configuration admin.
+        string intake = h.IntakeDecision(tierTwo: true);
+        RuntimeOutcome admin = Harness.Ok(h.Runtime.Compose(Harness.PersonTwo, new ComposeRequest("save_decision_proposal") { ReadOnly = true }, call => call.RequireProposalRight(intake)));
+        Assert.Equal("intake-a", RuntimeJsonTestHelpers.Text(RuntimeJsonTestHelpers.Member(admin.Payload, "grantedBy"), "decisionRightKey"));
+        RuntimeOutcome requester = h.Runtime.Compose(Harness.AiClientOf1, new ComposeRequest("save_decision_proposal") { ReadOnly = true }, call => call.RequireProposalRight(intake));
+        Assert.Equal(OperationOutcomes.Refused, requester.Outcome);
+        Assert.Equal("decision.propose-not-allowed", requester.Reasons.First(r => r.Severity == ReasonSeverity.Error).Code);
+
+        // Risk acceptance on the estate's application: person 1 is its business owner (risk-acceptance-a), for an AI client
+        // acting for them too; the platform admin holds no letter for it.
+        string risk = Harness.Ok(h.Runtime.Write(Harness.AiClientOf1, WriteCommand.Create("decision",
+            "{\"decisionType\":\"risk-acceptance\",\"subjectKind\":\"business-application\",\"subjectApplication\":\"" + h.ApplicationId + "\",\"statement\":\"Accept the supplier risk\",\"status\":\"decision-proposed\"}"))).RowId!;
+        RuntimeOutcome owner = Harness.Ok(h.Runtime.Compose(Harness.AiClientOf1, new ComposeRequest("save_decision_proposal") { ReadOnly = true }, call => call.RequireProposalRight(risk)));
+        Assert.Equal("risk-acceptance-a", RuntimeJsonTestHelpers.Text(RuntimeJsonTestHelpers.Member(owner.Payload, "grantedBy"), "decisionRightKey"));
+        Assert.Equal(OperationOutcomes.Refused, h.Runtime.Compose(Harness.PersonTwo, new ComposeRequest("save_decision_proposal") { ReadOnly = true }, call => call.RequireProposalRight(risk)).Outcome);
     }
 }

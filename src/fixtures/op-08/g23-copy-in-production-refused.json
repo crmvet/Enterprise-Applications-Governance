@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g23-copy-in-production-refused",
+  "description": "A production copy cannot sit at a production location; it would be a replica or the system of record.",
+  "ruleIds": [
+    "G-23"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "people",
+        "values": {
+          "label": "People",
+          "levelKey": "domain",
+          "classificationKey": "confidential",
+          "retentionClassKey": "keep-7-years"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "payroll",
+        "values": {
+          "label": "Payroll",
+          "parentKey": "people",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted",
+          "aiUseRule": "never"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "bank-details",
+        "values": {
+          "label": "Bank details",
+          "parentKey": "payroll",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "timesheets",
+        "values": {
+          "label": "Timesheets",
+          "parentKey": "people",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "field-operations",
+        "values": {
+          "label": "Field operations",
+          "levelKey": "domain",
+          "classificationKey": "internal"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "safety-findings",
+        "values": {
+          "label": "Safety findings",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "parts-catalog",
+        "values": {
+          "label": "Parts catalog",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "commercial",
+        "values": {
+          "label": "Commercial",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "contracts",
+        "values": {
+          "label": "Contracts",
+          "parentKey": "commercial",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "supplier-contracts",
+        "values": {
+          "label": "Supplier contracts",
+          "parentKey": "contracts",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "customers",
+        "values": {
+          "label": "Customers",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "client-accounts",
+        "values": {
+          "label": "Client accounts",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "data-mapping",
+    "operation": "create",
+    "after": {
+      "dataDomain": "client-accounts",
+      "dataLocation": "fixture-location-1",
+      "dataOrigin": "production-copy",
+      "status": "data-mapping-registered",
+      "startOn": "2026-11-24"
+    }
+  },
+  "facts": {
+    "dataFacts": {
+      "locationStageKey": "production"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "data.copy-origin",
+          "ruleId": "G-23"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "data.copy-origin",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

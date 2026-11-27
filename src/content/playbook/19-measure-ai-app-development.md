@@ -34,7 +34,7 @@ Build effort is no longer the constraint. An AI client can produce a working app
 | Lead time from idea to production | Days from an intake being submitted to its first production deployment on record, by tier | The intake date (P01) and the deployment record (P05) | PMO | Down at the lower tiers; steady at the top tier |
 | Share registered | Of the items the last gap check found, the share that belong to a registered app, were claimed, or were dismissed with a reason | The gap check run and its claims (P06) | Platform admin | Up, toward all of them |
 | Owner coverage | Live apps where every owner role is held by a person who has a named deputy | Owner assignments and the owner check (P08) | PMO | Up, toward every live app |
-| Decisions on time | Approval cards answered within the agreed number of days, by tier and decision type | The decision log | PMO | Up |
+| Decisions on time | Approval requests answered within the agreed number of days, by tier and decision type | The decision log | PMO | Up |
 | Standard change share | Changes that went through a standard change model, out of all changes | Change records (P03) | Change manager | Up, while failed changes stay flat |
 | Deployments on record | Production deployments that came through the expected route with their approval, out of all production deployments | Deployment records and their flags (P05) | Change manager | Up, toward all of them |
 | Documents current | Required documents that are current, out of all required documents for live apps | Document links and their status | Platform admin | Up |

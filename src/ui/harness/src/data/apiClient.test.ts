@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { SignInRequired, SignInUnavailable } from '../auth/types';
-import { createApiClient, isEnvelope, type ApiClientOptions } from './apiClient';
+import { createApiClient, isEnvelope, LOCAL_DAY_HEADER, type ApiClientOptions } from './apiClient';
+import { todayInZone } from './format';
 
 const BASE = 'https://product.example.org/api';
 
@@ -16,7 +17,12 @@ function json(status: number, body: unknown, headers: Record<string, string> = {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...headers } });
 }
 
-function setup(answer: (sent: Sent) => Response | Promise<Response>, auth: Partial<ApiClientOptions['auth']> = {}, timeoutMs?: number) {
+function setup(
+  answer: (sent: Sent) => Response | Promise<Response>,
+  auth: Partial<ApiClientOptions['auth']> = {},
+  timeoutMs?: number,
+  extraHeaders?: ApiClientOptions['extraHeaders'],
+) {
   const sent: Sent[] = [];
   let unauthorized = 0;
   const fetchFake = (async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -28,6 +34,7 @@ function setup(answer: (sent: Sent) => Response | Promise<Response>, auth: Parti
     apiBase: BASE,
     fetch: fetchFake,
     timeoutMs,
+    extraHeaders,
     auth: {
       headers: auth.headers ?? (async () => ({ Authorization: 'Bearer token-for-the-api' })),
       onUnauthorized: auth.onUnauthorized ?? (() => { unauthorized += 1; }),
@@ -63,6 +70,17 @@ test('a tool call posts the input as JSON to <apiBase>/<tool> with the sign-in h
   const headers = sent[0].init.headers as Record<string, string>;
   assert.equal(headers.Authorization, 'Bearer token-for-the-api');
   assert.equal(headers['Content-Type'], 'application/json');
+});
+
+test('every call carries the local day of the person, so a date the server stamps is their day (B24-21)', async () => {
+  const { client, sent } = setup(() => json(200, success));
+  await client.call('confirm_document_checked', { documentLinkId: '00000000-0000-4000-8000-000000000541', stillTrue: true });
+  await client.me();
+  for (const s of sent) {
+    const headers = s.init.headers as Record<string, string>;
+    assert.equal(headers[LOCAL_DAY_HEADER], todayInZone());
+    assert.match(headers[LOCAL_DAY_HEADER], /^\d{4}-\d{2}-\d{2}$/);
+  }
 });
 
 test('the bearer token only ever goes to the API base', async () => {
@@ -219,4 +237,60 @@ test('isEnvelope tells envelopes from other JSON', () => {
   assert.equal(isEnvelope({ ok: true }), false);
   assert.equal(isEnvelope({ error: 'x' }), false);
   assert.equal(isEnvelope(null), false);
+});
+
+test('a write posts its input to <apiBase>/<tool> the same way, and a refusal comes back with its rule and guideline', async () => {
+  const input = { approvalRecordId: '00000000-0000-4000-8000-000000000a01', answer: 'reject', reason: 'The data use goes beyond the notice.', clientRequestId: 'web-1' };
+  const { client, sent } = setup(() => json(422, {
+    ok: false,
+    summary: 'Refused.',
+    error: { code: 'rule_violation', message: 'The separation rule keeps your answer from counting.', ruleKey: 'self-approval-tier-3', guideline: 'G17' },
+    correlationId: 'corr-write',
+  }));
+  const envelope = await client.call('answer_approval', input);
+  assert.equal(sent[0].url, `${BASE}/answer_approval`);
+  assert.equal(sent[0].init.method, 'POST');
+  assert.equal(sent[0].init.body, JSON.stringify(input));
+  assert.equal(envelope.ok, false);
+  if (!envelope.ok) {
+    assert.equal(envelope.error.ruleKey, 'self-approval-tier-3');
+    assert.equal(envelope.error.guideline, 'G17');
+    assert.equal(envelope.correlationId, 'corr-write');
+  }
+});
+
+test('the demo persona header goes to the API base on every call and never replaces a sign-in header', async () => {
+  let persona: string | null = 'nadia';
+  const { client, sent } = setup(
+    () => json(200, success),
+    {},
+    undefined,
+    (): Record<string, string> => (persona ? { 'X-Product-Demo-Persona': persona, Authorization: 'Bearer forged' } : {}),
+  );
+  await client.call('get_my_queue', {});
+  await client.me();
+  persona = null;
+  await client.info();
+  const headers = sent.map(s => s.init.headers as Record<string, string>);
+  assert.equal(headers[0]['X-Product-Demo-Persona'], 'nadia');
+  assert.equal(headers[1]['X-Product-Demo-Persona'], 'nadia');
+  assert.equal(headers[2]['X-Product-Demo-Persona'], undefined);
+  for (const h of headers) assert.equal(h.Authorization, 'Bearer token-for-the-api');
+  for (const s of sent) assert.ok(s.url.startsWith(`${BASE}/`), s.url);
+});
+
+test('me names the demo persona the request ran as, and null without one', async () => {
+  const { client } = setup(() => json(200, {
+    objectId: '00000000-0000-4000-8000-000000000212',
+    name: 'Nadia Ferreira',
+    actorKind: 'person',
+    demoPersona: { name: 'nadia', label: 'Nadia Ferreira, application owner' },
+    roles: [],
+  }));
+  const answer = await client.me();
+  assert.equal(answer.ok && answer.value.demoPersona?.name, 'nadia');
+  assert.equal(answer.ok && answer.value.demoPersona?.label, 'Nadia Ferreira, application owner');
+  const plain = setup(() => json(200, { objectId: '00000000-0000-4000-8000-000000000212', roles: [], demoPersona: null }));
+  const none = await plain.client.me();
+  assert.equal(none.ok && none.value.demoPersona, null);
 });

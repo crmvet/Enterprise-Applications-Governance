@@ -1,0 +1,638 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_agents output",
+  "description": "The response envelope. On success, data lists the agents with the most flags first, with counts.",
+  "x-tool": "list_agents",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "applicationKindKeys",
+        "goLiveGate",
+        "counts",
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "applicationKindKeys": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          }
+        },
+        "goLiveGate": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "agents",
+            "autonomyMissing",
+            "autonomyWaiting",
+            "securityReviewMissing",
+            "goLiveNotReady",
+            "flagged"
+          ],
+          "properties": {
+            "agents": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "autonomyMissing": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "autonomyWaiting": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "securityReviewMissing": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "goLiveNotReady": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "flagged": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/agent"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    },
+    "agent": {
+      "type": "object",
+      "required": [
+        "businessApplicationId",
+        "recordNumber",
+        "name",
+        "registration",
+        "applicationKind",
+        "tier",
+        "lifecycleStage",
+        "autonomy",
+        "owners",
+        "ownerGaps",
+        "securityReview",
+        "goLive",
+        "flaggedDecision",
+        "flags",
+        "dataUses",
+        "components",
+        "isAiCreated",
+        "recordUrl"
+      ],
+      "properties": {
+        "businessApplicationId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O02 Business Application"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string",
+          "x-untrusted": true
+        },
+        "registration": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/statusValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applicationKind": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lifecycleStage": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "autonomy": {
+          "type": "object",
+          "required": [
+            "agreed",
+            "decisionId",
+            "waiting",
+            "requiredAtGoLive"
+          ],
+          "properties": {
+            "agreed": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "decisionId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "waiting": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "decisionId",
+                    "recordNumber",
+                    "proposedLevel",
+                    "recordUrl"
+                  ],
+                  "properties": {
+                    "decisionId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O09 Decision"
+                    },
+                    "recordNumber": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "proposedLevel": {
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/labelledKey"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "recordUrl": {
+                      "$ref": "../common.schema.json#/$defs/recordUrl"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requiredAtGoLive": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ownerRole",
+              "principal",
+              "isDeputy"
+            ],
+            "properties": {
+              "ownerRole": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "principal": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isDeputy": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "ownerGaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ownerRole",
+              "missing"
+            ],
+            "properties": {
+              "ownerRole": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "missing": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "securityReview": {
+          "type": "object",
+          "required": [
+            "reviewType",
+            "state",
+            "requiredAtGoLive",
+            "lastDoneOn",
+            "dueOn",
+            "reviewId",
+            "recordUrl"
+          ],
+          "properties": {
+            "reviewType": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "enum": [
+                "none",
+                "due",
+                "overdue",
+                "done"
+              ]
+            },
+            "requiredAtGoLive": {
+              "type": "boolean"
+            },
+            "lastDoneOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "dueOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reviewId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O21 Review"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recordUrl": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/recordUrl"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "goLive": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "gate",
+                "ready",
+                "unmet"
+              ],
+              "properties": {
+                "gate": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "ready": {
+                  "type": "boolean"
+                },
+                "unmet": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "requirementKey",
+                      "label",
+                      "requirementKind",
+                      "guidelineRef"
+                    ],
+                    "properties": {
+                      "requirementKey": {
+                        "$ref": "../common.schema.json#/$defs/keyPath"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "requirementKind": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "guidelineRef": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/guidelineRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "flaggedDecision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/decisionRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "label",
+              "recordUrl"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "recordUrl": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "dataUses": {
+          "type": "object",
+          "required": [
+            "open",
+            "reachingAi",
+            "drafts"
+          ],
+          "properties": {
+            "open": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "reachingAi": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "drafts": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "componentKind",
+              "label",
+              "url"
+            ],
+            "properties": {
+              "componentKind": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": "string",
+                "x-untrusted": true
+              },
+              "url": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Up to five Microsoft resources of the agent; URLs are restricted read."
+        },
+        "isAiCreated": {
+          "type": "boolean"
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "decisionRef": {
+      "type": "object",
+      "description": "A decision by its number, type and status, with a link to its page.",
+      "required": [
+        "decisionId",
+        "recordNumber",
+        "decisionType",
+        "status",
+        "decidedOn",
+        "recordUrl"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

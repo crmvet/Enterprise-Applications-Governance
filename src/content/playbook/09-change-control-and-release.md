@@ -32,7 +32,7 @@ Some changes are always normal: a new restricted data use, a role change for the
 
 1. **Draft the change.** The change owner, or their AI client, drafts it: application, proposed type, window and target. The affected applications come from the dependency map, and their owners are informed.
 2. **Classify.** Check whether it fits a standard change model. A person sets the type.
-3. **Submit and authorize.** Standard changes are pre-authorized. In the default configuration they need no card, because a person approved the model once. Normal changes go to approval cards per the tier and type.
+3. **Submit and authorize.** Standard changes are pre-authorized. In the default configuration they need no new approval, because a person approved the model once. Normal changes go for approval per the tier and type, and people answer on the decision page.
 4. **Plan the import.** Before the import, list what changes and which components the upgrade deletes, and attach the list to the change.
 5. **Deploy through your pipeline.** Build once, then promote that one artifact through each stage: Power Platform Pipelines, Azure Pipelines or GitHub Actions. Turn on self-approval prevention and window checks where the tool offers them.
 6. **Record the deployment.** A last step in the pipeline records what, where, when, which pipeline and who approved. The owner's AI tool or a person can record it too.
@@ -41,7 +41,7 @@ Some changes are always normal: a new restricted data use, a role change for the
 
 **AI-only code approvals.** Some code review tools let an AI review count toward the required approvals of a pull request. In the default configuration such an approval never counts as authorization for a change, and a deployment whose only code approval came from an AI is flagged.
 
-**Linked mode.** If you already run a change tool, the change record is designed to hold that tool's number and link instead, and never to copy its workflow. A recorded number alone never counts as authorization: your tool reports it through a step you add, or the change manager confirms it on a card.
+**Linked mode.** If you already run a change tool, the change record is designed to hold that tool's number and link instead, and never to copy its workflow. A recorded number alone never counts as authorization: your tool reports it through a step you add, or the change manager confirms it on the decision page.
 
 ## Gate levels
 

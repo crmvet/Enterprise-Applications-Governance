@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-intake-business-owner-without-consent-skipped",
+  "description": "The same accepted intake, but the named business owner has not accepted the role (no consent fact): the engine registers the application and completes the request, and skips the owner assignment with subject.change-skipped, so nobody becomes an owner without their consent (document 25, B25-18).",
+  "tags": [
+    "update-subject",
+    "intake-business-owner",
+    "intake-owner-consent"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-21"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "intake",
+      "subjectKind": "intake-request",
+      "subjectIntakeRequest": "fixture-intake-2",
+      "outcome": "accept"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "accept",
+      "ready": true,
+      "requirements": []
+    },
+    "subject": {
+      "intake": {
+        "id": "fixture-intake-2",
+        "statusMeaning": "submitted",
+        "title": "Visit planner",
+        "need": "Plan store visits on the phone",
+        "proposedKind": "power-platform-app",
+        "usesAi": false,
+        "businessOwner": "fixture-person-5"
+      },
+      "newRowIds": [
+        "fixture-app-9"
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Business Application",
+          "operation": "create",
+          "rowId": "fixture-app-9",
+          "columns": {
+            "applicationKind": "power-platform-app",
+            "lifecycleStage": "prioritize-and-fund",
+            "name": "Visit planner",
+            "purpose": "Plan store visits on the phone",
+            "stageDecision": "fixture-decision-21",
+            "status": "app-registered",
+            "usesAi": false
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Intake Request",
+          "operation": "update",
+          "rowId": "fixture-intake-2",
+          "columns": {
+            "businessApplication": "fixture-app-9",
+            "status": "intake-completed",
+            "triageDecision": "fixture-decision-21"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "subject-updated"
+          }
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "subject.change-skipped",
+        "severity": "warning",
+        "ref": "fixture-person-5"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -32,14 +32,20 @@ public sealed class RuntimeDependencyRuleTests
     }
 
     // The runtime defines no test double: nothing named in-memory, mock, fake, stub, manual or test, no implementation of
-    // a storage port (adapters implement them), and no clock but the system clock.
+    // a storage port (adapters implement them), and no clock but the system clock. The one transaction type it holds is
+    // the read cache of a read call (document 25, B25-23): internal, it wraps the transaction an adapter's store began
+    // and keeps rows only for that one call, so it binds no store.
     [Fact]
     public void TheRuntimeHoldsNoTestDouble()
     {
         Type[] types = typeof(EngineRuntime).Assembly.GetTypes();
 
         Assert.DoesNotContain(types, t => Regex.IsMatch(t.Name, "^(InMemory|Mock|Fake|Stub|Manual|Test)", RegexOptions.CultureInvariant));
-        Assert.DoesNotContain(types, t => !t.IsInterface && !t.IsAbstract && (typeof(IRecordStore).IsAssignableFrom(t) || typeof(IConfigurationStore).IsAssignableFrom(t) || typeof(IStoreTransaction).IsAssignableFrom(t)));
+        Assert.DoesNotContain(types, t => !t.IsInterface && !t.IsAbstract && (typeof(IRecordStore).IsAssignableFrom(t) || typeof(IConfigurationStore).IsAssignableFrom(t)));
+        Type cache = Assert.Single(types, t => !t.IsInterface && !t.IsAbstract && typeof(IStoreTransaction).IsAssignableFrom(t));
+        Assert.Equal("CallReadCache", cache.Name);
+        Assert.False(cache.IsPublic);
+        Assert.Equal(new[] { typeof(IStoreTransaction) }, Assert.Single(cache.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)).GetParameters().Select(p => p.ParameterType));
         Assert.Equal(new[] { typeof(SystemClock) }, types.Where(t => !t.IsInterface && !t.IsAbstract && typeof(IEngineClock).IsAssignableFrom(t)).ToArray());
         Assert.Equal("Product.Engine.Testing", typeof(InMemoryStore).Assembly.GetName().Name);
         Assert.Equal("Product.Engine.Testing", typeof(ManualClock).Assembly.GetName().Name);

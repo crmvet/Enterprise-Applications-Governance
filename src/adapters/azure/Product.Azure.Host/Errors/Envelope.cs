@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Product.Engine.Core;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
+using Product.Mcp.Core.Contracts;
 using Product.Mcp.Core.Envelope;
 using Product.Mcp.Core.Json;
 
@@ -117,7 +118,10 @@ internal static class HttpJson
 
         if (status == 401)
         {
-            headers["WWW-Authenticate"] = "Bearer";
+            // A step-up refusal carries the claims challenge as Microsoft Entra ID reads it (D-38; document 26, B26-9).
+            headers["WWW-Authenticate"] = error.Code == McpErrorCodes.StepUpRequired
+                ? "Bearer error=\"insufficient_claims\", error_description=\"A fresh sign-in is needed to answer an approval.\"" + (error.ClaimsChallenge == null ? string.Empty : ", claims=\"" + error.ClaimsChallenge + "\"")
+                : "Bearer";
         }
 
         return Write(context, status, Envelope.Failure(error, ProductRequest.CorrelationId(context), asOfUtc, version, summary), headers);

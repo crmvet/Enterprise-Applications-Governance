@@ -32,6 +32,9 @@ internal static class WellKnown
         "business-application",
         "intake-request",
         "change-request",
+
+        // A data use belongs to an application, so its retention decision carries the application's tier (data taxonomy).
+        "data-use",
     };
 
     public const string AiApprovalLock = "ai-approval-lock";
@@ -162,6 +165,11 @@ internal sealed class RuleGroup
         { "applicationKindKey", "application kind" },
         { "targetStageKey", "target stage" },
         { "portfolioId", "portfolio" },
+        { "subjectKind", "subject kind" },
+        { "classificationKey", "classification" },
+        { "aiUse", "AI use" },
+        { "dataDomainLevelKey", "data domain level" },
+        { "dataTaxonomyChange", "data taxonomy change" },
     };
 
     public RuleGroup(string entity, string decisionTypeKey, IList<KeyValuePair<string, string>> scope)
@@ -251,8 +259,18 @@ internal sealed class RuleGroup
 internal static class RuleGroups
 {
     // Optional scope fields of C32 and C31 (document 21, section 3.5).
-    public static readonly string[] ApprovalScope = { "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey", "targetStageKey", "portfolioId" };
-    public static readonly string[] DecisionRightScope = { "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey", "portfolioId" };
+    // The data taxonomy adds five scope fields (docs/architecture/data-taxonomy.md, Entities), counted for specificity like the others.
+    public static readonly string[] ApprovalScope =
+    {
+        "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey", "targetStageKey",
+        "subjectKind", "classificationKey", "aiUse", "dataDomainLevelKey", "dataTaxonomyChange", "portfolioId",
+    };
+
+    public static readonly string[] DecisionRightScope =
+    {
+        "tierKey", "lifecycleStageKey", "changeTypeKey", "applicationKindKey",
+        "subjectKind", "classificationKey", "aiUse", "dataDomainLevelKey", "dataTaxonomyChange", "portfolioId",
+    };
 
     public static List<RuleGroup> ApprovalRules(ConfigurationContent content)
     {
@@ -284,7 +302,8 @@ internal static class RuleGroups
                 JsonTreeNode? value = JsonNodes.Get(row.Node, field);
                 if (value != null && value.Kind != JsonTreeKind.Null)
                 {
-                    scope.Add(new KeyValuePair<string, string>(field, value.Kind == JsonTreeKind.String ? value.GetString() : value.ToString()));
+                    string text = value.Kind == JsonTreeKind.String ? value.GetString() : value.Kind == JsonTreeKind.True ? "true" : value.Kind == JsonTreeKind.False ? "false" : value.ToString();
+                    scope.Add(new KeyValuePair<string, string>(field, text));
                 }
             }
 

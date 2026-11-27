@@ -6,7 +6,8 @@ using Product.Engine.Core.Contract;
 
 namespace Product.Engine.Core;
 
-// The fourteen operations of the engine core (document 25, section 5.2).
+// The operations of the engine core (document 25, section 5.2): fourteen, and OP-15 to OP-17 of the data taxonomy
+// (docs/architecture/data-taxonomy.md).
 // The number is the operation ID, so EvaluateTier is OP-01.
 public enum EngineOperation
 {
@@ -24,6 +25,9 @@ public enum EngineOperation
     EvaluateStandardChange = 12,
     CompareGapCheckResult = 13,
     EvaluateLinkedAuthorization = 14,
+    ResolveDataDomain = 15,
+    EvaluateDataUse = 16,
+    RunDataChecks = 17,
 }
 
 // What one operation is and which outcome words it returns.
@@ -49,7 +53,7 @@ public sealed class OperationInfo
 
     public EngineOperation Operation { get; }
 
-    // "OP-01" to "OP-14".
+    // "OP-01" to "OP-17".
     public string Id { get; }
 
     public string Title { get; }
@@ -93,6 +97,12 @@ public static class OperationCatalog
         new OperationInfo(EngineOperation.EvaluateStandardChange, "Evaluate a standard change", false, false, "qualifies", "does-not-qualify"),
         new OperationInfo(EngineOperation.CompareGapCheckResult, "Compare a gap check result", false, false, "compared"),
         new OperationInfo(EngineOperation.EvaluateLinkedAuthorization, "Evaluate linked-mode authorization", false, false, "authorized", "not-authorized", "not-applicable"),
+
+        // The data taxonomy (docs/architecture/data-taxonomy.md, Engine). The design names the operations and their answers; the outcome words are
+        // proposed: OP-16's outcome is the computed data use state (docs/architecture/data-taxonomy.md, The decision state).
+        new OperationInfo(EngineOperation.ResolveDataDomain, "Resolve data domain", false, true, "resolved"),
+        new OperationInfo(EngineOperation.EvaluateDataUse, "Evaluate data use", false, true, "not-needed", "needed", "proposed", "allowed", "denied", "re-decide", "breaks-rule", "no-one-to-ask"),
+        new OperationInfo(EngineOperation.RunDataChecks, "Run data checks", false, true, "checked"),
     });
 
     public static OperationInfo Get(EngineOperation operation)

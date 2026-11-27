@@ -26,7 +26,7 @@ Requests arrive by email and chat. Apps appear that nobody asked for. An app bui
 4. **Check for duplicates.** Before submitting, look for an app that already does this, and its owner.
 5. **Submit.** A submission is a request, not a decision.
 6. **Triage.** The platform team decides: accept, park, redirect to reuse, or decline, with a typed reason. In the default configuration the lowest tier is accepted at once, under a rule a person approved once, so a small app does not wait.
-7. **Name the owner.** On accept, the named business owner confirms ownership on an approval card. Nobody becomes an owner without their own yes.
+7. **Name the owner.** On accept, the named business owner confirms ownership on the decision page. Nobody becomes an owner without their own yes.
 8. **Route demand.** If the request needs money or central capacity, it goes to the PMO and the sponsor (chapter 6).
 9. **Link the work.** The work item, plan or repository is linked to the application, never copied.
 
@@ -44,7 +44,7 @@ Apps already running but never registered reach the front door another way: an a
 ## Guidelines this chapter applies
 
 - **G1 Keep one register of business applications.** The register entry starts the day an app is proposed, before build starts.
-- **G2 Name the owners of every app.** Intake names the business owner, who accepts on a card.
+- **G2 Name the owners of every app.** Intake names the business owner, who accepts on the decision page.
 - **G3 Set a risk tier for every app.** The initial tier comes from the plain answers at intake.
 - **G16 Record AI use on every app and agent.** Intake asks whether the app uses AI or is an agent, and what it may do on its own.
 - **G22 Let the AI builder ask before it builds.** The builder's AI client checks for duplicates and asks the tier questions before it builds, and drafts what it learns into the intake.
@@ -58,7 +58,7 @@ Apps already running but never registered reach the front door another way: an a
 
 ## How the product is designed to support it
 
-- It is designed to offer the same intake from any MCP client, from its pages, and through approval cards, so most people never need a back office.
+- It is designed to offer the same intake from any MCP client and from its pages, with notices that link to the decision page, so most people never need a back office.
 - It is designed to keep intake drafts written by AI as drafts until a person submits them, and to let an AI client submit an intake on the person's behalf where the configuration allows it.
 - It is designed to search the register for duplicates and suggest a match, never decide it.
 - It is designed to keep the intake decision apart from delivery status, and to show the decision and its reason to the requester.
@@ -68,7 +68,7 @@ Apps already running but never registered reach the front door another way: an a
 
 - The intake questions per kind of application, and which answers trigger extra steps.
 - Who triages and who is consulted.
-- Whether the lowest tier needs a triage card. Add an approval rule for intake if you want one.
+- Whether the lowest tier needs a triage approval. Add an approval rule for intake if you want one.
 - Who can see other people's intakes.
 
 ## Microsoft guidance it applies

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_deployments input",
-  "description": "What runs where? The latest version per target, or the history, with flags. Writes nothing.",
+  "description": "What runs where? The latest version per application and target, or the history (latestOnly false), with flags. Filters by application, target, change request, result, dates, any flag or named flags. Writes nothing.",
   "x-tool": "get_deployments",
   "type": "object",
   "properties": {
@@ -10,10 +10,20 @@
       "x-entity": "O02 Business Application",
       "description": "Only this application."
     },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only the applications in this portfolio, child portfolios included."
+    },
     "deploymentTargetId": {
       "$ref": "../common.schema.json#/$defs/id",
       "x-entity": "O15 Deployment Target",
       "description": "Only this target."
+    },
+    "changeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O11 Change Request",
+      "description": "Only the records matched to this change."
     },
     "latestOnly": {
       "type": "boolean",
@@ -23,7 +33,27 @@
     "flaggedOnly": {
       "type": "boolean",
       "default": false,
-      "description": "True returns only records with at least one flag."
+      "description": "True returns only records with at least one flag: outside window, other path, missing approval or AI-only code approval."
+    },
+    "flagKeys": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "outside-window",
+          "other-path",
+          "missing-approval",
+          "ai-only-code-approval"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Only records with at least one of these flags."
+    },
+    "resultMeanings": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/deploymentResultMeaning"
+      },
+      "description": "Only these results."
     },
     "from": {
       "$ref": "../common.schema.json#/$defs/date",

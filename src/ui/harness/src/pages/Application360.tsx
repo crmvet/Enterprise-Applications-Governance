@@ -2,22 +2,59 @@
 // Reads (document 24 names): get_application_card (every section except owners), get_application_owners,
 // get_configuration (owner-role and target-stage labels). Two custom API calls, so the six-table limit of
 // generative pages does not bind this page (the card reads its tables on the server).
-// Read-only: edits happen in the form, or through an AI client, and every write goes through the engine.
+// In the harness the page is read-only: edits happen in the form, or through an AI client, and every write goes through
+// the engine. In the web app (D-36) people act here: the page wraps itself in the App 360 scope (./app360), adds the
+// section bar (?tab=), the summary's actions and the other sections; see app360/index.tsx.
 // In the web app the route is /app/records/business-application/<id>, the record link the tools return.
 import { ArrowRight, CalendarDays, ExternalLink as ExternalLinkIcon, Info, Sparkles, UserRoundX, UsersRound, Workflow } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { ApplicationCard, ApplicationOwners, LabelledKey } from '../data/contracts';
+import type { ApplicationCard, ApplicationOwners } from '../data/contracts';
 import { externalHref, fmtDate, fmtWindow } from '../data/format';
 import { useLabels, type Labels } from '../data/labels';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost } from '../harness';
+import { recordHrefOf, useQueryParam } from '../app/links';
+import { ProposeOwnerChangeSheet } from './owners-reviews/OwnerSheets';
+import {
+  App360Panels,
+  App360Scope,
+  App360TabBar,
+  ChangesPanelActions,
+  ChangeTypeBadge,
+  CriticalityBadge,
+  DeploymentsPanelActions,
+  DocumentRowActions,
+  DraftBanner,
+  LifecycleStrip,
+  OwnerRowActions,
+  OwnersPanelActions,
+  ProposalNotice,
+  ReadDedupe,
+  ReviewRowActions,
+  ReviewsPanelActions,
+  TAB_PATTERN,
+  changeStamp,
+  deploymentExtras,
+  portfolioPathOf,
+  tabHref,
+  tabOf,
+  useApp360,
+} from './app360';
+import { FlagBadges } from './changes-records/parts';
+// Wave 4 hook point (the teams group builds it): an owner that is a group links to its team page, in the web app only.
+import { OwnerHolderName } from './teams';
+// Wave 4: "What depends on it?" from a component (get_dependency_impact technicalComponentId), in the web app only.
+import { WhatDependsOnIt } from './data-records/WhatDependsOnIt';
 import { cn } from '../lib/utils';
 import { ExternalLink, Row, RowList } from '../components/rows';
 import { DataStamp, Empty, LinkButton, Muted, PageHeader, Panel, PanelFailure, StatusBadge, TextLink, ToneBadge } from '../components/blocks';
+import { AiMark } from '../components/stamps';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import type { Tone } from '../data/meanings';
+
+// The badges other pages import from here; they live in ./app360/parts.
+export { ChangeTypeBadge, CriticalityBadge, criticalityTone } from './app360';
 
 const CARD_SECTIONS = ['components', 'dependencies', 'decisions', 'changes', 'deployments', 'documents', 'reviews', 'links'];
 
@@ -41,12 +78,23 @@ const panelLinkClass = 'inline-flex items-center gap-x-1 font-semibold';
 const factLabelClass = 'm-0 text-xs text-navy-3';
 const subheadClass = 'mt-1.5 mb-0.5 text-xs font-semibold tracking-[0.04em] text-navy-3 uppercase';
 
+// Identical reads of the page's many parts share one request (app360/dedupe.ts).
 export function Application360({ applicationId }: { applicationId: string }) {
+  return <ReadDedupe><Application360Page applicationId={applicationId} /></ReadDedupe>;
+}
+
+function Application360Page({ applicationId }: { applicationId: string }) {
   const host = useHost();
+  // In the web app every row opens its record page, and people act on the application here (D-36). The harness has no
+  // record pages and stays read-only.
+  const webApp = !!host.open;
+  const link = (entity: string, id: string | null | undefined) => (webApp && id ? recordHrefOf(entity, id) : null);
   const card = useTool('get_application_card', { businessApplicationId: applicationId, sections: CARD_SECTIONS });
   const owners = useTool('get_application_owners', { businessApplicationId: applicationId });
   const ownerRoles = useLabels('owner-role');
   const stages = useLabels('target-stage');
+  const tabParam = useQueryParam('tab', TAB_PATTERN);
+  const tab = webApp ? tabOf(tabParam) : 'summary';
 
   const cardEnv = card.status === 'done' ? card.envelope : undefined;
   const data = dataOf(card);
@@ -63,8 +111,9 @@ export function Application360({ applicationId }: { applicationId: string }) {
 
   const mapHref = host.href({ page: 'map', id: applicationId });
   const recordUrl = host.showRecordLinks && cardEnv?.ok ? externalHref(cardEnv.links?.recordUrl) : null;
+  const path = portfolioPathOf(data);
 
-  return (
+  const page = (
     <>
       <PageHeader
         eyebrow="Application 360"
@@ -92,19 +141,41 @@ export function Application360({ applicationId }: { applicationId: string }) {
         }
       />
 
+      {webApp && <ProposalNotice />}
+      {webApp && <DraftBanner />}
+
       {app && data && (
         <section
           className="mb-4 flex flex-col gap-y-3.5 rounded-xl border bg-card px-6 py-5 shadow-xs narrow:mb-3 narrow:gap-y-3 narrow:rounded-lg narrow:px-3.5 narrow:py-4"
           aria-label="Summary"
         >
           <p className="m-0 max-w-[820px] text-base leading-6 text-navy-2 narrow:text-sm">{app.purpose}</p>
+          {path.length > 0 && (
+            <nav aria-label="Portfolio" className="-mt-1.5 text-xs text-navy-3">
+              <span className="mr-1">Portfolio:</span>
+              {path.map((p, i) => {
+                const href = webApp ? recordHrefOf('portfolio', p.portfolioId) : null;
+                return (
+                  <span key={p.portfolioId}>
+                    {i > 0 && <span aria-hidden> / </span>}
+                    {href ? <TextLink href={href}>{p.name}</TextLink> : <span className="text-navy-2">{p.name}</span>}
+                  </span>
+                );
+              })}
+            </nav>
+          )}
+          {webApp && app.isAiCreated && <AiMark isAiCreated={app.isAiCreated} performedBy={app.performedBy} className="self-start" />}
           <AttentionStrip card={data} owners={dataOf(owners)} ownerRoles={ownerRoles} />
           {/* Six across, three below 1024 px, two below 720 px. The three-column rule is limited to "not narrow" because
               the medium variant is emitted after the narrow one and would otherwise win on a phone. */}
           <dl className="m-0 grid grid-cols-6 gap-3 border-t border-line pt-3.5 medium:not-narrow:grid-cols-3 narrow:grid-cols-2 narrow:gap-y-3.5">
             <Fact label="Kind" value={app.kind.label} />
-            <Fact label="Tier" value={app.tier?.label ?? 'No tier yet'} />
-            <Fact label="Stage" value={app.stage?.label ?? 'Not set'} sub={app.stage?.since ? `since ${fmtDate(app.stage.since)}` : undefined} />
+            <Fact label="Tier" value={webApp ? <TextLink href={tabHref(applicationId, 'tier')}>{app.tier?.label ?? 'No tier yet'}</TextLink> : app.tier?.label ?? 'No tier yet'} />
+            <Fact
+              label="Stage"
+              value={webApp ? <TextLink href={tabHref(applicationId, 'lifecycle')}>{app.stage?.label ?? 'Not set'}</TextLink> : app.stage?.label ?? 'Not set'}
+              sub={app.stage?.since ? `since ${fmtDate(app.stage.since)}` : undefined}
+            />
             <Fact label="Build path" value={app.buildPath?.label ?? 'Not set'} />
             <Fact
               label="Uses AI"
@@ -113,127 +184,178 @@ export function Application360({ applicationId }: { applicationId: string }) {
             />
             <Fact label="Next review" value={fmtDate(app.nextReviewOn)} />
           </dl>
+          {webApp && <LifecycleStrip lifecycleHref={tabHref(applicationId, 'lifecycle')} />}
           <div className="flex items-center gap-x-1.5 text-xs text-navy-3">
             <Info className="size-4 shrink-0" aria-hidden />
-            Read-only page. Changes happen {host.showRecordLinks ? 'in the form or through an AI client' : 'through an AI client'}, and the engine checks every write.
+            {webApp
+              ? 'You act on the application here, and each change, decision, document, review and deployment opens its own page. The engine checks every write.'
+              : <>Read-only page. Changes happen {host.showRecordLinks ? 'in the form or through an AI client' : 'through an AI client'}, and the engine checks every write.</>}
           </div>
         </section>
       )}
 
-      <div className="grid grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start gap-4 medium:grid-cols-1 narrow:flex narrow:flex-col narrow:items-stretch narrow:gap-3">
-        <div className={columnClass}>
-          <Panel title="Deployments" subtitle="Latest deployment per target" state={card} className={order.deployments} notes={['deployment-record']}>
-            {d => <DeploymentsList card={d} stages={stages} />}
-          </Panel>
-          <Panel
-            title="Open changes"
-            state={card}
-            className={order.changes}
-            notes={['change-request']}
-            actions={<TextLink href={host.href({ page: 'timeline' })} className={panelLinkClass}>Timeline <ArrowRight className="size-4" aria-hidden /></TextLink>}
-          >
-            {d => (d.changes?.length ? (
-              <RowList label="Open changes">
-                {d.changes.map(c => (
-                  <Row
-                    key={c.changeRequestId}
-                    primary={c.title}
-                    secondary={fmtWindow(c.windowStart, c.windowEnd)}
-                    wideEnd
-                    end={<><ChangeTypeBadge type={c.changeType} /><StatusBadge status={c.status} /></>}
-                  />
-                ))}
-              </RowList>
-            ) : <Empty>No open changes.</Empty>)}
-          </Panel>
-          <Panel
-            title="Dependencies"
-            state={card}
-            className={order.dependencies}
-            notes={['dependency']}
-            actions={<TextLink href={mapHref} className={panelLinkClass}>Dependency map <ArrowRight className="size-4" aria-hidden /></TextLink>}
-          >
-            {d => <DependencySummary card={d} mapHref={mapHref} />}
-          </Panel>
-          <Panel title="Decisions" subtitle="The latest five" state={card} className={order.decisions} notes={['decision']}>
-            {d => (d.decisions?.length ? (
-              <RowList label="Decisions">
-                {d.decisions.map(x => (
-                  <Row
-                    key={x.decisionId}
-                    primary={x.statement}
-                    secondary={[x.decisionType.label, x.outcome?.label].filter(Boolean).join(', ')}
-                    end={<StatusBadge status={x.status} />}
-                    endSub={x.decidedOn ? fmtDate(x.decidedOn) : 'Waiting'}
-                  />
-                ))}
-              </RowList>
-            ) : <Empty>No decisions yet.</Empty>)}
-          </Panel>
-          <Panel title="Delivery links" state={card} className={order.links} notes={['delivery-link']}>
-            {d => (d.links?.length ? (
-              <RowList label="Delivery links">
-                {d.links.map(l => (
-                  <Row key={l.deliveryLinkId} primary={<ExternalLink href={l.url}>{l.label}</ExternalLink>} secondary={l.linkKind.label} />
-                ))}
-              </RowList>
-            ) : <Empty>No delivery links.</Empty>)}
-          </Panel>
-        </div>
+      {webApp && <App360TabBar applicationId={applicationId} tab={tab} />}
 
-        <div className={columnClass}>
-          <Panel title="Owners" state={owners} className={order.owners} skeletonRows={5}>
-            {o => <OwnersList owners={o} ownerRoles={ownerRoles} applicationName={app?.name ?? null} />}
-          </Panel>
-          <Panel title="Documents" subtitle="Status per required document type" state={card} className={order.documents} notes={['document-link']}>
-            {d => (d.documents?.length ? (
-              <RowList label="Documents">
-                {d.documents.map(doc => (
-                  <Row
-                    key={doc.documentType.key}
-                    primary={doc.url ? <ExternalLink href={doc.url}>{doc.documentType.label}</ExternalLink> : doc.documentType.label}
-                    secondary={
-                      doc.status.meaning === 'missing' ? 'No link recorded yet'
-                        : doc.status.meaning === 'stale' ? `Stale since ${fmtDate(doc.staleOn)}. Last checked ${fmtDate(doc.lastCheckedOn)}`
-                          : `Checked ${fmtDate(doc.lastCheckedOn)}. Stale on ${fmtDate(doc.staleOn)}`
-                    }
-                    end={<StatusBadge status={doc.status} />}
-                  />
-                ))}
-              </RowList>
-            ) : <Empty>No documents are required at this tier.</Empty>)}
-          </Panel>
-          <Panel title="Reviews" subtitle="Due, and the last one done per type" state={card} className={order.reviews} notes={['review']}>
-            {d => (d.reviews?.length ? (
-              <RowList label="Reviews">
-                {d.reviews.map(r => (
-                  <Row
-                    key={r.reviewId}
-                    primary={r.reviewType.label}
-                    secondary={r.status.meaning === 'done' ? `Done ${fmtDate(r.doneOn)}` : `Due ${fmtDate(r.dueOn)}`}
-                    end={<StatusBadge status={r.status} />}
-                  />
-                ))}
-              </RowList>
-            ) : <Empty>No reviews due.</Empty>)}
-          </Panel>
-          <Panel title="Components" subtitle="Technical parts, linked where they live" state={card} className={order.components} notes={['technical-component']}>
-            {d => (d.components?.length ? (
-              <RowList label="Components">
-                {d.components.map(c => (
-                  <Row
-                    key={c.technicalComponentId}
-                    primary={<ExternalLink href={c.url}>{c.labelAsSeen ?? c.externalId}</ExternalLink>}
-                    secondary={`${c.kind.label}. Seen ${fmtDate(c.lastSeenOn, 'never')}`}
-                  />
-                ))}
-              </RowList>
-            ) : <Empty>No components linked.</Empty>)}
-          </Panel>
+      {tab !== 'summary' ? <App360Panels tab={tab} /> : (
+        <div className="grid grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start gap-4 medium:grid-cols-1 narrow:flex narrow:flex-col narrow:items-stretch narrow:gap-3">
+          <div className={columnClass}>
+            <Panel
+              title="Deployments"
+              subtitle="Latest deployment per target"
+              state={card}
+              className={order.deployments}
+              notes={['deployment-record']}
+              actions={webApp ? <DeploymentsPanelActions /> : undefined}
+            >
+              {d => <DeploymentsList card={d} stages={stages} link={link} webApp={webApp} />}
+            </Panel>
+            <Panel
+              title="Open changes"
+              state={card}
+              className={order.changes}
+              notes={['change-request']}
+              actions={
+                <>
+                  {webApp && <ChangesPanelActions />}
+                  <TextLink href={host.href({ page: 'timeline' })} className={panelLinkClass}>Timeline <ArrowRight className="size-4" aria-hidden /></TextLink>
+                </>
+              }
+            >
+              {d => (d.changes?.length ? (
+                <RowList label="Open changes">
+                  {d.changes.map(c => {
+                    const stamp = changeStamp(c);
+                    return (
+                      <Row
+                        key={c.changeRequestId}
+                        primary={link('change-request', c.changeRequestId) ? <TextLink href={link('change-request', c.changeRequestId)!}>{c.title}</TextLink> : c.title}
+                        secondary={fmtWindow(c.windowStart, c.windowEnd)}
+                        badges={webApp && stamp.isAiCreated ? <AiMark isAiCreated={stamp.isAiCreated} performedBy={stamp.performedBy} /> : undefined}
+                        wideEnd
+                        end={<><ChangeTypeBadge type={c.changeType} /><StatusBadge status={c.status} /></>}
+                      />
+                    );
+                  })}
+                </RowList>
+              ) : <Empty>No open changes.</Empty>)}
+            </Panel>
+            <Panel
+              title="Dependencies"
+              state={card}
+              className={order.dependencies}
+              notes={['dependency']}
+              actions={<TextLink href={mapHref} className={panelLinkClass}>Dependency map <ArrowRight className="size-4" aria-hidden /></TextLink>}
+            >
+              {d => <DependencySummary card={d} mapHref={mapHref} />}
+            </Panel>
+            <Panel
+              title="Decisions"
+              subtitle="The latest five"
+              state={card}
+              className={order.decisions}
+              notes={['decision']}
+              actions={webApp ? <TextLink href={tabHref(applicationId, 'decisions')} className={panelLinkClass}>All decisions <ArrowRight className="size-4" aria-hidden /></TextLink> : undefined}
+            >
+              {d => (d.decisions?.length ? (
+                <RowList label="Decisions">
+                  {d.decisions.map(x => (
+                    <Row
+                      key={x.decisionId}
+                      primary={link('decision', x.decisionId) ? <TextLink href={link('decision', x.decisionId)!}>{x.statement}</TextLink> : x.statement}
+                      secondary={[x.decisionType.label, x.outcome?.label].filter(Boolean).join(', ')}
+                      badges={webApp && x.isAiCreated ? <AiMark isAiCreated={x.isAiCreated} performedBy={x.performedBy} /> : undefined}
+                      end={<StatusBadge status={x.status} />}
+                      endSub={x.decidedOn ? fmtDate(x.decidedOn) : 'Waiting'}
+                    />
+                  ))}
+                </RowList>
+              ) : <Empty>No decisions yet.</Empty>)}
+            </Panel>
+            <Panel title="Delivery links" state={card} className={order.links} notes={['delivery-link']}>
+              {d => (d.links?.length ? (
+                <RowList label="Delivery links">
+                  {d.links.map(l => (
+                    <Row key={l.deliveryLinkId} primary={<ExternalLink href={l.url}>{l.label}</ExternalLink>} secondary={l.linkKind.label} />
+                  ))}
+                </RowList>
+              ) : <Empty>No delivery links.</Empty>)}
+            </Panel>
+          </div>
+
+          <div className={columnClass}>
+            <Panel title="Owners" state={owners} className={order.owners} skeletonRows={5} actions={webApp ? <OwnersPanelActions /> : undefined}>
+              {o => <OwnersList owners={o} ownerRoles={ownerRoles} applicationName={app?.name ?? null} webApp={webApp} />}
+            </Panel>
+            <Panel
+              title="Documents"
+              subtitle="Status per required document type"
+              state={card}
+              className={order.documents}
+              notes={['document-link']}
+            >
+              {d => (d.documents?.length ? (
+                <RowList label="Documents">
+                  {d.documents.map(doc => (
+                    <Row
+                      key={doc.documentType.key}
+                      primary={link('document-link', doc.documentLinkId)
+                        ? <TextLink href={link('document-link', doc.documentLinkId)!}>{doc.documentType.label}</TextLink>
+                        : doc.url ? <ExternalLink href={doc.url}>{doc.documentType.label}</ExternalLink> : doc.documentType.label}
+                      secondary={
+                        doc.status.meaning === 'missing' ? 'No link recorded yet'
+                          : doc.status.meaning === 'stale' ? `Stale since ${fmtDate(doc.staleOn)}. Last checked ${fmtDate(doc.lastCheckedOn)}`
+                            : `Checked ${fmtDate(doc.lastCheckedOn)}. Stale on ${fmtDate(doc.staleOn)}`
+                      }
+                      tertiary={webApp ? <DocumentRowActions documentTypeKey={doc.documentType.key} typeLabel={doc.documentType.label} statusMeaning={doc.status.meaning} /> : undefined}
+                      end={<StatusBadge status={doc.status} />}
+                    />
+                  ))}
+                </RowList>
+              ) : <Empty>No documents are required at this tier.</Empty>)}
+            </Panel>
+            <Panel
+              title="Reviews"
+              subtitle="Due, and the last one done per type"
+              state={card}
+              className={order.reviews}
+              notes={['review']}
+              actions={webApp ? <ReviewsPanelActions /> : undefined}
+            >
+              {d => (d.reviews?.length ? (
+                <RowList label="Reviews">
+                  {d.reviews.map(r => (
+                    <Row
+                      key={r.reviewId}
+                      primary={link('review', r.reviewId) ? <TextLink href={link('review', r.reviewId)!}>{r.reviewType.label}</TextLink> : r.reviewType.label}
+                      secondary={r.status.meaning === 'done' ? `Done ${fmtDate(r.doneOn)}` : `Due ${fmtDate(r.dueOn)}`}
+                      tertiary={webApp ? <ReviewRowActions reviewId={r.reviewId} subject={r.reviewType.label} done={r.status.meaning === 'done'} /> : undefined}
+                      end={<StatusBadge status={r.status} />}
+                    />
+                  ))}
+                </RowList>
+              ) : <Empty>No reviews due.</Empty>)}
+            </Panel>
+            <Panel title="Components" subtitle="Technical parts, linked where they live" state={card} className={order.components} notes={['technical-component']}>
+              {d => (d.components?.length ? (
+                <RowList label="Components">
+                  {d.components.map(c => (
+                    <Row
+                      key={c.technicalComponentId}
+                      primary={c.url ? <ExternalLink href={c.url}>{c.labelAsSeen ?? c.externalId}</ExternalLink> : (c.labelAsSeen ?? c.externalId)}
+                      secondary={`${c.kind.label}. Seen ${fmtDate(c.lastSeenOn, 'never')}`}
+                      end={webApp ? <WhatDependsOnIt start={{ technicalComponentId: c.technicalComponentId }} name={c.labelAsSeen ?? c.externalId} /> : undefined}
+                    />
+                  ))}
+                </RowList>
+              ) : <Empty>No components linked.</Empty>)}
+            </Panel>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
+
+  return webApp ? <App360Scope applicationId={applicationId} card={data} owners={dataOf(owners)}>{page}</App360Scope> : page;
 }
 
 function Fact({ label, value, sub }: { label: string; value: ReactNode; sub?: string }) {
@@ -274,42 +396,31 @@ function AttentionStrip({ card, owners, ownerRoles }: { card: ApplicationCard; o
   );
 }
 
-function DeploymentsList({ card, stages }: { card: ApplicationCard; stages: Labels }) {
+function DeploymentsList({ card, stages, link, webApp }: { card: ApplicationCard; stages: Labels; link: (entity: string, id: string | null | undefined) => string | null; webApp: boolean }) {
   const list = [...(card.deployments ?? [])].sort((a, b) => stages.rank(b.targetStageKey) - stages.rank(a.targetStageKey));
   if (!list.length) return <Empty>Nothing deployed yet.</Empty>;
   return (
     <RowList label="Latest deployment per target">
-      {list.map(d => (
-        <Row
-          key={d.deploymentRecordId}
-          primary={d.targetLabel}
-          secondary={`${stages.label(d.targetStageKey)}. ${d.artifactName} ${d.artifactVersion}`}
-          end={<StatusBadge status={d.result} />}
-          endSub={d.finishedOn ? fmtDate(d.finishedOn) : 'Not finished'}
-        />
-      ))}
+      {list.map(d => {
+        // The route, flags and stamp the card carries; the web app shows them (the harness fixtures may hold none).
+        const extras = webApp ? deploymentExtras(d) : null;
+        return (
+          <Row
+            key={d.deploymentRecordId}
+            primary={link('deployment-record', d.deploymentRecordId) ? <TextLink href={link('deployment-record', d.deploymentRecordId)!}>{d.targetLabel}</TextLink> : d.targetLabel}
+            secondary={`${stages.label(d.targetStageKey)}. ${d.artifactName} ${d.artifactVersion}`}
+            badges={extras && (extras.flags || extras.isAiCreated) ? (
+              <>
+                {extras.flags && <FlagBadges flags={extras.flags} />}
+                <AiMark isAiCreated={extras.isAiCreated} performedBy={extras.performedBy} />
+              </>
+            ) : undefined}
+            end={<StatusBadge status={d.result} />}
+            endSub={d.finishedOn ? fmtDate(d.finishedOn) : 'Not finished'}
+          />
+        );
+      })}
     </RowList>
-  );
-}
-
-export function criticalityTone(key: string | null | undefined): Tone {
-  return key === 'high' ? 'danger' : key === 'medium' ? 'warning' : key === 'low' ? 'informative' : 'subtle';
-}
-
-export function CriticalityBadge({ criticality }: { criticality: LabelledKey | null }) {
-  return (
-    <ToneBadge tone={criticalityTone(criticality?.key)} icon={null}>
-      {criticality ? `${criticality.label} criticality` : 'Criticality not set'}
-    </ToneBadge>
-  );
-}
-
-// An outlined badge: red line and text for an emergency change, navy for the others.
-export function ChangeTypeBadge({ type }: { type: LabelledKey }) {
-  return (
-    <Badge variant="outline" className={type.key === 'emergency' ? 'border-danger-line text-danger' : 'border-line-strong text-navy-2'}>
-      {type.label}
-    </Badge>
   );
 }
 
@@ -381,7 +492,25 @@ function avatarTint(name: string): string {
   return avatarTints[Math.abs(h) % avatarTints.length];
 }
 
-function OwnersList({ owners, ownerRoles, applicationName }: { owners: ApplicationOwners; ownerRoles: Labels; applicationName: string | null }) {
+// In the web app a person proposes the owner change here, on the sheet the Owners page uses; the harness hands it to an
+// AI client instead. Shown when the person may propose an owner change on this application.
+function GapProposeSheet({ ownerRoleKey, missing, label }: { ownerRoleKey: string; missing: string; label: string }) {
+  const ctx = useApp360();
+  if (!ctx || !ctx.can('propose_owner_change') || !(ctx.ownerRoles.length > 0 || ctx.session.hasRole('platform-admin', 'ai-lead'))) return null;
+  return (
+    <ProposeOwnerChangeSheet
+      application={{ id: ctx.applicationId, name: ctx.applicationName }}
+      mode="add"
+      ownerRoleKey={ownerRoleKey}
+      isDeputy={missing === 'deputy'}
+      me={ctx.session.who}
+      onProposed={p => ctx.onProposed(p.decisionId, p.subject)}
+      trigger={<Button size="sm" variant="outline" aria-label={`Propose a ${missing} for ${label}`}>Propose a {missing}</Button>}
+    />
+  );
+}
+
+function OwnersList({ owners, ownerRoles, applicationName, webApp }: { owners: ApplicationOwners; ownerRoles: Labels; applicationName: string | null; webApp: boolean }) {
   const host = useHost();
   return (
     <>
@@ -402,8 +531,9 @@ function OwnersList({ owners, ownerRoles, applicationName }: { owners: Applicati
                   </Avatar>
                 )
             }
-            primary={o.principal.displayLabel}
+            primary={webApp ? <OwnerHolderName principal={o.principal} /> : o.principal.displayLabel}
             secondary={o.isDeputy ? `${o.label}, deputy` : o.label}
+            tertiary={webApp ? <OwnerRowActions assignment={o} /> : undefined}
             endSub={o.startOn ? `since ${fmtDate(o.startOn)}` : 'Waiting for its decision'}
           />
         ))}
@@ -413,7 +543,9 @@ function OwnersList({ owners, ownerRoles, applicationName }: { owners: Applicati
             lead={<span className="grid size-8 place-items-center rounded-full bg-gold-soft text-gold-strong" aria-hidden><UserRoundX className="size-[18px]" aria-hidden /></span>}
             primary={`${ownerRoles.label(g.ownerRoleKey)}: no ${g.missing}`}
             secondary="An owner change needs a decision by a person."
-            end={
+            end={webApp ? (
+              <GapProposeSheet ownerRoleKey={g.ownerRoleKey} missing={g.missing} label={ownerRoles.label(g.ownerRoleKey)} />
+            ) : (
               <LinkButton
                 aria-label={`Propose an owner change for ${ownerRoles.label(g.ownerRoleKey)}`}
                 onClick={() => host.handOff({
@@ -424,7 +556,7 @@ function OwnersList({ owners, ownerRoles, applicationName }: { owners: Applicati
               >
                 Propose
               </LinkButton>
-            }
+            )}
           />
         ))}
       </RowList>

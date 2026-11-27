@@ -49,12 +49,16 @@ public sealed class EngineContractTests
     public void AddedListsAreGroupedBySource()
     {
         Assert.Equal(
-            new[] { "claim-visibility", "engine-acceptance-condition", "intake-visibility", "record-access-mode", "setting-value-type" },
+            new[]
+            {
+                "claim-visibility", "data-access", "data-handling-rule", "data-origin", "data-taxonomy-change", "data-taxonomy-mode",
+                "engine-acceptance-condition", "intake-visibility", "owner-subject", "owner-subject-kind", "record-access-mode", "setting-value-type",
+            },
             NamesIn(ContractGroup.ConfigurationModel));
         Assert.Equal(
             new[] { "authorization-fact-source-kind", "condition-kind" },
             NamesIn(ContractGroup.EngineDesign));
-        Assert.Equal(14, NamesIn(ContractGroup.OperationVocabulary).Length);
+        Assert.Equal(15, NamesIn(ContractGroup.OperationVocabulary).Length);
     }
 
     [Fact]
@@ -264,6 +268,9 @@ public sealed class EngineContractTests
     [InlineData("claim", "claim-status-meaning")]
     [InlineData("deployment-record", "deployment-result-meaning")]
     [InlineData("review", "review-status-meaning")]
+    [InlineData("data-location", "registration-status-meaning")]
+    [InlineData("data-mapping", "registration-status-meaning")]
+    [InlineData("data-use", "registration-status-meaning")]
     public void StatusRowsMapToTheirMeaningList(string entityKey, string listName)
     {
         Assert.Equal(listName, EngineContract.StatusMeaningListsByEntity[entityKey].Name);
@@ -272,7 +279,7 @@ public sealed class EngineContractTests
     [Fact]
     public void OtherMeaningEntitiesMapToTheirList()
     {
-        Assert.Equal(9, EngineContract.StatusMeaningListsByEntity.Count);
+        Assert.Equal(12, EngineContract.StatusMeaningListsByEntity.Count);
         Assert.Equal("lifecycle-meaning", EngineContract.EngineMeaningListsByEntity["lifecycle-stage"].Name);
         Assert.Equal("deployment-route-meaning", EngineContract.EngineMeaningListsByEntity["deployment-route"].Name);
         Assert.Equal("actor-kind-meaning", EngineContract.EngineMeaningListsByEntity["actor-kind"].Name);

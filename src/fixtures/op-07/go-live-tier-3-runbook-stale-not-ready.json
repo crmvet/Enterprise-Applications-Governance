@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-07",
   "case": "go-live-tier-3-runbook-stale-not-ready",
-  "description": "A stale runbook is not current, so the tier 3 go-live gate is not ready.",
+  "description": "A stale runbook is not current, so the tier 3 go-live gate is not ready. A data owner is named, as Balanced asks at tiers 2 and 3.",
   "snapshot": {
     "presetKey": "balanced"
   },
@@ -30,6 +30,9 @@
     },
     "doneReviewTypeKeys": [
       "security-review"
+    ],
+    "assignedOwnerRoleKeys": [
+      "data-owner"
     ]
   },
   "expected": {
@@ -44,6 +47,14 @@
           "requiredDecisionTypeKey": "acceptance",
           "met": true,
           "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-data-owner-tier-3",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "data-owner",
+          "met": true,
+          "guidelineKey": "g2",
           "triggered": false
         },
         {

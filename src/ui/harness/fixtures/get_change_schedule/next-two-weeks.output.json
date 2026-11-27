@@ -23,7 +23,11 @@
           "label": "Scheduled",
           "meaning": "in-progress"
         },
-        "authorized": true
+        "authorized": true,
+        "authorizationStatus": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        }
       },
       {
         "changeRequestId": "70000000-0000-4000-8000-000000000002",
@@ -45,7 +49,11 @@
           "label": "Scheduled",
           "meaning": "in-progress"
         },
-        "authorized": true
+        "authorized": true,
+        "authorizationStatus": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        }
       },
       {
         "changeRequestId": "70000000-0000-4000-8000-000000000001",
@@ -67,7 +75,11 @@
           "label": "Scheduled",
           "meaning": "in-progress"
         },
-        "authorized": true
+        "authorized": true,
+        "authorizationStatus": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        }
       },
       {
         "changeRequestId": "70000000-0000-4000-8000-000000000008",
@@ -89,7 +101,11 @@
           "label": "Submitted",
           "meaning": "submitted"
         },
-        "authorized": false
+        "authorized": false,
+        "authorizationStatus": {
+          "label": "Proposed",
+          "meaning": "proposed"
+        }
       },
       {
         "changeRequestId": "70000000-0000-4000-8000-000000000010",
@@ -111,7 +127,11 @@
           "label": "Submitted",
           "meaning": "submitted"
         },
-        "authorized": false
+        "authorized": false,
+        "authorizationStatus": {
+          "label": "Proposed",
+          "meaning": "proposed"
+        }
       }
     ]
   },

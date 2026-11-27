@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_my_queue output",
-  "description": "The response envelope. On success, data lists what needs the person. Approvals point to the approval card. The tool never offers to answer one.",
+  "description": "The response envelope. On success, data lists what needs the person. An approval points to its decision page, where the person answers it (answer_approval, served only on the web app's entry, D-38). An AI client is never offered a tool that answers one. Each item says whether an AI client created its record and who last wrote it, as the engine stamped it.",
   "x-tool": "get_my_queue",
   "x-ai-write-states": [
     "read-only"
@@ -41,7 +41,9 @@
               "status",
               "why",
               "recordUrl",
-              "nextTool"
+              "nextTool",
+              "isAiCreated",
+              "performedBy"
             ],
             "properties": {
               "kind": {
@@ -51,16 +53,25 @@
                   "document",
                   "claim",
                   "draft",
-                  "owner-gap"
-                ]
+                  "owner-gap",
+                  "data-gap"
+                ],
+                "description": "approval: a request the person may answer now. review: a due review on an application they own, or one whose outcome decision they may propose (C24 Produces Decision Type and their Decision Right, C31). document: a required document missing (computed, never stored), stale by date or marked stale, or a draft waiting for their confirmation. claim: a claim suggested to them. draft: their draft, or a decision they proposed and have not submitted. owner-gap: an owner role with no holder or deputy on their application. data-gap: a data finding that names the person, such as a domain they own with no deputy (OP-17); for the platform admin and the data governance lead also the findings nobody owns yet. A draft also covers data uses, mappings and locations an AI client drafted for the person."
               },
               "subjectKind": {
                 "$ref": "../common.schema.json#/$defs/key",
                 "description": "The entity key of the subject, such as decision or intake-request."
               },
               "subjectId": {
-                "$ref": "../common.schema.json#/$defs/id",
-                "description": "The ID of the subject row."
+                "description": "The ID of the subject row, or the domain key for a data domain.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id"
+                  },
+                  {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  }
+                ]
               },
               "title": {
                 "type": "string",
@@ -106,14 +117,29 @@
                 "description": "Why the item is in the queue, in one plain sentence."
               },
               "recordUrl": {
-                "$ref": "../common.schema.json#/$defs/url",
-                "description": "Opens the record, or the approval card for an approval."
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "Opens the record, or the decision page for an approval."
               },
               "nextTool": {
-                "description": "The tool that helps with this item. Never a tool that answers an approval, because none exists.",
+                "description": "The tool that helps with this item. For an approval, answer_approval on the person entry (the web app, D-38), and null for an AI client, which never answers an approval.",
                 "anyOf": [
                   {
                     "$ref": "../common.schema.json#/$defs/toolName"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client created the item's record. False for a computed item (a missing document, an owner gap) and for a seeded record."
+              },
+              "performedBy": {
+                "description": "Who last wrote the item's record, as the engine stamped it (for an approval, its decision). Null for a computed item and for a row the engine never stamped.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
                   },
                   {
                     "type": "null"
@@ -150,7 +176,22 @@
             },
             "why": "Your intake request is still a draft.",
             "recordUrl": "https://product.example.org/records/70000000-0000-4000-8000-000000000001",
-            "nextTool": "submit_record"
+            "nextTool": "submit_record",
+            "isAiCreated": true,
+            "performedBy": {
+              "actorKind": "ai-client-for-person",
+              "principal": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)"
+              },
+              "onBehalfOf": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)"
+              },
+              "clientAppLabel": "Claude Code",
+              "stampedOn": "2026-11-21T10:00:00Z",
+              "draftedBy": null
+            }
           }
         ]
       },

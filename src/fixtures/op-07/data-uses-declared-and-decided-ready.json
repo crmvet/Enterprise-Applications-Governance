@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "data-uses-declared-and-decided-ready",
+  "description": "Two uses declared and both decided: the design gate is ready.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "design",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "dataUses": {
+      "declaredCount": 2,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "ready": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

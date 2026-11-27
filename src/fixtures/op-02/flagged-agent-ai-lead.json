@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "flagged-agent-ai-lead",
+  "description": "A decision on an agent Microsoft flags goes to the AI lead, first to respond, with a typed reason (P06 step 9, P08 step 7).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "flagged-agent",
+    "tierKey": "tier-2",
+    "applicationKindKey": "agent",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "flagged-agent-ai-lead",
+          "approverRoleKey": "ai-lead",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": true,
+          "guidelineKey": "g17"
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact"
+  }
+}

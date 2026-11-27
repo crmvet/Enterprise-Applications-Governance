@@ -61,17 +61,85 @@
             "$ref": "../common.schema.json#/$defs/id",
             "x-entity": "O21 Review"
           },
-          "description": "The owner check reviews the engine opened."
+          "description": "Every owner check review that covers the leave: the ones the engine opened and the ones already due, each due by the leave date."
+        },
+        "reusedOwnerCheckReviewIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O21 Review"
+          },
+          "description": "The owner check reviews in ownerCheckReviewIds that were already due. A review due after the leave date is brought forward to it."
         },
         "pendingApprovals": {
           "type": "integer",
           "minimum": 0,
           "description": "Pending approvals that move to the deputy on the leave date."
+        },
+        "affectedData": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "subjectKind",
+              "dataDomainKey",
+              "dataLocationId",
+              "label",
+              "ownerRoleKey",
+              "hasDeputy"
+            ],
+            "properties": {
+              "subjectKind": {
+                "enum": [
+                  "data-domain",
+                  "data-location"
+                ]
+              },
+              "dataDomainKey": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C49 Data Domain"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dataLocationId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O25 Data Location"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": "string",
+                "description": "The domain's path, or the location's name.",
+                "x-untrusted": true
+              },
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "hasDeputy": {
+                "type": "boolean",
+                "description": "True when the role has a deputy on the same domain or location."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The owner roles the person holds on data domains and data locations (docs/architecture/data-taxonomy.md, Appointing owners). No owner check review opens for them; the finding is DC-04."
         }
       },
       "required": [
         "affected",
         "ownerCheckReviewIds",
+        "reusedOwnerCheckReviewIds",
         "pendingApprovals"
       ],
       "unevaluatedProperties": false
@@ -115,6 +183,7 @@
         "ownerCheckReviewIds": [
           "b0000000-0000-4000-8000-000000000001"
         ],
+        "reusedOwnerCheckReviewIds": [],
         "pendingApprovals": 0
       },
       "asOf": "2026-11-22T09:00:00Z",

@@ -60,6 +60,7 @@
       }
     ],
     "ownerGaps": 4,
+    "applicationsWithOwnerGap": 4,
     "reviewsOverdue": 3,
     "documentsMissingOrStale": 7,
     "draftsOlderThanDays": 2,

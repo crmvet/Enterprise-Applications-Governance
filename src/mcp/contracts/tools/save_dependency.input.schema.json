@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_dependency input",
+  "description": "Records that an application depends on another application or on a component, changes that dependency, or ends it (O04), as reported. One open dependency per application, target and dependency type: a save for a pair already linked changes that link. endedOn ends it, and an ended dependency never changes again. The owner of the depending application, an architect or the platform admin writes it.",
+  "x-tool": "save_dependency",
+  "type": "object",
+  "properties": {
+    "dependencyId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O04 Dependency",
+      "description": "The dependency to change or end. Leave it out to record a new one."
+    },
+    "fromApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application that depends."
+    },
+    "toApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application depended on. Give this or technicalComponentId."
+    },
+    "technicalComponentId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O03 Technical Component",
+      "description": "The component depended on."
+    },
+    "dependencyTypeKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C17 Dependency Type",
+      "description": "The kind of dependency, such as reads-data-from. Required for a new one."
+    },
+    "criticalityKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "How badly the dependant is hit if the target fails, from the criticality list."
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Any detail an architect needs."
+    },
+    "endedOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Ends the dependency on this date."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "not": {
+    "required": [
+      "toApplicationId",
+      "technicalComponentId"
+    ]
+  },
+  "examples": [
+    {
+      "fromApplicationId": "10000000-0000-4000-8000-000000000001",
+      "toApplicationId": "10000000-0000-4000-8000-000000000002",
+      "dependencyTypeKey": "reads-data-from",
+      "criticalityKey": "high",
+      "clientRequestId": "req-0073"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "dependency-ended-never-changes-refused",
+  "description": "Class E: an ended dependency never changes again, so the record of who depended on what stays as it was; a new dependency is added instead (document 25, B25-13). Refused.",
+  "tags": [
+    "dependency-shape",
+    "class-e"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "dependency",
+    "operation": "update",
+    "rowId": "fixture-dependency-1",
+    "after": {
+      "criticality": "low"
+    }
+  },
+  "facts": {
+    "before": {
+      "fromApplication": "fixture-app-1",
+      "toApplication": "fixture-app-2",
+      "dependencyType": "reads-data-from",
+      "endedOn": "2026-11-01"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error",
+        "ref": "fixture-dependency-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -29,7 +29,8 @@ namespace Product.Azure.Host;
 /// as a user as recommendation only, and recomputes the decision in the same transaction: it counts the answer (one
 /// person once per requirement, and only an answer given before Expires On), accepts or rejects the decision, cancels
 /// the records a settled decision still holds open, and opens a new record for a requirement the answer did not meet.
-/// No tool approves.
+/// No tool an AI client is served approves; a person answers their own request through <c>answer_approval</c> on the
+/// web app's entry (D-38), which runs the same recompute.
 /// <para>
 /// The runner sends each answer with an <c>Idempotency-Key</c> header, <c>&lt;recordId&gt;:&lt;responderId&gt;:&lt;respondedOn&gt;</c>.
 /// The engine stores it as the Audit Entry Request Key, so the same answer sent again returns the first result and
@@ -61,6 +62,18 @@ public static class ApprovalOutcomeEndpoint
     {
         "outcome", "approver", "approverPrincipalKind", "approverActorKind", "respondedOn", "channel", "typedReason", "approverHoldsRequiredRole", "flowRunUrl",
     };
+
+    // True for an outcome that closes a request without a person's answer: its status row means expired or cancelled.
+    private static bool IsClosingOutcome(string? outcome, CompiledSnapshot? snapshot)
+    {
+        if (outcome == null || snapshot == null || !snapshot.Snapshot.TryGetEntity("status", out Product.Engine.Core.Snapshots.SnapshotEntity? statuses))
+        {
+            return false;
+        }
+
+        string? meaning = statuses.Rows.FirstOrDefault(r => string.Equals(r.KeyPath, outcome, StringComparison.Ordinal))?.EngineMeaning;
+        return meaning == "expired" || meaning == "cancelled";
+    }
 
     /// <summary>The members an approval answer may carry (a closed body).</summary>
     internal static IReadOnlyList<string> AllowedMembers => Allowed;
@@ -122,6 +135,17 @@ public static class ApprovalOutcomeEndpoint
         if (workload != null)
         {
             await HttpJson.WriteFailure(context, workload, contracts, now, inForce?.VersionNumber).ConfigureAwait(false);
+            return;
+        }
+
+        // Step-up sign-in (D-38; document 26, B26-9; security review 2026-11-24): with the setting on, a person answers
+        // only on the product's decision page, where the fresh sign-in is checked. A card then carries the link only, so
+        // the runner's relay of a person's answer is refused and nothing is written. Expired and cancelled outcomes are
+        // not a person's answer and still pass.
+        ProductStepUpOptions stepUp = services.GetRequiredService<IOptions<ProductWebAppOptions>>().Value.StepUp ?? new ProductStepUpOptions();
+        if (stepUp.Mode != ProductStepUpMode.Off && !IsClosingOutcome(Js.Text(body, "outcome"), inForce))
+        {
+            await HttpJson.WriteFailure(context, new McpError(McpErrorCodes.RuleViolation, "Step-up sign-in is on, so a person answers an approval on the product's decision page, never in a card. The card links to the page."), contracts, now, inForce?.VersionNumber).ConfigureAwait(false);
             return;
         }
 
@@ -207,7 +231,9 @@ public static class ApprovalOutcomeEndpoint
             : string.Equals(decision?.Text("statusMeaning"), "rejected", StringComparison.Ordinal) ? "The answer is recorded, and the engine rejected the decision."
             : !counts && opened.Length > 0 ? "The answer is recorded but does not count, so the engine asks again with a new approval request."
             : counts && decision != null && string.Equals(decision.Text("statusMeaning"), "proposed", StringComparison.Ordinal)
-                ? (records.Query(RowQuery.For("approval-record").Where("decision", decision.Id).Where("outcomeMeaning", "pending")).Count > 0
+                ? (outcome.HasReason(Product.Engine.Core.Reasons.ReasonCodes.GateNotReady)
+                    ? "The answer is recorded and counts. Every approval is in, and the gate is not ready yet, so the decision stays proposed until it is; the warnings say what the gate still needs."
+                    : records.Query(RowQuery.For("approval-record").Where("decision", decision.Id).Where("outcomeMeaning", "pending")).Count > 0
                     ? "The answer is recorded and counts. The decision still waits for other answers."
                     : "The answer is recorded and counts. The decision is not accepted yet; the warnings say why.")
             : "The answer is recorded.";
@@ -267,18 +293,26 @@ public static class ApprovalOutcomeEndpoint
     // of the decision's application on the day of the answer. The runner's Approver Holds Required Role stands only when
     // they agree; otherwise the answer is recorded as from someone who does not hold the role, and it does not count. A
     // product role's holders are the members of its Entra groups, which the runner reads; its value stands as sent.
+    // A record that asks one person by name (Asked Principal; document 25, B25-14) is held only by that person, whatever
+    // roles they hold.
     internal static JsonTreeNode WithOwnerRoleChecked(JsonTreeNode body, StoredRow stored, IRecordReader records)
     {
         string? ownerRole = stored.Text("requiredOwnerRole");
-        if (ownerRole == null || Js.Member(body, "approverHoldsRequiredRole")?.Kind != JsonTreeKind.True)
+        string? asked = stored.Text("askedPrincipal");
+        if ((ownerRole == null && asked == null) || Js.Member(body, "approverHoldsRequiredRole")?.Kind != JsonTreeKind.True)
         {
             return body;
         }
 
         string approver = Js.Text(body, "approver")!;
+        if (asked != null)
+        {
+            return string.Equals(asked, approver, StringComparison.OrdinalIgnoreCase) ? body : WithMember(body, "approverHoldsRequiredRole", JsonTreeNode.False);
+        }
+
         DateTime responded = RecordEndpoints.Moment(Js.Text(body, "respondedOn"))!.Value;
         StoredRow? decision = stored.Text("decision") is string decisionId ? records.Get("decision", decisionId) : null;
-        return decision != null && ApprovalRequestCards.HoldsOwnerRole(records, decision, ownerRole, approver, responded)
+        return decision != null && ApprovalRequestCards.HoldsOwnerRole(records, decision, ownerRole!, approver, responded)
             ? body
             : WithMember(body, "approverHoldsRequiredRole", JsonTreeNode.False);
     }

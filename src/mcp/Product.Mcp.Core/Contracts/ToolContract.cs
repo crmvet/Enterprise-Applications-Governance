@@ -22,7 +22,8 @@ public sealed class ToolContract
         JsonTreeNode annotations,
         string inputSchemaId,
         string outputSchemaId,
-        IList<string> untrustedPaths)
+        IList<string> untrustedPaths,
+        IList<string>? entries = null)
     {
         Number = number;
         Name = name;
@@ -37,7 +38,13 @@ public sealed class ToolContract
         InputSchemaId = inputSchemaId;
         OutputSchemaId = outputSchemaId;
         UntrustedPaths = new ReadOnlyCollection<string>(untrustedPaths);
+        Entries = new ReadOnlyCollection<string>(entries == null || entries.Count == 0 ? new[] { AiClientEntry, PersonEntry } : entries.ToArray());
     }
+
+    // The entry values of tools.json: the MCP endpoint (and the REST API for an AI client), and the product's web app.
+    public const string AiClientEntry = "ai-client";
+
+    public const string PersonEntry = "person";
 
     // The stable tool number of document 24.
     public int Number { get; }
@@ -79,6 +86,19 @@ public sealed class ToolContract
 
     // The data paths the output schema marks x-untrusted, such as "items[].purpose".
     public IReadOnlyList<string> UntrustedPaths { get; }
+
+    // The entries that serve the tool (tools.json entries; both when absent).
+    public IReadOnlyList<string> Entries { get; }
+
+    // True for a tool served only to a person in the product's web app, never to an AI client on any entry (D-38:
+    // answer_approval). AI never approves.
+    public bool IsPersonOnly => !Entries.Contains(AiClientEntry);
+
+    // True when the entry serves the tool.
+    public bool IsServedOn(Product.Engine.Runtime.Callers.CallerEntry entry)
+    {
+        return entry == Product.Engine.Runtime.Callers.CallerEntry.Person ? Entries.Contains(PersonEntry) : entry == Product.Engine.Runtime.Callers.CallerEntry.AiClient && Entries.Contains(AiClientEntry);
+    }
 
     public override string ToString()
     {

@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g21-ai-ends-confirmed-use-refused",
+  "description": "Security review: an AI client cannot end or change a data use a person confirmed; a person does.",
+  "ruleIds": [
+    "G-21"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "people",
+        "values": {
+          "label": "People",
+          "levelKey": "domain",
+          "classificationKey": "confidential",
+          "retentionClassKey": "keep-7-years"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "payroll",
+        "values": {
+          "label": "Payroll",
+          "parentKey": "people",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted",
+          "aiUseRule": "never"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "bank-details",
+        "values": {
+          "label": "Bank details",
+          "parentKey": "payroll",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "timesheets",
+        "values": {
+          "label": "Timesheets",
+          "parentKey": "people",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "field-operations",
+        "values": {
+          "label": "Field operations",
+          "levelKey": "domain",
+          "classificationKey": "internal"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "safety-findings",
+        "values": {
+          "label": "Safety findings",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "parts-catalog",
+        "values": {
+          "label": "Parts catalog",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "commercial",
+        "values": {
+          "label": "Commercial",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "contracts",
+        "values": {
+          "label": "Contracts",
+          "parentKey": "commercial",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "supplier-contracts",
+        "values": {
+          "label": "Supplier contracts",
+          "parentKey": "contracts",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "customers",
+        "values": {
+          "label": "Customers",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "client-accounts",
+        "values": {
+          "label": "Client accounts",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "ai-client-for-person",
+      "onBehalfOfPrincipalId": "fixture-person-1",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "data-use",
+    "operation": "update",
+    "rowId": "fixture-use-1",
+    "after": {
+      "endedOn": "2026-11-24"
+    }
+  },
+  "facts": {
+    "before": {
+      "businessApplication": "fixture-app-1",
+      "dataDomain": "parts-catalog",
+      "access": "read",
+      "purpose": "Fixture purpose.",
+      "reachesAi": false,
+      "isDeidentified": false,
+      "status": "data-use-registered",
+      "startOn": "2026-11-24",
+      "statusMeaning": "registered"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "ai.data-row-draft-only",
+          "ruleId": "G-21"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "ai.data-row-draft-only",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

@@ -35,7 +35,7 @@ public sealed class ContractConformanceTests
     {
         using JsonDocument index = JsonDocument.Parse(File.ReadAllText(Path.Combine(ContractsFolder, "tools.json")));
         string[] indexed = index.RootElement.GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).OrderBy(n => n, StringComparer.Ordinal).ToArray();
-        Assert.Equal(51, indexed.Length);
+        Assert.Equal(102, indexed.Length);
         Assert.Equal(indexed, Disk.Tools.Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Equal(Disk.Tools.Select(t => t.Name), ContractSet.Embedded.Tools.Select(t => t.Name));
 
@@ -101,8 +101,9 @@ public sealed class ContractConformanceTests
     private static void AssertMatchesContracts(IReadOnlyList<JsonObject> listed, string where)
     {
         ToolPolicySet policy = ToolPolicySet.From(DemoSeed.Version.Snapshot, Disk);
-        List<ToolContract> served = Disk.Tools.Where(policy.IsServed).ToList();
-        Assert.Equal(Disk.Tools.Count(t => t.IsR1), served.Count);
+        // The MCP endpoint is the AI client entry: a tool served only to a person (answer_approval, D-38) is not listed.
+        List<ToolContract> served = Disk.Tools.Where(t => policy.IsServed(t) && !t.IsPersonOnly).ToList();
+        Assert.Equal(Disk.Tools.Count(t => t.IsR1 && !t.IsPersonOnly), served.Count);
         Assert.Equal(
             served.Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal),
             listed.Select(t => t["name"]!.GetValue<string>()).OrderBy(n => n, StringComparer.Ordinal));

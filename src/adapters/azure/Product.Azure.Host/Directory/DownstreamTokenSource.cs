@@ -217,6 +217,13 @@ public sealed class OnBehalfOfTokenSource : IDownstreamTokenSource
             return "The development identity has no Microsoft Entra token to exchange. Live directory reads need a real sign-in; for a local demo, use the recorded mode (Product:Directory:Mode Recorded).";
         }
 
+        // A demo persona (D-39) is fictional: the bearer token on the request is the demo operator's own, and exchanging it
+        // would read the directory as the operator while the product shows the persona.
+        if (caller.DemoPersona != null)
+        {
+            return "A demo persona is fictional and has no Microsoft Entra token to exchange. Live directory reads need the person's own sign-in; for a demo install, use the recorded mode (Product:Directory:Mode Recorded).";
+        }
+
         if (caller.IsAppOnly)
         {
             return "An app-only caller has no person to act for. The directory is read only on behalf of a signed-in person.";

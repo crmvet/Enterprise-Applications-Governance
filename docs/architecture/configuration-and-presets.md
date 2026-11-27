@@ -1,13 +1,13 @@
 # Configuration and presets
 
-**Status: in design.** This page describes how the next version is designed to hold everything an organization tailors. Nothing here is released or deployed. Early code that follows it, with the shipped presets as JSON, is in [`src/config`](../../src/config/), under the MIT License. It is not a release.
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes how the product holds everything an organization tailors. The shipped presets are JSON in [`src/config`](../../src/config/), under the MIT License, and the engine that compiles, validates, diffs and activates them is in [`src/engine`](../../src/engine/). The build validates every shipped preset, alone and with each allowed overlay. Where this page says "open design question" or "designed to", that part is not settled or not built.
 
 ## In one screen
 
 1. **Everything an organization can tailor is a configuration row.** Tiers, lifecycle stages, gates, change types, roles, decision rights, approval rules, gate levels, documentation rules, review cadences and separation of duties are all rows. The engine never branches on a fixed tier number or label.
 2. **One working set, many versions.** An organization has one working set in force. It changes only through versions. Each version is a full, hashed snapshot, exactly one version is active, and every operational record stamps the version it was judged by.
-3. **AI proposes, a person accepts, the engine activates.** An AI client, acting for a configuration admin, builds a draft. The engine validates it and computes the difference. A person accepts that difference on an approval card. Only then does the engine activate the new version.
-4. **Presets are shipped configuration sets.** Four full presets and three overlays are designed to ship. An organization picks one full preset, adds any compatible overlays, and owns the result.
+3. **AI proposes, a person accepts, the engine activates.** An AI client, acting for a configuration admin, builds a draft. The engine validates it and computes the difference. A person accepts that difference on the decision page. Only then does the engine activate the new version.
+4. **Presets are shipped configuration sets.** Four full presets and four overlays ship with the code. An organization picks one full preset, adds any compatible overlays, and owns the result.
 5. **The gate ladder is configuration.** What each gate level does is fixed in the engine. Which level applies to which tier, change type and target stage is a configuration row.
 6. **No silent fallback.** If a rule row the engine needs is missing, the engine refuses governed writes and reports the broken configuration. It never falls back to a built-in default.
 
@@ -66,13 +66,13 @@ Each version holds the full snapshot, a SHA-256 hash of it, the change that was 
 | 4 | Engine | Checks that the person holds a role that may change configuration, validates the draft, and computes the preview, the difference, the hash, the summary and the applications whose rules would change |
 | 5 | AI client | Fixes any errors and submits the draft with a reason |
 | 6 | Engine | Records a configuration change decision as Proposed and asks for the approvals the active rules require |
-| 7 | Approver, a person | Reads the engine's difference on an approval card and approves or rejects it, with a typed reason |
+| 7 | Approver, a person | Reads the engine's difference on the decision page and approves or rejects it, with a typed reason |
 | 8 | Engine | When the rules are met, writes the new version and the changed rows in one transaction |
 | 9 | Engine, everywhere | The next request sees the new version. No rebuild and no redeploy |
 
-The approval card shows the engine's own difference, never only the AI's description of it.
+The decision page shows the engine's own difference, never only the AI's description of it.
 
-In the default presets, one configuration admin accepts the change, and that person may be the admin who gave the instruction. The Regulated preset and the strict separation overlay require a second configuration admin. **Open design question:** whether the instructing admin should always accept the exact difference on a card. The design assumes yes, one card that shows the difference.
+One configuration admin accepts the change. The working default is that, in Balanced, this may be the admin who gave the instruction, accepting their own AI's draft. The Regulated preset and the strict separation overlay require another configuration admin. **Open design question:** whether that default should change. Either way, the person who accepts reads the engine's difference on the decision page.
 
 ### What an AI client may and may not do
 
@@ -89,20 +89,20 @@ In the default presets, one configuration admin accepts the change, and that per
 These are part of the engine contract. No configuration and no preset can turn them off.
 
 1. AI never approves. Only an approved answer from a person counts.
-2. Every decision is accepted on a card answered by a person. The only exceptions are a short, locked list of decisions the engine may accept by itself, and the first version at install.
+2. Every decision is accepted only when a person answers its approval. The only exceptions are a short, locked list of decisions the engine may accept by itself, and the first version at install.
 3. Every configuration change is accepted by at least one person who holds a role that may change configuration, except the first version at install.
 4. Activation happens only through an accepted decision. There is no activate tool or button.
 5. A change to who may change configuration is judged by the active rules, not the proposed ones. A draft can never lower its own bar.
 6. Rows in use are retired, never deleted. Keys are never reused.
 7. The engine refuses governed writes when it cannot load a valid active version, or when a rule row it needs is missing.
 
-The locked list in floor 2 has two entries in the design: intake at the lowest tier, and standard changes whose model a person approved once. **Open design question:** whether the engine may ever accept a decision without a person's card. The design assumes only this locked list.
+The locked list in floor 2 has two entries in the design: intake at the lowest tier, and standard changes whose model a person approved once. **Open design question:** whether the engine may ever accept a decision without a person's answer. The design assumes only this locked list.
 
 ### Rollback, records in flight, install and upgrades
 
 - **Rollback.** There is no in-place rollback. "Go back to version 9" is a new draft whose change turns the active version into version 9's snapshot. It goes through the same validation and acceptance, so the history stays append-only.
 - **Records in flight.** Approval requirements are fixed when a decision is submitted. A later version does not add or remove approvals for it. A deployment record is judged by the version active when it arrives.
-- **Install.** No version exists before install, so no approval rules exist either. The person who installs applies the chosen preset, and that first version is accepted directly by that person and recorded as a decision. The next change maps the product roles to the organization's Entra groups. From then on, every change follows the steps above.
+- **Install.** No version exists before install, so no approval rules exist either. The person who installs applies the chosen preset, and that first version is accepted directly by that person and recorded as a decision. The next change maps the product roles to the organization's Entra groups. From then on, every change follows the steps above. The engine's bootstrap of version 1 is built, but a real install has no entry point for it yet; today only the demo install's seed command writes version 1.
 - **Upgrades.** A new product release never applies its changed presets by itself. The upgrade proposes one draft. Shipped rows the organization never touched are proposed as updates. Rows the organization changed are kept and listed as conflicts. Rows the organization added are untouched. A configuration admin accepts the draft like any other change, so local changes are never lost.
 
 ## Presets
@@ -118,6 +118,7 @@ The locked list in floor 2 has two entries in the design: intake at the lowest t
 | Small team | Overlay | One group may carry several roles. No change board. Self-approval at the top tier needs a recorded exception |
 | Strict separation | Overlay | Different people for proposer and approver, and for the instructing and accepting admin. The AI lead and the platform admin in different groups |
 | Linked change management | Overlay | Switches change management to linked mode, where an existing change tool keeps the workflow and the product stores its change number and link |
+| Data domains starter | Overlay | A generic business data domain tree to rename: six domains and fifteen subdomains, with no owners and no tenant facts. It applies to any full preset. See [Data taxonomy](data-taxonomy.md) |
 
 ### Selecting and mixing
 
@@ -136,9 +137,10 @@ Examples: a finance-heavy organization picks Regulated plus strict separation. A
 | Tiers | Three, ranked 1 to 3. Each tier maps to three Microsoft vocabularies: Microsoft's agent risk tiers, the Copilot Studio governance zones and the Power Platform application support tiers |
 | Tier questions | Five: data change, sensitivity, reach, agent autonomy (agents only) and failure impact. The most serious answer wins |
 | Stages and gates | Eleven lifecycle stages, from idea to retirement, and five gates: Accept, Commit, Design, Go-live and Value |
-| Decision types | Sixteen, each with its allowed outcomes |
+| Decision types | Eighteen, each with its allowed outcomes, data use and data retention among them |
 | Change management | Built in. Standard (needs a pre-approved model), normal and emergency (authorization may follow, with a review after) |
-| People | Seven parties, eight owner roles, 14 human roles and 2 workload roles |
+| People | Seven parties, nine owner roles, 15 human roles and 2 workload roles, with 2 more workload roles proposed |
+| Data | Four classifications in Purview's default label names, three domain levels, 20 vendor platforms, and the data approval rules. No domain tree: the tree is the organization's own. See [Data taxonomy](data-taxonomy.md) |
 | Approval rules | The business owner by default. The change manager at tier 3 and for emergencies. The change board for exceptions about a change. Business owner, then security reviewer, for tier 3 go-live. A configuration admin for configuration changes |
 | Separation | Nobody approves their own proposal at tier 3. The deployer is not the only approver of a production change, which is flagged |
 | Documentation | A wiki page for every application from build. A runbook at tiers 2 and 3. An architecture decision record at tier 3. A support guide at tier 3 |
@@ -197,7 +199,7 @@ Development targets are off in every preset. **Open design question:** which pre
 
 ## The seed files
 
-Presets ship as JSON files, one bundle per preset. Rows refer to each other by stable key, never by internal ID. A JSON Schema checks the shape of each file, and the engine's validator checks its meaning, such as complete gate coverage, one accountable per decision right, and no rule that makes an AI an approver. Every shipped preset is designed to pass the same validator in the product build as in your own database.
+Presets ship as JSON files, one bundle per preset. Rows refer to each other by stable key, never by internal ID. A JSON Schema checks the shape of each file, and the engine's validator checks its meaning, such as complete gate coverage, one accountable per decision right, and no rule that makes an AI an approver. Every shipped preset passes the same validator in the product build (the `presets` check of `src/tools/ci.mjs`) that checks each configuration draft in your own install.
 
 The seed is never the live copy. The live copy is the active version in your database. An organization that wants its configuration in source control exports the active version as files after each activation.
 

@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-08",
   "case": "g06-approver-writes-own-outcome-refused",
-  "description": "The approver, a person, writes the outcome on the row directly instead of answering the card. Refused: the only path to an outcome is the approval channel (document 26, AN-01).",
+  "description": "The approver, a person, writes the outcome on the row directly, with no approval answer check behind it. Refused: a person answers only through the product's decision page (answer_approval), where the engine checks them first (D-38; document 26, AN-01).",
   "ruleIds": [
     "G-06"
   ],

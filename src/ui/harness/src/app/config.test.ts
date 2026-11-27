@@ -1,7 +1,7 @@
 // config.json checks: what the page accepts, and what it refuses before any sign-in or API call.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { loadConfig, validateConfig, type PageLocation } from './config';
+import { loadConfig, offeredPersonas, validateConfig, type PageLocation } from './config';
 
 const deployed: PageLocation = { origin: 'https://product.example.org', hostname: 'product.example.org' };
 const local: PageLocation = { origin: 'http://127.0.0.1:4319', hostname: '127.0.0.1' };
@@ -119,4 +119,53 @@ test('loadConfig reads without the cache and reports a missing file', async () =
 
   const missing = await loadConfig((async () => new Response('', { status: 404 })) as typeof fetch, '/app/config.json', deployed);
   assert.equal(missing.ok, false);
+});
+
+test('demo personas are empty when missing, and read by name and label when the host lists them', () => {
+  const missing = validateConfig(entra, deployed);
+  assert.deepEqual(missing.ok && missing.config.demoPersonas, []);
+  const empty = validateConfig({ ...entra, demo: true, demoPersonas: [] }, deployed);
+  assert.deepEqual(empty.ok && empty.config.demoPersonas, []);
+  const listed = validateConfig({
+    ...entra,
+    demo: true,
+    demoPersonas: [
+      { name: 'lena', label: 'Lena Okoro, requester' },
+      { name: 'nadia', label: 'Nadia Ferreira, application owner', objectId: 'ignored' },
+    ],
+  }, deployed);
+  assert.equal(listed.ok, true);
+  if (listed.ok) {
+    assert.deepEqual(listed.config.demoPersonas, [
+      { name: 'lena', label: 'Lena Okoro, requester' },
+      { name: 'nadia', label: 'Nadia Ferreira, application owner' },
+    ]);
+  }
+});
+
+test('demo personas that are not a list, have a bad name, no label or a duplicate name are refused', () => {
+  assert.deepEqual(problemsOf({ ...entra, demoPersonas: 'nadia' }, deployed), ['demoPersonas must be a list.']);
+  for (const demoPersonas of [
+    [{ name: 'bad name<>', label: 'x' }],
+    [{ name: 'nadia', label: '' }],
+    [{ name: 'nadia', label: 'Nadia' }, { name: 'NADIA', label: 'Nadia again' }],
+    ['nadia'],
+  ]) {
+    assert.ok(problemsOf({ ...entra, demoPersonas }, deployed).some(x => x.includes('demo persona')), JSON.stringify(demoPersonas));
+  }
+});
+
+// Fix round 1 (product review): the sign-in page offers the sixteen demo personas; the harness logins only with ?all=1, and the
+// one signed in now stays in the account menu.
+test('the development sign-in offers the demo personas, and harness logins only with ?all=1', () => {
+  const personas = [
+    { name: 'demo-lena', label: 'Lena Okoro, requester' },
+    { name: 'nadia-web', label: 'Nadia Ferreira, business owner (harness login)', harness: true },
+  ];
+  assert.deepEqual(offeredPersonas(personas, '').map(p => p.name), ['demo-lena']);
+  assert.deepEqual(offeredPersonas(personas, '?all=1').map(p => p.name), ['demo-lena', 'nadia-web']);
+  assert.deepEqual(offeredPersonas(personas, '', 'nadia-web').map(p => p.name), ['demo-lena', 'nadia-web']);
+  const parsed = validateConfig({ schemaVersion: 1, apiBase: '/api', auth: { mode: 'development' }, development: { personas } }, local);
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) assert.equal(parsed.config.development.personas[1].harness, true);
 });

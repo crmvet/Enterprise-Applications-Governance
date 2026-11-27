@@ -102,6 +102,20 @@
         "severity": "warning",
         "ruleId": "V37",
         "entity": "Role",
+        "ref": "data-governance-lead"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "pmo"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
         "ref": "security-reviewer"
       }
     ],

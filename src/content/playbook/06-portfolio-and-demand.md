@@ -31,7 +31,7 @@
 ## How it works
 
 1. **See demand.** Every request enters through the front door (chapter 3). The PMO sees them all.
-2. **Prioritize when needed.** When a request needs money or central capacity, the PMO scores it and sets a horizon. The sponsor funds, defers or stops it on a card. That is the Commit gate.
+2. **Prioritize when needed.** When a request needs money or central capacity, the PMO scores it and sets a horizon. The sponsor funds, defers or stops it on the decision page. That is the Commit gate.
 3. **Link the plan.** The epic, work item or plan is linked to the application. The product is designed to copy no plan facts.
 4. **Track the stage.** Each application moves through the agreed lifecycle stages. Reports use only those words.
 5. **Review the portfolio.** On a set cadence the PMO prepares the review pack: apps by business area, with owner, tier, stage, last review, open decisions and dependants.

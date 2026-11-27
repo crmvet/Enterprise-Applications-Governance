@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-01",
   "case": "most-serious-answer-wins",
-  "description": "Balanced, a Power Platform app. One tier 3 answer, two tier 2 answers and one tier 1 answer compute tier 3: the most serious answer wins, and it is the only decisive answer.",
+  "description": "Balanced, a Power Platform app. One tier 3 answer, two tier 2 answers and one tier 1 answer compute tier 3: the most serious answer wins, and it is the only decisive answer. Changing data under its own identity also triggers the architecture review.",
   "tags": [
     "invariant"
   ],
@@ -43,7 +43,9 @@
         }
       ],
       "missingQuestionKeys": [],
-      "triggeredReviewTypeKeys": [],
+      "triggeredReviewTypeKeys": [
+        "architecture"
+      ],
       "triggeredGateRequirementKeys": [],
       "proposedIsLower": false,
       "ignoredAnswers": [],

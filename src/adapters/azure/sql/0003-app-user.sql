@@ -9,8 +9,9 @@
 -- product_app: reads and writes the engine's rows and nothing else. No DDL. No delete in config or audit, and none on the
 -- operational tables whose rows are never deleted (document 22, section 2.5); the engine decides which drafts go.
 -- No read of history tables or ledger views: the engine reads current rows only, and auditors read history elsewhere.
--- The approval outcome columns are written in the approval runner's request only (0002); the separate approval_writer
--- principal of document 22 needs a second identity and connection and is not in this release.
+-- The approval outcome columns are written only in the approval runner's request or in a person's own answer request
+-- (0002, D-38). The separate approval_writer principal of document 22 needs a second identity and connection and is
+-- not in this release.
 
 IF DATABASE_PRINCIPAL_ID(N'product_app') IS NULL CREATE ROLE [product_app];
 IF DATABASE_PRINCIPAL_ID(N'product_migrator') IS NULL CREATE ROLE [product_migrator];

@@ -138,6 +138,8 @@ Every process writes through the same path, so the rules hold for the app, the w
 
 ### 3.2 S1: approvals through approval cards
 
+> **As built (D-38).** A person answers on the decision page in the web app by default. Build note [B23-7](#b23-7-s1-a-person-answers-on-the-decision-page-built-2026-11-23-d-38) records the change; this section keeps the design as written.
+
 Every process that needs a person's yes uses this one sub-process. It is how D-02 ("AI never approves"), D-07 (decision rights as configuration) and D-16 (approval cards in Outlook and Teams) meet.
 
 **Trigger.** A decision (O09) reaches status proposed, or a confirmation card is needed (P10). Every decision type goes on at least one card (28, issue 1).
@@ -712,6 +714,8 @@ The Document Owner on each O19 row is a person; by default the technical owner.
 
 **Purpose.** Make sure no application is left without an answerable owner: a deputy acts at once, a successor is named before access goes, open approvals move, and agents flagged by Microsoft get a business decision.
 
+> **As built.** The deputy holds the owner role and may answer that role's requests, and reminders escalate to the deputy. The deputy acting for the leaver and open approvals moving are designed, not built; see [p08-owner-leaves.md](../../architecture/processes/p08-owner-leaves.md).
+
 **Decisions it follows.** D-01, D-11, D-15, D-17, D-20.
 
 **Trigger.**
@@ -1197,7 +1201,7 @@ P05 step 5 says an emergency inside its follow-up time is not flagged until the 
 ### B23-4 P04 and P07: reviews and documents
 
 - **P07.** OP-08 refuses an AI actor's update to current on a gate-relevant document (C22 Current Needs Person) on every path. Until an approval runner is connected, no confirmation card is sent: the tool stores the AI's "current" as draft and says so (working default, open design question 9, see 28-working-defaults.md).
-- **P04.** Whether an AI client may mark a review done, and whether done needs Done On, Reviewer and an accepted Outcome Decision, is open. A decision about a review points at the review's application, with the review ID in its context, because O09 has no review subject kind.
+- **P04.** Whether an AI client may mark a review done, and whether done needs Done On, Reviewer and an accepted Outcome Decision, was open; it is settled in B23-10 (a person, and yes). A decision about a review points at the review's application, and the review names the decision as its Outcome Decision, because O09 has no review subject kind.
 
 ### B23-5 P01, P03, P08 and S1: behavior as built
 
@@ -1223,3 +1227,130 @@ writes the final outcome, the same transaction settles the row.
   counts. Step 3's one record per required response is still open: the engine opens one record per requirement, so a
   rule with Minimum Count above 1 cannot be met yet, and expiry writes and restarts are not built.
 - **Proposal.** Accept pull as the Azure binding's S1 transport, and keep push as the Dataverse binding's.
+
+### B23-7 S1: a person answers on the decision page (built 2026-11-23, D-38)
+
+D-38 makes the product's decision page the default place to answer, with the token proving who answered; Teams and
+Outlook messages become notices that link to the page. Answering inside a card stays a per-install option: with step-up
+sign-in off, the approval runner can send an answerable card and relay its answer to the outcome route. D-38 rewrites
+S1; the steps above still describe the card path, so this note records what is built.
+
+- **Steps 4 to 6 on the page.** The person opens the decision page and answers through `answer_approval` (document 24,
+  tool 52), a tool served only on the web app's entry. Before anything is written, the engine checks that the signed-in
+  person is one the request asks (its role, or its owner role on the decision's application, held now), that no
+  separation rule keeps the answer from counting, that the person's approval does not already count for the same
+  requirement, that the request is pending and not expired, and that a typed reason is given where needed. It then writes
+  the person's own answer with channel in-app, and steps 7 and 8 run as for a card's answer: OP-03 counts, the decision
+  is accepted or rejected, requests still pending are canceled, and the next step or a restart opens.
+- **The outbox.** An answer on the page settles the record's outbox row in the same transaction, so the runner sends no
+  card for it afterwards, and a card already sent is answered for the outbox too.
+- **Not built on 2026-11-23:** the notices themselves (the runner still sent cards), the decision page, and step-up
+  sign-in for tier 3 and configuration changes, a setting that is off in the demo (document 26, B26-7).
+- **Built since:** the decision page, and step-up sign-in, which applies to every approval answer while it is on
+  (document 26, B26-9). With step-up sign-in on, the runner's flow template sends a link-only notice and the outcome
+  route refuses a relayed answer; with it off, the template sends an answerable card and relays its answer. The
+  product's side of both paths is tested through a stand-in for the runner, and the flow template through checks of its
+  files. The flows have not run in a real tenant.
+
+### B23-8 P01, P02, P03, P08 and P09: the accepted decision acts (built 2026-11-24, D-41)
+
+The update-subject effect (document 25, B25-8) is built, so the steps that say "on acceptance the engine writes" now
+happen, in the same transaction as the acceptance, on every path: the approval runner's answer, a person's answer on
+the decision page (B23-7), and the engine's acceptance for the locked list. A rejected decision changes nothing but
+itself.
+
+- **P01 step 7.** Accept registers the application the request names, or creates it, registered, from the request; it
+  moves past the Accept gate (Balanced: to prioritize and fund) and the request is completed. Redirect completes the
+  request, decline rejects it, park keeps it open; each names the decision as the Triage Decision. The business owner
+  named on the intake becomes the application's business owner (built since, B23-9).
+- **P02 steps 6 and 8.** An accepted tier decision writes Tier and Tier Decision (the tier named on the decision, or for
+  confirm the tier the latest answers computed), and the assessment takes the decision as its Tier Decision. An
+  accepted autonomy level decision (agree) writes the Agreed Autonomy Level and Autonomy Decision. Not built: Next
+  Review On from the cadence.
+- **P03 step 4.** An authorized change moves to in progress, which Balanced labels Scheduled; a change authorization
+  accepted with outcome reject moves it to rejected. When the approvers reject the decision itself, the change stays
+  submitted and its reads show the authorization as rejected. Go-live moves the application to operate (C19 Next
+  Lifecycle Stage).
+- **P08 steps 4 and 5.** An accepted ownership decision ends the named assignments (End On) and starts the successor and
+  any new deputy, with the decision as Ownership Decision. Deputies of an ended holder move to the successor. A role
+  with Maximum Holders ends its earliest holders when a new one starts. Not built: who answers the ownership card of
+  an application with no owner yet.
+- **P09 step 7.** An accepted retirement (retire) moves the application to the retired stage and cancels the reviews
+  still due. Not built: archiving the registration "when configured" (no setting exists) and stopping document
+  reminders (the reminder timer is not built yet).
+
+### B23-9 P01: the business owner, the PMO's demand fields and record numbers (built 2026-11-24, D-41)
+
+- **P01 step 1** asks for "purpose, business owner, data, audience". The requester now names the business owner as a
+  person the product knows, found by name (`save_intake_draft` with `businessOwnerObjectId`; `find_people`). Before,
+  the web app kept the name as a line of the need, which no rule could read; an older request keeps that line, and the
+  page asks for the person. The Accept gate counts the named owner, so a request for a new application can pass triage,
+  and the accepted intake makes the person the application's business owner (document 25, B25-10). No ownership
+  decision is opened for it: the intake decision is the basis, and the person who decides triage reads the named owner
+  on the request.
+- **P01 step 8.** The PMO records Score, Size Band, Horizon and Expected Benefit with `score_intake_request` once the
+  request is submitted (document 24, B24-9), and proposes the priority decision with `save_decision_proposal`; the
+  sponsor answers it on the decision page. The demand list orders and filters by score, priority, size band and
+  horizon. Who answers the priority card of a request with no application yet (Balanced names the sponsor owner role)
+  waits for a sponsor fallback.
+- **Record numbers.** The engine numbers every intake request, decision, change request and review it creates (IR-,
+  DEC-, CHG-, REV-, and APP- and CFG-), after the highest number already held (document 25, B25-9), so every record
+  a process step names has a number people can say.
+
+### B23-10 P03, P04, P05, P06 and P07: completing reviews and changes, claims and My work (built 2026-11-24, D-41)
+
+- **P04 step 5, close the review.** A person whose review it is (its lead owner, a person who decides the decision it records, or a person whose role approves it) completes it on its page with `complete_review` once its outcome decision is accepted: done, with Done On, the person as Reviewer, the Outcome Decision and Next Due On from the cadence. An AI client drafts the outcome; it never marks a review done (document 25, B25-12). The Design gate: the architecture review records the design decision, the gate's own gate decision, so accepting that decision passes the gate ("Approve, then Complete review" in the demo story). A review-done requirement for the architecture type on the Design gate would hold the design decision until the review is done, while the review waits for that decision, so Balanced keeps none, and the review page shows the gate the review feeds through its decision.
+- **P03 step 8, close.** The change owner, or the change manager, closes an authorized change with its result on the change page (`complete_change`): in progress, or a submitted emergency, whose authorization may follow. The change leaves the open schedule. An AI client records the result as reported; a person closes.
+- **P03 step 9, review.** A failed, rolled back or partly succeeded change, or any change whose type Requires Review After (Balanced: emergency), opens one post-change review, due Review Due Days working days later (C20; Balanced: 5). The build read a flag no preset has and gave every review 14 days; that is fixed. The change page lists its own post-change reviews.
+- **P05 step 5.** The AI-only code approval flag is stored on the deployment record, so the Deployments page and flagged lists show it (document 22, B22-10).
+- **P06 step 6, claim.** For a new application the claim starts an intake: a draft application holds the component, and a draft intake request names it and the claimant as business owner. The requester answers the tier questions and submits it; triage registers the application. For an existing application a claimant who holds no owner role on it opens an ownership decision about the claim, and a person's claim submits it at once, so the owners the rules name confirm it on the decision page. Claims keep the link the admin's list gave.
+- **P07 and My work.** A missing document goes to the application's technical owner, the default document owner, and a stale or draft one to its Document Owner. Reviews reach people by role, as in P04. Each item opens the page where its action is.
+- **Seeded decisions.** The demo estate holds change authorizations recorded as accepted with no approval request. Their reads say they were recorded outside the product's approvals (`settledBy: recorded`) instead of listing approvals as missing; the engine cannot give them approval records after the fact.
+- **Not built yet:** the S2 refresh that opens the next review on its due date; retiring a claimed component when its owners reject the claim; a link for items the live inventory finds.
+
+### B23-11 P05, P09 and the screens: places, dependencies, evidence and AI activity (built 2026-11-24, D-41)
+
+- **P05, a target first.** `record_deployment` takes only a registered target. A person registers one, with its stage and change path, on the Places screen (`save_deployment_target`, platform admin, web app only); `list_deployment_targets` shows what runs where (document 24, B24-11).
+- **Dependencies (A-DEPENDENCIES, P09 step 2).** The owner of an application, an architect or the platform admin records "reads data from" or another dependency on the map (`save_dependency`), and ends it when it stops. An AI build loop may report one too, as reported.
+- **Evidence and AI activity (UC-09, UC-11, A-EVIDENCE, P10).** The auditor reads an application's or a decision's evidence pack (`get_evidence`) and the audit trail (`get_audit_trail`); the AI activity (`get_ai_activity`) shows what AI clients drafted, who took it forward, and what the product refused them, with the rule.
+- **Not built yet:** the screens; retiring a target.
+
+### B23-12 P01, P02, P03, P04, P06, P08 and P09: Balanced follows the processes (built 2026-11-24, D-41)
+
+The Balanced preset now says what the "Approvals" tables of the processes say (document 21, B21-9; document 25, B25-14).
+
+- **P01 step 5.** The intake decision opens consultation cards for the architect, the PMO and the security reviewer; their answers are recommendation only. The platform admin still decides on the accountable card, and the lowest-tier intake is still accepted by the engine (step 6). **P01 step 8.** The priority card goes to the sponsor; for a request with no application yet, to the business owner the request names, by name.
+- **P02.** A tier decision asks the platform admin; at tier 3 the platform admin and the security reviewer, everyone must approve. The tier is the one at stake, so raising an application to tier 3 takes the tier 3 approvals. The builder may propose it (responsible). A data use at tier 3 asks the data owner and the security reviewer, both must approve: restricted data is a tier 3 answer, and approval rules have no data scope yet (data-taxonomy.md scopes it by classification later). The AI lead is consulted on an autonomy level.
+- **P03.** Balanced ships one standard change model, `routine-maintenance` (one application, a window of four hours or less, tier 2 at most). It counts once a person in the install approves it through a configuration change (P11): activation names that decision as the model's approval. A submitted standard change that fits an approved model is then accepted by the engine with no card and scheduled; one that fits none is refused as not standard.
+- **P04.** A tier answer that changes data under the app's own identity, touches restricted data, reaches the whole organization or outside users, or lets an agent act on its own triggers the architecture review. The answer tools report the trigger; nothing opens the review yet (S2).
+- **P06 step 9 and P08 step 7.** A new decision type, flagged agent (keep, reassign, consolidate, retire), goes to the AI lead, first to respond, with a typed reason.
+- **P08 steps 4 and 5.** An ownership decision asks each proposed owner by name, so the successor accepts on their own card, and the business owner; when the business owner role is the one that changes hands, the sponsor, and with no sponsor the portfolio's accountable person, by name. The platform admin may propose a hand-over (responsible). The successor's yes is consent, so no separation rule applies to it.
+- **P09.** The data owner may decide to retain data (data use outcome retain, step 3). The retirement decision ends with the outcome complete, which moves the application to the retired stage (step 7), first to respond.
+- **Go-live.** A data owner is named before go-live at tiers 2 and 3 (G2), and owner gaps follow that scope.
+- **The demo estate** names a data owner and deputy on every tier 2 and 3 application but two (Quote Builder and Partner Rebate Calculator, deliberate gaps), a sponsor on three applications whose business owner role changes hands in the demo, and makes the two tier 3 maintenance changes normal changes the change manager authorized. The demo director proposes a tier 3 data use on Field Knowledge MCP Server, so the two yeses show live.
+
+### B23-13 S2, S1 step 9 and P07: the due-state refresh runs (built 2026-11-24, D-41)
+
+S2's daily refresh is built (document 25, B25-18): a timer in the Azure Functions app runs it as the engine, at the hour
+a host setting names (off when unset), and a platform admin runs it now from the web app (`run_due_state_refresh`,
+document 24, B24-17). It opens the next review on its Next Due On (P04; the review `complete_review` stored), moves a
+current document past its Stale On to stale (P07 step 7), expires approval requests past their Expires On and asks again
+(S1 step 9), with the escalation to the deputy at expiry, and sends the day's reminders, repeats and escalations of the
+C26 rules for reviews, documents, approval requests and claims, a review's first overdue day to its lead owner, and the
+flag notices of deployments flagged at gate level flag or above (S2 step 4). Each change and each notice is an Audit
+Entry (S2 step 5). A rerun on the same day changes and sends nothing new: each notice is keyed by its item and its step.
+
+- **Messages.** The engine records who is told, through which channel, and why; sending the Teams or Outlook message is
+  the notification flow's (S2, bindings), which is not built yet. The approval runner already carries the cards.
+- **UC-08 in the demo.** The platform admin runs the refresh on the Demo install and the answer lists every reminder and
+  escalation with its recipients; the audit trail shows each one.
+- **Not built:** missing documents get no reminder (they are computed, never stored); draft expiry
+  (`draft-expiry-days`); a gate policy row's own Flag Notify list (the default-flag-notify setting is read).
+
+### B23-14 P01 step 5: the named business owner consents (built 2026-11-24, D-41)
+
+The business owner a requester names on an intake is asked by name, on an approval request of their own, whether they
+take the role (document 25, B25-18). The Accept gate counts them, and the accepted intake assigns them, only once they
+consented. A lowest-tier request the engine accepts with no card waits for the consent too, and a refused consent
+rejects the intake decision. The demo story's order changes accordingly: the named owner accepts the role before the
+application is registered, not after.

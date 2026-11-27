@@ -27,7 +27,7 @@
       "properties": {
         "status": {
           "$ref": "../common.schema.json#/$defs/statusValue",
-          "description": "Always Proposed. Only people accept a decision, on approval cards.",
+          "description": "Always Proposed. A decision is accepted only through people's answers on the decision page.",
           "properties": {
             "meaning": {
               "$ref": "../common.schema.json#/$defs/decisionStatusMeaning",
@@ -73,7 +73,7 @@
   "examples": [
     {
       "ok": true,
-      "summary": "The owner handover is proposed. Two people must approve it on their cards.",
+      "summary": "The owner handover is proposed. Two people must approve it on the decision page.",
       "data": {
         "recordId": "60000000-0000-4000-8000-000000000002",
         "status": {

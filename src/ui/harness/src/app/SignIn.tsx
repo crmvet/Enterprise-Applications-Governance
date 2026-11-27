@@ -4,6 +4,7 @@
 import { TriangleAlert, UserRoundCheck } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import type { DevAuth } from '../auth/devAuth';
+import { offeredPersonas } from './config';
 import type { MsalAuth } from '../auth/msalAuth';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Button } from '../components/ui/button';
@@ -41,7 +42,8 @@ export function EntraSignIn({ auth }: { auth: MsalAuth }) {
           dependencies, and planned changes and deployments.
         </p>
         <p className={small}>
-          The pages are read-only. Your organization's groups decide which product roles you hold and what you can see.
+          The engine checks every change you make. Your organization's groups decide which product roles you hold, and so
+          what you can see and do.
         </p>
         <Button className="self-start" disabled={busy} onClick={() => { setBusy(true); void auth.signIn(); }}>
           <UserRoundCheck aria-hidden />
@@ -55,7 +57,8 @@ export function EntraSignIn({ auth }: { auth: MsalAuth }) {
 export function DevSignIn({ auth }: { auth: DevAuth }) {
   const legendId = useId();
   const groupName = useId();
-  const [choice, setChoice] = useState<string>(auth.personas[0]?.name ?? '');
+  const shown = offeredPersonas(auth.personas, window.location.search);
+  const [choice, setChoice] = useState<string>(shown[0]?.name ?? '');
   useEffect(() => { document.title = 'Development sign-in | Enterprise Applications Governance'; }, []);
   return (
     <main className={wrap} id="main">
@@ -70,7 +73,7 @@ export function DevSignIn({ auth }: { auth: DevAuth }) {
           <legend className="mb-1.5 p-0 text-sm font-semibold text-navy" id={legendId}>Persona</legend>
           {/* Native radio buttons: one tab stop for the group, arrow keys move the choice. */}
           <div className="flex flex-col gap-0.5" role="radiogroup" aria-labelledby={legendId}>
-            {auth.personas.map(p => (
+            {shown.map(p => (
               <label key={p.name} className="flex min-h-8 cursor-pointer items-center gap-2.5 rounded-md px-1 text-sm text-navy hover:bg-muted">
                 <input
                   type="radio"

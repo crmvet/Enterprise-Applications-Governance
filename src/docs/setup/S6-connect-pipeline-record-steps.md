@@ -2,12 +2,12 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run in Azure DevOps, GitHub or a pipelines host. The record step samples are tested against a local stub of the record endpoint, and the record endpoint itself is tested in the local server.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 23, P05; document 24, sections 4.6 and 9.1; document 25, section 12.2; document 26, sections 3.4 and 8; document 28, question 12 and question 7; `src/samples/pipeline-steps/README.md`; `mcp/contracts/record-endpoint.json`.
+- **See also:** [api.md](../api.md#the-other-routes), [install.md](../install.md#3-pipelines-and-the-approval-runner), [admin.md](../admin.md#roles-and-access); [`src/samples/pipeline-steps/README.md`](../../samples/pipeline-steps/README.md); `mcp/contracts/record-endpoint.json`.
 - **Open design questions that touch this guide:** 7 and 12 (markers below).
 
 ## Purpose
 
-The product records deployments from the client's own pipelines and never builds, hosts or runs a pipeline (D-19). Each pipeline gets one small step after its deploy that sends one HTTPS call to the record endpoint, `POST https://<host>/api/deployments`. The step fails soft: a failed record never fails the release, and the step never asks whether a deployment may go ahead (check steps wait for D-03).
+The product records deployments from the client's own pipelines and never builds, hosts or runs a pipeline: it maps them, records their deployments and offers copy-paste steps. Each pipeline gets one small step after its deploy that sends one HTTPS call to the record endpoint, `POST https://<host>/api/deployments`. The step fails soft: a failed record never fails the release, and the step never asks whether a deployment may go ahead. Check steps wait for the change gate decision, which is not made yet: whether a recorded change approval should stop a deployment that lacks it, or only record and flag it.
 
 This guide gives each pipeline its own workload identity, the app role and the Workload Grant it needs, and the settings of the copy-paste samples in `src/samples/pipeline-steps/`.
 
@@ -17,7 +17,7 @@ This guide gives each pipeline its own workload identity, the app role and the W
 |---|---|
 | The pipeline's owner | Adds the record step, sets its variables, owns the federated credential |
 | The client's Entra admin | Registers each pipeline's identity (or approves the service connection's), assigns the `Deployment.Record` app role |
-| The client's configuration admin | Instructs one Workload Grant per pipeline identity as a configuration change; a person accepts it on a card |
+| The client's configuration admin | Instructs one Workload Grant per pipeline identity as a configuration change; a person accepts it on the decision page |
 | The client's platform admin | Runs `check_role_bindings` and reviews the first records |
 
 ## Prerequisites
@@ -33,11 +33,11 @@ This guide gives each pipeline its own workload identity, the app role and the W
    - GitHub Actions: an app registration (or a user-assigned managed identity) with a federated credential that trusts the repository and its environment or branch; the job asks for `id-token: write`.
    - Power Platform Pipelines: a managed identity or federated credential where the tenant offers one for cloud flows. UNVERIFIED; see the sample's README.
 
-   Never a client secret, a certificate in a connection, a personal access token or a key in the URL. One identity per pipeline keeps each pipeline visible and revocable on its own (document 28, question 12, option A).
+   Never a client secret, a certificate in a connection, a personal access token or a key in the URL. One identity per pipeline keeps each pipeline visible and revocable on its own (a working default).
 
 2. **Assign the `Deployment.Record` app role** of the product's API directly to each pipeline's service principal, as `infra/README.md`, section "3. Pipelines and the approval runner", shows. Never through a group. Note each assignment's ID.
 
-3. **Record one Workload Grant per pipeline identity.** The configuration admin instructs a configuration change that upserts a `workload-grant` row for each: `principalObjectId` (the pipeline's service principal object ID), `workloadRoleKey` `deployment-recorder`, a `reason`, `usesFederatedCredential` true, `bindingDetail` (the assignment ID from step 2) and `expiresOn` (no more than `workload-grant-max-days`, default 365, ahead). A person accepts it on a card. Without a current grant the engine refuses the pipeline, even with the app role. WORKING DEFAULT (open design question 12)
+3. **Record one Workload Grant per pipeline identity.** The configuration admin instructs a configuration change that upserts a `workload-grant` row for each: `principalObjectId` (the pipeline's service principal object ID), `workloadRoleKey` `deployment-recorder`, a `reason`, `usesFederatedCredential` true, `bindingDetail` (the assignment ID from step 2) and `expiresOn` (no more than `workload-grant-max-days`, default 365, ahead). A person accepts it on the decision page. Without a current grant the engine refuses the pipeline, even with the app role. WORKING DEFAULT (open design question 12)
 
 4. **Copy the sample** for the platform (`azure-devops/`, `github-actions/` or `power-platform-pipelines/`) into the pipeline, after the deploy step, and set:
 
@@ -64,7 +64,7 @@ This guide gives each pipeline its own workload identity, the app role and the W
 ## Open points
 
 1. **The samples' default token scope.** The script derives the scope from the endpoint URL's origin (`https://<host>/.default`), while the API's Application ID URI is `https://<host>/mcp` (or `api://<api-client-id>`). With the default, the token request fails and the step warns. Until the samples change, step 4 sets `RECORD_ENDPOINT_SCOPE` explicitly. Proposal: the samples' README names the Application ID URI as the scope for the Azure binding.
-2. **Check steps** (asking before a deploy whether the change is approved) wait for D-03; no sample exists, and nothing here ever stops a deployment.
+2. **Check steps** (asking before a deploy whether the change is approved) wait for the change gate decision; no sample exists, and nothing here ever stops a deployment.
 3. **Power Platform Pipelines.** If no managed identity or federated credential works for the extension flow, that sample cannot meet the no-secret rule and should be withdrawn rather than given a secret (the sample's README, open point 3).
 4. **Many pipelines, many grants.** Forty pipelines are forty grants, each renewed within `workload-grant-max-days`. `check_role_bindings` lists them by key, not by Expires On; guide [A3](../admin/A3-workload-grants.md) has the renewal routine.
 

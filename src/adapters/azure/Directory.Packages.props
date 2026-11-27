@@ -31,6 +31,8 @@
          The project SDK is Azure.Functions.Sdk, pinned in the project file's Sdk attribute (1.0.1). -->
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />
+    <!-- The timer trigger of the daily due-state refresh (document 25, B25-18). MIT. -->
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" Version="1.2.0" />
     <!-- The managed identity credential the Functions wrapper gives the telemetry exporter. MIT.
          From 1.21 this package forwards its types to Azure.Core. SqlClient's Azure extension asks for 1.18, a full copy

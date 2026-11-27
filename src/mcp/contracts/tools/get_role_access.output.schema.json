@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_role_access output",
+  "description": "The response envelope. On success, data lists each role with its bindings, holders, tools, decision rights and approval rules, and the separation rules.",
+  "x-tool": "get_role_access",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "roles",
+        "separationRules",
+        "toolPolicySource",
+        "holdersReadFrom",
+        "myRoleKeys"
+      ],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/role"
+          }
+        },
+        "separationRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "separationRule",
+              "ruleKind",
+              "enforcement",
+              "words"
+            ],
+            "properties": {
+              "separationRule": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "ruleKind": {
+                "type": "string"
+              },
+              "enforcement": {
+                "type": "string"
+              },
+              "words": {
+                "type": "string",
+                "description": "The rule in one sentence."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "toolPolicySource": {
+          "enum": [
+            "configuration",
+            "shipped-seed"
+          ]
+        },
+        "holdersReadFrom": {
+          "enum": [
+            "entra-live",
+            "demo-personas",
+            "not-read"
+          ],
+          "description": "Where this install reads the holders, also when this read lists none (includeHolders false): Entra, read live; the demo personas and their fictional groups (a demo install or a local run); or nowhere, when this install cannot read them. The binding check reads the same source."
+        },
+        "myRoleKeys": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "role": {
+      "type": "object",
+      "required": [
+        "role",
+        "party",
+        "duties",
+        "isWorkloadRole",
+        "isReadOnly",
+        "canChangeConfiguration",
+        "heldByMe",
+        "bindings",
+        "holders",
+        "workloadGrants",
+        "tools",
+        "decisionRights",
+        "approvals",
+        "separationRules"
+      ],
+      "properties": {
+        "role": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "party": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isWorkloadRole": {
+          "type": "boolean"
+        },
+        "isReadOnly": {
+          "type": "boolean"
+        },
+        "canChangeConfiguration": {
+          "type": "boolean"
+        },
+        "heldByMe": {
+          "type": "boolean"
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "group",
+              "bindingMethod",
+              "lastVerifiedOn"
+            ],
+            "properties": {
+              "group": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/directoryObject"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "bindingMethod": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "dataverse-group-team",
+                      "entra-app-role-assignment"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lastVerifiedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The Entra groups bound to the role (C30)."
+        },
+        "holders": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "objectId",
+                  "displayLabel",
+                  "viaGroup"
+                ],
+                "properties": {
+                  "objectId": {
+                    "$ref": "../common.schema.json#/$defs/guid"
+                  },
+                  "displayLabel": {
+                    "type": "string"
+                  },
+                  "viaGroup": {
+                    "$ref": "../common.schema.json#/$defs/guid"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "People in the bound groups, read live. Null when not read."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workloadGrants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "principal",
+              "reason",
+              "expiresOn",
+              "isExpired"
+            ],
+            "properties": {
+              "principal": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expiresOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isExpired": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "For a workload role: its grants (C42)."
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/toolLine"
+          },
+          "description": "The tools the role may call."
+        },
+        "decisionRights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "decisionRight",
+              "decisionType",
+              "letter",
+              "scope"
+            ],
+            "properties": {
+              "decisionRight": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "decisionType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "letter": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRule",
+              "decisionType",
+              "isConsultation",
+              "scope",
+              "guidelineRef"
+            ],
+            "properties": {
+              "approvalRule": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "decisionType": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "isConsultation": {
+                "type": "boolean"
+              },
+              "scope": {
+                "type": "string"
+              },
+              "guidelineRef": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/guidelineRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "separationRules": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/labelledKey"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "toolLine": {
+      "type": "object",
+      "required": [
+        "tool",
+        "number",
+        "toolset",
+        "access",
+        "personOnly",
+        "maxAiState",
+        "aiMaySubmit",
+        "relations"
+      ],
+      "properties": {
+        "tool": {
+          "$ref": "../common.schema.json#/$defs/toolName"
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "toolset": {
+          "type": "string"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        },
+        "personOnly": {
+          "type": "boolean",
+          "description": "True for a tool served only to a person in the web app."
+        },
+        "maxAiState": {
+          "type": "string",
+          "description": "How far an AI client may take a record through the tool, after the Tool Policy."
+        },
+        "aiMaySubmit": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The subject kinds an AI client may submit through the tool."
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The relations the engine also checks, such as owner-of-application."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

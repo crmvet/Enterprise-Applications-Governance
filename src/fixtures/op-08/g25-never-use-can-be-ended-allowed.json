@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g25-never-use-can-be-ended-allowed",
+  "description": "A use that breaks a never rule after the rule tightened can always be ended today (End On today or earlier).",
+  "ruleIds": [
+    "G-25"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "people",
+        "values": {
+          "label": "People",
+          "levelKey": "domain",
+          "classificationKey": "confidential",
+          "retentionClassKey": "keep-7-years"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "payroll",
+        "values": {
+          "label": "Payroll",
+          "parentKey": "people",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted",
+          "aiUseRule": "never"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "bank-details",
+        "values": {
+          "label": "Bank details",
+          "parentKey": "payroll",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "timesheets",
+        "values": {
+          "label": "Timesheets",
+          "parentKey": "people",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "field-operations",
+        "values": {
+          "label": "Field operations",
+          "levelKey": "domain",
+          "classificationKey": "internal"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "safety-findings",
+        "values": {
+          "label": "Safety findings",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "parts-catalog",
+        "values": {
+          "label": "Parts catalog",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "commercial",
+        "values": {
+          "label": "Commercial",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "contracts",
+        "values": {
+          "label": "Contracts",
+          "parentKey": "commercial",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "supplier-contracts",
+        "values": {
+          "label": "Supplier contracts",
+          "parentKey": "contracts",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "customers",
+        "values": {
+          "label": "Customers",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "client-accounts",
+        "values": {
+          "label": "Client accounts",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "application-owner"
+      ]
+    }
+  },
+  "input": {
+    "entity": "data-use",
+    "operation": "update",
+    "rowId": "fixture-use-2",
+    "after": {
+      "endedOn": "2026-11-24"
+    }
+  },
+  "facts": {
+    "before": {
+      "businessApplication": "fixture-app-1",
+      "dataDomain": "bank-details",
+      "access": "read",
+      "purpose": "Fixture purpose.",
+      "reachesAi": true,
+      "isDeidentified": false,
+      "status": "data-use-registered",
+      "startOn": "2026-11-24",
+      "statusMeaning": "registered"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true
+    }
+  }
+}

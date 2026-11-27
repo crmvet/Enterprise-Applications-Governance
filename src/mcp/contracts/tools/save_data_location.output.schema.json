@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_data_location output",
+  "description": "The response envelope. On success, data is the write result for the first location and one result per item.",
+  "x-tool": "save_data_location",
+  "x-ai-write-states": [
+    "draft"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the first location saved.",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "dataLocationId",
+              "created",
+              "matchedExisting",
+              "status",
+              "label",
+              "platform",
+              "recordUrl"
+            ],
+            "properties": {
+              "dataLocationId": {
+                "description": "Null only for a validateOnly check of a new location.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O25 Data Location"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "created": {
+                "type": "boolean"
+              },
+              "matchedExisting": {
+                "type": "boolean",
+                "description": "True when the item named no ID and matched a registered location on its platform and external ID or URL."
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue"
+              },
+              "label": {
+                "type": "string",
+                "description": "The name as saved.",
+                "x-untrusted": true
+              },
+              "platform": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "recordUrl": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "createdCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "updatedCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "createdCount",
+        "updatedCount"
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

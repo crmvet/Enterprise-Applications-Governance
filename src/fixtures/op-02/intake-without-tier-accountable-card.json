@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-02",
   "case": "intake-without-tier-accountable-card",
-  "description": "An intake whose tier is not known yet cannot meet the lowest-tier condition, so a person answers a card.",
+  "description": "An intake whose tier is not known yet cannot meet the lowest-tier condition, so a person answers a card. Balanced also ships the consent of the business owner the request names (intake-business-owner-consent, document 25, B25-18), which stays a requirement beside it; the runtime drops it when the request names nobody new.",
   "workingDefaults": [
     8
   ],
@@ -20,6 +20,11 @@
     "outcome": "required",
     "payload": {
       "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-business-owner-consent",
+          "approverProposedOwners": true
+        },
         {
           "source": "accountable",
           "decisionRightKey": "intake-a"

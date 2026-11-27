@@ -32,6 +32,9 @@ public sealed class V38Settings : ValidationRule, IContentRule
         new("guideline-hub-base-url", "text"),
         new("draft-expiry-days", "number"),
         new("configuration-review-days", "number"),
+
+        // How many days after the request a review falls due when the person gives no date (wave 4b review; D-41).
+        new("review-request-due-days", "number"),
         new("default-flag-notify", "json"),
         new("default-ai-only-code-approval-handling", "contract:ai-only-code-approval-handling"),
         new("confirmation-channel", "json"),
@@ -49,9 +52,28 @@ public sealed class V38Settings : ValidationRule, IContentRule
         new("mcp-page-size-max", "number"),
         new("engine-read-cache-seconds", "number"),
         new("working-days", "json"),
+
+        // The data taxonomy (D-37, settled by D-41; docs/architecture/data-taxonomy.md).
+        new("data-taxonomy-mode", "contract:data-taxonomy-mode"),
+        new("data-location-stale-days", "number"),
+
+        // The measure targets and the slide-back signal thresholds (document 24, B24-22; MeasureSettings).
+        new(MeasureSettings.TargetsSetting, "json"),
+        new(MeasureSettings.ThresholdsSetting, "json"),
     };
 
     private static readonly HashSet<string> Nullable = new(StringComparer.Ordinal) { "guideline-hub-base-url", "audit-retention-days" };
+
+    // Settings added after the first release that the runtime reads with a default of its own (document 21, section 3.6;
+    // wave 4b review). A set seeded before them has no row, and every draft built on it would fail V38 until the draft
+    // added the row, so a missing row is allowed for these. A row that is there still has its value type checked. They
+    // stay optional until the product upgrade draft of section 4.9 adds them to an installed set.
+    internal static readonly HashSet<string> OptionalWithDefault = new(StringComparer.Ordinal)
+    {
+        "review-request-due-days",
+        MeasureSettings.TargetsSetting,
+        MeasureSettings.ThresholdsSetting,
+    };
 
     private V38Settings()
         : base("V38", ReasonCodes.SettingRequired, "Every setting exists once, with the right value type")
@@ -67,6 +89,11 @@ public sealed class V38Settings : ValidationRule, IContentRule
         {
             known.Add(spec.Key, spec.Value);
             ContentRow? row = plain.FirstOrDefault(s => string.Equals(s.KeyPath, spec.Key, StringComparison.Ordinal));
+            if (row == null && OptionalWithDefault.Contains(spec.Key))
+            {
+                continue;
+            }
+
             if (row == null)
             {
                 issues.Add(Issue(
@@ -92,7 +119,50 @@ public sealed class V38Settings : ValidationRule, IContentRule
         {
             CheckValue(row, known.ContainsKey(row.KeyPath), issues);
             CheckNarrowing(row, settings, issues);
+            CheckMeasures(row, issues);
         }
+    }
+
+    // measure-targets and signal-thresholds hold the product's own keys and numbers (MeasureSettings), so a typo in a
+    // measure or signal key is refused when the draft is validated, not silently ignored when the Measures page reads it.
+    private void CheckMeasures(ContentRow row, ValidationIssues issues)
+    {
+        bool targets = string.Equals(row.KeyPath, MeasureSettings.TargetsSetting, StringComparison.Ordinal);
+        bool thresholds = string.Equals(row.KeyPath, MeasureSettings.ThresholdsSetting, StringComparison.Ordinal);
+        JsonTreeNode? value = JsonNodes.Get(row.Node, "value");
+        if ((!targets && !thresholds) || value == null || value.Kind == JsonTreeKind.Null)
+        {
+            return;
+        }
+
+        if (value.Kind != JsonTreeKind.Object)
+        {
+            issues.Add(Issue("Setting " + Q(row.KeyPath) + " holds an object keyed by " + (targets ? "measure" : "signal") + ". Give it an object, such as {} for none.", row.Entity, row.KeyPath, row.Pointer));
+            return;
+        }
+
+        IEnumerable<string> problems;
+        if (targets)
+        {
+            problems = MeasureSettings.TargetProblems(value.Members.Select(m => new KeyValuePair<string, decimal?>(m.Key, NumberOrNull(m.Value))).ToList())
+                .Concat(value.Members.Where(m => m.Value.Kind != JsonTreeKind.Null && m.Value.Kind != JsonTreeKind.Number).Select(m => "gives `" + m.Key + "` a target that is not a number. Give it a number, or null for no target"));
+        }
+        else
+        {
+            problems = value.Members.SelectMany(m => m.Value.Kind != JsonTreeKind.Object
+                ? new[] { "gives `" + m.Key + "` no object of numbers. Give it one, such as {\"days\": 30}" }
+                : MeasureSettings.ThresholdProblems(m.Key, m.Value.Members.Select(p => new KeyValuePair<string, decimal?>(p.Key, NumberOrNull(p.Value))).ToList()));
+        }
+
+        foreach (string problem in problems)
+        {
+            issues.Add(Issue("Setting " + Q(row.KeyPath) + " " + problem + ".", row.Entity, row.KeyPath, row.Pointer));
+        }
+    }
+
+    private static decimal? NumberOrNull(JsonTreeNode node)
+    {
+        return node.Kind == JsonTreeKind.Number && node.TryGetDecimal(out decimal value) ? value : (decimal?)null;
     }
 
     private void CheckValue(ContentRow row, bool isKnown, ValidationIssues issues)

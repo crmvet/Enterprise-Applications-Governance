@@ -2,14 +2,15 @@
   "$schema": "./logical-model.schema.json",
   "title": "Product logical data model",
   "modelVersion": "0.1.0",
-  "date": "2026-11-22",
+  "date": "2026-11-24",
   "sources": [
     "document 22, logical data model (attributes, keys, relationships, history, delete policy)",
     "document 20, glossary and entities (names, purposes, engine contract, C40, reserved IDs)",
     "document 21, configuration model (C40 types, column proposals)",
     "document 24, MCP surface (C41 Tool Policy, proposal)",
     "document 26, security model (C43 to C45, proposals)",
-    "document 28, working defaults"
+    "document 28, working defaults",
+    "data taxonomy design (docs/architecture/data-taxonomy.md, D-37, settled by D-41): C47 to C50, O25 to O27, subjects on O06 and O09; L01 Data Area withdrawn"
   ],
   "conventions": [
     "Names are the logical names of document 20: singular Title Case English with no prefix. A generator turns them into physical names, for example <prefix>_BusinessApplication on Dataverse and ops.BusinessApplication on Azure SQL.",
@@ -21,13 +22,13 @@
     "Relationship ids follow the catalog of document 22, section 6. A catalog row that covers several columns gets a letter per column. RX ids are relationships the catalog does not list."
   ],
   "counts": {
-    "entities": 75,
-    "document22FirstRelease": 65,
-    "document22Configuration": 41,
-    "document22Operational": 24,
+    "entities": 81,
+    "document22FirstRelease": 72,
+    "document22Configuration": 45,
+    "document22Operational": 27,
     "adoptedOutsideDocument22": 1,
     "proposals": 4,
-    "later": 5
+    "later": 4
   },
   "types": [
     {
@@ -164,7 +165,7 @@
       "id": "E",
       "name": "Effective-dated",
       "rule": "Updated in place, with history, but a fact is ended with a date, never deleted",
-      "entities": "O03 (Retired On), O04 (Ended On), O06 (End On)",
+      "entities": "O03 (Retired On), O04 (Ended On), O06 (End On), O25 (Retired On), O26 (Ended On), O27 (Ended On)",
       "dataverse": "Auditing on",
       "azureSql": "System-versioned temporal table [S19]"
     },
@@ -180,7 +181,7 @@
       "id": "V",
       "name": "Configuration versioned",
       "rule": "Updated in place inside a working set, only by the activation operation. Each activation creates an immutable snapshot (C02)",
-      "entities": "C01, C03 to C39, C42",
+      "entities": "C01, C03 to C39, C42, C47 to C50",
       "dataverse": "Auditing on, plus C02",
       "azureSql": "Temporal table, plus C02"
     }
@@ -450,9 +451,10 @@
           "document",
           "evidence",
           "Microsoft resource",
-          "external change"
+          "external change",
+          "data location"
         ],
-        "usedBy": "C37 Link Kind",
+        "usedBy": "C37 Link Kind. Data location is added by the data taxonomy design (D-37) for O25 Data Location",
         "status": "adopted",
         "source": "document 20, section 2.4"
       },
@@ -490,9 +492,11 @@
         "status": "adopted",
         "source": "document 20, section 2.4",
         "proposedValues": [
-          "owner assigned"
+          "owner assigned",
+          "data uses declared",
+          "data uses decided"
         ],
-        "notes": "Document 21, section 13.4 proposes the value owner assigned"
+        "notes": "Document 21, section 13.4 proposes the value owner assigned. The data taxonomy (D-37; docs/architecture/data-taxonomy.md, Gate requirements) adds data uses declared and data uses decided, which the engine reads from data taxonomy slice 2"
       },
       {
         "key": "configuration-set-kind",
@@ -678,9 +682,13 @@
           "Configuration Draft",
           "Decision",
           "Approval Record",
-          "Review"
+          "Review",
+          "Data Use",
+          "Data Mapping",
+          "Data Domain",
+          "Data Location"
         ],
-        "usedBy": "O09, O18 and O20 Subject Kind. Values are logical entity names, fixed by the schema, because adding a kind adds a column",
+        "usedBy": "O09, O18 and O20 Subject Kind; O06 Owner Assignment subjects (Business Application, Data Domain, Data Location). Values are logical entity names, fixed by the schema, because adding a kind adds a column",
         "status": "adopted",
         "source": "document 22, section 2.6"
       },
@@ -785,6 +793,125 @@
         "usedBy": "L05 Gate Check",
         "status": "later",
         "source": "document 22, section 5"
+      },
+      {
+        "key": "data-handling-rule",
+        "name": "Data handling rule",
+        "values": [
+          "allowed",
+          "decision",
+          "masked only",
+          "never"
+        ],
+        "usedBy": "C47 Data Classification default rules, C49 Data Domain rules",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)",
+        "notes": "Strictness rises in the order listed. A domain may make a rule stricter, never looser"
+      },
+      {
+        "key": "data-origin",
+        "name": "Data origin",
+        "values": [
+          "system of record",
+          "replica",
+          "production copy",
+          "masked copy",
+          "synthetic"
+        ],
+        "usedBy": "O26 Data Mapping",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)"
+      },
+      {
+        "key": "data-access",
+        "name": "Data access",
+        "values": [
+          "read",
+          "write",
+          "read write"
+        ],
+        "usedBy": "O27 Data Use",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)"
+      },
+      {
+        "key": "owner-subject-kind",
+        "name": "Owner subject kind",
+        "values": [
+          "business application",
+          "data domain",
+          "data location"
+        ],
+        "usedBy": "C28 Owner Role Subject Kinds, O06 Owner Assignment Subject Kind",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)",
+        "notes": "The wire values are the entity keys, as for O09 Subject Kind: business-application, data-domain, data-location"
+      },
+      {
+        "key": "owner-subject",
+        "name": "Owner subject",
+        "values": [
+          "business application",
+          "data domain",
+          "parent data domain",
+          "data location",
+          "touched data domains"
+        ],
+        "usedBy": "C31 Decision Right and C32 Approval Rule Owner Subject: where an owner role is resolved",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)",
+        "notes": "Read by the engine from data taxonomy slice 2 (OP-02); adopted with the C31 and C32 data scope columns (docs/architecture/data-taxonomy.md)"
+      },
+      {
+        "key": "data-taxonomy-change",
+        "name": "Data taxonomy change",
+        "values": [
+          "touches",
+          "loosens"
+        ],
+        "usedBy": "C31 and C32 scope Data Taxonomy Change, computed from a configuration draft's diff",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)",
+        "notes": "Read by the engine from data taxonomy slice 2; adopted with the C31 and C32 data scope columns (docs/architecture/data-taxonomy.md)"
+      },
+      {
+        "key": "data-use-state",
+        "name": "Data use state",
+        "values": [
+          "not needed",
+          "needed",
+          "proposed",
+          "allowed",
+          "denied",
+          "re-decide",
+          "breaks rule",
+          "no one to ask"
+        ],
+        "usedBy": "OP-16, the data tools and screens. Computed when read, never stored",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)",
+        "derivedValues": [
+          "not needed",
+          "needed",
+          "proposed",
+          "allowed",
+          "denied",
+          "re-decide",
+          "breaks rule",
+          "no one to ask"
+        ]
+      },
+      {
+        "key": "data-taxonomy-mode",
+        "name": "Data taxonomy mode",
+        "values": [
+          "off",
+          "domains optional",
+          "domains required"
+        ],
+        "usedBy": "C04 Setting data-taxonomy-mode",
+        "status": "adopted",
+        "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, The main fields)"
       }
     ]
   },
@@ -888,6 +1015,26 @@
       "key": "dismiss-reason",
       "status": "proposal",
       "source": "document 24, section 15"
+    },
+    {
+      "key": "location-kind",
+      "status": "adopted",
+      "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, Entities; C06 seed lists)"
+    },
+    {
+      "key": "data-vendor",
+      "status": "adopted",
+      "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, Entities; C06 seed lists)"
+    },
+    {
+      "key": "retention-class",
+      "status": "adopted",
+      "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, Entities; C06 seed lists)"
+    },
+    {
+      "key": "access-approach",
+      "status": "adopted",
+      "source": "data taxonomy (D-37; docs/architecture/data-taxonomy.md, Entities; C06 seed lists)"
     }
   ],
   "columnSets": [
@@ -1010,7 +1157,7 @@
     },
     {
       "name": "operational",
-      "appliesTo": "Every operational entity (document 22, section 2.1.1, Configuration Set Version)",
+      "appliesTo": "Every operational entity (document 22, section 2.1.1, Configuration Set Version; B22-15, the drafted by pair)",
       "attributes": [
         {
           "name": "Configuration Set Version",
@@ -1020,6 +1167,25 @@
           "target": "C02",
           "description": "Operational rows only: the configuration set version in force when the row was created. It also fixes which guideline versions applied",
           "notes": "Document 22 marks it C in the common table because only operational rows carry it. On an operational row it is required (R00d)."
+        },
+        {
+          "name": "Drafted By Client App",
+          "type": "text",
+          "length": 200,
+          "required": "N",
+          "status": "proposal",
+          "source": "proposal of the leftovers slice (document 22, B22-15)",
+          "description": "The client app of the AI client that created the row, such as Claude Code. Set by the engine on create, when an AI client acting for a person writes, and never changed, so the AI mark stays after a person edits the draft"
+        },
+        {
+          "name": "Drafted For Principal",
+          "type": "ref",
+          "required": "C",
+          "ref": "PR",
+          "target": "O05",
+          "status": "proposal",
+          "source": "proposal of the leftovers slice (document 22, B22-15)",
+          "description": "The person that AI client acted for when it created the row. Set with Drafted By Client App and never changed. Empty for a row a person, a pipeline, the approval runner or the engine created"
         }
       ]
     },
@@ -1116,6 +1282,15 @@
       "cardinality": "1 to 0..n",
       "delete": "Restrict",
       "note": "Every taxonomy entity. A set with rows can't be deleted"
+    },
+    {
+      "id": "R00f",
+      "columnSet": "operational",
+      "column": "Drafted For Principal",
+      "target": "O05",
+      "cardinality": "0..1 to 0..n",
+      "delete": "Restrict",
+      "note": "Every operational entity. Proposal of the leftovers slice (B22-15)"
     }
   ],
   "entities": [
@@ -3141,7 +3316,7 @@
       "release": "R1",
       "historyClass": "V",
       "deletePolicy": "retire",
-      "purpose": "A responsibility for one business application",
+      "purpose": "A responsibility for one subject: a business application, a data domain or a data location",
       "source": "document 22, section 3.2",
       "columnSets": [
         "common",
@@ -3177,6 +3352,22 @@
           "status": "proposal",
           "source": "document 26, section 15",
           "description": "The product role a holder of this owner role must also hold (CHK-06)"
+        },
+        {
+          "name": "Subject Kinds",
+          "type": "json",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Where the role can be held: a list of owner subject kinds (business-application, data-domain, data-location). Empty means business application only"
+        },
+        {
+          "name": "Inherits Down",
+          "type": "bool",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Yes when a holder on a data domain answers for the domains below it that name no holder of their own (OP-15)"
         }
       ],
       "keys": [
@@ -3410,7 +3601,7 @@
       "purpose": "Who is responsible, accountable, consulted or informed for a decision type in a scope",
       "source": "document 22, section 3.3",
       "rules": [
-        "Exactly one of Owner Role and Role, except on a row whose letter is supports, which names neither (document 21, V31). Exactly one accountable per scope, checked when a draft is validated and again at activation."
+        "Exactly one of Owner Role and Role, except on a row whose letter is supports, which names neither (document 21, V31). A Fallback Owner Role only beside an Owner Role (document 21, B21-9). Exactly one accountable per scope, checked when a draft is validated and again at activation."
       ],
       "columnSets": [
         "common",
@@ -3487,6 +3678,71 @@
           "ref": "CFG",
           "target": "C29",
           "description": "The product role that holds the letter, when organization-wide"
+        },
+        {
+          "name": "Fallback Owner Role",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C28",
+          "status": "proposal",
+          "source": "document 21, B21-9",
+          "description": "Only on an accountable row with Owner Role. When the subject has no current holder of that owner role, the one card asks the holders of this owner role, then the Accountable Principal of the nearest portfolio that names one"
+        },
+        {
+          "name": "Subject Kind",
+          "type": "text",
+          "length": 64,
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: the decision's subject kind, such as data-use or data-mapping. Counted for specificity like the other scope columns"
+        },
+        {
+          "name": "Classification",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C47",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: the effective classification of the data the decision is about"
+        },
+        {
+          "name": "AI Use",
+          "type": "bool",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: yes when the data use reaches AI, no when it does not"
+        },
+        {
+          "name": "Data Domain Level",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C48",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: the level of the data domain an ownership decision is about"
+        },
+        {
+          "name": "Data Taxonomy Change",
+          "type": "meaning",
+          "meaning": "data-taxonomy-change",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope of a configuration change: touches or loosens the data taxonomy, computed from the draft's diff"
+        },
+        {
+          "name": "Owner Subject",
+          "type": "meaning",
+          "meaning": "owner-subject",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Where the owner role is resolved: business application (the default and the behavior before the data taxonomy), data domain, parent data domain, data location or touched data domains"
         }
       ],
       "keys": [
@@ -3567,6 +3823,33 @@
           "cardinality": "0..1 to 0..n",
           "delete": "Restrict",
           "note": "Exactly one per row"
+        },
+        {
+          "id": "R32f",
+          "catalogId": "R32",
+          "column": "Fallback Owner Role",
+          "target": "C28",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Only beside Owner Role (document 21, B21-9)"
+        },
+        {
+          "id": "R113a",
+          "catalogId": "R113",
+          "column": "Classification",
+          "target": "C47",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Proposal, data taxonomy slice 2"
+        },
+        {
+          "id": "R113b",
+          "catalogId": "R113",
+          "column": "Data Domain Level",
+          "target": "C48",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Proposal, data taxonomy slice 2"
         }
       ],
       "constraints": [
@@ -3591,7 +3874,7 @@
       "purpose": "Which approvals a decision type needs in a scope",
       "source": "document 22, section 3.3",
       "rules": [
-        "Exactly one of Approver Owner Role and Approver Role. Which rules apply follows document 21: the single most specific rule group wins, and broader groups drop out (28, issue 2)."
+        "Exactly one of Approver Owner Role, Approver Role and Approver Proposed Owners. A Fallback Owner Role only beside an Approver Owner Role (document 21, B21-9). Which rules apply follows document 21: the single most specific rule group wins, and broader groups drop out (28, issue 2)."
       ],
       "columnSets": [
         "common",
@@ -3671,6 +3954,24 @@
           "description": "The product role that must approve, when organization-wide"
         },
         {
+          "name": "Approver Proposed Owners",
+          "type": "bool",
+          "required": "N",
+          "status": "proposal",
+          "source": "document 21, B21-9",
+          "description": "Yes when each person the decision proposes to make an owner must approve, by name: the successor and any new deputy of an ownership decision. A decision that names nobody new skips the rule"
+        },
+        {
+          "name": "Fallback Owner Role",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C28",
+          "status": "proposal",
+          "source": "document 21, B21-9",
+          "description": "Only with Approver Owner Role. When the application has no current holder of that owner role, or the decision ends its holder's assignment, the request asks the holders of this owner role, then the Accountable Principal of the nearest portfolio that names one"
+        },
+        {
           "name": "Approval Mode",
           "type": "meaning",
           "meaning": "approval-mode",
@@ -3723,6 +4024,61 @@
           "status": "proposal",
           "source": "document 26, section 15",
           "description": "Whether a guest user's answer can count toward this rule. Shipped default No"
+        },
+        {
+          "name": "Subject Kind",
+          "type": "text",
+          "length": 64,
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: the decision's subject kind, such as data-use or data-mapping. Counted for specificity like the other scope columns"
+        },
+        {
+          "name": "Classification",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C47",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: the effective classification of the data the decision is about"
+        },
+        {
+          "name": "AI Use",
+          "type": "bool",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: yes when the data use reaches AI, no when it does not"
+        },
+        {
+          "name": "Data Domain Level",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C48",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope: the level of the data domain an ownership decision is about"
+        },
+        {
+          "name": "Data Taxonomy Change",
+          "type": "meaning",
+          "meaning": "data-taxonomy-change",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Scope of a configuration change: touches or loosens the data taxonomy, computed from the draft's diff"
+        },
+        {
+          "name": "Owner Subject",
+          "type": "meaning",
+          "meaning": "owner-subject",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md); adopted: the engine reads them since data taxonomy slice 2, the bundle schema takes them and Balanced ships rows that use them (docs/architecture/data-taxonomy.md)",
+          "description": "Where the owner role is resolved: business application (the default and the behavior before the data taxonomy), data domain, parent data domain, data location or touched data domains"
         }
       ],
       "keys": [
@@ -3813,12 +4169,39 @@
           "note": "Exactly one per row"
         },
         {
+          "id": "R32e",
+          "catalogId": "R32",
+          "column": "Fallback Owner Role",
+          "target": "C28",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Only beside Approver Owner Role (document 21, B21-9)"
+        },
+        {
           "id": "R16b",
           "catalogId": "R16",
           "column": "Guideline",
           "target": "C39",
           "cardinality": "0..1 to 0..n",
           "delete": "Restrict"
+        },
+        {
+          "id": "R114a",
+          "catalogId": "R114",
+          "column": "Classification",
+          "target": "C47",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Proposal, data taxonomy slice 2"
+        },
+        {
+          "id": "R114b",
+          "catalogId": "R114",
+          "column": "Data Domain Level",
+          "target": "C48",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Proposal, data taxonomy slice 2"
         }
       ],
       "constraints": [
@@ -4021,6 +4404,14 @@
           "type": "int",
           "required": "Y",
           "description": "Order from development to production. Used only for ordering"
+        },
+        {
+          "name": "Is Production",
+          "type": "bool",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Yes for a production stage. The copy to test rule reads it, never a stage key. At least one stage has it (V58)"
         }
       ],
       "keys": [
@@ -4985,7 +5376,7 @@
           "length": 20,
           "required": "Y",
           "new": true,
-          "description": "A number such as CFG-00012, assigned by the engine. MCP tools and pages name a draft by it"
+          "description": "A number such as CFG-0012, assigned by the engine. MCP tools and pages name a draft by it"
         },
         {
           "name": "Configuration Set",
@@ -5147,6 +5538,420 @@
       "workingDefault": "WORKING DEFAULT (open design question 4). A person accepts the configuration change decision on one approval card that shows the Change Summary. The instructing admin may accept their own AI draft. Strict separation needs a second admin."
     },
     {
+      "id": "C47",
+      "name": "Data Classification",
+      "kind": "configuration",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "V",
+      "deletePolicy": "retire",
+      "purpose": "A ranked sensitivity level in the tenant's Purview label names, with the default handling rules for data of that level",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+      "notes": [
+        "Each row maps through C11 Vocabulary Mapping (vocabulary purview-sensitivity-label) to the published label. Purview wins on the words."
+      ],
+      "columnSets": [
+        "common",
+        "taxonomy"
+      ],
+      "attributes": [
+        {
+          "name": "Rank",
+          "type": "int",
+          "required": "Y",
+          "description": "Higher means more sensitive. Unique within the set among active rows. It follows the label priority order. The engine compares ranks, never labels"
+        },
+        {
+          "name": "Implied Tier Question",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C09",
+          "description": "The tier question this class informs. In Balanced it is sensitivity"
+        },
+        {
+          "name": "Implied Answer",
+          "type": "ref",
+          "required": "C",
+          "ref": "CFG",
+          "target": "C10",
+          "description": "The answer option of the implied tier question that data of this class implies. Required with an implied tier question. It prefills the answer at intake as a suggestion, and the data check DC-09 compares the application's real answer with it"
+        },
+        {
+          "name": "Default Use Rule",
+          "type": "meaning",
+          "meaning": "data-handling-rule",
+          "required": "Y",
+          "description": "Applies to reads and writes that do not reach AI"
+        },
+        {
+          "name": "Default AI Use Rule",
+          "type": "meaning",
+          "meaning": "data-handling-rule",
+          "required": "Y",
+          "description": "Applies to uses with Reaches AI set to yes"
+        },
+        {
+          "name": "Default Copy To Test Rule",
+          "type": "meaning",
+          "meaning": "data-handling-rule",
+          "required": "Y",
+          "description": "Applies to production copies outside production"
+        }
+      ],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Key",
+            "Configuration Set"
+          ],
+          "enforcement": "store",
+          "note": "Key, within set"
+        },
+        {
+          "kind": "alternate",
+          "columns": [
+            "Rank",
+            "Configuration Set"
+          ],
+          "enforcement": "store"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "R106a",
+          "catalogId": "R106",
+          "column": "Implied Tier Question",
+          "target": "C09",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R106b",
+          "catalogId": "R106",
+          "column": "Implied Answer",
+          "target": "C10",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        }
+      ]
+    },
+    {
+      "id": "C48",
+      "name": "Data Domain Level",
+      "kind": "configuration",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "V",
+      "deletePolicy": "retire",
+      "purpose": "One level of the business data domain tree of this install, with its rules",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+      "columnSets": [
+        "common",
+        "taxonomy"
+      ],
+      "attributes": [
+        {
+          "name": "Rank",
+          "type": "int",
+          "required": "Y",
+          "description": "1 is the top. Unique within the set among active rows. A child domain's level ranks higher than its parent's; skipping a level is allowed"
+        },
+        {
+          "name": "Owner Required",
+          "type": "bool",
+          "required": "N",
+          "description": "Yes when each domain at this level needs its own data owner, not an inherited one (data check DC-02)"
+        },
+        {
+          "name": "Declarable",
+          "type": "bool",
+          "required": "N",
+          "description": "Yes (the default) when data uses and mappings may point at domains of this level"
+        }
+      ],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Key",
+            "Configuration Set"
+          ],
+          "enforcement": "store",
+          "note": "Key, within set"
+        },
+        {
+          "kind": "alternate",
+          "columns": [
+            "Rank",
+            "Configuration Set"
+          ],
+          "enforcement": "store"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "C49",
+      "name": "Data Domain",
+      "kind": "configuration",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "V",
+      "deletePolicy": "retire",
+      "purpose": "One node of the business data domain tree each install draws for itself, such as People, then Payroll",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+      "notes": [
+        "Seed files hold domains as flat rows with a parent key, because nested rows go only one level deep (V03). Owners are not columns here: they are O06 Owner Assignment rows with a data domain subject (D-41, question 1). Shipped full presets hold no domains; the overlay data-domains-starter holds a generic tree to rename."
+      ],
+      "columnSets": [
+        "common",
+        "taxonomy"
+      ],
+      "attributes": [
+        {
+          "name": "Parent Domain",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C49",
+          "description": "The domain above this one. Empty at the top. No cycles (V49). A move changes it; the key never changes"
+        },
+        {
+          "name": "Level",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C48",
+          "description": "This node's level"
+        },
+        {
+          "name": "Classification",
+          "type": "ref",
+          "required": "C",
+          "ref": "CFG",
+          "target": "C47",
+          "description": "Required at the top. Below the top, empty means inherit the nearest classification above"
+        },
+        {
+          "name": "Use Rule",
+          "type": "meaning",
+          "meaning": "data-handling-rule",
+          "required": "N",
+          "description": "A stricter use rule for this branch. Empty adds nothing here"
+        },
+        {
+          "name": "AI Use Rule",
+          "type": "meaning",
+          "meaning": "data-handling-rule",
+          "required": "N",
+          "description": "A stricter AI use rule for this branch. Empty adds nothing here"
+        },
+        {
+          "name": "Copy To Test Rule",
+          "type": "meaning",
+          "meaning": "data-handling-rule",
+          "required": "N",
+          "description": "A stricter copy to test rule for this branch. Empty adds nothing here"
+        },
+        {
+          "name": "Retention Class",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C07",
+          "valueList": "retention-class",
+          "description": "How long the data is kept, from the `retention-class` list. Empty means inherit"
+        },
+        {
+          "name": "Examples",
+          "type": "text",
+          "length": 500,
+          "required": "N",
+          "description": "What belongs here, in plain words, such as salary, deductions, tax codes and bank details for pay. AI clients use it to suggest mappings. An untrusted field"
+        }
+      ],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Key",
+            "Configuration Set"
+          ],
+          "enforcement": "store",
+          "note": "Key, within set"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "R107a",
+          "catalogId": "R107",
+          "column": "Parent Domain",
+          "target": "C49",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Self"
+        },
+        {
+          "id": "R107b",
+          "catalogId": "R107",
+          "column": "Level",
+          "target": "C48",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R107c",
+          "catalogId": "R107",
+          "column": "Classification",
+          "target": "C47",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R107d",
+          "catalogId": "R107",
+          "column": "Retention Class",
+          "target": "C07",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        }
+      ]
+    },
+    {
+      "id": "C50",
+      "name": "Data Platform",
+      "kind": "configuration",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "V",
+      "deletePolicy": "retire",
+      "purpose": "A kind of data store from any vendor, such as Dataverse, Azure SQL, Salesforce or an IBM i host",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+      "columnSets": [
+        "common",
+        "taxonomy"
+      ],
+      "attributes": [
+        {
+          "name": "Location Kind",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C07",
+          "valueList": "location-kind",
+          "description": "A grouping from the `location-kind` list: app platform, CRM, ERP, relational database, document database, file store, lake, SaaS application, legacy or other"
+        },
+        {
+          "name": "Vendor",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C07",
+          "valueList": "data-vendor",
+          "description": "The vendor, from the `data-vendor` list"
+        },
+        {
+          "name": "Instance Label",
+          "type": "text",
+          "length": 50,
+          "required": "N",
+          "description": "What a top-level location of this platform is called: environment, server, account, org, host, tenant or workspace"
+        },
+        {
+          "name": "Store Label",
+          "type": "text",
+          "length": 50,
+          "required": "N",
+          "description": "What a child location is called: database, library, share or lakehouse. Empty means the platform has no child level"
+        },
+        {
+          "name": "Container Label",
+          "type": "text",
+          "length": 50,
+          "required": "Y",
+          "description": "What the names on a mapping are called: table, schema.table, container, object, file or folder"
+        },
+        {
+          "name": "Default Link Kind",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C37",
+          "description": "The link kind of category data location a new location of this platform takes"
+        },
+        {
+          "name": "Id Pattern",
+          "type": "text",
+          "length": 200,
+          "required": "N",
+          "description": "A pattern a valid External Id of this platform matches (V40)"
+        },
+        {
+          "name": "Url Pattern",
+          "type": "text",
+          "length": 400,
+          "required": "N",
+          "description": "A pattern a valid Url of this platform matches (V40)"
+        },
+        {
+          "name": "Estate",
+          "type": "ref",
+          "required": "N",
+          "ref": "CFG",
+          "target": "C07",
+          "valueList": "estate",
+          "description": "Later: the gap check estate that can confirm locations of this platform"
+        }
+      ],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Key",
+            "Configuration Set"
+          ],
+          "enforcement": "store",
+          "note": "Key, within set"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "R108a",
+          "catalogId": "R108",
+          "column": "Location Kind",
+          "target": "C07",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R108b",
+          "catalogId": "R108",
+          "column": "Vendor",
+          "target": "C07",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R108c",
+          "catalogId": "R108",
+          "column": "Default Link Kind",
+          "target": "C37",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R108d",
+          "catalogId": "R108",
+          "column": "Estate",
+          "target": "C07",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        }
+      ]
+    },
+    {
       "id": "O01",
       "name": "Portfolio",
       "kind": "operational",
@@ -5262,7 +6067,7 @@
           "length": 20,
           "required": "Y",
           "new": true,
-          "description": "A human-friendly number such as APP-00042, assigned by the engine, unique, never reused"
+          "description": "A human-friendly number such as APP-0042, assigned by the engine, unique, never reused"
         },
         {
           "name": "Purpose",
@@ -5354,6 +6159,14 @@
           "type": "bool",
           "required": "N",
           "description": "The owner's statement that it uses AI models or tools. Empty means not yet stated"
+        },
+        {
+          "name": "Holds No Business Data",
+          "type": "bool",
+          "required": "N",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Yes when the application reads and writes no business data, such as meeting room signage. It meets the gate requirement data-uses-declared with no data use rows. Empty means not stated"
         },
         {
           "name": "Agreed Autonomy Level",
@@ -5919,10 +6732,10 @@
       "historyClass": "E",
       "deletePolicy": "draft-only",
       "deleteNote": "Ended with End On instead of a delete",
-      "purpose": "One principal holding one owner role for one application",
-      "source": "document 22, section 4.1",
+      "purpose": "One principal holding one owner role for one subject: an application, a data domain or a data location",
+      "source": "document 22, section 4.1; subjects from document 22, B22-14 (data taxonomy, D-37)",
       "notes": [
-        "One principal holding one owner role for one application. Class E."
+        "One principal holding one owner role for one subject. Class E. Exactly one subject column is set, of a kind the owner role's Subject Kinds allows (G-19). Rows written before the data taxonomy name an application and no Subject Kind."
       ],
       "columnSets": [
         "common",
@@ -5932,10 +6745,39 @@
         {
           "name": "Business Application",
           "type": "ref",
-          "required": "Y",
+          "required": "C",
           "ref": "OPS",
           "target": "O02",
-          "description": "The application"
+          "description": "The application, when the subject is an application. Every row written before the data taxonomy has it"
+        },
+        {
+          "name": "Subject Kind",
+          "type": "text",
+          "length": 64,
+          "required": "C",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Which kind of subject the row is about, a value of the owner-subject-kind contract: business-application, data-domain or data-location. Required when the subject is not an application; empty means business-application"
+        },
+        {
+          "name": "Subject Data Domain",
+          "type": "ref",
+          "required": "C",
+          "ref": "CFG",
+          "target": "C49",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "The data domain, when the subject is a domain. Its owner answers for the domains below it that name no owner of their own, when the owner role inherits down"
+        },
+        {
+          "name": "Subject Data Location",
+          "type": "ref",
+          "required": "C",
+          "ref": "OPS",
+          "target": "O25",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "The data location, when the subject is a location, such as its technical owner"
         },
         {
           "name": "Owner Role",
@@ -5995,8 +6837,27 @@
           "catalogId": "R55",
           "column": "Business Application",
           "target": "O02",
-          "cardinality": "1 to 0..n",
-          "delete": "Restrict"
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one subject set"
+        },
+        {
+          "id": "R112a",
+          "catalogId": "R112",
+          "column": "Subject Data Domain",
+          "target": "C49",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one subject set"
+        },
+        {
+          "id": "R112b",
+          "catalogId": "R112",
+          "column": "Subject Data Location",
+          "target": "O25",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one subject set"
         },
         {
           "id": "R56",
@@ -6031,7 +6892,38 @@
           "cardinality": "0..1 to 0..n",
           "delete": "Restrict"
         }
-      ]
+      ],
+      "rules": [
+        "Exactly one of Business Application, Subject Data Domain and Subject Data Location is set, and it matches Subject Kind. An empty Subject Kind means business application."
+      ],
+      "constraints": [
+        {
+          "kind": "exactly-one",
+          "columns": [
+            "Business Application",
+            "Subject Data Domain",
+            "Subject Data Location"
+          ],
+          "note": "Exactly one subject column is set, and it matches Subject Kind. Azure SQL migration 0008 checks it"
+        }
+      ],
+      "subjects": {
+        "kindColumn": "Subject Kind",
+        "options": [
+          {
+            "value": "Business Application",
+            "column": "Business Application"
+          },
+          {
+            "value": "Data Domain",
+            "column": "Subject Data Domain"
+          },
+          {
+            "value": "Data Location",
+            "column": "Subject Data Location"
+          }
+        ]
+      }
     },
     {
       "id": "O07",
@@ -6051,7 +6943,7 @@
         "common",
         "operational"
       ],
-      "recordNumberPrefix": "INT",
+      "recordNumberPrefix": "IR",
       "attributes": [
         {
           "name": "Record Number",
@@ -6059,7 +6951,7 @@
           "length": 20,
           "required": "Y",
           "new": true,
-          "description": "A number such as INT-00123, assigned by the engine"
+          "description": "A number such as IR-0123, assigned by the engine when it creates the row, never reused"
         },
         {
           "name": "Requester",
@@ -6068,6 +6960,16 @@
           "ref": "PR",
           "target": "O05",
           "description": "Who asked"
+        },
+        {
+          "name": "Business Owner",
+          "type": "ref",
+          "required": "N",
+          "ref": "PR",
+          "target": "O05",
+          "status": "proposal",
+          "source": "proposal of the intake build (document 23, P01 step 1; document 25, B25-10)",
+          "description": "The person the requester names as the business owner of the application the request is for, from the Principal References. Counts for an Accept gate requirement of the business-owner owner role, and becomes that owner when the intake is accepted and the application has none"
         },
         {
           "name": "Title",
@@ -6097,6 +6999,16 @@
           "ref": "OPS",
           "target": "O02",
           "description": "The application this request is about, once known or created"
+        },
+        {
+          "name": "Portfolio",
+          "type": "ref",
+          "required": "N",
+          "ref": "OPS",
+          "target": "O01",
+          "status": "proposal",
+          "source": "proposal of the wave 2 fixes (document 22, B22-13)",
+          "description": "The portfolio the request is placed in. The application an accepted request creates starts in it"
         },
         {
           "name": "Status",
@@ -6240,6 +7152,22 @@
           "target": "O09",
           "cardinality": "0..1 to 0..1",
           "delete": "Restrict"
+        },
+        {
+          "id": "RX29",
+          "column": "Business Owner",
+          "target": "O05",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Not in the catalog of document 22. A proposal of the intake build (document 25, B25-10)"
+        },
+        {
+          "id": "RX30",
+          "column": "Portfolio",
+          "target": "O01",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Not in the catalog of document 22. A proposal of the wave 2 fixes (document 22, B22-13)"
         }
       ]
     },
@@ -6401,7 +7329,7 @@
           "length": 20,
           "required": "Y",
           "new": true,
-          "description": "A number such as DEC-00456, assigned by the engine, never reused"
+          "description": "A number such as DEC-0456, assigned by the engine, never reused"
         },
         {
           "name": "Decision Type",
@@ -6474,6 +7402,46 @@
           "target": "C46",
           "new": true,
           "description": "Set for a configuration change or gate policy change decision: the submitted draft. It replaces the earlier subjects configuration set version and gate policy row, because neither exists until activation (28, issue 3)"
+        },
+        {
+          "name": "Subject Data Use",
+          "type": "ref",
+          "required": "C",
+          "ref": "OPS",
+          "target": "O27",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Set when the subject is a data use: the data-use decision about it, or its retention decision at retirement"
+        },
+        {
+          "name": "Subject Data Mapping",
+          "type": "ref",
+          "required": "C",
+          "ref": "OPS",
+          "target": "O26",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Set when the subject is a data mapping: the decision on a copy outside production"
+        },
+        {
+          "name": "Subject Data Domain",
+          "type": "ref",
+          "required": "C",
+          "ref": "CFG",
+          "target": "C49",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Set when the subject is a data domain: an ownership decision about the domain"
+        },
+        {
+          "name": "Subject Data Location",
+          "type": "ref",
+          "required": "C",
+          "ref": "OPS",
+          "target": "O25",
+          "status": "adopted",
+          "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+          "description": "Set when the subject is a data location: an ownership decision about the location"
         },
         {
           "name": "Statement",
@@ -6573,6 +7541,46 @@
           "new": true,
           "description": "Derived: the accepted decision whose Supersedes points here. Computed in a view on Azure. Stored by the engine on Dataverse, as the only write a frozen row ever receives (section 8.1)",
           "notes": "Computed in a view on Azure. Stored by the engine on Dataverse, as the only write a frozen row ever receives (section 8.1)."
+        },
+        {
+          "name": "Proposed Changes Json",
+          "type": "json",
+          "required": "N",
+          "ref": "CFG",
+          "keyOf": [
+            "C08",
+            "C28",
+            "C07"
+          ],
+          "status": "proposal",
+          "source": "proposal of the engine runtime (the update-subject effect, document 25, B25-8)",
+          "description": "The subject changes the decision makes once accepted, in the engine's form: the owner changes of an ownership decision, the tier of a tier decision, the autonomy level of an autonomy level decision. Set while the decision is proposed and frozen with it. The engine applies it as the update-subject effect, with the decision as its basis"
+        },
+        {
+          "name": "Exception Standard",
+          "type": "text",
+          "length": 200,
+          "required": "N",
+          "status": "proposal",
+          "source": "proposal of the decision build (document 23, P04 step 6; document 24, B24-9)",
+          "description": "For an exception decision: the standard, guideline or rule the exception departs from, in plain words. Set while the decision is proposed and frozen with it"
+        },
+        {
+          "name": "Exception Review On",
+          "type": "date",
+          "required": "N",
+          "status": "proposal",
+          "source": "proposal of the decision build (document 23, P04 step 6; document 24, B24-9)",
+          "description": "For an exception decision: the date the exception is looked at again. Set while the decision is proposed and frozen with it"
+        },
+        {
+          "name": "Slide Back Signal",
+          "type": "text",
+          "length": 100,
+          "required": "N",
+          "status": "proposal",
+          "source": "proposal of the wave 4 engine leftovers (document 24, B24-22; playbook chapters 17 and 19)",
+          "description": "The key of the slide-back signal this decision acts on, one of the ten signals of chapter 17, such as gap-check-stale. A signal that fires leads to a recorded decision, and the Measures page links each signal to the decisions it led to. Set while the decision is proposed and frozen with it"
         }
       ],
       "keys": [
@@ -6657,6 +7665,42 @@
           "note": "Exactly one set"
         },
         {
+          "id": "R72h",
+          "catalogId": "R72",
+          "column": "Subject Data Use",
+          "target": "O27",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one set"
+        },
+        {
+          "id": "R72i",
+          "catalogId": "R72",
+          "column": "Subject Data Mapping",
+          "target": "O26",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one set"
+        },
+        {
+          "id": "R72j",
+          "catalogId": "R72",
+          "column": "Subject Data Domain",
+          "target": "C49",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one set"
+        },
+        {
+          "id": "R72k",
+          "catalogId": "R72",
+          "column": "Subject Data Location",
+          "target": "O25",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Exactly one set"
+        },
+        {
           "id": "R68b",
           "catalogId": "R68",
           "column": "Outcome",
@@ -6725,9 +7769,13 @@
             "Subject Deployment Record",
             "Subject Component",
             "Subject Claim",
-            "Subject Configuration Draft"
+            "Subject Configuration Draft",
+            "Subject Data Use",
+            "Subject Data Mapping",
+            "Subject Data Domain",
+            "Subject Data Location"
           ],
-          "note": "Exactly one Subject column is set, and it matches Subject Kind"
+          "note": "Exactly one Subject column is set, and it matches Subject Kind. Subject Application may also hold the application of a subject of another kind, as its scope (the decision tools write it so); Azure SQL migration 0008 checks that at most one subject column other than Subject Application is set"
         }
       ],
       "subjects": {
@@ -6760,6 +7808,22 @@
           {
             "value": "Configuration Draft",
             "column": "Subject Configuration Draft"
+          },
+          {
+            "value": "Data Use",
+            "column": "Subject Data Use"
+          },
+          {
+            "value": "Data Mapping",
+            "column": "Subject Data Mapping"
+          },
+          {
+            "value": "Data Domain",
+            "column": "Subject Data Domain"
+          },
+          {
+            "value": "Data Location",
+            "column": "Subject Data Location"
           }
         ]
       }
@@ -7079,7 +8143,7 @@
           "length": 20,
           "required": "Y",
           "new": true,
-          "description": "A number such as CHG-00789, assigned by the engine"
+          "description": "A number such as CHG-0789, assigned by the engine"
         },
         {
           "name": "Title",
@@ -7646,6 +8710,14 @@
           "description": "Yes when the change lacked the approvals its policy requires, at write time"
         },
         {
+          "name": "Is AI Only Code Approval",
+          "type": "bool",
+          "required": "N",
+          "status": "proposal",
+          "source": "proposal of the deployment build (document 22, B22-10)",
+          "description": "Yes when the sender reported that the only code review approval came from an AI and the gate policy flags it (C33 AI Only Code Approval Handling, flag or stop). Computed by the engine at write time, as the other flags. Records written before this column read as no"
+        },
+        {
           "name": "Idempotency Key",
           "type": "text",
           "length": 200,
@@ -7852,6 +8924,23 @@
           "type": "datetime",
           "required": "N",
           "description": "When the product last confirmed it exists"
+        },
+        {
+          "name": "Retired On",
+          "type": "date",
+          "required": "N",
+          "status": "proposal",
+          "source": "document 22, B22-16 (the Places screen; document 24, B24-18)",
+          "description": "When a person retired the target. A retired target keeps its deployment records and takes no new deployment. Set instead of deleting the row; empty means in service"
+        },
+        {
+          "name": "Retired Reason",
+          "type": "text",
+          "length": 2000,
+          "required": "N",
+          "status": "proposal",
+          "source": "document 22, B22-16 (the Places screen; document 24, B24-18)",
+          "description": "Why the person retired the target, such as the environment it was replaced by"
         }
       ],
       "keys": [
@@ -8688,6 +9777,16 @@
       ],
       "attributes": [
         {
+          "name": "Record Number",
+          "type": "text",
+          "length": 20,
+          "required": "Y",
+          "new": true,
+          "status": "proposal",
+          "source": "proposal of the record number build (document 25, B25-9)",
+          "description": "A number such as REV-0042, assigned by the engine when it opens the review, never reused. Reviews written before this build have none"
+        },
+        {
           "name": "Business Application",
           "type": "ref",
           "required": "Y",
@@ -8766,6 +9865,13 @@
         {
           "kind": "business",
           "columns": [
+            "Record Number"
+          ],
+          "enforcement": "store"
+        },
+        {
+          "kind": "business",
+          "columns": [
             "Business Application",
             "Review Type",
             "Due On"
@@ -8814,7 +9920,8 @@
           "cardinality": "0..1 to 0..n",
           "delete": "Restrict"
         }
-      ]
+      ],
+      "recordNumberPrefix": "REV"
     },
     {
       "id": "O22",
@@ -9298,17 +10405,228 @@
       ]
     },
     {
-      "id": "L01",
-      "name": "Data Area",
+      "id": "O25",
+      "name": "Data Location",
       "kind": "operational",
-      "status": "later",
-      "release": "Later",
-      "historyClass": "M",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "E",
       "deletePolicy": "draft-only",
-      "purpose": "A named body of data with an owner, classification and copy-to-test rule; data-use decisions point to it",
-      "source": "document 22, section 5",
+      "deleteNote": "Retired with Retired On instead of a delete",
+      "purpose": "One concrete data store, held as a link: an environment, server, database, account, org, tenant, host or library",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
       "notes": [
-        "Attributes are a first cut. Decisions of type data use point to it through a new Subject Data Area column on O09, added when this entity is built."
+        "One concrete store, held as a link like O15 Deployment Target. Class E: retired with Retired On, never deleted once registered. At most two levels: an instance, then a store inside it (G-24; D-41, question 9). Its technical owner is an O06 row with subject kind data location and owner role technical-owner. Connection strings, keys and tokens are never stored (G-22)."
+      ],
+      "columnSets": [
+        "common",
+        "operational"
+      ],
+      "linkColumns": true,
+      "attributes": [
+        {
+          "name": "Data Platform",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C50",
+          "description": "The kind of store"
+        },
+        {
+          "name": "Parent Location",
+          "type": "ref",
+          "required": "N",
+          "ref": "OPS",
+          "target": "O25",
+          "description": "The instance this store sits in: a database in a server, a library on a host. A parent has no parent of its own (G-24)"
+        },
+        {
+          "name": "Target Stage",
+          "type": "ref",
+          "required": "C",
+          "ref": "CFG",
+          "target": "C34",
+          "description": "Required on a top-level location. A child takes its parent's stage and sets none"
+        },
+        {
+          "name": "Deployment Target",
+          "type": "ref",
+          "required": "N",
+          "ref": "OPS",
+          "target": "O15",
+          "description": "Set when the store is a target the register knows, such as a Power Platform environment. Its stage must match the target's stage"
+        },
+        {
+          "name": "Hosted By Application",
+          "type": "ref",
+          "required": "N",
+          "ref": "OPS",
+          "target": "O02",
+          "description": "The business application this system is, such as an HR system for its tenant"
+        },
+        {
+          "name": "Link Kind",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C37",
+          "description": "A link kind of category data location"
+        },
+        {
+          "name": "External Id",
+          "type": "text",
+          "length": 400,
+          "required": "C",
+          "description": "The tool's own ID: an environment ID, an Azure resource ID, Fabric workspace and item IDs, a Salesforce org ID or a host name. At least one of External Id and Url. A restricted column (document 26)"
+        },
+        {
+          "name": "Url",
+          "type": "url",
+          "required": "C",
+          "description": "Opens the location in its own tool. At least one of External Id and Url"
+        },
+        {
+          "name": "Label As Seen",
+          "type": "text",
+          "length": 200,
+          "required": "Y",
+          "description": "The location's name when last seen"
+        },
+        {
+          "name": "Last Seen On",
+          "type": "datetime",
+          "required": "N",
+          "description": "When a person, an AI client or (later) the location check last confirmed it"
+        },
+        {
+          "name": "Status",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C05",
+          "description": "Registration state: draft (an AI client's row, or one no person has confirmed), registered (confirmed by a person) or archived"
+        },
+        {
+          "name": "Status Meaning",
+          "type": "meaning",
+          "meaning": "registration-status",
+          "required": "Y",
+          "meaningCopyOf": "Status",
+          "description": "Meaning copy: draft, registered or archived"
+        },
+        {
+          "name": "Retired On",
+          "type": "date",
+          "required": "N",
+          "description": "Set instead of deleting the row"
+        }
+      ],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Data Platform",
+            "External Id"
+          ],
+          "enforcement": "store",
+          "condition": "Among rows with no Retired On"
+        },
+        {
+          "kind": "alternate",
+          "columns": [
+            "Data Platform",
+            "Url"
+          ],
+          "enforcement": "engine",
+          "condition": "Among rows with no Retired On and no External Id"
+        }
+      ],
+      "toolIds": [
+        "External Id"
+      ],
+      "relationships": [
+        {
+          "id": "R109a",
+          "catalogId": "R109",
+          "column": "Data Platform",
+          "target": "C50",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R109b",
+          "catalogId": "R109",
+          "column": "Parent Location",
+          "target": "O25",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Self"
+        },
+        {
+          "id": "R109c",
+          "catalogId": "R109",
+          "column": "Target Stage",
+          "target": "C34",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R109d",
+          "catalogId": "R109",
+          "column": "Deployment Target",
+          "target": "O15",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R109e",
+          "catalogId": "R109",
+          "column": "Hosted By Application",
+          "target": "O02",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R109f",
+          "catalogId": "R109",
+          "column": "Link Kind",
+          "target": "C37",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R109g",
+          "catalogId": "R109",
+          "column": "Status",
+          "target": "C05",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "at-least-one",
+          "columns": [
+            "External Id",
+            "Url"
+          ],
+          "note": "A location is a link: at least one of its ID and its URL"
+        }
+      ]
+    },
+    {
+      "id": "O26",
+      "name": "Data Mapping",
+      "kind": "operational",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "E",
+      "deletePolicy": "draft-only",
+      "deleteNote": "Ended with Ended On instead of a delete",
+      "purpose": "This domain's data sits at this location, in these containers, with this origin",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+      "notes": [
+        "Many to many: one location holds many domains, and one domain spans many locations. Class E: ended with Ended On, never deleted once registered. Copies carry the class: a replica or copy is mapped to the same domain as its source."
       ],
       "columnSets": [
         "common",
@@ -9316,78 +10634,323 @@
       ],
       "attributes": [
         {
-          "name": "Classification",
+          "name": "Data Domain",
           "type": "ref",
           "required": "Y",
           "ref": "CFG",
-          "target": "C07",
-          "description": "The data classification label"
+          "target": "C49",
+          "description": "A domain at a declarable level"
         },
         {
-          "name": "Data Owner",
+          "name": "Data Location",
           "type": "ref",
           "required": "Y",
-          "ref": "PR",
-          "target": "O05",
-          "description": "The person who owns the data area"
+          "ref": "OPS",
+          "target": "O25",
+          "description": "Where the data sits"
         },
         {
-          "name": "Steward",
+          "name": "Containers",
+          "type": "json",
+          "required": "N",
+          "description": "Container names as seen, such as [\"account\",\"contact\"]. Empty means the whole location, or not yet known. Matched exactly, ignoring case. Labels only, never data"
+        },
+        {
+          "name": "Data Origin",
+          "type": "meaning",
+          "meaning": "data-origin",
+          "required": "Y",
+          "description": "System of record, replica, production copy, masked copy or synthetic"
+        },
+        {
+          "name": "Copied From",
           "type": "ref",
           "required": "N",
-          "ref": "PR",
-          "target": "O05",
-          "description": "The data steward"
+          "ref": "OPS",
+          "target": "O26",
+          "description": "For a replica or a copy: the mapping it came from"
         },
         {
-          "name": "Retention Rule",
+          "name": "Status",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C05",
+          "description": "Registration state: draft (an AI client's row, or one no person has confirmed), registered (confirmed by a person) or archived"
+        },
+        {
+          "name": "Status Meaning",
+          "type": "meaning",
+          "meaning": "registration-status",
+          "required": "Y",
+          "meaningCopyOf": "Status",
+          "description": "Meaning copy: draft, registered or archived"
+        },
+        {
+          "name": "Confirmed On",
+          "type": "date",
+          "required": "N",
+          "description": "When a steward, the domain's owner or the location's technical owner last confirmed it"
+        },
+        {
+          "name": "Start On",
+          "type": "date",
+          "required": "Y",
+          "description": "When the data arrived"
+        },
+        {
+          "name": "Ended On",
+          "type": "date",
+          "required": "N",
+          "description": "Set instead of deleting the row"
+        }
+      ],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Data Domain",
+            "Data Location",
+            "Data Origin"
+          ],
+          "enforcement": "store",
+          "condition": "Among rows with no Ended On"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "R110a",
+          "catalogId": "R110",
+          "column": "Data Domain",
+          "target": "C49",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R110b",
+          "catalogId": "R110",
+          "column": "Data Location",
+          "target": "O25",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R110c",
+          "catalogId": "R110",
+          "column": "Copied From",
+          "target": "O26",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict",
+          "note": "Self"
+        },
+        {
+          "id": "R110d",
+          "catalogId": "R110",
+          "column": "Status",
+          "target": "C05",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
+        }
+      ]
+    },
+    {
+      "id": "O27",
+      "name": "Data Use",
+      "kind": "operational",
+      "status": "adopted",
+      "release": "R1",
+      "historyClass": "E",
+      "deletePolicy": "draft-only",
+      "deleteNote": "Ended with Ended On instead of a delete",
+      "purpose": "This application reads or writes this data domain, at this location, for this purpose, with or without AI",
+      "source": "document 22, B22-14 (data taxonomy, D-37 and D-41; docs/architecture/data-taxonomy.md)",
+      "notes": [
+        "Class E: ended with Ended On, never deleted once registered. Its decision state is computed when read from the decisions whose subject is this use (OP-16); no decision column is stored. Widening a registered use from read to write, or turning Reaches AI on, ends the row and starts a new one in the same write plan. A use that breaks a never rule is refused when it is saved, for people and AI clients alike, and the refusal names the rule (D-41, question 7, as the product owner changed it)."
+      ],
+      "columnSets": [
+        "common",
+        "operational"
+      ],
+      "recordNumberPrefix": "DU",
+      "attributes": [
+        {
+          "name": "Record Number",
+          "type": "text",
+          "length": 20,
+          "required": "Y",
+          "description": "A number such as DU-0042, assigned by the engine, never reused"
+        },
+        {
+          "name": "Business Application",
+          "type": "ref",
+          "required": "Y",
+          "ref": "OPS",
+          "target": "O02",
+          "description": "The application that uses the data. Draft applications too, so a use can be declared right after triage"
+        },
+        {
+          "name": "Data Domain",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C49",
+          "description": "A domain at a declarable level. Stored, so routing stays stable if a mapping changes later"
+        },
+        {
+          "name": "Data Location",
+          "type": "ref",
+          "required": "N",
+          "ref": "OPS",
+          "target": "O25",
+          "description": "Where the application reaches the data, when known"
+        },
+        {
+          "name": "Access",
+          "type": "meaning",
+          "meaning": "data-access",
+          "required": "Y",
+          "description": "Read, write or read write"
+        },
+        {
+          "name": "Purpose",
+          "type": "text",
+          "length": 500,
+          "required": "Y",
+          "description": "Why the application needs the data, in one plain sentence. An untrusted field"
+        },
+        {
+          "name": "Reaches AI",
+          "type": "bool",
+          "required": "Y",
+          "description": "Yes when the data is sent to an AI model or agent, for grounding, prompts or training"
+        },
+        {
+          "name": "AI Service As Seen",
           "type": "text",
           "length": 200,
           "required": "N",
-          "description": "How long the data is kept"
+          "description": "The model or service as named"
         },
         {
-          "name": "Copy To Test Rule",
+          "name": "AI Component",
+          "type": "ref",
+          "required": "N",
+          "ref": "OPS",
+          "target": "O03",
+          "description": "When that service is a registered technical component"
+        },
+        {
+          "name": "Is Deidentified",
+          "type": "bool",
+          "required": "Y",
+          "description": "Yes when only masked or de-identified data is used. The masked-only rule reads it"
+        },
+        {
+          "name": "Access Approach",
           "type": "ref",
           "required": "N",
           "ref": "CFG",
           "target": "C07",
-          "description": "Whether and how the data may be copied to test (I-86)"
+          "valueList": "access-approach",
+          "description": "As the signed-in person, as the application's own identity, or read-only for the person, from the `access-approach` list (guideline G8)"
+        },
+        {
+          "name": "Status",
+          "type": "ref",
+          "required": "Y",
+          "ref": "CFG",
+          "target": "C05",
+          "description": "Registration state: draft (an AI client's row, or one no person has confirmed), registered (confirmed by a person) or archived"
+        },
+        {
+          "name": "Status Meaning",
+          "type": "meaning",
+          "meaning": "registration-status",
+          "required": "Y",
+          "meaningCopyOf": "Status",
+          "description": "Meaning copy: draft, registered or archived"
+        },
+        {
+          "name": "Start On",
+          "type": "date",
+          "required": "Y",
+          "description": "When the use started"
+        },
+        {
+          "name": "Ended On",
+          "type": "date",
+          "required": "N",
+          "description": "Set instead of deleting the row"
         }
       ],
-      "keys": [],
+      "keys": [
+        {
+          "kind": "business",
+          "columns": [
+            "Record Number"
+          ],
+          "enforcement": "store"
+        },
+        {
+          "kind": "alternate",
+          "columns": [
+            "Business Application",
+            "Data Domain",
+            "Data Location",
+            "Reaches AI"
+          ],
+          "enforcement": "engine",
+          "condition": "Among rows with no Ended On. An empty Data Location counts as one value, which a store key cannot hold, so the engine checks it"
+        }
+      ],
       "relationships": [
         {
-          "id": "RX16",
-          "column": "Classification",
-          "target": "C07",
+          "id": "R111a",
+          "catalogId": "R111",
+          "column": "Business Application",
+          "target": "O02",
           "cardinality": "1 to 0..n",
-          "delete": "Restrict",
-          "note": "Later entity. Restrict, as every relationship"
+          "delete": "Restrict"
         },
         {
-          "id": "RX17",
-          "column": "Data Owner",
-          "target": "O05",
+          "id": "R111b",
+          "catalogId": "R111",
+          "column": "Data Domain",
+          "target": "C49",
           "cardinality": "1 to 0..n",
-          "delete": "Restrict",
-          "note": "Later entity. Restrict, as every relationship"
+          "delete": "Restrict"
         },
         {
-          "id": "RX18",
-          "column": "Steward",
-          "target": "O05",
+          "id": "R111c",
+          "catalogId": "R111",
+          "column": "Data Location",
+          "target": "O25",
           "cardinality": "0..1 to 0..n",
-          "delete": "Restrict",
-          "note": "Later entity. Restrict, as every relationship"
+          "delete": "Restrict"
         },
         {
-          "id": "RX19",
-          "column": "Copy To Test Rule",
+          "id": "R111d",
+          "catalogId": "R111",
+          "column": "AI Component",
+          "target": "O03",
+          "cardinality": "0..1 to 0..n",
+          "delete": "Restrict"
+        },
+        {
+          "id": "R111e",
+          "catalogId": "R111",
+          "column": "Access Approach",
           "target": "C07",
           "cardinality": "0..1 to 0..n",
-          "delete": "Restrict",
-          "note": "Later entity. Restrict, as every relationship"
+          "delete": "Restrict"
+        },
+        {
+          "id": "R111f",
+          "catalogId": "R111",
+          "column": "Status",
+          "target": "C05",
+          "cardinality": "1 to 0..n",
+          "delete": "Restrict"
         }
       ]
     },

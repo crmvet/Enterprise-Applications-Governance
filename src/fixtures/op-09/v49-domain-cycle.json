@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v49-domain-cycle",
+  "description": "Two domains that name each other as parent make a cycle.",
+  "ruleIds": [
+    "V49"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "data-domains-starter"
+    ],
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "fixture-a",
+        "values": {
+          "label": "fixture-a",
+          "parentKey": "fixture-b",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "fixture-b",
+        "values": {
+          "label": "fixture-b",
+          "parentKey": "fixture-a",
+          "levelKey": "data-set"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "invalid",
+    "payload": {
+      "isValid": false
+    },
+    "reasons": [
+      {
+        "code": "data.domain-parent",
+        "severity": "error",
+        "ruleId": "V49"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

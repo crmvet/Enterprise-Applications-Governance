@@ -54,12 +54,12 @@ public sealed class ShippedPresetTests
     }
 
     [Fact]
-    public void TheShippedCatalogHoldsFourFullPresetsAndThreeOverlays()
+    public void TheShippedCatalogHoldsFourFullPresetsAndFourOverlays()
     {
         Assert.Empty(Shipped.Issues);
         Assert.All(Shipped.Presets, p => Assert.True(p.LoadIssues.Count == 0, p.Key + ": " + string.Join(" | ", p.LoadIssues)));
         Assert.Equal(new[] { "balanced", "microsoft-coe-baseline", "regulated", "starter" }, Shipped.FullPresets.Select(p => p.Key).ToArray());
-        Assert.Equal(new[] { "linked-change-management", "small-team", "strict-separation" }, Shipped.Overlays.Select(p => p.Key).ToArray());
+        Assert.Equal(new[] { "data-domains-starter", "linked-change-management", "small-team", "strict-separation" }, Shipped.Overlays.Select(p => p.Key).ToArray());
 
         // Balanced is canonical. The other three full presets are written as changes to it (document 21, section 6.2).
         Assert.All(Shipped.FullPresets.Where(p => p.Key != "balanced"), p => Assert.Equal("balanced", p.Extends));
@@ -72,8 +72,10 @@ public sealed class ShippedPresetTests
             .SelectMany(full => new[] { new[] { full.Key } }.Concat(Shipped.AllowedOverlayCombinations(full).Select(o => new[] { full.Key }.Concat(o).ToArray())))
             .ToArray();
 
-        // 4 presets alone, 5 overlay sets for each of Balanced, Starter and the CoE baseline, 3 for Regulated.
-        Assert.Equal(22, selections.Length);
+        // 4 presets alone, 11 overlay sets for each of Balanced, Starter and the CoE baseline, 7 for Regulated: 22 before the
+        // data domains starter overlay (D-37), which conflicts with nothing, so it doubles every set.
+        Assert.Equal(44, selections.Length);
+        Assert.Equal(22, selections.Count(s => s.Contains("data-domains-starter")));
 
         // Small team never meets strict separation (document 21, sections 6.5 and 6.6; V43).
         Assert.DoesNotContain(selections, s => s.Contains("small-team") && s.Contains("strict-separation"));

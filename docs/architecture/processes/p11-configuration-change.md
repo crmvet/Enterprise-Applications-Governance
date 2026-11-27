@@ -1,6 +1,6 @@
 # P11 Configuration change
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-10](../../../src/docs/demo/scenarios/S-10-configuration.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -33,11 +33,11 @@ There is one accountable for every configuration decision: the configuration adm
 3. **Propose.** The AI client proposes the change as the admin. The engine checks that the admin holds a role that may change configuration.
 4. **Check.** The engine runs its full set of validation rules. It refuses a change that would break the engine or the configuration's own integrity. Examples: a key that does not exist; a decision with no one, or two people, answering for it; an approval rule whose approver is not a person's role; a rule that requires zero approvals; a change to a locked setting; a gate requirement that points to a retired row; a sequential approval that repeats an approver.
 5. **Show the difference, then submit.** The engine stores the patch as a configuration draft, with the version it is based on and a summary. The admin can see the difference and its effect on live applications first, for example "12 applications move to the new tier's review cadence". When the draft passes the checks, the AI client submits it. The engine freezes the draft and opens a configuration change decision (or a gate policy change decision) as Proposed.
-6. **Decide.** One card goes to the configuration admin role. It shows the difference. In the current design, the admin who asked may accept their own AI's draft, and the "strict separation" overlay needs a second configuration admin. Whether the admin should accept the exact change on a card at all is an open design question. The consulted roles get consultation cards, which never count. The AI cannot answer any card.
+6. **Decide.** One approval request goes to the configuration admin role, answered on the decision page by default. It shows the difference. In Balanced, the admin who asked may accept their own AI's draft. The Regulated preset and the "strict separation" overlay need a second configuration admin. Whether that default should change is an open design question. The consulted roles get consultation requests, whose answers never count. The AI cannot answer any request.
 7. **Activate.** On acceptance, the engine activates the draft in one step: it rebases the draft if needed, checks it again, writes the changed configuration rows, and creates the next configuration version. Each version records its content, a hash of the content, when it was published, who asked for it, and the decision that accepted it. Versions are never edited. The engine and the API reload their caches when they see a higher version number.
 8. **Stamp.** New records carry the new version. Old records keep the version they were made under, so any record can show which rules applied to it.
-9. **Withdraw or undo.** A draft that is not yet accepted can be withdrawn. The engine marks it discarded and, if it was submitted, cancels its decision and its card. Undoing an active version is a new change that restores an earlier version's content and supersedes the decision. Nothing is edited in place.
-10. **Upgrade.** A product upgrade proposes a configuration draft that adds missing default rows and updates default rows the organization has not changed. A configuration admin accepts it on a card. The organization's own changes are never overwritten, only reported.
+9. **Withdraw or undo.** A draft that is not yet accepted can be withdrawn. The engine marks it discarded and, if it was submitted, cancels its decision and its approval requests. Undoing an active version is a new change that restores an earlier version's content and supersedes the decision. Nothing is edited in place.
+10. **Upgrade.** A product upgrade proposes a configuration draft that adds missing default rows and updates default rows the organization has not changed. A configuration admin accepts it, on the decision page by default. The organization's own changes are never overwritten, only reported.
 11. **Check health.** The product shows the version history and the engine's own information, such as its version and a hash of the configuration it loaded.
 
 ## What is recorded
@@ -51,9 +51,9 @@ There is one accountable for every configuration decision: the configuration adm
 | Approval record | One per required answer |
 | Audit entry | "Configuration activated" |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
 | Configuration change | Configuration admin (a second one under "strict separation") | First to respond |
 | Gate policy change | Configuration admin, with the change manager consulted | First to respond |
@@ -67,7 +67,7 @@ There is one accountable for every configuration decision: the configuration adm
 - Who decides and who approves configuration changes.
 - The separation rules, for example a second configuration admin under "strict separation".
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in admin.
 
@@ -93,11 +93,11 @@ None directly. Presets name which Microsoft controls an organization should set 
 | Versions | An append-only ledger table, so no version can be edited |
 | Checking a change | The rules engine in the one Azure Functions app |
 | Cache reload | The API compares its cached version number with the current one |
-| The card | The approval runner ([approval cards](README.md#approval-cards)) |
+| Notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
 
 ## Open design questions
 
-- Whether the admin who asked for a change then accepts the exact change on a card, and whether they may accept their own AI's draft.
+- Whether the admin who asked for a change may accept their own AI's draft, as Balanced allows today, or another configuration admin must, as Regulated and the strict separation overlay require.
 - Whether a short list of fixed engine meanings (such as "this status is final") is acceptable, while every label stays configurable.
 
 ## Microsoft sources

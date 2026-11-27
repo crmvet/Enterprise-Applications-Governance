@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "review-done-stays-done-refused",
+  "description": "A done review stays done: moving it back to due is refused, and a new review is opened instead (document 25, B25-12).",
+  "tags": [
+    "review-done"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-3",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "review",
+    "operation": "update",
+    "rowId": "fixture-review-1",
+    "after": {
+      "status": "review-due"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "done",
+      "reviewType": "architecture",
+      "businessApplication": "fixture-app-1",
+      "doneOn": "2026-11-20",
+      "reviewer": "fixture-person-3",
+      "outcomeDecision": "fixture-decision-9"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "record.final"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "record.final",
+        "severity": "error",
+        "ref": "fixture-review-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

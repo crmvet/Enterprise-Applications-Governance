@@ -24,7 +24,8 @@
     "data": {
       "type": "object",
       "required": [
-        "questions"
+        "questions",
+        "impliedAnswer"
       ],
       "properties": {
         "questions": {
@@ -86,6 +87,17 @@
             },
             "additionalProperties": false
           }
+        },
+        "impliedAnswer": {
+          "description": "The highest tier answer the application's declared data implies (docs/architecture/data-taxonomy.md), as a suggestion to prefill. Null with no application, or no declared data that implies one.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/impliedAnswer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -120,7 +132,8 @@
               }
             ]
           }
-        ]
+        ],
+        "impliedAnswer": null
       },
       "asOf": "2026-11-22T09:00:00Z",
       "configurationSetVersion": 3,

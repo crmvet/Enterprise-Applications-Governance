@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "propose_configuration_change input",
   "description": "Turns an admin's instruction into a validated configuration draft. The AI client prepares the operations; the engine validates them against the engine contract and the locked settings. The result is a candidate: a patch stored on a Configuration Draft row (C46). No configuration table changes and no Configuration Set Version (C02) is written. Give exactly one of operations, preset and fileContent. Then submit_record freezes the draft and starts the card; nothing is in force until a person accepts that decision.",
-  "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on one card. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
+  "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on the decision page. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
   "x-tool": "propose_configuration_change",
   "type": "object",
   "required": [

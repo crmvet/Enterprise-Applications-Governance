@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_gap_check_runs output",
+  "description": "The response envelope. On success, data lists gap check runs, newest first, with paging.",
+  "x-tool": "list_gap_check_runs",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "gapCheckRunId",
+              "runBy",
+              "adminRoleUsed",
+              "estatesCovered",
+              "startedOn",
+              "finishedOn",
+              "state",
+              "itemsSeen",
+              "newClaims",
+              "vanishedClaims",
+              "openClaimsLastSeen",
+              "isAiCreated",
+              "performedBy",
+              "recordUrl"
+            ],
+            "properties": {
+              "gapCheckRunId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O22 Gap Check Run"
+              },
+              "runBy": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "adminRoleUsed": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The Entra role the admin held, as seen."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "estatesCovered": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                "description": "The estates the run read."
+              },
+              "startedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "finishedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "state": {
+                "enum": [
+                  "finished",
+                  "not-finished"
+                ],
+                "description": "not-finished: still running, or stopped by a failure."
+              },
+              "itemsSeen": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Items compared."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "newClaims": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "New unregistered claims."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "vanishedClaims": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Registered components not seen."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "openClaimsLastSeen": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Unregistered claims (an item no application holds) still open whose last sighting was this run. Vanished claims are counted in openVanishedLastSeen."
+              },
+              "openVanishedLastSeen": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Vanished claims (a registered component the run did not see) still open whose last sighting was this run."
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client ran it for the admin."
+              },
+              "performedBy": {
+                "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "The record page in the product."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many runs match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 gap check run(s), newest first.",
+      "data": {
+        "items": [
+          {
+            "gapCheckRunId": "a0000000-0000-4000-8000-000000000001",
+            "runBy": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "adminRoleUsed": "Power Platform administrator",
+            "estatesCovered": [
+              {
+                "key": "power-platform-inventory",
+                "label": "Power Platform inventory"
+              }
+            ],
+            "startedOn": "2026-11-24T08:00:00Z",
+            "finishedOn": "2026-11-24T08:01:00Z",
+            "state": "finished",
+            "itemsSeen": 42,
+            "newClaims": 2,
+            "vanishedClaims": 0,
+            "openClaimsLastSeen": 2,
+            "openVanishedLastSeen": 0,
+            "isAiCreated": true,
+            "performedBy": {
+              "actorKind": "ai-client-for-person",
+              "principal": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)",
+                "principalKind": "user"
+              },
+              "onBehalfOf": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)",
+                "principalKind": "user"
+              },
+              "clientAppLabel": "Claude Code",
+              "stampedOn": "2026-11-24T08:00:00Z",
+              "draftedBy": null
+            },
+            "recordUrl": "https://product.example.org/app/records/gap-check-run/a0000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "totalCount": 1
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

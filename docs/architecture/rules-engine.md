@@ -1,22 +1,22 @@
 # Rules engine
 
-**Status: in design.** This page describes the rules engine of the next version: the code that is designed to read the configuration and check every write. Nothing here is released or deployed. Early code that follows it is in [`src/engine`](../../src/engine/), under the MIT License. It is not a release.
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the rules engine: the code that reads the configuration and checks the writes that reach it. It is in [`src/engine`](../../src/engine/), under the MIT License, with one JSON fixture per case in [`src/fixtures`](../../src/fixtures/README.md). Every build runs every fixture and every replay record. Where this page says "designed" or "planned", that part is not built yet.
 
 ## In one screen
 
-| Question | Answer, as designed |
+| Question | Answer |
 |---|---|
-| What is it? | One plain .NET library, plus a thin adapter that binds it to Azure SQL Database. The library holds fourteen operations, from tier evaluation to configuration validation |
+| What is it? | One plain .NET library, plus a thin adapter that binds it to Azure SQL Database. The library holds seventeen operations, from tier evaluation to configuration validation and the data taxonomy |
 | Where does it run? | Inside the one service on Azure Functions, together with the API and the MCP server. The API is the only write path |
 | What does it read? | Only the active configuration version's snapshot. Never the live configuration rows |
-| What does every write get? | Allow, flag or refuse; a stamp of the engine version and the configuration version that checked it; and an audit entry in the same transaction |
+| What does a write get? | Allow, flag or refuse; a stamp of the engine version and the configuration version that checked it; and, for a tool call that writes, one audit entry in the same transaction |
 | Whose rights? | Always the caller's. The engine never acts with more rights than the caller |
 | What if configuration is broken? | It refuses governed writes and reports the problem. It never guesses or falls back to a built-in default |
 | Is it portable? | Yes. The library has no database driver and makes no outbound calls, so the rules are written once and do not depend on one data store |
 
 ![One engine, two bindings](img/s2-engine-1.png)
 
-The diagram shows the callers on top, the library in the middle and an adapter on each side. The Azure adapter is the one in the first release design. The library is designed to compile for more than one .NET target, so another data store could be added later without rewriting the rules. That is an option, not a plan.
+The diagram shows the callers on top, the library in the middle and an adapter on each side. The Azure adapter is the one built for the first release. The library compiles for more than one .NET target (.NET 10, .NET Framework 4.8 and .NET Standard 2.0, with its tests on the first two), so another data store could be added later without rewriting the rules. That is an option, not a plan.
 
 ## Ten rules the engine follows
 
@@ -35,7 +35,7 @@ The diagram shows the callers on top, the library in the middle and an adapter o
 
 | Part | What it holds |
 |---|---|
-| Core | The contract records, the fourteen operations, the reason code catalog, the snapshot model and the hashing |
+| Core | The contract records, the operations, the reason code catalog, the snapshot model and the hashing |
 | Configuration | Reads and writes snapshots, applies a draft's patch, rebases a patch, reads seed and preset files, computes the difference and the summary |
 | Runtime | Loads the snapshot, asks the core which facts it needs, fetches them, evaluates, and returns a write plan. Holds the snapshot cache |
 | Testing | The fixture runner, the preset loader for tests and the invariant tests |
@@ -54,12 +54,12 @@ The core is pure, so it cannot read rows. Each operation runs in three steps:
 
 This makes every rule testable with facts written inline in a test file, with no database.
 
-## The fourteen operations
+## The seventeen operations
 
 | Operation | What it answers |
 |---|---|
 | Evaluate tier | Which tier do these answers suggest? The most serious answer wins |
-| Resolve required approvals | Which approvals and consultations does this decision need in this scope, or may the engine accept it without a card? |
+| Resolve required approvals | Which approvals and consultations does this decision need in this scope, or may the engine accept it without a person's answer? |
 | Evaluate approval status | Are the required approvals met, and which answers count? An answer from an AI, an agent or a pipeline never counts, and separation rules are applied here |
 | Evaluate gate decision | At this gate level, what happens to this deployment: record, flag, warn or stop? |
 | Check change window | Is this moment inside the change request's window? |
@@ -72,6 +72,11 @@ This makes every rule testable with facts written inline in a test file, with no
 | Evaluate a standard change | Does this change fit a standard change model that a person approved? |
 | Compare a gap check result | Which items are unregistered, which registered components vanished, and which claims change? |
 | Evaluate linked-mode authorization | In linked mode, does the product know that the external change was authorized? A change number alone never counts |
+| Resolve data domain | Who owns this business data domain, inherited from where, and which classification and rules apply? |
+| Evaluate data use | Does this data use or copy need a decision, who is asked, and what is its state now? |
+| Run data checks | What is missing, broken or waiting in the data: owners, deputies, decisions, mappings and locations? |
+
+The three data operations are described in [Data taxonomy](data-taxonomy.md#engine).
 
 Every operation returns the same shape: an outcome word, its own output, the reasons, a trace of the configuration rows that decided the outcome (which matched, which won, which dropped out), and the configuration version, snapshot hash and engine version it used. The `explain_rules` MCP tool returns that trace, so a person can see why a rule applied.
 
@@ -89,7 +94,7 @@ Approval rules and decision rights can be scoped by tier, lifecycle stage, chang
 | 2. Resolve the actor kind | Person, AI client for a person, agent identity, pipeline, approval runner or engine. Rows an AI client writes are marked as AI-created | Never |
 | 3. Check the role | The caller must hold a product role that allows this write, through a bound group, an owner role on this application, or a workload grant | No role allows it |
 | 4. Validate against configuration | Reads the configuration version in force: keys exist, status changes are allowed, required fields are set, gate requirements hold | A rule fails, or the configuration is broken. The error names the rule and the guideline |
-| 5. Guard protected columns | Only the approval writer writes approval answers. Live configuration changes only inside activation. Accepted decisions, approval records and audit entries are append-only | Anyone else writes them |
+| 5. Guard protected columns | Approval answers are written only by a person on the decision page, through `answer_approval` (D-38), and by the approval writer, which records an answer given on a card. Live configuration changes only inside activation. Accepted decisions, approval records and audit entries are append-only | Anyone else writes them |
 | 6. Apply AI defaults | A row an AI client creates starts as Draft or Proposed | Never. It lowers the status instead |
 | 7. Stamp | The configuration version, who performed it, the time, the engine version and the engine check time | Never |
 | 8. Derive | Computes deployment flags, whether an approval counts, when a document goes stale and when a review is due | Never |
@@ -153,9 +158,9 @@ Problem details follow RFC 9457: the type ends in the reason code, the title is 
 |---|---|
 | Fixtures | One JSON file per case, with a snapshot (a preset plus overrides), the context, the facts, the input and the expected outcome and reason codes. Fictional data only |
 | Preset validation | Every shipped full preset, alone and with each allowed overlay, must validate with no errors |
-| Invariant tests | Generated configurations and inputs check rules that must hold for any configuration. For example: an AI or workload actor never counts toward an approval; no decision outside the locked list is accepted without a person's card; a consultation never counts; a change number alone never authorizes; a missing gate policy never falls back to a level; a more serious answer never lowers the tier; enforce never stops for the window or path alone; a configuration with the AI approval lock off never validates |
+| Invariant tests | Generated configurations and inputs check rules that must hold for any configuration. For example: an AI or workload actor never counts toward an approval; no decision outside the locked list is accepted without a person's answer; a consultation never counts; a change number alone never authorizes; a missing gate policy never falls back to a level; a more serious answer never lowers the tier; enforce never stops for the window or path alone; a configuration with the AI approval lock off never validates |
 | One test per behavior change | Every change to a rule adds or changes a fixture |
-| Binding tests | The same fixtures run through the Azure adapter against a test database, and must give the same outcome and reason codes as the library alone |
+| Binding tests | Designed: the same fixtures run through the Azure adapter against a test database, and must give the same outcome and reason codes as the library alone. Built today: the store conformance tests on SQLite and in memory, and a replay of the scripted walkthrough against the local server that must match the library's answers |
 
 ## The Azure binding
 
@@ -176,8 +181,8 @@ Microsoft says Azure Functions 4.x on the isolated worker model supports .NET 10
 | Question | The design's default |
 |---|---|
 | Is a short list of fixed engine meanings acceptable under "never hardcoded"? | Yes. About 20 fixed meanings, and every label stays configurable |
-| When an admin tells an AI to change configuration, does the admin then accept the exact difference on a card? | Yes, one card that shows the engine's difference |
+| When an admin tells an AI to change configuration, does the admin then accept the exact difference themselves? | Yes, on one decision page that shows the engine's difference |
 | Do AI approvals from other tools count, such as a pull request approved only by an AI? | No. They never count as authorization, and the shipped gate default flags them |
-| May the engine ever accept a decision without a person's card? | Only for a locked list: lowest-tier intake, and standard changes whose model a person approved once |
+| May the engine ever accept a decision without a person's answer? | Only for a locked list: lowest-tier intake, and standard changes whose model a person approved once |
 
 If the first answer were no, the library would need a rule language, which would be a much larger piece of work.

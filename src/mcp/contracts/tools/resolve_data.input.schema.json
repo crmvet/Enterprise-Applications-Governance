@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "resolve_data input",
+  "description": "Which business data is this table, object or file? The build loop's first question: give the location (by its ID, its external ID or its URL) and, when known, the container, and the answer names the domain, its owner, its classification and its rules. Writes nothing.",
+  "x-tool": "resolve_data",
+  "type": "object",
+  "properties": {
+    "locationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "The location by its row ID."
+    },
+    "externalId": {
+      "type": "string",
+      "description": "The location's own ID in its tool, such as an environment ID or a host name.",
+      "minLength": 1,
+      "maxLength": 400
+    },
+    "url": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "The location's URL."
+    },
+    "platformKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C50 Data Platform",
+      "description": "Narrows an externalId or url to one platform."
+    },
+    "container": {
+      "type": "string",
+      "description": "The container as seen, such as a table, an object or a file. Matched exactly, ignoring case.",
+      "minLength": 1,
+      "maxLength": 200
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "locationId"
+      ]
+    },
+    {
+      "required": [
+        "externalId"
+      ]
+    },
+    {
+      "required": [
+        "url"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "externalId": "payroll-host-01",
+      "container": "PAYMAST"
+    }
+  ]
+}

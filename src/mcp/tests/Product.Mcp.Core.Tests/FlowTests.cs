@@ -33,7 +33,7 @@ public sealed class FlowTests
     {
         McpHarness h = McpHarness.Create();
         JsonTreeNode proposed = h.Ok(McpHarness.TokenOwner, "save_decision_proposal", "{\"decisionTypeKey\":\"retirement\",\"subjectKind\":\"business-application\",\"subjectId\":\"" + McpHarness.Travel
-            + "\",\"statement\":\"Retire the travel planner\",\"context\":\"Replaced\",\"proposedOutcomeKey\":\"retire\",\"reason\":\"A duplicate\"}");
+            + "\",\"statement\":\"Retire the travel planner\",\"context\":\"Replaced\",\"proposedOutcomeKey\":\"complete\",\"reason\":\"A duplicate\"}");
         string decision = McpHarness.Text(McpHarness.Data(proposed), "recordId");
         Assert.Equal("proposed", McpHarness.Text(McpHarness.Data(proposed), "status.meaning"));
         Assert.True(h.Store.Get("decision", decision)!.Flag("isAiCreated"));
@@ -92,22 +92,32 @@ public sealed class FlowTests
     }
 
     // WORKING DEFAULT (open design question 8): the engine accepts with no card only for the locked list, here a
-    // lowest-tier intake. The AI client's own write still never shows accepted.
+    // lowest-tier intake for a new application (B25-15), whose requester named its business owner. The named person
+    // consents first, on their own request (B25-18); then the engine accepts. The AI client's own write still never shows
+    // accepted.
     [Fact]
-    public void TheEngineAcceptsALowestTierIntakeAndTheAiNeverDoes()
+    public void TheEngineAcceptsALowestTierIntakeOnceTheNamedOwnerConsentsAndTheAiNeverDoes()
     {
         McpHarness h = McpHarness.Create();
-        string intake = Scenarios.Intake(h);
+        string intake = Scenarios.Intake(h, linked: false, businessOwner: McpHarness.Deputy);
         h.Ok(McpHarness.TokenOwner, "answer_tier_questions", "{\"intakeRequestId\":\"" + intake + "\",\"answers\":[{\"questionKey\":\"data-change\",\"answerKey\":\"reads-only\"},{\"questionKey\":\"sensitivity\",\"answerKey\":\"none\"},{\"questionKey\":\"reach\",\"answerKey\":\"small-team\"},{\"questionKey\":\"failure-impact\",\"answerKey\":\"little\"}]}");
         JsonTreeNode submitted = h.Ok(McpHarness.TokenOwner, "submit_record", "{\"subjectKind\":\"intake-request\",\"subjectId\":\"" + intake + "\"}");
         JsonTreeNode data = McpHarness.Data(submitted);
         Assert.Equal("submitted", McpHarness.Text(data, "status.meaning"));
-        Assert.Equal("lowest-tier", McpHarness.Text(data, "engineAccepted.condition"));
+        Assert.Equal("null", McpHarness.Text(data, "engineAccepted"));
         string decision = McpHarness.Text(data, "decisionId");
+        Assert.Equal("proposed", h.Store.Get("decision", decision)!.Text("statusMeaning"));
+        JsonTreeNode consent = Assert.Single(Js.Items(data, "approvalsRequested"));
+        Assert.Equal(McpHarness.Deputy, McpHarness.Text(consent, "askedPrincipal.objectId"));
+        Assert.Equal("business-owner", McpHarness.Text(consent, "requiredOwnerRoleKey"));
+        ToolContractTests.AssertNeverApprovedOrAccepted("submit_record", data);
+
+        // An AI client never gives the consent; the named person does, on the decision page, and the engine accepts.
+        h.Fails(McpHarness.TokenDeputy, "answer_approval", "{\"approvalRecordId\":\"" + McpHarness.Text(consent, "approvalRecordId") + "\",\"answer\":\"approve\"}", McpErrorCodes.AiCannotDoThis);
+        h.Ok(McpHarness.TokenDeputyWeb, "answer_approval", "{\"approvalRecordId\":\"" + McpHarness.Text(consent, "approvalRecordId") + "\",\"answer\":\"approve\"}", server: h.PersonServer());
         StoredRow row = h.Store.Get("decision", decision)!;
         Assert.Equal("accepted", row.Text("statusMeaning"));
         Assert.Equal("engine", row.Text("performedByActorKind"));
-        ToolContractTests.AssertNeverApprovedOrAccepted("submit_record", data);
 
         // Tier answers are a suggestion: the application's tier did not move.
         Assert.Equal("tier-1", h.Store.Get("business-application", McpHarness.Expense)!.Text("tier"));

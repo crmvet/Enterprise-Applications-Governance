@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_pipeline_map input",
-  "description": "Which pipelines deploy an application, in which stage order. Give exactly one of businessApplicationId and pipelineReferenceId. Writes nothing.",
+  "description": "Which pipelines deploy an application, in which stage order. Give businessApplicationId for an application's pipelines, pipelineReferenceId for one pipeline, or neither for every pipeline the product holds, a pipeline mapped to no target included (with no entries). Writes nothing.",
   "x-tool": "get_pipeline_map",
   "type": "object",
   "properties": {
@@ -17,28 +17,12 @@
     }
   },
   "additionalProperties": false,
-  "oneOf": [
-    {
-      "required": [
-        "businessApplicationId"
-      ],
-      "not": {
-        "required": [
-          "pipelineReferenceId"
-        ]
-      }
-    },
-    {
-      "required": [
-        "pipelineReferenceId"
-      ],
-      "not": {
-        "required": [
-          "businessApplicationId"
-        ]
-      }
-    }
-  ],
+  "not": {
+    "required": [
+      "businessApplicationId",
+      "pipelineReferenceId"
+    ]
+  },
   "examples": [
     {
       "businessApplicationId": "10000000-0000-4000-8000-000000000001"

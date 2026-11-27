@@ -16,12 +16,29 @@ public sealed class EntityCatalogTests
     public void TheCatalogHoldsEveryFirstReleaseEntityWithATableOfItsOwn()
     {
         EntityCatalog catalog = EntityCatalog.Embedded;
-        IEnumerable<string> expected = Enumerable.Range(1, 46).Where(n => n != 3).Select(n => "C" + n.ToString("D2"))
-            .Concat(Enumerable.Range(1, 24).Select(n => "O" + n.ToString("D2")));
+        IEnumerable<string> expected = Enumerable.Range(1, 50).Where(n => n != 3).Select(n => "C" + n.ToString("D2"))
+            .Concat(Enumerable.Range(1, 27).Select(n => "O" + n.ToString("D2")));
         Assert.Equal(expected, catalog.Entities.Select(e => e.ModelId));
-        Assert.Equal(69, catalog.Entities.Count);
+        Assert.Equal(76, catalog.Entities.Count);
         Assert.False(catalog.TryGet("preset", out _));
+
+        // The data taxonomy (D-37; document 22, B22-14) replaced L01 Data Area with four configuration entities and three
+        // operational ones, so data-area is gone from the model and the store has no table for it.
         Assert.False(catalog.TryGet("data-area", out _));
+        Assert.False(Product.Engine.Core.Model.LogicalModel.Compiled.TryGet("data-area", out _));
+        foreach (string key in new[] { "data-classification", "data-domain-level", "data-domain", "data-platform" })
+        {
+            Assert.True(catalog.Get(key).IsConfiguration, key);
+            Assert.Equal("config", catalog.Get(key).Schema);
+        }
+
+        foreach (string key in new[] { "data-location", "data-mapping", "data-use" })
+        {
+            Assert.False(catalog.Get(key).IsConfiguration, key);
+            Assert.Equal("ops", catalog.Get(key).Schema);
+            Assert.Equal('E', catalog.Get(key).HistoryClass);
+        }
+
         Assert.Contains("widget", Assert.Throws<InvalidOperationException>(() => catalog.Get("widget")).Message);
         Assert.Equal(catalog.Entities.Count, catalog.Entities.Select(e => e.Table).Distinct(StringComparer.Ordinal).Count());
     }
@@ -59,7 +76,8 @@ public sealed class EntityCatalogTests
         EntityCatalog catalog = EntityCatalog.Embedded;
         Assert.Equal(new[] { "C46", "O08", "O09", "O10" }, catalog.Entities.Where(e => e.Storage == EntityStorage.UpdatableLedger).Select(e => e.ModelId));
         Assert.Equal(new[] { "C02", "O14", "O20", "O24" }, catalog.Entities.Where(e => e.Storage == EntityStorage.AppendOnlyLedger).Select(e => e.ModelId));
-        Assert.Equal(61, catalog.Entities.Count(e => e.Storage == EntityStorage.Temporal));
+        Assert.Equal(68, catalog.Entities.Count(e => e.Storage == EntityStorage.Temporal));
+        Assert.All(new[] { "C47", "C48", "C49", "C50", "O25", "O26", "O27" }, id => Assert.Equal(EntityStorage.Temporal, catalog.Entities.Single(e => e.ModelId == id).Storage));
         Assert.Equal("audit", catalog.Get("audit-entry").Schema);
         Assert.Equal("config", catalog.Get("configuration-draft").Schema);
         Assert.Equal("ops", catalog.Get("approval-record").Schema);
@@ -107,6 +125,29 @@ public sealed class EntityCatalogTests
         Assert.Equal("k", request.ValueOf(CanonicalJson.Parse("{\"requestKey\":\"k\"}")));
         Assert.True(request.IsTooLong(CanonicalJson.Parse("{\"requestKey\":\"" + new string('k', 401) + "\"}")));
         Assert.Equal("nvarchar(400) COLLATE Latin1_General_BIN2", request.SqlType);
+    }
+
+    // O06 Owner Assignment names exactly one subject, and its Subject Kind names that one; an empty kind means the
+    // application, so every row written before the data taxonomy passes (document 22, section 2.6 and B22-14).
+    [Fact]
+    public void AnOwnerAssignmentNamesExactlyOneSubjectOfItsKind()
+    {
+        SubjectCheck check = EntityCatalog.Embedded.Get("owner-assignment").SubjectCheck!;
+        Assert.Equal("OneSubject", check.Name);
+        Assert.Equal("subjectKind", check.KindColumn);
+        Assert.Equal(new[] { "businessApplication", "subjectDataDomain", "subjectDataLocation" }, check.Subjects.Select(s => s.Value));
+        Assert.Null(check.Problem(CanonicalJson.Parse("{\"businessApplication\":\"a\",\"ownerRole\":\"business-owner\"}")));
+        Assert.Null(check.Problem(CanonicalJson.Parse("{\"businessApplication\":\"a\",\"subjectKind\":\"business-application\"}")));
+        Assert.Null(check.Problem(CanonicalJson.Parse("{\"subjectDataDomain\":\"payroll\",\"subjectKind\":\"data-domain\",\"businessApplication\":null}")));
+        Assert.Null(check.Problem(CanonicalJson.Parse("{\"subjectDataLocation\":\"l\",\"subjectKind\":\"data-location\",\"subjectDataDomain\":\"\"}")));
+        Assert.Contains("sets 0 of the subject columns", check.Problem(CanonicalJson.Parse("{\"ownerRole\":\"data-owner\"}")));
+        Assert.Contains("sets 2 of the subject columns", check.Problem(CanonicalJson.Parse("{\"businessApplication\":\"a\",\"subjectDataDomain\":\"payroll\",\"subjectKind\":\"data-domain\"}")));
+        Assert.Contains("but sets subjectDataDomain instead of businessApplication", check.Problem(CanonicalJson.Parse("{\"subjectDataDomain\":\"payroll\"}")));
+        Assert.Contains("\"business-application\" but sets subjectDataDomain", check.Problem(CanonicalJson.Parse("{\"subjectDataDomain\":\"payroll\",\"subjectKind\":\"business-application\"}")));
+        Assert.Contains("not one of", check.Problem(CanonicalJson.Parse("{\"businessApplication\":\"a\",\"subjectKind\":\"Business Application\"}")));
+
+        // No other entity has a store-level subject check: O09 Decision's subjects stay the engine's (B22-14).
+        Assert.Equal(new[] { "owner-assignment" }, EntityCatalog.Embedded.Entities.Where(e => e.SubjectCheck != null).Select(e => e.Key));
     }
 
     [Fact]

@@ -193,6 +193,30 @@ public sealed class CallerClaims
     /// <summary>True when the validated token names an agent as its subject or its client.</summary>
     public bool IsAgentToken => SubjectIsAgentUser || SubjectIsAgentIdentity || ActorIsAgent;
 
+    /// <summary>
+    /// The demo persona this request runs as (D-39), or null. Set only by the demo persona switch, in the Demo environment,
+    /// on the caller facts that replace the signed-in operator's for the rest of the request.
+    /// </summary>
+    public DemoPersonaUse? DemoPersona { get; private set; }
+
+    /// <summary>
+    /// The caller facts of a demo persona acting through this caller's sign-in (D-39): the persona's object ID and groups,
+    /// with this token's tenant, client app, scopes and version. No app role, no directory role and no agent facet carries
+    /// over, so the persona is a person with the persona's roles only.
+    /// </summary>
+    public CallerClaims ForDemoPersona(ProductDemoPersona persona)
+    {
+        if (persona == null)
+        {
+            throw new ArgumentNullException(nameof(persona));
+        }
+
+        return new CallerClaims(persona.ObjectId.Trim(), TenantId, ClientAppId, isAppOnly: false, Scopes, groupObjectIds: persona.Groups, tokenVersion: TokenVersion)
+        {
+            DemoPersona = new DemoPersonaUse(persona.Name, persona.Label, ObjectId),
+        };
+    }
+
     /// <summary>True when the token carries the scope.</summary>
     public bool HasScope(string scope)
     {

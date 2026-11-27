@@ -8,9 +8,9 @@
 
 ## The keynote
 
-**Govern AI development of your apps: people build with AI at speed, and every app stays owned, tiered and decided by a person.**
+**Govern AI development of your apps: the product is designed so people can build with AI while each app stays owned, tiered and decided by a person.**
 
-People now build working apps with AI in days. Most governance was built for slow builds: one board for every change, a ticket queue, a review at the end and a yearly inventory spreadsheet. Against AI builders it either blocks them or gets skipped. This playbook is written to govern AI development of the apps, not to slow it down. It gives the organization a clear say in who may build with AI, who decides, and what each risk tier needs. It gives IT a paved road: environments, templates, pipelines the organization owns, and identities for people, agents and pipelines. The product is designed to put governance inside the AI build loop. Its own MCP server is designed so the AI builder, such as Claude Code (the reference client), GitHub Copilot or another MCP client, can ask the governance questions while it builds: the risk tier, the required documents, the owners, the dependencies, and what needs a person's decision. AI drafts and people decide, on approval cards in Outlook and Teams. The organization's own pipelines deploy, and the product is designed to record each deployment. Where a Microsoft tool already does a job, the product is designed to link to it, never to rebuild it.
+People now build working apps with AI in days. Most governance was built for slow builds: one board for every change, a ticket queue, a review at the end and a yearly inventory spreadsheet. Against AI builders it either blocks them or gets skipped. This playbook is written to govern AI development of the apps, not to slow it down. It gives the organization a clear say in who may build with AI, who decides, and what each risk tier needs. It gives IT a paved road: environments, templates, pipelines the organization owns, and identities for people, agents and pipelines. The product is designed to put governance inside the AI build loop. Its own MCP server is designed so the AI builder, such as Claude Code (the reference client), GitHub Copilot or another MCP client, can ask the governance questions while it builds: the risk tier, the required documents, the owners, the dependencies, and what needs a person's decision. AI drafts and people decide, on the decision page in the web app; Teams and Outlook notices are designed to link to it. The organization's own pipelines deploy, and the product is designed to record each deployment. Where a Microsoft tool already does a job, the product is designed to link to it, never to rebuild it.
 
 ## Why this chapter exists
 
@@ -22,7 +22,7 @@ This chapter says what governing AI development of the apps means. It says what 
 
 | Side | Who | What it is designed to enable | Where the playbook covers it |
 |---|---|---|---|
-| The organization | Leaders and sponsors, business owners, the AI lead, the PMO, change control | Builders keep their speed, and every app keeps an owner, a tier and a person who decides. A published answer to who may build with AI and on which path. One accountable role per decision. Review weight set by the tier, not by habit. Decisions on cards, not in meetings. Adoption measured by flow and coverage, not by apps shipped | [Organization track](README.md#organization-track): chapters 2, 3, 4, 6, 10, 14, 18 and 19 |
+| The organization | Leaders and sponsors, business owners, the AI lead, the PMO, change control | Builders keep their speed, and every app keeps an owner, a tier and a person who decides. A published answer to who may build with AI and on which path. One accountable role per decision. Review weight set by the tier, not by habit. Decisions on the decision page, not in meetings. Adoption measured by flow and coverage, not by apps shipped | [Organization track](README.md#organization-track): chapters 2, 3, 4, 6, 10, 14, 18 and 19 |
 | IT | The platform team, architects, security | Self-service instead of tickets. A paved road builders use by themselves. Identities for people, agents and pipelines. Governance answers inside the AI client. Evidence as a query, not a project. A clear map of which Microsoft tool does which job | [IT track](README.md#it-track): chapters 7, 8, 13, 15, 16, 20, 21 and 22 |
 | Both | Every party | One application record every party points to. Change and release across every tool. One set of AI rules. Operate and review on a cadence | [Shared](README.md#shared-both): chapters 5, 9, 11 and 12 |
 
@@ -51,11 +51,11 @@ Both views point to **one application record** per business application, however
 
 This is application portfolio management, kept as the record underneath, not as the headline.
 
-The product is designed so people reach the record three ways: MCP clients (Claude Code is the reference client), the web app, and approval cards in Outlook and Teams. Each way in is designed to act as the signed-in person, so the person's own rights are the limit. The organization decides on cards. IT links, maps and records.
+The product is designed so people reach the record three ways: MCP clients (Claude Code is the reference client), the web app, and notices in Outlook and Teams that are designed to link to the web app. Each way in is designed to act as the signed-in person, so the person's own rights are the limit. The organization decides on the decision page in the web app. IT links, maps and records.
 
 Below the record, Microsoft's tools keep their jobs: the Power Platform admin center for [inventory](https://learn.microsoft.com/power-platform/admin/power-platform-inventory) and environments, Microsoft Entra for groups and [agent identities](https://learn.microsoft.com/entra/agent-id/best-practices-agent-id), [Microsoft Agent 365](https://learn.microsoft.com/microsoft-agent-365/overview) for the agent registry, your pipelines (Power Platform Pipelines, Azure Pipelines or GitHub Actions), your work tools (Azure Boards, Planner or GitHub), Microsoft Purview for [audit](https://learn.microsoft.com/agents/center-of-excellence/govern-agents-risk), and [Microsoft Defender](https://learn.microsoft.com/defender-xdr/security-for-ai/ai-agent-inventory) for security. The record is designed to link to them, never to copy them. [Chapter 22](22-which-microsoft-tool-does-which-job.md) maps each job to its tool.
 
-The diagram "Two views, one record" shows this on one page.
+The diagram "Two views, one record" shows this on one page. It was drawn before the decision page: where it shows approval cards, read notices in Outlook and Teams that are designed to link to the decision page.
 
 ![Diagram: Two views, one record. On the left, the organization's view: leaders and sponsors, business owners, the AI lead, the PMO and change control ask who may build with AI, who decides, what each tier needs and whether AI app development is working. On the right, IT's view: the platform team, architects and security ask where AI builders build, which identity acts, how AI clients reach the product, where the evidence is and which Microsoft tool does which job. Both point to one application record in the middle, reached through MCP clients, the web app and approval cards as the signed-in person. Below it, the Microsoft tools keep their jobs and are linked, not copied.](img/playbook-two-perspectives.png)
 
@@ -69,7 +69,7 @@ One change, from the ask to the record. Each step says who acts.
 | 2. The AI client asks first | The AI client | Before it builds, Claude Code or another MCP client calls the product's own MCP server, as the signed-in person. |
 | 3. The answers come back | The product | It is designed to answer with the proposed tier and why, what the tier needs, the owners and deputies, what depends on the app, the missing documents, and what needs a person. The answers shape the build. |
 | 4. The AI drafts | The AI client | It builds the app or the change in your repository. It drafts the intake or the change request in the product. It writes the documents in your own tools and links them. Everything it writes in the product starts as a draft. |
-| 5. A person decides | A person | The holder of the accountable role answers an approval card in Outlook or Teams. The AI client submits a request, never an approval, and it cannot answer the card. A rejection goes back to step 4. |
+| 5. A person decides | A person | The holder of the accountable role answers on the decision page in the web app; a notice in Outlook or Teams is designed to link to it. The AI client submits a request, never an approval, and it cannot answer. A rejection goes back to step 4. |
 | 6. Your pipeline deploys | Your own tools | Power Platform Pipelines, Azure Pipelines or GitHub Actions build once and promote the tested artifact. The product is designed never to build, host or run them. |
 | 7. The deployment is recorded | Your pipeline and the product | A last step in your pipeline, under the pipeline's own workload identity, calls the product's record endpoint. It does not go through the MCP server. The product is designed to record what was deployed, where, when, by which pipeline and who approved, and to flag a deployment that came another way, lacks an approval or falls outside its window. |
 
@@ -77,7 +77,7 @@ Then the loop starts again. Before the next change, the builder can ask the AI c
 
 By design, three things are never in the loop: an AI approval, a stored shared secret, and a copy of Microsoft's inventory.
 
-The diagram "The governed AI build loop" shows the seven steps as one circle.
+The diagram "The governed AI build loop" shows the seven steps as one circle. It was drawn before the decision page: in step 5, read the decision page in the web app where it says approval card.
 
 ![Diagram: The governed AI build loop, seven steps in a circle. 1, a person asks an AI client for an app or a change. 2, the AI client asks the product first, as the signed-in person. 3, the product is designed to answer with the proposed tier, what the tier needs, the owners, what depends on the app, the missing documents and what needs a person. 4, the AI drafts the app, the request and the documents. 5, a named person decides on an approval card in Outlook or Teams; the AI cannot answer it, and a rejection goes back to step 4. 6, the organization's own pipeline deploys the tested artifact. 7, a last pipeline step records the deployment under the pipeline's own identity. In the middle: AI drafts, people decide, your pipeline deploys, and the product is designed to record the deployment.](img/playbook-ai-build-loop.png)
 
@@ -85,7 +85,7 @@ The diagram "The governed AI build loop" shows the seven steps as one circle.
 
 ## Three rules that never bend
 
-1. **AI drafts and recommends; a named person decides.** Only a person's answer on an approval card counts. A pre-authorized decision, such as a standard change on an approved model, counts only because a named person approved that rule on record. No AI approves anything, including its own work.
+1. **AI drafts and recommends; a named person decides.** Only a person's answer counts, given by default on the decision page in the web app. A pre-authorized decision, such as a standard change on an approved model, counts only because a named person approved that rule on record. No AI approves anything, including its own work.
 2. **The tier, not the tool, sets the weight.** An app built with AI in a day gets the review its tier needs, no more and no less. Build effort is no longer a sign of risk.
 3. **Links, not copies.** Microsoft's tools keep their jobs. The product is designed to link to them, listen for the facts they send, or read them live when an admin asks.
 
@@ -95,7 +95,7 @@ The diagram "The governed AI build loop" shows the seven steps as one circle.
 - Builders get a governed place to build, a template to start from and a pipeline to ship through, without filing a ticket.
 - Before an AI client builds or changes an app, it asks the governance questions, and the answers shape the build.
 - Every app, however it was built, has an owner, a tier and a register entry from the day the idea arrives.
-- Every decision has a named person behind it: on a card, or through a rule that person approved on record. No approval is made by an AI alone.
+- Every decision has a named person behind it: an answer, by default on the decision page, or a rule that person approved on record. No approval is made by an AI alone.
 - Every production deployment comes through the organization's own pipeline and is on record.
 - Nothing a Microsoft tool already holds is copied. Each technical part is a link.
 
@@ -111,7 +111,7 @@ Every decision right is a default. [Chapter 1](01-adopt-and-tailor.md) shows how
 ## Guidelines this chapter applies
 
 - **G3 Set a risk tier for every app, on tiers you define.** The tier, not the tool or the build effort, sets how much review an app needs.
-- **G17 Let AI draft and recommend; people approve.** The AI client drafts and submits. A person decides on a card.
+- **G17 Let AI draft and recommend; people approve.** The AI client drafts and submits. A person decides on the decision page.
 - **G21 Give AI builders a paved road.** Make the governed way to build the fastest way: environments without a ticket, templates, approved connectors and MCP servers, pipelines the organization owns, and identities ready to use.
 - **G22 Let the AI builder ask before it builds.** The AI client asks for the tier, what the tier needs, the owners, the dependants and the missing documents before it builds or changes an app.
 
@@ -124,7 +124,7 @@ Every decision right is a default. [Chapter 1](01-adopt-and-tailor.md) shows how
 ## How the product is designed to support it
 
 - Its own MCP server is designed to answer the governance questions inside the build, for any MCP client, with Claude Code as the reference client. It is designed to act as the signed-in person.
-- It is designed so that only a person's answer on an approval card counts as a decision. By default the card is a Power Automate approval, answered in Outlook or Teams. A pre-authorized decision, such as a standard change, is designed to link the rule a person approved. No tool it ships is designed to approve, reject or accept for an AI.
+- It is designed so that only a person's answer counts as a decision, given by default on the decision page in the web app. Notices in Outlook and Teams are designed to link to that page. A pre-authorized decision, such as a standard change, is designed to link the rule a person approved. No tool an AI client is served approves, rejects or accepts; the one answer tool is served only to a person in the web app.
 - It is designed to take a deployment record from the last step of the organization's own pipeline, under that pipeline's own workload identity, and to flag deployments that came another way. It is designed never to build, host or run a pipeline.
 - It is designed to hold each technical part as a link to the Microsoft tool that owns it: a Microsoft ID, a URL and a last seen date.
 - It is designed to keep tiers, approvals, required documents and which roles may call which tools as configuration, so the organization changes the rules without a rebuild.

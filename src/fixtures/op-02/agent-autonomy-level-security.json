@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-02",
   "case": "agent-autonomy-level-security",
-  "description": "The autonomy level of an agent matches the group scoped to the application kind agent.",
+  "description": "The autonomy level of an agent matches the group scoped to the application kind agent: the security reviewer approves, and the AI lead is consulted (P02).",
   "snapshot": {
     "presetKey": "balanced"
   },
@@ -24,12 +24,24 @@
           "approverRoleKey": "security-reviewer",
           "requiresTypedReason": true
         }
+      ],
+      "consultations": [
+        {
+          "ruleKey": "autonomy-level-consult-ai-lead",
+          "approverRoleKey": "ai-lead",
+          "isConsultation": true
+        }
       ]
     },
     "trace": [
       {
         "entity": "Approval Rule",
         "key": "autonomy-level-approval",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "autonomy-level-consult-ai-lead",
         "role": "won"
       }
     ],

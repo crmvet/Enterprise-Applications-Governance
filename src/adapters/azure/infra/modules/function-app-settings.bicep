@@ -51,6 +51,9 @@ param webAppApiScope string
 @description('A demo install: the web app shows the demo badge.')
 param demo string
 
+@description('The demo persona switch (D-39): true or false. Applies only with demo true and the web app on.')
+param demoPersonas string
+
 @description('Serve the approval runner\'s routes: true or false.')
 param approvalRunnerEnabled string
 
@@ -95,6 +98,18 @@ var webAppSettings = empty(webAppClientId)
       Product__WebApp__Demo: demo
     }
 
+// The demo persona switch (D-39), only for a demo install with the web app on. The app must run in the environment
+// named Demo, or it refuses to start with demo personas: AZURE_FUNCTIONS_ENVIRONMENT names the environment of a function
+// app, and DOTNET_ENVIRONMENT is the .NET host's own setting, set too in case the worker reads that one. The personas
+// are the fictional ones the package carries (seed/demo-personas.json): names, labels and fictional IDs, no secret.
+var demoPersonaSettings = demo == 'true' && demoPersonas == 'true' && !empty(webAppClientId)
+  ? {
+      AZURE_FUNCTIONS_ENVIRONMENT: 'Demo'
+      DOTNET_ENVIRONMENT: 'Demo'
+      Product__WebApp__DemoPersonasFile: 'seed/demo-personas.json'
+    }
+  : {}
+
 // The approval runner's routes and the directory reads. The directory reads use a user-assigned managed identity as the
 // API app registration's federated credential: no client secret anywhere.
 var runnerAndDirectorySettings = union(
@@ -125,7 +140,7 @@ var saltSettings = empty(keyVaultName)
 resource appSettings 'Microsoft.Web/sites/config@2024-04-01' = {
   parent: site
   name: 'appsettings'
-  properties: union(coreSettings, webAppSettings, runnerAndDirectorySettings, entraTelemetrySettings, saltSettings)
+  properties: union(coreSettings, webAppSettings, demoPersonaSettings, runnerAndDirectorySettings, entraTelemetrySettings, saltSettings)
 }
 
 output publicBaseUrl string = baseUrl

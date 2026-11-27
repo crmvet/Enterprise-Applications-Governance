@@ -20,7 +20,7 @@ public sealed class LogicalModelViewTests
         LogicalModel model = LogicalModel.Compiled;
         IReadOnlyList<JsonTreeNode> entities = Items(Source.Value, "entities");
 
-        Assert.Equal(75, model.Entities.Count);
+        Assert.Equal(81, model.Entities.Count);
         Assert.Equal(entities.Count, model.Entities.Count);
         Assert.Equal(Text(Source.Value, "modelVersion"), model.ModelVersion);
         for (int i = 0; i < entities.Count; i++)
@@ -105,7 +105,7 @@ public sealed class LogicalModelViewTests
 
         // The same instance every time: the model is parsed once.
         Assert.Same(model, LogicalModel.Compiled);
-        Assert.Equal(75, LogicalModel.Compiled.Entities.Count);
+        Assert.Equal(81, LogicalModel.Compiled.Entities.Count);
     }
 
     // src/: from the current folder (the test apps run there when built outside the tree), then from this assembly.

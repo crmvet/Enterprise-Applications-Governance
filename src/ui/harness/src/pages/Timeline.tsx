@@ -2,8 +2,21 @@
 // (D-13): no booking and no freeze tables. Enforcing a window stays in the deployment tool.
 // Reads (document 24 names): get_change_schedule (two weeks back, four weeks ahead), get_deployments (history, two
 // weeks back, latestOnly false), get_configuration (target-stage and deployment-route labels).
+// The portfolio filter (web app, wave 3): ?portfolio=<id>, the same parameter and the same choices as the Overview's
+// picker, so the Overview's Timeline link keeps the portfolio and Back keeps it too. Wave 4: both reads take the
+// portfolio (portfolioId, the portfolios below it included; B24-21), so the tool keeps the windows and deployments and
+// the page no longer reads the portfolio's applications first. The lanes and their stage headings come from the rows
+// kept, so a filtered chart shows no empty stage. The harness has no portfolio list and no query routing, so it shows
+// no picker.
+// Wave 4 search: q= keeps the windows and deployments whose title, application, target, artifact or version hold the
+// words (data/textSearch.ts); the chart, the lists and the agenda follow it.
 import { CalendarDays, Rocket } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
+import { hrefTo, useQueryParam, withParams } from '../app/links';
+import { navigate } from '../app/navigation';
+import { ListSearch, useListText } from '../components/listSearch';
+import { filterByText } from '../data/textSearch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import type { DeploymentItem, ScheduledChange } from '../data/contracts';
 import { addDays, dayKey, dayStartMs, daysBetween, fmtDate, fmtDateTime, fmtDayMonth, fmtTime, fmtTimeRange, fmtWeekday, fmtWindow, inDays, inWindowDays, plural, utcDayRange, zoneLabel } from '../data/format';
 import { useLabels, type Labels } from '../data/labels';
@@ -11,6 +24,7 @@ import { activeFlags, flagHelp, flagText } from '../data/meanings';
 import { dataOf, useTool } from '../data/toolClient';
 import { useHost } from '../harness';
 import { cn } from '../lib/utils';
+import { recordHrefOf } from '../app/links';
 import { Row, RowList } from '../components/rows';
 import { DataStamp, Empty, EnvelopeNotes, MoreRowsNote, Muted, PageHeader, Panel, PanelFailure, StatusBadge, SwitchTabs, ToneBadge, useNarrow } from '../components/blocks';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
@@ -18,6 +32,7 @@ import { ChangeTypeBadge } from './Application360';
 
 const BACK_DAYS = 14;
 const AHEAD_DAYS = 28;
+const ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 // The chart marks, shared by the chart and its legend. Lanes are 50 px high (h-[50px]). Change windows: solid blue
 // when authorized, hollow blue when not yet, hollow gray for a draft, pale blue when closed, a red ring (c4314b) for an
@@ -53,16 +68,34 @@ export function Timeline() {
   const to = addDays(host.today, AHEAD_DAYS);
   // The range is calendar days in the display zone. The tools filter by UTC date, so each call asks for the UTC dates
   // that cover those days, and the page keeps the items of the days it shows.
-  const changes = useTool('get_change_schedule', { ...utcDayRange(from, to), top: 100 });
-  const deployments = useTool('get_deployments', { latestOnly: false, ...utcDayRange(from, host.today), top: 100 });
+  // The portfolio filter lives in the web app only: the harness has hash routes and no portfolio list.
+  const webApp = !!host.open;
+  const portfolioParam = useQueryParam('portfolio', ID)?.toLowerCase();
+  const portfolio = webApp ? portfolioParam : undefined;
+  const scope = portfolio ? { portfolioId: portfolio } : {};
+  const changes = useTool('get_change_schedule', { ...utcDayRange(from, to), ...scope, top: 100 });
+  const deployments = useTool('get_deployments', { latestOnly: false, ...utcDayRange(from, host.today), ...scope, top: 100 });
+  const text = useListText();
   const stages = useLabels('target-stage');
   const routes = useLabels('deployment-route');
   const [stage, setStage] = useState<string>('all');
   const [view, setView] = useState<'chart' | 'agenda' | null>(null);
   const shownView = view ?? (narrow ? 'agenda' : 'chart');
+  const portfolios = useTool('list_portfolios', webApp ? { top: 100 } : null);
+  const portfolioItems = (dataOf(portfolios)?.items ?? []).filter(p => p.isActive);
+  const portfolioName = portfolio ? portfolioItems.find(p => p.portfolioId.toLowerCase() === portfolio)?.name ?? 'One portfolio' : null;
+  const pickPortfolio = (value: string) => navigate(withParams(`${window.location.pathname}${window.location.search}`, { portfolio: value === 'all' ? undefined : value }), true);
 
-  const changeItems = (dataOf(changes)?.items ?? []).filter(c => inWindowDays(c.windowStart, c.windowEnd, from, to));
-  const deployItems = (dataOf(deployments)?.items ?? []).filter(d => inDays(d.finishedOn, from, host.today));
+  const changeItems = filterByText(
+    (dataOf(changes)?.items ?? []).filter(c => inWindowDays(c.windowStart, c.windowEnd, from, to)),
+    text,
+    c => [c.title, c.applicationName, c.target?.label, c.changeType.label],
+  );
+  const deployItems = filterByText(
+    (dataOf(deployments)?.items ?? []).filter(d => inDays(d.finishedOn, from, host.today)),
+    text,
+    d => [d.applicationName, d.targetLabel, d.artifactName, d.artifactVersion, d.versionAfter],
+  );
   // While the deployments are still being read, the chart and the agenda say so instead of showing none.
   const deploymentsLoading = deployments.status === 'loading' ? <Muted>Reading the deployments.</Muted> : null;
   const keep = (stageKey: string | null) => stage === 'all' || stageKey === stage;
@@ -84,11 +117,33 @@ export function Timeline() {
       <PageHeader
         eyebrow="Timeline"
         title="Changes and deployments"
-        subtitle={`Planned change windows and recorded deployments by target, ${fmtDate(from)} to ${fmtDate(to)}. Read-only.`}
+        subtitle={`Planned change windows and recorded deployments by target, ${fmtDate(from)} to ${fmtDate(to)}${portfolioName ? `, for ${portfolioName}` : ''}. Read-only.`}
         meta={<DataStamp envelope={changes.status === 'done' ? changes.envelope : undefined} />}
+        actions={webApp ? (
+          <div className="flex items-center gap-2 narrow:w-full">
+            <span className="text-sm text-navy-2" id="timeline-portfolio-label">Portfolio</span>
+            <Select value={portfolio ?? 'all'} onValueChange={pickPortfolio}>
+              <SelectTrigger className="w-56 narrow:w-full" aria-labelledby="timeline-portfolio-label"><SelectValue placeholder="All portfolios" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All portfolios</SelectItem>
+                {portfolio && !portfolioItems.some(p => p.portfolioId.toLowerCase() === portfolio) && <SelectItem value={portfolio}>The portfolio chosen</SelectItem>}
+                {portfolioItems.map(p => <SelectItem key={p.portfolioId} value={p.portfolioId.toLowerCase()}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : undefined}
       />
 
+      {portfolio && (
+        <div className="mb-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-navy-2" role="status">
+          <span>{`Showing the windows and deployments of the applications in ${portfolioName ?? 'the portfolio'} and the portfolios below it.`}</span>
+          <a className="text-primary underline-offset-4 hover:underline" href={withParams(hrefTo({ page: 'overview' }), { portfolio })}>Its overview</a>
+          <a className="text-primary underline-offset-4 hover:underline" href={hrefTo({ page: 'timeline' })}>All portfolios</a>
+        </div>
+      )}
+
       <div className="mb-3.5 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <ListSearch label="Search the windows and deployments by title, application, target, artifact or version" placeholder="Change, application or target" />
         <SwitchTabs
           label="Targets"
           ariaLabel="Target stage"
@@ -128,7 +183,7 @@ export function Timeline() {
                     <RowList label="Planned changes">
                       {shownChanges.map(c => <ChangeRow key={c.changeRequestId} change={c} stages={stages} />)}
                     </RowList>
-                  ) : <Empty>No change windows in this range.</Empty>}
+                  ) : <Empty>{text ? 'No change window matches this search.' : 'No change windows in this range.'}</Empty>}
                   <MoreRowsNote skipToken={data.skipToken} what="change windows" />
                 </>
               )}
@@ -140,7 +195,7 @@ export function Timeline() {
                     <RowList label="Deployments">
                       {shownDeploys.map(d => <DeploymentRow key={d.deploymentRecordId} deployment={d} routes={routes} />)}
                     </RowList>
-                  ) : <Empty>No deployments in this range.</Empty>}
+                  ) : <Empty>{text ? 'No deployment matches this search.' : 'No deployments in this range.'}</Empty>}
                   <MoreRowsNote skipToken={data.skipToken} what="deployments" />
                 </>
               )}
@@ -195,7 +250,9 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
   const dayPct = (date: string) => at(dayStartMs(date));
   const todayStart = dayStartMs(props.today);
   const todayPct = dayPct(props.today);
-  const lanes = lanesOf(props.changes, props.deployments, props.stages);
+  // Lanes grouped by stage, so each stage heads its lanes once (QA: with a portfolio filter the headers repeated).
+  const lanes = [...lanesOf(props.changes, props.deployments, props.stages)].sort((a, b) =>
+    (a.key === 'none' ? 1 : 0) - (b.key === 'none' ? 1 : 0) || props.stages.rank(a.stageKey) - props.stages.rank(b.stageKey) || a.label.localeCompare(b.label));
 
   // Week lines on Mondays.
   const ticks: string[] = [];
@@ -245,17 +302,16 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
             <span key={c.changeRequestId}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span
-                    tabIndex={0}
-                    role="img"
-                    aria-label={`Change window: ${c.title}, ${fmtWindow(c.windowStart, c.windowEnd)}, ${c.status.label}`}
-                    className={cn(
-                      'absolute top-[9px] z-[2] h-3.5 min-w-2.5 cursor-default rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy',
-                      kind,
-                      c.changeType.key === 'emergency' && emergencyRing,
-                    )}
+                  {/* A link to the change record (product review 2026-11-24: the windows were not links). */}
+                  {/* The link is a 24 px tall target (WCAG 2.5.8, fix round 1); the bar inside it is what shows. */}
+                  <a
+                    href={recordHrefOf('change-request', c.changeRequestId) ?? '#'}
+                    aria-label={`Change window: ${c.title}, ${fmtWindow(c.windowStart, c.windowEnd)}, ${c.status.label}. Open the change record.`}
+                    className="absolute top-px z-[2] flex h-6 min-w-6 cursor-pointer items-center rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
                     style={{ left: `${x1}%`, width: `${Math.max(0, x2 - x1)}%` }}
-                  />
+                  >
+                    <span className={cn('h-3.5 w-full rounded-[4px]', kind, c.changeType.key === 'emergency' && emergencyRing)} aria-hidden />
+                  </a>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[280px]">
                   <ChangeTip change={c} stages={props.stages} />
@@ -279,17 +335,15 @@ function Chart(props: { changes: ScheduledChange[]; deployments: DeploymentItem[
           return (
             <Tooltip key={d.deploymentRecordId}>
               <TooltipTrigger asChild>
-                <span
-                  tabIndex={0}
-                  role="img"
-                  aria-label={`Deployment: ${d.applicationName} ${d.artifactVersion}, ${d.result.label}, ${fmtDateTime(d.finishedOn)}${flagged ? ', flagged' : ''}`}
-                  className={cn(
-                    'absolute top-[29px] z-[3] -ml-1.5 size-3 cursor-default rounded-full border-2 border-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy',
-                    kind,
-                    flagged && flaggedRing,
-                  )}
+                {/* A 24 by 24 px target around the 12 px dot (WCAG 2.5.8, fix round 1). */}
+                <a
+                  href={recordHrefOf('deployment-record', d.deploymentRecordId) ?? '#'}
+                  aria-label={`Deployment: ${d.applicationName} ${d.artifactVersion}, ${d.result.label}, ${fmtDateTime(d.finishedOn)}${flagged ? ', flagged' : ''}. Open the deployment record.`}
+                  className="absolute top-[25px] z-[3] -ml-3 grid size-6 cursor-pointer place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
                   style={{ left: `${pct(d.finishedOn)}%` }}
-                />
+                >
+                  <span className={cn('size-3 rounded-full border-2 border-card', kind, flagged && flaggedRing)} aria-hidden />
+                </a>
               </TooltipTrigger>
               <TooltipContent className="max-w-[280px]">
                 <DeployTip deployment={d} routes={props.routes} />
@@ -375,7 +429,7 @@ function authorizationText(c: ScheduledChange): string {
 function ChangeRow({ change, stages }: { change: ScheduledChange; stages: Labels }) {
   return (
     <Row
-      primary={change.title}
+      primary={<a className="text-navy underline-offset-2 hover:underline" href={recordHrefOf('change-request', change.changeRequestId) ?? '#'}>{change.title}</a>}
       secondary={`${change.applicationName} to ${change.target ? `${change.target.label}, ${stages.label(change.target.targetStageKey).toLowerCase()}` : 'no target yet'}`}
       tertiary={fmtWindow(change.windowStart, change.windowEnd)}
       wideEnd
@@ -409,7 +463,7 @@ function DeploymentRow({ deployment, routes }: { deployment: DeploymentItem; rou
   // workload identity, which holds the deployment recorder role through a recorded, expiring workload grant.
   return (
     <Row
-      primary={deployment.applicationName ?? 'Unknown application'}
+      primary={<a className="text-navy underline-offset-2 hover:underline" href={recordHrefOf('deployment-record', deployment.deploymentRecordId) ?? '#'}>{deployment.applicationName ?? 'Unknown application'}</a>}
       secondary={`${deployment.artifactName} ${deployment.artifactVersion} to ${deployment.targetLabel ?? 'an unknown target'}`}
       tertiary={`${fmtDateTime(deployment.finishedOn)}. Recorded by: ${routes.label(deployment.route.key)}`}
       end={<StatusBadge status={deployment.result} />}
@@ -459,7 +513,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
         <Row
           key={c.changeRequestId}
           lead={<span className={cn(agendaIcon, 'bg-secondary text-brand-dark')} aria-hidden><CalendarDays className="size-4.5" aria-hidden /></span>}
-          primary={c.title}
+          primary={<a className="text-navy underline-offset-2 hover:underline" href={recordHrefOf('change-request', c.changeRequestId) ?? '#'}>{c.title}</a>}
           secondary={`${c.applicationName} to ${c.target?.label ?? 'no target yet'}`}
           tertiary={c.windowStart && c.windowEnd ? `${fmtTimeRange(c.windowStart, c.windowEnd)} ${zoneLabel()}. ${authorizationText(c)}.` : `${authorizationText(c)}.`}
           badges={<><ChangeTypeBadge type={c.changeType} /><StatusBadge status={c.status} /></>}
@@ -471,7 +525,7 @@ function Agenda(props: { changes: ScheduledChange[]; deployments: DeploymentItem
         <Row
           key={dep.deploymentRecordId}
           lead={<span className={cn(agendaIcon, 'bg-background text-navy-2')} aria-hidden><Rocket className="size-4.5" aria-hidden /></span>}
-          primary={`${dep.applicationName ?? 'Unknown application'} ${dep.artifactVersion}`}
+          primary={<a className="text-navy underline-offset-2 hover:underline" href={recordHrefOf('deployment-record', dep.deploymentRecordId) ?? '#'}>{`${dep.applicationName ?? 'Unknown application'} ${dep.artifactVersion}`}</a>}
           secondary={`Deployed to ${dep.targetLabel ?? 'an unknown target'} at ${fmtTime(dep.finishedOn)} ${zoneLabel()}`}
           tertiary={`Recorded by: ${props.routes.label(dep.route.key)}`}
           badges={<><StatusBadge status={dep.result} /><FlagBadges deployment={dep} /></>}

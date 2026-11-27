@@ -1,6 +1,6 @@
 # P01 Intake and triage
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenarios [S-20](../../../src/docs/demo/scenarios/S-20-requester.md) and [S-03](../../../src/docs/demo/scenarios/S-03-triage-gap-check-places-leavers.md) play it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -31,14 +31,14 @@ Intake is designed as one front door for every kind of business application: new
 2. **Answer the tier questions.** The AI client fetches the tier questions for that kind of app and records the answers as a draft tier assessment. [P02](p02-tier-assessment.md) works out the first tier.
 3. **Check for duplicates and reuse.** The product searches the register by name, purpose and kind. A match is shown as a suggestion, never as a decision.
 4. **Submit.** The requester submits. A submission is a request, not a decision. The AI client may submit for the person where the tool policy allows it, and the shipped default allows it for intakes. Which act counts as a person's here is an open design question ([P10](p10-ai-draft-and-human-accept.md)).
-5. **Open the triage decision.** The engine opens an intake decision with the status Proposed and the outcomes accept, park, redirect and decline. It asks the consulted roles for input: the architect for reuse, the PMO for demand and the security reviewer for first risk. Their input arrives on consultation cards. A consultation answer is recorded as a recommendation only and never counts as an approval.
-6. **Decide.** The platform admin answers the triage card with a typed reason ([approval cards](README.md#approval-cards)). The current design has one exception: intake at the lowest tier is on the locked list, so the engine may accept it with no card, and the record links the configuration decision that set that rule. Whether this exception should exist is an open design question. An organization that wants a card here gives intake an approval rule.
+5. **Open the triage decision.** The engine opens an intake decision with the status Proposed and the outcomes accept, park, redirect and decline. It asks the consulted roles for input: the architect for reuse, the PMO for demand and the security reviewer for first risk. Each is asked with a consultation request. A consultation answer is recorded as a recommendation only and never counts as an approval.
+6. **Decide.** The platform admin answers the triage request with a typed reason, on the decision page by default ([approvals](README.md#approval-cards)). The current design has one exception: intake at the lowest tier is on the locked list, so the engine may accept it with no person's answer, and the record links the configuration decision that set that rule. Whether this exception should exist is an open design question. An organization that wants a person's answer here gives intake an approval rule.
 7. **Act on the outcome.**
-   - **Accept:** the engine registers the business application, or links the existing one, and proposes an ownership decision for the named business owner. Nobody becomes an owner without their own yes on a card.
+   - **Accept:** the engine registers the business application, or links the existing one, and proposes an ownership decision for the named business owner. Nobody becomes an owner without their own yes, given on the decision page by default.
    - **Park:** the PMO sets a horizon (now, next or later). The intake stays visible to the requester.
    - **Redirect:** the duplicate is confirmed, and the requester is pointed to the existing app and its owner.
    - **Decline:** the reason is visible to the requester.
-8. **Prioritize when needed.** If an answer says the request needs money or central capacity, the engine opens a priority decision. The PMO records a score, a horizon, a size band and the expected benefit. The sponsor decides on a card. The Commit gate follows.
+8. **Prioritize when needed.** If an answer says the request needs money or central capacity, the engine opens a priority decision. The PMO records a score, a horizon, a size band and the expected benefit. The sponsor decides, on the decision page by default. The Commit gate follows.
 9. **Link the delivery work.** The requester's own AI tool creates the work item in Azure DevOps through the Azure DevOps MCP Server, as the same person. It then records the link in the product. Planner plans and GitHub Projects are linked the same way. The product never reads the work item or the plan.
 
 ## What is recorded
@@ -54,9 +54,9 @@ Intake is designed as one front door for every kind of business application: new
 | Person reference | The Entra ID and a display label for the requester, owners and deciders, created on first sight |
 | Delivery link | Added by the requester's AI tool or a person |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode | Notes |
+| Decision | Approver in the default configuration | Approval mode | Notes |
 |---|---|---|---|
 | Intake | Platform admin | First to respond | Typed reason required. Lowest-tier intake is on the locked list (open design question) |
 | Priority | Sponsor | First to respond | Only when the request needs money or central capacity |
@@ -73,7 +73,7 @@ Intake is designed as one front door for every kind of business application: new
 - Whether an AI client may submit an intake for a person.
 - Who can read intake requests. The default is "own": the requester, the PMO, the platform admin and the architect.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 
@@ -84,7 +84,7 @@ Every tool runs as the signed-in person.
 | `answer_tier_questions` | Records the tier answers as a draft assessment |
 | `check_duplicates` | Searches the register for duplicates and reuse |
 | `submit_record` | Submits a draft intake |
-| `get_my_queue` | "What needs me": intakes to triage, cards waiting |
+| `get_my_queue` | "What needs me": intakes to triage, approvals waiting |
 | `save_link` | Records a link to a work item, plan, project or repository |
 
 ## Microsoft tools linked, never rebuilt
@@ -99,11 +99,11 @@ Every tool runs as the signed-in person.
 |---|---|
 | Draft and submit | API endpoints in the one Azure Functions app, with the same names as the tools. The rules engine validates and stamps each write |
 | Duplicate search | A full-text search or a simple match in Azure SQL Database. The exact method is still a design point |
-| Triage and other cards | The approval runner ([approval cards](README.md#approval-cards)) |
+| Triage and other notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
 
 ## Example (fictional people and apps)
 
-Priya Castell, a maker in field operations, asks Claude Code to submit an intake for a field inspections app. In the design, Claude Code would check for duplicates and find an older Inspection Scheduler app. It would save the intake as a draft marked AI-created, then submit it for her. One triage card would go to a platform admin. Nothing would be accepted until a person answers.
+Priya Castell, a maker in field operations, asks Claude Code to submit an intake for a field inspections app. In the design, Claude Code would check for duplicates and find an older Inspection Scheduler app. It would save the intake as a draft marked AI-created, then submit it for her. One triage request would wait for a platform admin. Nothing would be accepted until a person answers.
 
 ## Microsoft sources
 

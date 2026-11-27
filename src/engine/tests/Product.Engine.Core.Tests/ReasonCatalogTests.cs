@@ -91,6 +91,20 @@ public sealed class ReasonCatalogTests
     }
 
     [Fact]
+    public void EveryDataTaxonomyRuleHasACode()
+    {
+        // V49 to V60 and G-18 to G-25 (docs/architecture/data-taxonomy.md, Guard rules and Validation rules; G-25 is D-41, question 7).
+        string[] missing = Enumerable.Range(49, 12).Select(i => "V" + i.ToString("00", CultureInfo.InvariantCulture))
+            .Concat(Enumerable.Range(18, 8).Select(i => "G-" + i.ToString("00", CultureInfo.InvariantCulture)))
+            .Where(ruleId => ReasonCatalog.ForRule(ruleId).Count == 0)
+            .ToArray();
+
+        Assert.Empty(missing);
+        Assert.Contains(ReasonCatalog.ForRule("G-25"), info => info.Code == "data.rule-never");
+        Assert.Contains(ReasonCatalog.ForRule("G-20"), info => info.Code == "data.decision-cannot-allow");
+    }
+
+    [Fact]
     public void EveryGuardRuleG01ToG17HasACode()
     {
         string[] missing = Enumerable.Range(1, 17)
@@ -127,7 +141,8 @@ public sealed class ReasonCatalogTests
     public void ValidationSeveritiesFollowDocument25()
     {
         // Warnings in the V01 to V44 table and the engine checks. Every other validation code is an error by default.
-        string[] warnings = { "cadence.coverage", "role.unbound", "vocabulary.source" };
+        // The data taxonomy adds V53 and V59, both warnings (docs/architecture/data-taxonomy.md, Validation rules).
+        string[] warnings = { "cadence.coverage", "role.unbound", "vocabulary.source", "data.classification-lower", "data.loosens" };
 
         string[] wrong = ReasonCatalog.All
             .Where(info => info.Categories.HasFlag(ReasonCategories.Validation))
@@ -256,10 +271,10 @@ public sealed class ReasonCatalogTests
 
         Assert.Equal("approval.outcome-writer", reason.Code);
         Assert.Equal(ReasonSeverity.Error, reason.Severity);
-        Assert.Equal("Only the approval runner can record an approval outcome.", reason.Message);
+        Assert.Equal("Only the approval runner, or the person answering their own approval request on the product's page, can record an approval outcome.", reason.Message);
         Assert.Equal("Approval Record", reason.Entity);
         Assert.Equal("row-17", reason.Ref);
-        Assert.Equal("[approval.outcome-writer] Only the approval runner can record an approval outcome.", reason.ToString());
+        Assert.Equal("[approval.outcome-writer] Only the approval runner, or the person answering their own approval request on the product's page, can record an approval outcome.", reason.ToString());
     }
 
     [Fact]

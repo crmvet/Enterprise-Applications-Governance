@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "summary": "AI work across the estate: 9 rows an AI client created, 3 waiting for a person, 6 taken forward by a person. AI never approves.",
+  "data": {
+    "scope": "estate",
+    "counts": {
+      "drafts": 9,
+      "waiting": 3,
+      "takenForwardByPerson": 6,
+      "submittedByAi": 0,
+      "editedByPersonFirst": 2,
+      "withdrawn": 0,
+      "refused": 1,
+      "answers": 2,
+      "codeApprovals": 0
+    },
+    "byClient": [
+      {
+        "clientApp": "Claude Code",
+        "count": 9
+      }
+    ],
+    "byPerson": [
+      {
+        "onBehalfOf": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Requester (sample)",
+          "principalKind": "user"
+        },
+        "count": 1
+      }
+    ],
+    "byApplication": [],
+    "knownClients": [
+      {
+        "key": "claude-code",
+        "label": "Claude Code",
+        "isAiClient": true,
+        "isAllowed": true
+      }
+    ],
+    "items": [
+      {
+        "kind": "draft",
+        "occurredOn": "2026-11-24T08:00:00Z",
+        "clientApp": "Claude Code",
+        "onBehalfOf": {
+          "objectId": "20000000-0000-4000-8000-000000000001",
+          "displayLabel": "Requester (sample)",
+          "principalKind": "user"
+        },
+        "application": null,
+        "record": {
+          "entity": "intake-request",
+          "recordId": "70000000-0000-4000-8000-000000000001",
+          "recordNumber": "IR-0108",
+          "label": "IR-0108: Crew overtime tracker",
+          "status": {
+            "label": "Draft",
+            "meaning": "draft"
+          },
+          "recordUrl": "https://product.example.org/app/records/intake-request/70000000-0000-4000-8000-000000000001"
+        },
+        "state": "waiting",
+        "takenForward": null,
+        "editedByPersonFirst": false,
+        "withdrawn": null,
+        "decided": null,
+        "refusal": null,
+        "answer": null,
+        "deployment": null,
+        "hasCallHistory": true
+      }
+    ],
+    "totalCount": 3,
+    "clients": [],
+    "skipToken": "harness-ai-waiting-page-2"
+  },
+  "links": {},
+  "asOf": "2026-11-24T09:00:00Z",
+  "configurationSetVersion": 3,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [],
+  "nextSteps": [],
+  "correlationId": "harness-ai-waiting"
+}

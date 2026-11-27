@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_guidelines input",
+  "description": "Why each rule exists: the guidelines of the configuration in force (C39) with the adopter's own copy and whether each is adopted, the playbook chapters by track with the guidelines each applies (a title and a link, never the text), the builder paths and the sanctioned clients. A read for any role. It serves on the REST API what the guideline and playbook chapter resources serve on the MCP endpoint.",
+  "x-tool": "list_guidelines",
+  "type": "object",
+  "properties": {
+    "number": {
+      "$ref": "../common.schema.json#/$defs/guidelineNumber",
+      "description": "One guideline, such as G17."
+    },
+    "includeRetired": {
+      "type": "boolean",
+      "default": true,
+      "description": "False leaves retired guideline numbers out."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "number": "G17"
+    }
+  ]
+}

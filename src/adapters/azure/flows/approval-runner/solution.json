@@ -68,6 +68,11 @@
       "logicalName": "{{prefix}}_RunnerDataverse",
       "displayName": "Approval runner: Microsoft Dataverse",
       "connectorId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+    },
+    {
+      "logicalName": "{{prefix}}_RunnerOutlook",
+      "displayName": "Approval runner: Office 365 Outlook",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_office365"
     }
   ],
   "workflows": [

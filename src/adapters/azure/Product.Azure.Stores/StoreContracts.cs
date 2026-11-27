@@ -54,8 +54,9 @@ public interface IStoreSeeder
 
     // A version as an earlier activation left it in force, with the same rows as InMemoryStore.SeedVersion in
     // Product.Engine.Testing: the working set in force at the snapshot's version, the Configuration Set Version row
-    // with Content Json and Content Hash, and the live configuration rows equal to the snapshot.
-    void SeedVersion(CompiledSnapshot snapshot);
+    // with Content Json and Content Hash (and Published On, the seed moment, when given), and the live configuration rows
+    // equal to the snapshot.
+    void SeedVersion(CompiledSnapshot snapshot, DateTime? publishedOnUtc = null);
 }
 
 // Settings every row store takes. The provider options carry these plus the connection.
@@ -166,6 +167,27 @@ public sealed class StoreCallContext
 
     // The actor kind as the engine contract writes it ("ai-client-for-person"), or null.
     public string? ActorKindWire => ActorKind.HasValue ? EngineContract.ActorKindMeanings.ToWire(ActorKind.Value) : null;
+
+    // The Approval Record a person answers in this request, through answer_approval on the person entry (D-38), or null.
+    // The Azure SQL store writes it to SESSION_CONTEXT as AnsweredApprovalId. Row-level security then lets this request,
+    // and no other, write the records of that record's own decision, each stamped with the caller: the person's answer
+    // on the record named, and the recompute the engine runs on that decision (fn_ApprovalOutcomeWriter and
+    // fn_ApprovalPending). Records of every other decision stay as locked as in any other request. The value comes from
+    // the caller's argument before the engine checks it, so the engine's guard is the control; the predicates are the
+    // backstop.
+    public string? AnsweredApprovalId { get; private set; }
+
+    // The same caller, answering the Approval Record named. Only the host's REST API sets it, for answer_approval on the
+    // person entry.
+    public StoreCallContext WithAnsweredApproval(string approvalRecordId)
+    {
+        if (string.IsNullOrEmpty(approvalRecordId))
+        {
+            throw new ArgumentException("The answered Approval Record is named by its ID.", nameof(approvalRecordId));
+        }
+
+        return new StoreCallContext(PrincipalId, Entry, ActorKind, CorrelationId, RoleKeys, OnBehalfOfId, ClientApp, ClientAppVerified) { AnsweredApprovalId = approvalRecordId };
+    }
 
     public static StoreCallContext? Current => Ambient.Value;
 

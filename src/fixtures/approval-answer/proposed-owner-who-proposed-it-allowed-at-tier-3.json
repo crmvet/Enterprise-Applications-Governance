@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "proposed-owner-who-proposed-it-allowed-at-tier-3",
+  "description": "The successor proposed the ownership decision of a tier 3 application and accepts on their own named card. A proposed owner's yes is consent to take the role, not a check on the proposal, so no-self-approval-tier-3 does not apply to it (document 25, B25-14); the business owner's card carries the check.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-3",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": []
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "ownership-proposed-owners",
+      "requiredOwnerRoleKey": "business-owner",
+      "askedPrincipalId": "fixture-person-3"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "ownership",
+      "tierKey": "tier-3"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-3"
+    },
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "askedByName": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

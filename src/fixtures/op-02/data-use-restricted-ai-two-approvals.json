@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "data-use-restricted-ai-two-approvals",
+  "description": "A data-use decision about a use of restricted data that reaches AI matches the restricted AI group (specificity 3): the domain's data owner and the security reviewer, with the steward consulted (docs/architecture/data-taxonomy.md, Approval rules).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-use",
+    "tierKey": "tier-2",
+    "subjectKind": "data-use",
+    "classificationKey": "restricted",
+    "aiUse": true,
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "data-use-restricted-ai-owner",
+          "approverOwnerRoleKey": "data-owner",
+          "ownerSubject": "data-domain"
+        },
+        {
+          "ruleKey": "data-use-restricted-ai-security",
+          "approverRoleKey": "security-reviewer"
+        }
+      ],
+      "consultations": [
+        {
+          "ruleKey": "data-use-restricted-ai-steward",
+          "approverOwnerRoleKey": "data-steward",
+          "ownerSubject": "data-domain",
+          "isConsultation": true
+        }
+      ]
+    },
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "data-use-domain",
+        "role": "dropped"
+      }
+    ]
+  }
+}

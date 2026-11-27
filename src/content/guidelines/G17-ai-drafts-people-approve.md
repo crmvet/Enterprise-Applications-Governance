@@ -11,7 +11,7 @@
 
 **Why it matters.** Some approval tools now let an AI stage end a request as approved with no person involved. Keeping people as the deciders keeps accountability clear.
 
-**How the product is designed to support it.** It is designed so that rows created by AI start as Draft or Proposed, only the approval flow writes an approval outcome, an AI stage counts as a recommendation, and each configuration change an AI makes records the admin it acted for.
+**How the product is designed to support it.** It is designed so that rows created by AI start as Draft or Proposed, an AI stage counts as a recommendation, and each configuration change an AI makes records the admin it acted for. A person answers by default on the decision page, through `answer_approval`, a tool served only to a person signed in to the web app. The approval runner (the optional flows that send approval notices) is designed to relay an answer given in a card, and the product takes a relayed answer only while step-up sign-in (a fresh sign-in before each answer) is off. An AI answer it relays is stored as a recommendation that never counts.
 
 ## Microsoft anchors
 

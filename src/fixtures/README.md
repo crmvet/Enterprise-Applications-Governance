@@ -170,14 +170,14 @@ Some cases are unit tests in `OperationPart3Tests.cs` instead, because the fixtu
 
 ## OP-08 fixtures (the write guard)
 
-`fixtures/op-08` holds the cases of document 25, section 5.10: G-01 to G-17, the approver kind rule, the erasure effect, the delete policy of document 22, section 2.5, and RA-06 of document 26, plus the history classes of document 22, section 2.3 and the column check. They run through `OperationJson` like the other evaluation operations. 170 cases: 60 allowed, 91 refused, 18 invalid-input, 1 unavailable. The 40 cases tagged `hardening-1` (10 allowed, 25 refused, 5 invalid-input) hold 17 adversarial probes of the write guard and a case for every history class. The 22 cases tagged `hardening-2` (10 allowed, 8 refused, 4 invalid-input) hold a second set of adversarial probes and an allowed case beside each rule, so each fix is shown to refuse no more than it should.
+`fixtures/op-08` holds the cases of document 25, section 5.10: G-01 to G-17, the approver kind rule, the erasure effect, the delete policy of document 22, section 2.5, and RA-06 of document 26, plus the history classes of document 22, section 2.3 and the column check. They run through `OperationJson` like the other evaluation operations. 233 cases: 95 allowed, 112 refused, 25 invalid-input, 1 unavailable. The four tagged `dependency-shape` (document 25, B25-13) hold the O04 rules: one target, never its own application, and an ended dependency never changes. Twelve of them (the `g06-person-` cases, D-38) hold the person path of G-06: a person's own answer passes only with the approval answer check's basis, for that same person acting directly as a user, on the pending record the check judged, with the answer it judged, naming themselves as approver, with no run link. The 40 cases tagged `hardening-1` (10 allowed, 25 refused, 5 invalid-input) hold 17 adversarial probes of the write guard and a case for every history class. The 22 cases tagged `hardening-2` (10 allowed, 8 refused, 4 invalid-input) hold a second set of adversarial probes and an allowed case beside each rule, so each fix is shown to refuse no more than it should.
 
 What each side holds:
 
 | Side | Fields |
 |---|---|
 | `input` (the caller) | `entity` (the entity key, such as `decision` or `tier`), `operation` (create, update or delete), `rowId`, `after` (the changed columns, lowerCamelCase, configuration references as keys), `idempotencyKey`, and `nestedEffect` (a proposal: the engine effect an engine-nested write belongs to, set by the adapter next to the engine-nested marker) |
-| `facts` (the adapter) | `before` (the pre-image columns the rules read), `configurationSetKind` (G-02), `bindingPrincipalKind` (G-12), `acceptance` (G-17: `approvals-satisfied` with the OP-03 outcome, `engine-accept` with the OP-02 outcome and condition, or `bootstrap` with `noVersionExists`), `gateReadiness` (G-14: the OP-07 payload, passed on unchanged), `priorRequestHash` (G-15) and `approverPrincipalReference` (G-06: the Principal Reference of an approval outcome's Approver, `principalKind` and `isErased`, a proposal) |
+| `facts` (the adapter) | `before` (the pre-image columns the rules read), `configurationSetKind` (G-02), `bindingPrincipalKind` (G-12), `acceptance` (G-17: `approvals-satisfied` with the OP-03 outcome, `engine-accept` with the OP-02 outcome and condition, or `bootstrap` with `noVersionExists`), `gateReadiness` (G-14: the OP-07 payload, passed on unchanged), `priorRequestHash` (G-15), `approverPrincipalReference` (G-06: the Principal Reference of an approval outcome's Approver, `principalKind` and `isErased`, a proposal) and `approvalAnswer` (G-06, the person path: the approval answer check the runtime ran, `checkOutcome` and `responderPrincipalId`, a proposal; D-38) and `subject` (the update-subject effect of an accepted decision: the subject rows as the store holds them, `application`, `intake`, `changeRequest`, `tierAssessment`, `owners` and `dueReviewIds`, and `newRowIds` for the rows it creates, a proposal; document 25, B25-8) |
 | `context.actor` | Who writes. `isEngineNested` marks the engine's own writes; a caller that names `nestedEffect` without the marker is refused as invalid input |
 
 The payload is the WritePlan: `allowed`, `requestHash` (the hash the adapter stores with the idempotency key), `isReplay`, `isNoOp` (a proposal), `refusals` (each code with its guard rule), `setColumns` (stamps, meaning copies, forced statuses), `removedColumns` (a proposal: caller values in columns the engine computes) and `effects` (kind, entity, operation, rowId or key, columns).
@@ -193,7 +193,7 @@ The payload is the WritePlan: `allowed`, `requestHash` (the hash the adapter sto
 | G-05 | `g05-` | A final decision never changes or goes away; the supersede-decision effect may set Superseded By |
 | G-06 | `g06-`, `approver-kind-` | Only the approval runner holding the approval writer role writes an outcome, and only once (the same outcome again is a no-op); an answer that is not from a person signed in as a user is stored as recommendation only. The engine's own writes (`g06-engine-`): it creates an Approval Record only with the pending outcome (the request and every restart; a create without an outcome is invalid input), then writes only expired or cancelled, only once, on a pending record (the same outcome again is a no-op, another on a final record is refused), and never a responder column (Approver, its kinds and meaning, Typed Reason, Responded On, Channel, Flow Run Url, Approver Holds Required Role), with or without an outcome. It never names Outcome Meaning: the guard writes it from the outcome (G-10). The approval runner writes its answer only with an outcome, and nothing else; no other caller writes any O10 column, not even one G-09 would drop |
 | G-07 | `g07-` | Audit entries and versions never change |
-| G-08 | `g08-` | AI-created rows start as draft or proposed whatever status they name; an AI update never reaches accepted, registered, approved or completed; an AI client may submit an intake (question 9) |
+| G-08 | `g08-` | AI-created rows start as draft or proposed whatever status they name; an AI update never reaches accepted, registered, approved, completed or done (a review, B25-12); an AI client may submit an intake (question 9) |
 | G-09 | `g09-` | Caller stamps are replaced, computed flags are dropped, and columns only an engine effect writes (owner assignments, Decided On) are refused (`engine.effect-only`, proposed) |
 | G-10 | `g10-` | An unknown, retired or foreign status is refused |
 | G-11 | `g11-` | A link kind of another category, a URL off the kind's pattern, and a URL that may carry a secret (`link.forbidden-url`, proposed, from the `forbidden-url-patterns` setting) are refused |
@@ -210,6 +210,11 @@ The payload is the WritePlan: `allowed`, `requestHash` (the hash the adapter sto
 | Class E and M | `class-e-`, `class-m-` | Updated in place: a dependency is ended with a date; a portfolio changes its description |
 | Withdraw | `withdraw-` | A proposed decision is withdrawn only by its proposer (Created By Principal) or its decider, in person or through an AI client acting for them (document 22, section 8.1; `decision.withdraw-not-allowed`, proposed) |
 | Registration status | `register-status-` | The registration status is engine-written (document 26, sections 5.3 and 6.2): a request sets only draft, or archives a draft; registered, and any move away from registered, come only from the update-subject effect of an accepted decision (`engine.effect-only`) |
+| Update-subject | `subject-`, `proposed-changes-` | An accepted decision changes its subject in the same transaction (document 25, B25-8): an intake registers or creates the application and completes, rejects or keeps the request; a change authorization schedules or rejects the change; a tier, autonomy level or ownership decision writes what its Proposed Changes Json names; a Next Lifecycle Stage moves the stage, and a retired stage cancels due reviews. What no longer applies is skipped with `subject.change-skipped`; a rejected decision plans nothing; missing subject facts are invalid input. A caller's Proposed Changes Json holds only its decision type's member, with active keys. The 29 cases are tagged `update-subject`; two more (tag `intake-business-owner`, document 25, B25-10) make the business owner an intake names the owner of the application it registers, or skip them when a linked application has one |
+| Record numbers | `record-number-` | A caller never writes a Record Number: OP-08 drops it on a create or an update, with `engine.column-overwritten` (G-09); the store gives the number (document 25, B25-9). Tag `record-number` |
+| Review done | `review-done-`, `g08-ai-marks-review-done-` | A review is done only with Done On, Reviewer and Outcome Decision (`review.done-incomplete`, proposed), and only once that decision is accepted, of the type its review type records, about its application (`review.outcome-not-accepted`, proposed), read from `facts.reviewOutcome` (invalid input without it). An AI actor never sets done (G-08), and a done review stays done (`record.final`). Document 25, B25-12. Tag `review-done` |
+| AI-only code approval | `g09-ai-only-code-approval-` | Is AI Only Code Approval is an engine-computed flag of O14 like the other three: a caller's value is dropped (G-09) and the runtime stores OP-04's (document 22, B22-10). Tag `ai-only-code-approval` |
+| Exception fields | `exception-` | Exception Standard and Exception Review On belong to an exception decision; another type, or a review date that is not a date, is invalid input (document 25, B25-11). Tag `exception-fields` |
 | Gate-relevant documents | `g08-ai-marks-`, `g08-person-marks-` | An AI actor never marks a Document Link current when its document type has Current Needs Person (RA-03; question 9); a person may, and so may an AI actor for a type without it |
 | Platform columns | `g09-platform-`, `delete-link-with-future-created-on-refused` | Id, Created On, Created By, Modified On and Modified By are platform-supplied (document 22, section 2.1.1): a value given is dropped and listed in `removedColumns`; a link whose Created On is later than now cannot be deleted, because its undo window cannot be counted |
 | Facts | `facts-` | A meaning copy or draft status in the pre-image outside its contract list (such as `Accepted`) is invalid input, never read as not final |
@@ -233,6 +238,64 @@ Notes on the cases:
 - **Activation is not callable** (`not-engine-nested-refused`), follows only an accepted decision and a submitted draft, and is a no-op for a draft already activated (`already-activated-replay`).
 - **A row is never deleted.** A row the new version retires is written retired (`retired-row-written-as-retire`).
 - **The bootstrap rule.** Version 1 is accepted directly by the person behind the call (directly or through an AI client), only while no version exists and only with install rights. Its change summary names the presets and the rows each entity starts with, instead of one line per row.
+
+## Proposal right fixtures
+
+`fixtures/proposal-right` holds the cases of the check of who may propose a decision (document 24, tool 17, and the Tool Policy row `save-decision-proposal`; B24-5). The check runs through the core's `ProposalRightsOperation` wire form. The operation name `proposal-right`, its outcome words and its fields are proposals of the fixture schema.
+
+| Folder | Fields | Outcomes in the cases |
+|---|---|---|
+| `proposal-right` (10) | `input` is the decision type and the scope OP-02 reads (`tierKey`, `lifecycleStageKey`, `changeTypeKey`, `applicationKindKey`, `targetStageKey`, `portfolioPath`), as the runtime derives it from the decision's subject; `facts.roleKeys` are the product roles the person behind the call holds now, and `facts.ownerRoleKeys` the owner roles they hold now on the subject's application (a deputy too) | allowed, refused, invalid-input, unavailable |
+
+Notes on the cases:
+
+- **The letters that propose** are responsible, accountable and consulted (a judgment call of the build: the design names R and C, and Balanced gives most decision types only an accountable row). Informed and supports never propose (`coe-baseline-informed-business-owner-refused`).
+- **The groups resolve as OP-02 resolves the accountable letter:** the single most specific matching group wins and broader groups drop out (`tier-3-change-consulted-business-owner-allowed`, `tier-3-emergency-business-owner-refused`).
+- **A role key is not an owner role** (`role-key-is-not-an-owner-role-refused`): an owner letter needs an owner assignment on the subject's application.
+- **A refusal names who may propose** in its payload (`holders`) and reports `decision.propose-not-allowed` (proposed). No matching group is a broken configuration (`decision-right.accountable`, unavailable).
+
+`engine/tests/Product.Engine.Configuration.Tests/ProposalRightTests.cs` adds, over every shipped selection, every decision type, every tier (and none) and every change type: exactly one accountable holder is listed, each listed holder alone may propose, nobody with no role may, and no informed or supports row is listed.
+
+## Approval answer fixtures
+
+`fixtures/approval-answer` holds the cases of the check a person's own answer to an approval request passes before the engine writes it (D-38; document 26, AN-01 and AN-02 as D-38 rewrites them; document 24, tool 52 and B24-6). The check runs through the core's `ApprovalAnswerOperation` wire form. The responder is the fixture context's actor, never a field of the input. The operation name `approval-answer`, its outcome words and its fields are proposals of the fixture schema.
+
+| Folder | Fields | Outcomes in the cases |
+|---|---|---|
+| `approval-answer` (20) | `input` is what the person sends: `approvalRecordId`, `answer` (approve or reject) and `hasReason`; `facts` are what the runtime fetches: the `record` (outcome meaning, approval rule or decision right, the role or owner role it asks for, consultation, Expires On), the `decisionStatus`, the `scope` the separation rules match (decision type, tier, target stage), the `parties` (as for OP-03), `acceptedExceptionDecisionTypeKeys`, the `ownerRoleKeys` the person holds now on the decision's application (a deputy too) and the decision's `earlierAnswers` | allowed, refused, invalid-input |
+
+Notes on the cases:
+
+- **Eligible:** a role holder (`role-holder-approves-allowed`), an owner role holder (`owner-role-holder-approves-allowed`), a typed reason where the rule asks (`rule-asks-typed-reason-given-allowed`), a consultation (`consultation-answer-allowed`, recorded and never counted), and a flagged deployer (`deployer-answer-is-flagged-allowed`, with `approval.separation-flagged`).
+- **Not asked** (`approval.answer-not-asked`): a role the person does not hold, and a product role that is not the owner role on this application.
+- **Already answered** (`approval.answer-already-given`): the record holds an answer, or the person's approval already counts for the same requirement.
+- **Expired or closed:** a pending record past its Expires On and an expired record (`approval.answer-expired`); a cancelled record and a decision no longer proposed (`approval.answer-closed`).
+- **Separation** (`approval.answer-separation`): self-approval at tier 3 in Balanced is refused (`no-self-approval-tier-3`), and the same self-approval at tier 2 passes (D-40).
+- **Not a person** (`approval.answer-person-only`): an AI client, an agent user and the approval runner.
+- **Typed reason** (`approval.answer-reason-required`, invalid-input on the field `reason`): a rejection without one, and an approval where the rule asks for one.
+
+## Data taxonomy fixtures (slice 2)
+
+The data taxonomy's engine cases (`docs/architecture/data-taxonomy.md`; D-41 records the choices). `data-taxonomy.gen.mjs` writes all 117 of them; run it from `src/` with `node fixtures/data-taxonomy.gen.mjs`
+after a change, and check the files in. Most cases run on Balanced with the worked tree of the data fixtures as inline
+operations: People, Payroll (restricted, AI use never), Bank details; Field operations, Safety findings (restricted),
+Parts catalog; Commercial, Contracts, Supplier contracts; Customers, Client accounts. The V-rule cases use the overlay
+`data-domains-starter`. The worked rules of the design carry the tag `worked-rule`.
+
+| Folder | Operation | Cases | What each side holds |
+|---|---|---|---|
+| `op-15` | Resolve data domain | 9 | `input.domainKey`; `facts.ownerAssignments` (O06 rows as `{ assignmentId, ownerRoleKey, principalId, isDeputy, deputyForId, startOn, endOn }` with exactly one of `dataDomainKey`, `dataLocationId`, `applicationId`) and `facts.principals` (`{ principalId, directoryState, leavesOn, isErased }`) |
+| `op-16` | Evaluate data use | 14 | `input`: `subjectKind` (data-use or data-mapping), `domainKey`, `reachesAi`, `isDeidentified`, `origin`, `locationId`, `locationStageKey` and the application's scope; `facts`: the owner facts, `decisions` (`{ decisionId, decisionTypeKey, statusMeaning, outcomeKey, decidedOn, judgedClassificationRank, judgedRule, approvalsGiven }`), `mappedAtLocation` (DC-11) and `sensitivityAnswerKey` (DC-09). The outcome is the state (`docs/architecture/data-taxonomy.md`, The decision state) |
+| `op-17` | Run data checks | 19 | `input.scope` (`domainKey`, `includeSubtree`, `applicationId`, `locationId`, `principalId`); `facts`: owners, principals, `locations`, `mappings`, `uses`, `applications` and `decisions`. One case per check DC-01 to DC-14, a clean estate, two scopes and the mode off |
+| `op-02` | Resolve required approvals | 11 | The scope fields `subjectKind`, `classificationKey`, `aiUse`, `dataDomainLevelKey` and `dataTaxonomyChange`; a requirement names its `ownerSubject` |
+| `op-07` | Evaluate gate readiness | 9 | `facts.dataUses` (`{ declaredCount, holdsNoBusinessData, undecidedCount, retentionOpenCount }`) for the kinds `data-uses-declared` and `data-uses-decided` |
+| `op-08` | Guard a write | 25 | `facts.dataFacts` (`locationStageKey`, `parentLocation`, `deploymentTargetStageKey`, `decisionSubject`). Prefixes `g18-` to `g25-`, a passing and a refusing case per rule. G-25 is D-41, question 7, as the product owner changed it: a use or copy whose rule is never is refused when saved, for a person (`g25-person-saves-never-use-refused`) and an AI client (`g25-ai-saves-never-use-refused`) alike, and can always be ended |
+| `op-09` | Validate a configuration set | 30 | Prefixes `v49-` to `v60-`, a passing and a failing case per rule; V53 and V59 are warnings, V50 also warns |
+
+`ruleIds` reaches V60 and G-25. `engine/tests/Product.Engine.Runtime.Tests/DataTaxonomyRuntimeTests.cs` adds the runtime
+cases: a restricted AI use asks the domain owner by name and the security reviewer, an inherited owner answers below,
+the never rule refuses a person and an AI client and writes nothing, the design gate reads the data uses, an ownership
+decision about a domain writes a domain owner, and the data checks find the gaps.
 
 ## Generated checks
 
@@ -284,3 +347,12 @@ Fictional presets that only fixtures use. Never shipped.
 | `fixture-overlay-c` | overlay | Conflicts with nothing, for the passing V43 case |
 
 `tools/schema-map.json` checks them with the preset schemas, not the fixture schema.
+
+## The wave 2 leftovers (2026-11-24, document 25, B25-18)
+
+| Folder | Cases | What they show |
+|---|---|---|
+| `op-02` | 5 changed | The five intake cases carry Balanced's consent of the named business owner (`intake-business-owner-consent`). A consent never stands for the group's counting rule: the lowest-tier case stays engine-accept with the consent as its one requirement, and the accountable card stays beside it at tier 2 |
+| `op-08` | 1 changed, 1 new | `facts.subject.intakeOwnerConsented`: the accepted intake assigns the named business owner only with it (`subject-intake-accept-assigns-named-business-owner-allowed`), and skips them without it (`subject-intake-business-owner-without-consent-skipped`, tag `intake-owner-consent`) |
+| `op-09` | 1 new | `v20-consent-without-approval-allowed`: V20 lets a consent rule stand on a type without Requires Approval |
+| `replay` | 14 refreshed | The new Balanced hash, and the drafted by stamps (Drafted By Client App, Drafted For Principal) on an AI client's create |

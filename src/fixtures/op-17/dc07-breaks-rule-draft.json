@@ -1,0 +1,365 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-17",
+  "case": "dc07-breaks-rule-draft",
+  "description": "DC-07: a draft use of Bank details with AI breaks the never rule of Payroll. DC-07 reads drafts too, so it shows before anyone confirms it.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "people",
+        "values": {
+          "label": "People",
+          "levelKey": "domain",
+          "classificationKey": "confidential",
+          "retentionClassKey": "keep-7-years"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "payroll",
+        "values": {
+          "label": "Payroll",
+          "parentKey": "people",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted",
+          "aiUseRule": "never"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "bank-details",
+        "values": {
+          "label": "Bank details",
+          "parentKey": "payroll",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "timesheets",
+        "values": {
+          "label": "Timesheets",
+          "parentKey": "people",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "field-operations",
+        "values": {
+          "label": "Field operations",
+          "levelKey": "domain",
+          "classificationKey": "internal"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "safety-findings",
+        "values": {
+          "label": "Safety findings",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "parts-catalog",
+        "values": {
+          "label": "Parts catalog",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "commercial",
+        "values": {
+          "label": "Commercial",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "contracts",
+        "values": {
+          "label": "Contracts",
+          "parentKey": "commercial",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "supplier-contracts",
+        "values": {
+          "label": "Supplier contracts",
+          "parentKey": "contracts",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "customers",
+        "values": {
+          "label": "Customers",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "client-accounts",
+        "values": {
+          "label": "Client accounts",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {},
+  "facts": {
+    "ownerAssignments": [
+      {
+        "assignmentId": "fixture-owner-hana",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-hana",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "people"
+      },
+      {
+        "assignmentId": "fixture-owner-rosa",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-rosa",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "people",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-hana"
+      },
+      {
+        "assignmentId": "fixture-owner-greta",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-greta",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "payroll"
+      },
+      {
+        "assignmentId": "fixture-owner-ines",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-ines",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "field-operations"
+      },
+      {
+        "assignmentId": "fixture-owner-ravi",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-ravi",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "field-operations",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-ines"
+      },
+      {
+        "assignmentId": "fixture-owner-kai",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-kai",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "safety-findings"
+      },
+      {
+        "assignmentId": "fixture-owner-kai-deputy",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-ravi",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "safety-findings",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-kai"
+      },
+      {
+        "assignmentId": "fixture-owner-clara",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-clara",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "contracts"
+      },
+      {
+        "assignmentId": "fixture-owner-greta-2",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-greta",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "contracts",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-clara"
+      },
+      {
+        "assignmentId": "fixture-owner-nadia",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-nadia",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "customers"
+      },
+      {
+        "assignmentId": "fixture-owner-wren",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-wren",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "customers",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-nadia"
+      },
+      {
+        "assignmentId": "fixture-owner-greta-deputy",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-otto",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "payroll",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-greta"
+      },
+      {
+        "assignmentId": "fixture-owner-commercial",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-clara",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "commercial"
+      },
+      {
+        "assignmentId": "fixture-owner-commercial-deputy",
+        "ownerRoleKey": "data-owner",
+        "principalId": "fixture-person-greta",
+        "startOn": "2026-01-05",
+        "dataDomainKey": "commercial",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-commercial"
+      },
+      {
+        "assignmentId": "fixture-owner-tech",
+        "ownerRoleKey": "technical-owner",
+        "principalId": "fixture-person-sana",
+        "startOn": "2026-01-05",
+        "dataLocationId": "fixture-loc-prod"
+      },
+      {
+        "assignmentId": "fixture-owner-tech-deputy",
+        "ownerRoleKey": "technical-owner",
+        "principalId": "fixture-person-felix",
+        "startOn": "2026-01-05",
+        "dataLocationId": "fixture-loc-prod",
+        "isDeputy": true,
+        "deputyForId": "fixture-owner-tech"
+      }
+    ],
+    "principals": [
+      {
+        "principalId": "fixture-person-hana",
+        "directoryState": "enabled"
+      },
+      {
+        "principalId": "fixture-person-kai",
+        "directoryState": "enabled"
+      }
+    ],
+    "locations": [
+      {
+        "locationId": "fixture-loc-prod",
+        "targetStageKey": "production",
+        "statusMeaning": "registered",
+        "lastSeenOn": "2026-11-01T00:00:00Z",
+        "label": "fixture-loc-prod"
+      }
+    ],
+    "mappings": [
+      {
+        "mappingId": "fixture-map-1",
+        "domainKey": "parts-catalog",
+        "locationId": "fixture-loc-prod",
+        "origin": "system-of-record",
+        "statusMeaning": "registered"
+      }
+    ],
+    "uses": [
+      {
+        "useId": "fixture-use-1",
+        "applicationId": "fixture-app-1",
+        "domainKey": "parts-catalog",
+        "access": "read",
+        "reachesAi": false,
+        "isDeidentified": false,
+        "statusMeaning": "registered",
+        "locationId": "fixture-loc-prod"
+      },
+      {
+        "useId": "fixture-use-4",
+        "applicationId": "fixture-app-1",
+        "domainKey": "bank-details",
+        "access": "read",
+        "reachesAi": true,
+        "isDeidentified": false,
+        "statusMeaning": "draft"
+      }
+    ],
+    "applications": [
+      {
+        "applicationId": "fixture-app-1",
+        "label": "fixture-app-1",
+        "tierKey": "tier-2",
+        "applicationKindKey": "power-platform-app",
+        "lifecycleStageKey": "build",
+        "statusMeaning": "registered",
+        "sensitivityAnswerKey": "internal",
+        "hasDataDependency": true
+      }
+    ],
+    "decisions": []
+  },
+  "expected": {
+    "outcome": "checked",
+    "payload": {
+      "counts": {
+        "DC-01": 0,
+        "DC-02": 0,
+        "DC-03": 0,
+        "DC-04": 0,
+        "DC-05": 0,
+        "DC-06": 0,
+        "DC-07": 1,
+        "DC-08": 0,
+        "DC-09": 0,
+        "DC-10": 0,
+        "DC-11": 0,
+        "DC-12": 0,
+        "DC-13": 0,
+        "DC-14": 0
+      },
+      "findings": [
+        {
+          "check": "DC-07",
+          "code": "data.breaks-rule",
+          "severity": "high",
+          "subjectKind": "data-use",
+          "subjectId": "fixture-use-4"
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

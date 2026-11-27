@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_deployments output",
-  "description": "The response envelope. On success, data lists deployment records, newest first. A corrected record shows its latest correction. artifactName and labels are text people or tools typed.",
+  "description": "The response envelope. On success, data lists deployment records, newest first, with counts of the flags for the same filters and paging. A corrected record shows its latest correction. artifactName and labels are text people or tools typed.",
   "x-tool": "get_deployments",
   "x-ai-write-states": [
     "read-only"
@@ -24,13 +24,16 @@
     "data": {
       "type": "object",
       "required": [
-        "items"
+        "items",
+        "counts",
+        "totalCount"
       ],
       "properties": {
         "items": {
           "type": "array",
           "items": {
             "type": "object",
+            "description": "One deployment record.",
             "required": [
               "deploymentRecordId",
               "businessApplicationId",
@@ -46,7 +49,16 @@
               "flags",
               "gateLevelApplied",
               "runUrl",
-              "correctsRecordId"
+              "correctsRecordId",
+              "changeRequestId",
+              "pipelineReferenceId",
+              "versionBefore",
+              "versionAfter",
+              "startedByAiClient",
+              "isAiCreated",
+              "performedBy",
+              "configurationSetVersion",
+              "recordUrl"
             ],
             "properties": {
               "deploymentRecordId": {
@@ -156,10 +168,148 @@
                     "type": "null"
                   }
                 ]
+              },
+              "changeRequestId": {
+                "description": "The change the deployment was matched to.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O11 Change Request"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "pipelineReferenceId": {
+                "description": "The pipeline that reported it.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O16 Pipeline Reference"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "versionBefore": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The version the target ran before."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "versionAfter": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The version the target runs after."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "startedByAiClient": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The AI client that started the deployment, as reported."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client reported the record."
+              },
+              "performedBy": {
+                "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "configurationSetVersion": {
+                "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "The record page in the product."
               }
             },
             "additionalProperties": false
           }
+        },
+        "counts": {
+          "type": "object",
+          "description": "Counts for the same filters, before the flag filters and paging.",
+          "required": [
+            "records",
+            "flagged",
+            "outsideWindow",
+            "otherPath",
+            "missingApproval",
+            "aiOnlyCodeApproval"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Records that match the filters other than the flags."
+            },
+            "flagged": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of them, records with any flag."
+            },
+            "outsideWindow": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Outside the change window."
+            },
+            "otherPath": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "On a route the target's change path does not expect."
+            },
+            "missingApproval": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "With no authorization where the policy expects one."
+            },
+            "aiOnlyCodeApproval": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Whose only code approval came from an AI."
+            }
+          },
+          "additionalProperties": false
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many records match in all."
         },
         "skipToken": {
           "$ref": "../common.schema.json#/$defs/nextSkipToken"
@@ -200,9 +350,27 @@
             },
             "gateLevelApplied": "advise",
             "runUrl": "https://pipelines.example.org/runs/2001",
-            "correctsRecordId": null
+            "correctsRecordId": null,
+            "changeRequestId": null,
+            "pipelineReferenceId": null,
+            "versionBefore": null,
+            "versionAfter": null,
+            "startedByAiClient": null,
+            "isAiCreated": false,
+            "performedBy": null,
+            "configurationSetVersion": 3,
+            "recordUrl": "https://product.example.org/app/records/deployment-record/d2000000-0000-4000-8000-000000000003"
           }
-        ]
+        ],
+        "counts": {
+          "records": 1,
+          "flagged": 1,
+          "outsideWindow": 1,
+          "otherPath": 0,
+          "missingApproval": 0,
+          "aiOnlyCodeApproval": 0
+        },
+        "totalCount": 1
       },
       "asOf": "2026-11-22T09:00:00Z",
       "configurationSetVersion": 3,

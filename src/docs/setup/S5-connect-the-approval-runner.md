@@ -2,20 +2,20 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant. The approval runner's flows are a template that nobody has imported yet; a stand-in plays the runner in the local steps and the tests.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 23, S1 and B23-6; document 25, section 12.2; document 26, sections 3.4, 7 and 8; document 28, issue 7, Q19 and question 12; `src/adapters/azure/flows/README.md`; `src/adapters/azure/README.md`, "The approval runner".
+- **See also:** [concepts.md](../concepts.md), [admin.md](../admin.md); `src/adapters/azure/flows/README.md`; `src/adapters/azure/README.md`, "The approval runner".
 - **Open design questions that touch this guide:** 12 (marker below).
 
 ## Purpose
 
-The product never approves anything. A person approves on a Power Automate approval card in Outlook, Teams or the Power Automate action center, and the engine decides whether that answer counts. The **approval runner** is the small group of flows in the client's tenant that carries each approval request from the product to the people asked, and carries each answer back. It is the only writer of approval outcomes, and it writes through the approval writer workload role (document 28, issue 7; working default Q19).
+The product never approves anything. A person answers an approval request on the product's decision page in the web app, and the engine decides whether that answer counts. The **approval runner** is the small group of flows in the client's tenant that tells each person asked. With step-up sign-in on, it sends an email that only links to the decision page. With step-up sign-in off, the template sends a Power Automate approval card, which reaches Outlook, Teams and the Power Automate action center, and carries the answer given in it back to the product. That path is tested only through a stand-in, not in a tenant. The runner writes those relayed answers through the approval writer workload role. An answer on the decision page needs no runner.
 
 This guide connects the runner to a deployed product: its identity, its app role, its Workload Grant, the flows, and the switch that serves its routes. The click-by-click import steps are in `src/adapters/azure/flows/README.md`.
 
 ## How it works, in short
 
-1. The engine opens one Approval Record per required answer (a rule with Minimum Count 2 gets two). When it opens a record, the same database transaction adds a row to the **approval outbox** (IDs only). When the engine writes the record's final outcome (an answer, expired or cancelled), the same transaction settles the row.
+1. The engine opens one Approval Record per required answer (a rule with Minimum Count 2 gets two). When it opens a record, the same database transaction adds a row to the **approval outbox** (IDs only). When the engine writes the record's final outcome (an answer, expired or canceled), the same transaction settles the row.
 2. Every five minutes the runner's parent flow claims waiting requests with a lease (`POST /engine/v1/approval-runner/claims`) and starts one child flow per request. Each claim first has the engine, as the runner, expire the records past their Expires On, open their restarts, and cancel the records that settled decisions still hold open.
-3. The child flow works out who to ask (the current holders of an owner role, or the user members of the Entra groups bound to a product role), sends one card, reports it as sent, waits for the first answer, and posts it to `POST /engine/v1/approval-records/{id}/outcome` with `Idempotency-Key: <recordId>:<responderId>:<respondedOn>`.
+3. The child flow works out who to ask (the current holders of an owner role, or the user members of the Entra groups bound to a product role), sends one card (with step-up sign-in on, a link-only email instead, and then it stops), reports it as sent, waits for the first answer, and posts it to `POST /engine/v1/approval-records/{id}/outcome` with `Idempotency-Key: <recordId>:<responderId>:<respondedOn>`.
 4. A request the child cannot send or wait for is given back (`release`). After `Product:ApprovalRunner:MaxAttempts` (default 3) it becomes failed and an admin looks at it (guide [A4](../admin/A4-approval-runner-operations.md)).
 
 Every runner route takes only an app-only token with the `Approval.Write` app role, and then serves only a caller that the configuration in force resolves as the approval runner: a workload with a current `approval-writer` Workload Grant. A person, an AI client, a pipeline and an agent identity get 403 on every runner route.
@@ -27,7 +27,7 @@ Every runner route takes only an app-only token with the `Approval.Write` app ro
 | The client's Entra admin | Registers the runner's app, adds its certificate credential, assigns it the `Approval.Write` app role |
 | The client's Power Platform admin | Creates the approvals environment, the flow group and its Process license; imports the flows |
 | The Key Vault owner | Holds the runner's certificate and its password as secrets, and gives the approvals environment read access to them |
-| The client's configuration admin | Instructs the Workload Grant for the runner as a configuration change; a person accepts it on a card |
+| The client's configuration admin | Instructs the Workload Grant for the runner as a configuration change; a person accepts it on the decision page |
 | The client's platform admin | Turns on the runner's routes and runs the first test |
 
 ## Prerequisites
@@ -56,7 +56,7 @@ Every runner route takes only an app-only token with the `Approval.Write` app ro
    | `bindingDetail` | The app role assignment ID from step 3 |
    | `expiresOn` | A date no more than `workload-grant-max-days` (default 365) after the day the change is validated |
 
-   A person accepts the change on a card; the engine stamps the deciding decision on the grant. The app role lets the token through the door; the grant is what the engine checks. WORKING DEFAULT (open design question 12)
+   A person accepts the change on the decision page; the engine stamps the deciding decision on the grant. The app role lets the token through the door; the grant is what the engine checks. WORKING DEFAULT (open design question 12)
 
 5. **Create the flow group.** In the approvals environment, one flow group with one Process license, and add **both** flows to it after import (step 7): Microsoft counts parent and child flows separately, and a child flow does not inherit the group's capacity from its parent.
 
@@ -66,15 +66,15 @@ Every runner route takes only an app-only token with the `Approval.Write` app ro
 
 8. **Serve the runner's routes.** From `src/adapters/azure`: `azd env set PRODUCT_APPROVAL_RUNNER_ENABLED true`, then `azd provision`. Until then every runner route answers `not_found`, and the outbox fills either way, so nothing is lost by turning it on later.
 
-9. **Test with one request.** Have a requester submit a small intake (`save_intake_draft`, then `submit_record`) through Claude Code. Within one poll interval a card reaches the role holders. Answer it as one of them, then check the record (Checks below).
+9. **Test with one request.** Have a requester submit a small intake (`save_intake_draft`, then `submit_record`) through Claude Code. Within one poll interval a card (with step-up sign-in on, a link-only email) reaches the role holders. Answer as one of them, in the card or on the decision page, then check the record (Checks below).
 
 ## Checks
 
 - `check_role_bindings`, run by the platform admin, lists the runner's grant with `assignmentFound` true and `isExpired` false, and reports no direct assignment without a grant.
 - A call to `POST /engine/v1/approval-runner/claims` with a person's token, or with a pipeline's token, answers 403.
-- After step 9: `get_approval_status` on the decision shows the answer with its approver, the time of the answer and whether it counts (`countsTowardRequirement`). An answer counts only from a person who signed in as a user, holds the role the card asked for, and passes the separation rules in force.
+- After step 9: `get_approval_status` on the decision shows the answer with its approver, the time of the answer and whether it counts (`countsTowardRequirement`). An answer counts only from a person who signed in as a user, holds the role the request asked for, and passes the separation rules in force.
 - The same answer posted again returns the first result and writes nothing (the runner's retries are safe).
-- The claim's answer has a `refresh` part that counts the decisions the engine brought up to date and the records it expired, cancelled and opened; the service's log says the same on every poll.
+- The claim's answer has a `refresh` part that counts the decisions the engine brought up to date and the records it expired, canceled and opened; the service's log says the same on every poll.
 - The parent flow's run history shows one run every five minutes; a run that claims nothing ends at once.
 - No run history shows the certificate: every HTTP action has secure inputs.
 
@@ -87,8 +87,8 @@ Every runner route takes only an app-only token with the `Approval.Write` app ro
 
 ## What the runner cannot do yet
 
-- **Cancel a card.** The Approvals connector has no action that cancels an open approval, so a card for an expired or cancelled record can still be answered; the product then answers 409 and records nothing.
-- **Expire while it is off.** Expiry and restarts run in the runner's claims, so while the parent flow is off no record is written as expired and no restart goes out. Document 23, S2 has a daily timer for this; the Azure binding has none yet.
+- **Cancel a card.** The Approvals connector has no action that cancels an open approval, so a card for an expired or canceled record can still be answered; the product then answers 409 and records nothing.
+- **Expire while it is off.** Expiry and restarts run in the runner's claims, and in the daily due-state refresh, built since this draft. The Functions timer `due-state-refresh` runs that refresh only once `Product:DueStateRefresh:HourUtc` is set, which the template does not do yet. Until then a record past its Expires On is written as expired at the next claim, or when a platform admin runs the refresh on the Admin page.
 - **Leave out a product role's earlier responders.** For a product role the child lists the group's members and cannot tell who already answered, so a person whose answer already counts may get the next card for the same requirement. Their second answer does not count, and the engine asks again.
 - **Wait longer than 28 days.** A flow can wait at most 28 days; the child waits at most 27, then gives the request back, and a new card goes out on the next poll (for a restart, if the record expired meanwhile). The old card stays in the action center.
 
@@ -96,7 +96,7 @@ Every runner route takes only an app-only token with the `Approval.Write` app ro
 
 1. **A secretless sign-in for the runner.** The template uses a certificate in a Key Vault-backed environment variable, so its grant has `usesFederatedCredential` false. The schema says a false value "is flagged", but no check in this release reads the column yet: neither `get_configuration_health` nor `check_role_bindings` reports it. Proposal: `check_role_bindings` lists credential-bearing grants as a finding, and a tenant test looks for a federated credential path for the HTTP action.
 2. **The runner's Principal Reference.** `flows/README.md` asks for a Principal Reference that records the runner as a service principal. Outside the local seed, the product writes no Principal Reference row for a workload yet. Proposal: the binding patch apply, or the grant's activation, writes one for each grant's principal.
-3. **Pull, not push.** Document 23 has the API push each request to a flow; the runner pulls instead (B23-6), so the API stays inbound only. The cost is the poll interval. This is a proposal for the design.
+3. **Pull, not push.** An earlier design had the API push each request to a flow; the runner pulls instead, so the API stays inbound only. The cost is the poll interval. This is a proposal for the design.
 4. **Not verified in a tenant:** the responder ID and response date the Approvals connector returns, whether group member listing returns each member's type and whether it lists agent users, and whether **Run a Child Flow** returns when the child answers (`flows/README.md`, "Not verified yet").
 
 ## Microsoft facts used

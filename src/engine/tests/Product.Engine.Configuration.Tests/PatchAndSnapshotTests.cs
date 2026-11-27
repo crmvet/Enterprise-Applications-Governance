@@ -109,8 +109,9 @@ public sealed class PatchAndSnapshotTests
         Assert.Equal(CanonicalHash.ComputeContentHash(compiled.CanonicalText), compiled.ContentHash);
         Assert.Equal(compiled.ContentHash, compiled.Snapshot.ContentHash);
 
-        // 34 entities plus the three child entities, which the core model keeps apart.
-        Assert.Equal(37, compiled.Snapshot.Entities.Count);
+        // 37 entities plus the three child entities, which the core model keeps apart. Balanced holds no data domains, so the
+        // snapshot has no Data Domain entity.
+        Assert.Equal(40, compiled.Snapshot.Entities.Count);
         Assert.True(compiled.Snapshot.TryGetRow("list-value", "channel/teams", out SnapshotRow? teams));
         Assert.Equal("channel", teams.ParentKey);
         Assert.Equal(Origin.Shipped, teams.Origin);

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-06",
+  "case": "live-application-stale-link-incomplete",
+  "description": "A tier 1 application in build whose wiki page was last checked in June 2024: the page is stale, so the documentation is incomplete and the page is one to fix. Its pair is retired-application-owes-no-document.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "applicationKindKey": "power-platform-app",
+    "tierKey": "tier-1",
+    "lifecycleStageKey": "build"
+  },
+  "facts": {
+    "links": [
+      {
+        "documentLinkId": "fixture-link-w1",
+        "documentTypeKey": "wiki-page",
+        "requirementKey": "wiki-page-all",
+        "status": "current",
+        "lastCheckedOnUtc": "2024-06-01T10:00:00Z"
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "incomplete",
+    "payload": {
+      "complete": false,
+      "items": [
+        {
+          "requirementKey": "wiki-page-all",
+          "documentTypeKey": "wiki-page",
+          "status": "stale",
+          "documentLinkId": "fixture-link-w1",
+          "staleOnUtc": "2025-06-01T10:00:00Z"
+        }
+      ],
+      "staleCount": 1
+    }
+  }
+}

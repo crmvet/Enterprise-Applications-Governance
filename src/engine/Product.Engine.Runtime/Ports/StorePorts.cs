@@ -38,6 +38,11 @@ public interface IStoreTransaction : IRecordReader, IDisposable
     // A new row ID. The store makes IDs; the engine core never does (document 25, section 3.2).
     string NewId(string entity);
 
+    // The next record number of an entity (RecordNumbers; document 25, B25-9): one above the highest number the store
+    // has given for the entity or holds in a Record Number with this prefix. The store reserves it at once, outside this
+    // transaction, so a concurrent call never gets the same number and a rolled-back call leaves a gap.
+    long NextRecordNumber(string entity, string prefix);
+
     void Create(string entity, string id, string? key, JsonTreeNode columns);
 
     // Merges the columns given into the row: a column named is replaced, a JSON null clears it, others are kept.

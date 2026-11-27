@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "request_security_review output",
+  "description": "The response envelope. On success, data is the write result for the Review (O21), status due, trigger request. nextSteps point to save_decision_proposal about the review.",
+  "$comment": "WORKING DEFAULT (open design question 9), as for request_architecture_review: an AI client may send the request where the Tool Policy row says AI May Submit = yes for subject kind review-request. Shipped yes.",
+  "x-tool": "request_security_review",
+  "x-ai-write-states": [
+    "submitted"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Review (O21).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "Always due. A review request is a request, never a decision.",
+          "properties": {
+            "meaning": {
+              "$ref": "../common.schema.json#/$defs/reviewStatusMeaning",
+              "const": "due"
+            }
+          }
+        },
+        "reviewId": {
+          "description": "Null only when validateOnly was true and no open review existed.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O21 Review"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reviewTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "x-entity": "C24 Review Type",
+          "description": "The security review type."
+        },
+        "trigger": {
+          "$ref": "../common.schema.json#/$defs/reviewTrigger",
+          "const": "request",
+          "description": "Always request for this tool."
+        },
+        "dueOn": {
+          "$ref": "../common.schema.json#/$defs/date"
+        },
+        "existingReviewReturned": {
+          "type": "boolean",
+          "description": "True when an open security review already existed. Nothing new was written."
+        },
+        "evidenceLinkIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O20 Evidence Link"
+          },
+          "description": "The Evidence Link rows written."
+        },
+        "assignedOwnerRoleKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "description": "The owner role the review type names as its lead (C24 Default Owner Role).",
+          "x-entity": "C28 Owner Role"
+        },
+        "producesDecisionTypeKey": {
+          "$ref": "../common.schema.json#/$defs/key",
+          "description": "The decision type the review records.",
+          "x-entity": "C19 Decision Type"
+        },
+        "isAgent": {
+          "type": "boolean",
+          "description": "True when the application is of an agent kind."
+        }
+      },
+      "required": [
+        "reviewId",
+        "reviewTypeKey",
+        "trigger",
+        "assignedOwnerRoleKey",
+        "producesDecisionTypeKey",
+        "isAgent",
+        "dueOn",
+        "existingReviewReturned",
+        "evidenceLinkIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

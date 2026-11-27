@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_reviews input",
+  "description": "Reviews across the portfolio. state overdue: due with a due date before today; due: every due review (dueWithinDays narrows it to those due within that many days, overdue included); done; cancelled; all. mineOnly keeps the reviews that are the caller's to do: on an application they own, or whose outcome decision (C24 Produces Decision Type) they may propose through a product role (C31), as get_my_queue decides. No tool marks a review done yet. Writes nothing.",
+  "x-tool": "list_reviews",
+  "type": "object",
+  "properties": {
+    "state": {
+      "enum": [
+        "overdue",
+        "due",
+        "done",
+        "cancelled",
+        "all"
+      ],
+      "default": "due",
+      "description": "Which reviews."
+    },
+    "dueWithinDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3650,
+      "description": "With state due: only reviews due within this many days from today, overdue included."
+    },
+    "reviewTypeKeys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C24 Review Type"
+      },
+      "description": "Only these review types."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only reviews of this application."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only reviews of applications in this portfolio or below it."
+    },
+    "mineOnly": {
+      "type": "boolean",
+      "description": "True keeps only the reviews that are the caller's to do."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "state": "due",
+      "dueWithinDays": 30,
+      "reviewTypeKeys": [
+        "architecture"
+      ]
+    }
+  ]
+}

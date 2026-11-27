@@ -1,0 +1,10 @@
+{
+  "decisionTypeKeys": [
+    "exception"
+  ],
+  "statusMeanings": [
+    "proposed",
+    "accepted"
+  ],
+  "top": 100
+}

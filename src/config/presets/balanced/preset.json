@@ -7,7 +7,7 @@
   "presetKind": "full",
   "extends": null,
   "conflictsWith": [],
-  "areas": ["taxonomy", "people", "rules", "gates", "change-management", "documentation"],
+  "areas": ["taxonomy", "people", "rules", "gates", "change-management", "documentation", "data"],
   "productRelease": "0.1.0",
   "contentVersion": "1.0.0",
   "checkedOn": "2026-11-22",

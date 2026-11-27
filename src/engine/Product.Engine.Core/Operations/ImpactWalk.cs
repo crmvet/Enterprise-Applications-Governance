@@ -260,7 +260,7 @@ internal readonly struct ImpactNodeId : IEquatable<ImpactNodeId>
 // Only dependency types with Counts For Impact yes are followed. The walk goes breadth first, so each node is listed
 // once per direction at its shortest depth; ties are broken by ID, never by input order. Both directions are two
 // separate walks: the dependants of the start, and what the start depends on. One call, because the walk is recursive
-// and agents do better with one tool (design brief, section 5).
+// and agents do better with one tool.
 public static class ImpactOperation
 {
     private const string DependencyType = "dependency-type";

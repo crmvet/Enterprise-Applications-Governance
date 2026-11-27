@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "resolve_data output",
+  "description": "The response envelope. On success, data is the location and the domains whose data sits there, with owners and rules.",
+  "x-tool": "resolve_data",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "location",
+        "matches",
+        "unmapped"
+      ],
+      "properties": {
+        "location": {
+          "description": "The registered location. Null when none matches.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dataLocationBrief"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "domain",
+              "dataMappingId",
+              "origin",
+              "containers",
+              "containerMatched",
+              "owner",
+              "classification",
+              "rules"
+            ],
+            "properties": {
+              "domain": {
+                "$ref": "../common.schema.json#/$defs/dataDomainRef"
+              },
+              "dataMappingId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O26 Data Mapping"
+              },
+              "origin": {
+                "$ref": "../common.schema.json#/$defs/dataOrigin"
+              },
+              "containers": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "x-untrusted": true
+                }
+              },
+              "containerMatched": {
+                "type": "boolean",
+                "description": "True when the container asked for is named on the mapping. False when the mapping covers the whole location."
+              },
+              "owner": {
+                "description": "The domain's effective data owner.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dataPersonValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "classification": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dataClassificationValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rules": {
+                "$ref": "../common.schema.json#/$defs/dataRules"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The domains mapped at the location that hold the container: mappings that name it first, then mappings of the whole location."
+        },
+        "unmapped": {
+          "type": "boolean",
+          "description": "True when no open mapping answers the question."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -180,6 +180,10 @@ public sealed class CallerFacts
                 {
                     KnownClientResult known = KnownClientCheck.From(snapshot.Snapshot).Check(caller.ClientAppId);
                     clientLabel = known.IsAllowed ? known.Label : null;
+                    if (clientLabel != null && caller.DemoPersona != null)
+                    {
+                        clientLabel += ProductDemo.OperatorLabelSuffix;
+                    }
                 }
 
                 CallerResolution resolution = CallerResolver.Resolve(snapshot.Snapshot, Identity(caller, clientLabel, person), Utc(_runtime.Clock.UtcNow));

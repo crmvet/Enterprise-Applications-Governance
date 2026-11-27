@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_data_use input",
+  "description": "May this application use this data this way, and what is needed? Answers before anything is saved: the decision state the use would have, the rule that governs it and where that rule is set, who would be asked, and the tier answer the data implies. A use whose rule is never cannot be saved by anyone (G-25). Writes nothing.",
+  "x-tool": "check_data_use",
+  "type": "object",
+  "required": [
+    "access",
+    "reachesAi"
+  ],
+  "properties": {
+    "applicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application. Give this or intakeRequestId."
+    },
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "The intake request, before the application is registered."
+    },
+    "domainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "The data, by its domain. Give this, or locationId with container."
+    },
+    "locationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "Where the application reaches the data."
+    },
+    "container": {
+      "type": "string",
+      "description": "The container as seen. With locationId, it names the domain through the mappings.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "access": {
+      "$ref": "../common.schema.json#/$defs/dataAccess"
+    },
+    "reachesAi": {
+      "type": "boolean",
+      "description": "True when the data would be sent to an AI model or agent."
+    },
+    "isDeidentified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when only masked or de-identified data would be used."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "required": [
+            "applicationId"
+          ]
+        },
+        {
+          "required": [
+            "intakeRequestId"
+          ]
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "domainKey"
+          ]
+        },
+        {
+          "required": [
+            "locationId",
+            "container"
+          ]
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "applicationId": "10000000-0000-4000-8000-000000000001",
+      "domainKey": "payroll",
+      "access": "write",
+      "reachesAi": false
+    }
+  ]
+}

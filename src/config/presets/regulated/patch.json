@@ -8,7 +8,8 @@
     "WORKING DEFAULT (open design question 7): every enforce row sets aiOnlyCodeApprovalHandling to stop. Rows below enforce use the setting default-ai-only-code-approval-handling (flag). An AI-only code approval never counts as authorization.",
     "The tier 2 go-live group replaces the broader go-live group at tier 2 (document 21, section 10.3), so it repeats the business owner and adds the data owner. The business owner keeps Balanced's 5 day timeout.",
     "no-self-approval-all replaces no-self-approval-tier-3 (document 28, Q10). The keys match the strict separation overlay, so the overlay on Regulated changes nothing in these rows.",
-    "WORKING DEFAULT (open design question 4): config-accepter-differs and its twin gate-policy-accepter-differs refuse an approval from the admin who instructed the change, so a second configuration admin accepts it."
+    "WORKING DEFAULT (open design question 4): config-accepter-differs and its twin gate-policy-accepter-differs refuse an approval from the admin who instructed the change, so a second configuration admin accepts it.",
+    "Data taxonomy (D-37; docs/architecture/data-taxonomy.md): data-taxonomy-mode is domains-required, so every data use decision is about a declared use. Data uses and mappings point at subdomains or below, never at the top level, and every subdomain needs its own data owner. AI use of confidential data also asks the security reviewer, and retention needs the business owner's approval instead of a consultation (data taxonomy slice 2)."
   ],
   "schemaVersion": "1.0",
   "manifest": {
@@ -126,6 +127,85 @@
         "decisionTypeKey": "gate-policy-change",
         "mustDifferFrom": "instructing-admin",
         "enforcement": "refuse"
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "setting",
+      "key": "data-taxonomy-mode",
+      "values": { "value": "domains-required" }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain-level",
+      "key": "domain",
+      "values": { "declarable": false }
+    },
+    {
+      "op": "upsert",
+      "entity": "data-domain-level",
+      "key": "subdomain",
+      "values": { "ownerRequired": true }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "data-use-confidential-ai-owner",
+      "values": {
+        "label": "Confidential data to AI: the domain's data owner approves",
+        "decisionTypeKey": "data-use",
+        "subjectKind": "data-use",
+        "classificationKey": "confidential",
+        "aiUse": true,
+        "approverOwnerRoleKey": "data-owner",
+        "ownerSubject": "data-domain",
+        "approvalMode": "everyone-must-approve",
+        "timeoutDays": 10,
+        "requiresTypedReason": true
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "data-use-confidential-ai-security",
+      "values": {
+        "label": "Confidential data to AI: the security reviewer approves",
+        "decisionTypeKey": "data-use",
+        "subjectKind": "data-use",
+        "classificationKey": "confidential",
+        "aiUse": true,
+        "approverRoleKey": "security-reviewer",
+        "approvalMode": "first-to-respond",
+        "minimumCount": 1,
+        "timeoutDays": 10,
+        "requiresTypedReason": true
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "data-use-confidential-ai-steward",
+      "values": {
+        "label": "Confidential data to AI: the domain's data steward consulted",
+        "decisionTypeKey": "data-use",
+        "subjectKind": "data-use",
+        "classificationKey": "confidential",
+        "aiUse": true,
+        "approverOwnerRoleKey": "data-steward",
+        "ownerSubject": "data-domain",
+        "approvalMode": "first-to-respond",
+        "timeoutDays": 10,
+        "isConsultation": true
+      }
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "data-retention-business-owner",
+      "values": {
+        "label": "Retention: the application's business owner approves",
+        "approvalMode": "everyone-must-approve",
+        "isConsultation": false
       }
     }
   ]

@@ -35,7 +35,7 @@
 1. **Request.** A review opens when a trigger fires, with the trigger recorded. Anyone, or their AI client, can also ask for one.
 2. **Prepare.** The builder's AI client may draft the architecture decision record from the discussion. The builder's own tool writes the full text into the team's repository or wiki.
 3. **Review.** The architect reviews the design, the dependency map and any linked assessment, such as a Well-Architected assessment export.
-4. **Decide.** The design decision goes to the architect on an approval card. A data use decision goes to the data owner when data use changed.
+4. **Decide.** The design decision goes to the architect, who answers on the decision page. A data use decision goes to the data owner when data use changed.
 5. **Close.** The review closes with its decision, and the Design gate is checked again.
 6. **Supersede, never edit.** If the decision changes later, record a new one that supersedes it, and link the two.
 7. **Exceptions.** An exception records the standard it departs from, the reason and a review date.
@@ -85,7 +85,7 @@
 
 - The AI client can draft the decision record and list the dependants of a shared component in seconds, so preparing a review is no longer the slow part.
 - Review triggers surface during the build, because the AI client asks what the tier needs before it starts, and the answer names the review.
-- Templates on the paved road (chapter 20) carry decisions already made, so the lowest tier needs no review beyond a self-check. Where a review is needed, the architect still decides on a card.
+- Templates on the paved road (chapter 20) carry decisions already made, so the lowest tier needs no review beyond a self-check. Where a review is needed, the architect still decides on the decision page.
 
 ## Old paradigm to avoid
 

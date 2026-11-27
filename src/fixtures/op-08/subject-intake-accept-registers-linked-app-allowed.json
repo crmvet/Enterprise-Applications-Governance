@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-intake-accept-registers-linked-app-allowed",
+  "description": "An accepted intake (outcome accept) registers the draft application the request names and moves it to the first stage after the Accept gate, then completes the request with the decision as its Triage Decision, all as update-subject writes in the same transaction.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-20"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "intake",
+      "subjectKind": "intake-request",
+      "subjectIntakeRequest": "fixture-intake-1",
+      "outcome": "accept"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "accept",
+      "ready": true,
+      "requirements": []
+    },
+    "subject": {
+      "intake": {
+        "id": "fixture-intake-1",
+        "statusMeaning": "submitted",
+        "title": "Field inspections",
+        "businessApplication": "fixture-app-1",
+        "proposedKind": "power-platform-app"
+      },
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "draft",
+        "lifecycleStage": "idea",
+        "applicationKind": "power-platform-app"
+      }
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Business Application",
+          "operation": "update",
+          "rowId": "fixture-app-1",
+          "columns": {
+            "lifecycleStage": "prioritize-and-fund",
+            "stageDecision": "fixture-decision-20",
+            "status": "app-registered"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Intake Request",
+          "operation": "update",
+          "rowId": "fixture-intake-1",
+          "columns": {
+            "status": "intake-completed",
+            "triageDecision": "fixture-decision-20"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "entityName": "Intake Request",
+            "rowId": "fixture-intake-1",
+            "operation": "subject-updated",
+            "changedValuesJson": {
+              "basisDecision": "fixture-decision-20"
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

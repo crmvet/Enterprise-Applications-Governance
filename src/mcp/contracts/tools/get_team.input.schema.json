@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_team input",
+  "description": "One team or committee: who is in it (read live from Entra as the signed-in person, or from the demo personas on a demo install, never stored), the product roles it holds through its bindings, the decision types it answers from the decision rights and approval rules of those roles, the applications and data it holds owner roles on, the approval requests waiting on it now, the latest answers its people gave through it, and the owner gaps among its applications. A read for any role.",
+  "x-tool": "get_team",
+  "type": "object",
+  "required": [
+    "teamId"
+  ],
+  "properties": {
+    "teamId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "The group's Entra object ID, as list_teams gives it in teamId, or as an owner assignment or a role binding names the group.",
+      "x-entity": "O05 Principal Reference"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "teamId": "00000000-0000-4000-8000-000000000111"
+    }
+  ]
+}

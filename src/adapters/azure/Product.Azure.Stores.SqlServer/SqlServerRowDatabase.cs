@@ -112,6 +112,42 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         return Read(command, entity.Key);
     }
 
+    // One read for many IDs: the IDs travel as one JSON array parameter, which OPENJSON opens into typed rows, so the
+    // clustered key is sought for each.
+    public IReadOnlyList<StoredRowData> GetMany(EntityInfo entity, IReadOnlyList<string> ids)
+    {
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+            using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable
+                + " WHERE [Id] IN (SELECT [v] FROM OPENJSON(@ids) WITH ([v] varchar(" + RowStore.MaxIdLength + ") N'$')) ORDER BY [Id]");
+            command.Parameters.Add(new SqlParameter("@ids", SqlDbType.NVarChar, -1) { Value = JsonArray(ids) });
+            return Read(command, entity.Key);
+        });
+    }
+
+    // One read for many values of one column, as Query narrows by one value.
+    public IReadOnlyList<StoredRowData> QueryIn(EntityInfo entity, string column, IReadOnlyList<string> values)
+    {
+        return _retry.Run(() =>
+        {
+            using SqlConnection connection = OpenOnce(StoreCallContext.Current, RowStoreOperations.Read);
+
+            // The column name is a plain identifier (RowStore checks it). JSON_VALUE compares in the database collation,
+            // which may ignore case: RowStore filters the result exactly.
+            using SqlCommand command = Command(connection, "SELECT " + RowColumns + " FROM " + entity.QualifiedTable
+                + " WHERE JSON_VALUE([Columns], N'$.\"" + column + "\"') IN (SELECT [v] FROM OPENJSON(@values) WITH ([v] nvarchar(" + RowStore.MaxNarrowingLength.ToString(CultureInfo.InvariantCulture) + ") N'$')) ORDER BY [Id]");
+            command.Parameters.Add(new SqlParameter("@values", SqlDbType.NVarChar, -1) { Value = JsonArray(values) });
+            return Read(command, entity.Key);
+        });
+    }
+
+    // A JSON array of strings, as one parameter.
+    private static string JsonArray(IEnumerable<string> values)
+    {
+        return RowJson.Write(Product.Engine.Core.Canonical.JsonTreeNode.CreateArray(values.Select(Product.Engine.Core.Canonical.JsonTreeNode.FromString)));
+    }
+
     public StoredRowData? ProbeInForce()
     {
         EntityInfo set = _catalog.Get("configuration-set");
@@ -303,6 +339,30 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
+    // One transaction that commits on its own (sql/0007-record-numbers.sql): the counter row locked, the highest number
+    // the entity's table holds with this prefix, and the counter moved to the next number before the lock is let go.
+    // The caller's session context lets the read see every row of the table. Only the connection open is retried.
+    public long NextRecordNumber(EntityInfo entity, string prefix)
+    {
+        using SqlConnection connection = Open(StoreCallContext.Current, RowStoreOperations.Write);
+        using SqlCommand command = Command(connection,
+            "SET NOCOUNT ON; SET XACT_ABORT ON;\n"
+            + "DECLARE @last bigint, @high bigint, @next bigint;\n"
+            + "BEGIN TRANSACTION;\n"
+            + "SELECT @last = [LastNumber] FROM [host].[RecordNumber] WITH (UPDLOCK, HOLDLOCK) WHERE [Entity] = @entity;\n"
+            + "SELECT @high = MAX(TRY_CONVERT(bigint, SUBSTRING(JSON_VALUE([Columns], '$.recordNumber'), @start, 19))) FROM " + entity.QualifiedTable
+            + " WHERE JSON_VALUE([Columns], '$.recordNumber') LIKE @pattern;\n"
+            + "SET @next = (CASE WHEN ISNULL(@high, 0) > ISNULL(@last, 0) THEN ISNULL(@high, 0) ELSE ISNULL(@last, 0) END) + 1;\n"
+            + "IF @last IS NULL INSERT INTO [host].[RecordNumber] ([Entity], [LastNumber]) VALUES (@entity, @next);\n"
+            + "ELSE UPDATE [host].[RecordNumber] SET [LastNumber] = @next WHERE [Entity] = @entity;\n"
+            + "COMMIT TRANSACTION;\n"
+            + "SELECT @next;");
+        command.Parameters.Add(EntityParameter(entity.Key));
+        command.Parameters.Add(new SqlParameter("@start", SqlDbType.Int) { Value = prefix.Length + 2 });
+        command.Parameters.Add(new SqlParameter("@pattern", SqlDbType.NVarChar, 64) { Value = prefix + "-[0-9]%" });
+        return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
     public ApprovalOutboxItem? OutboxGet(string approvalRecordId)
     {
         return _retry.Run(() =>
@@ -419,6 +479,7 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
         Add("Roles", context == null || context.RoleKeys.Count == 0 ? null : string.Join(",", context.RoleKeys));
         Add("CorrelationId", context?.CorrelationId);
         Add("EngineOperation", engineOperation);
+        Add("AnsweredApprovalId", seed ? null : context?.AnsweredApprovalId);
         return values;
     }
 
@@ -432,6 +493,8 @@ internal sealed class SqlServerRowDatabase : IRowDatabase
                 return "ai-client";
             case CallerEntry.Workload:
                 return "workload";
+            case CallerEntry.Engine:
+                return "engine";
             default:
                 return "setup";
         }

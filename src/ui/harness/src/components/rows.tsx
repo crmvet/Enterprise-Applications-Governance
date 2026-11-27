@@ -34,7 +34,8 @@ export function Row(props: RowProps) {
       )}
     >
       {lead && <div className="pt-px">{props.lead}</div>}
-      <div className="flex min-w-0 flex-col gap-0.5">
+      {/* On a phone the lines of a row stand 8 px apart, so the links in them keep the target spacing of WCAG 2.5.8. */}
+      <div className="flex min-w-0 flex-col gap-0.5 narrow:gap-2">
         <span className="text-sm leading-5 font-semibold [overflow-wrap:anywhere] text-navy">{props.primary}</span>
         {props.secondary && <span className="text-xs leading-4 text-navy-3">{props.secondary}</span>}
         {props.tertiary && <span className="text-xs leading-4 text-navy-3">{props.tertiary}</span>}

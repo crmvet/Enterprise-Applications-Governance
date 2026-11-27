@@ -22,6 +22,14 @@ public enum DirectoryReadMode
     /// identity. Nothing goes to the network and no token is exchanged. Outside Development, startup fails.
     /// </summary>
     Recorded,
+
+    /// <summary>
+    /// The demo personas and their fictional groups, as the persona switch and the development identity trust them: in the
+    /// Demo environment (always, when it has personas) or in Development (with the development identity on). Roles and
+    /// access lists the holders from them and the binding check finds the groups. The gap check reads the demo's fictional
+    /// inventory (<see cref="DemoInventoryReader"/>). No Entra read, no Power Platform read and no token.
+    /// </summary>
+    Demo,
 }
 
 /// <summary>
@@ -89,6 +97,13 @@ public sealed class DirectoryOptions
 
     /// <summary>Recorded mode only: the folder that holds the recorded responses (one JSON file per exchange).</summary>
     public string RecordedPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The demo inventory file of <see cref="DemoInventoryReader"/>: fictional items no application holds yet, which the
+    /// demo's inventory adds to the register's own components. Empty means <c>seed/demo-inventory.json</c> when the
+    /// deployment carries it, else none. Named outside the Development and the Demo environment, startup fails.
+    /// </summary>
+    public string DemoInventoryFile { get; set; } = string.Empty;
 
     /// <summary>The estate keys after defaults.</summary>
     public IReadOnlyList<string> EffectiveInventoryEstateKeys =>

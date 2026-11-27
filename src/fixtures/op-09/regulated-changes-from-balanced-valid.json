@@ -3,20 +3,54 @@
   "operation": "OP-09",
   "case": "regulated-changes-from-balanced-valid",
   "description": "The Regulated preset, compared with Balanced as the active version. The change summary pins the production and emergency gate rows, the configuration review days, the tier 2 go-live group and the separation rules.",
-  "tags": ["preset"],
-  "ruleIds": ["V01", "V02", "V03", "V04", "V05", "V06", "V07", "V08", "V09", "V10", "V11", "V12", "V44"],
-  "workingDefaults": [4, 7],
-  "snapshot": { "presetKey": "regulated" },
-  "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
-  "input": { "mode": "preset-build", "activeSnapshot": { "presetKey": "balanced" } },
+  "tags": [
+    "preset"
+  ],
+  "ruleIds": [
+    "V01",
+    "V02",
+    "V03",
+    "V04",
+    "V05",
+    "V06",
+    "V07",
+    "V08",
+    "V09",
+    "V10",
+    "V11",
+    "V12",
+    "V44"
+  ],
+  "workingDefaults": [
+    4,
+    7
+  ],
+  "snapshot": {
+    "presetKey": "regulated"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "preset-build",
+    "activeSnapshot": {
+      "presetKey": "balanced"
+    }
+  },
   "expected": {
     "outcome": "valid",
     "payload": {
       "isValid": true,
       "issues": [],
       "changeSummary": [
+        "Changed Approval Rule `data-retention-business-owner`: approvalMode, isConsultation, label.",
+        "Added Approval Rule `data-use-confidential-ai-owner`.",
+        "Added Approval Rule `data-use-confidential-ai-security`.",
+        "Added Approval Rule `data-use-confidential-ai-steward`.",
         "Added Approval Rule `go-live-tier-2-data-owner`.",
         "Added Approval Rule `go-live-tier-2-owner`.",
+        "Changed Data Domain Level `domain`: declarable.",
+        "Changed Data Domain Level `subdomain`: ownerRequired.",
         "Changed Gate Policy `gp-emergency-prod-tier-1`: aiOnlyCodeApprovalHandling, failMode, gateLevel.",
         "Changed Gate Policy `gp-emergency-prod-tier-2`: aiOnlyCodeApprovalHandling, failMode, gateLevel.",
         "Changed Gate Policy `gp-emergency-prod-tier-3`: aiOnlyCodeApprovalHandling, failMode, gateLevel.",
@@ -31,7 +65,8 @@
         "Added Separation Rule `gate-policy-accepter-differs`.",
         "Added Separation Rule `no-self-approval-all`.",
         "Retired Separation Rule `no-self-approval-tier-3`.",
-        "Changed Setting `configuration-review-days`: value."
+        "Changed Setting `configuration-review-days`: value.",
+        "Changed Setting `data-taxonomy-mode`: value."
       ]
     }
   }

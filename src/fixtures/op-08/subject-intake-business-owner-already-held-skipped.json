@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-intake-business-owner-already-held-skipped",
+  "description": "An accepted intake for a linked application that already has a business owner: the application keeps its owner, and the person the intake names is skipped with a warning. Changing the owner is an ownership decision (document 25, B25-10).",
+  "tags": [
+    "update-subject",
+    "intake-business-owner"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "after": {
+      "status": "decision-accepted"
+    },
+    "nestedEffect": "accept-decision",
+    "rowId": "fixture-decision-20"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "intake",
+      "subjectKind": "intake-request",
+      "subjectIntakeRequest": "fixture-intake-1",
+      "outcome": "accept"
+    },
+    "acceptance": {
+      "basis": "approvals-satisfied",
+      "approvalStatusOutcome": "satisfied"
+    },
+    "gateReadiness": {
+      "gateKey": "accept",
+      "ready": true,
+      "requirements": []
+    },
+    "subject": {
+      "intake": {
+        "id": "fixture-intake-1",
+        "statusMeaning": "submitted",
+        "title": "Field inspections",
+        "businessApplication": "fixture-app-1",
+        "proposedKind": "power-platform-app",
+        "businessOwner": "fixture-person-5"
+      },
+      "application": {
+        "id": "fixture-app-1",
+        "statusMeaning": "draft",
+        "lifecycleStage": "idea",
+        "applicationKind": "power-platform-app"
+      },
+      "owners": [
+        {
+          "id": "fixture-owner-1",
+          "businessApplication": "fixture-app-1",
+          "ownerRole": "business-owner",
+          "principal": "fixture-person-2",
+          "isDeputy": false,
+          "startOn": "2026-09-01"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": [
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "operation": "decision-accepted"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Business Application",
+          "operation": "update",
+          "rowId": "fixture-app-1",
+          "columns": {
+            "lifecycleStage": "prioritize-and-fund",
+            "stageDecision": "fixture-decision-20",
+            "status": "app-registered"
+          }
+        },
+        {
+          "kind": "update-subject",
+          "entity": "Intake Request",
+          "operation": "update",
+          "rowId": "fixture-intake-1",
+          "columns": {
+            "status": "intake-completed",
+            "triageDecision": "fixture-decision-20"
+          }
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "columns": {
+            "entityName": "Intake Request",
+            "rowId": "fixture-intake-1",
+            "operation": "subject-updated",
+            "changedValuesJson": {
+              "basisDecision": "fixture-decision-20"
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "subject.change-skipped",
+        "severity": "warning",
+        "entity": "Decision",
+        "ref": "fixture-person-5"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

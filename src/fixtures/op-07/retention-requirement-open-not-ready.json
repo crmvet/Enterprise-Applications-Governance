@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "retention-requirement-open-not-ready",
+  "description": "An install that adds a retirement gate requirement of kind data-uses-decided with data-retention: one write use on a system of record has no accepted retention decision, so the gate is not ready (P09).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "gate-requirement",
+        "key": "value-data-retention-decided",
+        "values": {
+          "label": "Retention decided",
+          "gateKey": "value",
+          "requirementKind": "data-uses-decided",
+          "requiredDecisionTypeKey": "data-retention"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "value",
+    "tierKey": "tier-1",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "dataUses": {
+      "declaredCount": 1,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 1
+    }
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "requirements": [
+        {
+          "requirementKey": "value-data-retention-decided",
+          "requirementKind": "data-uses-decided",
+          "requiredDecisionTypeKey": "data-retention",
+          "met": false
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "gate.requirement-data-uses-undecided"
+      },
+      {
+        "code": "gate.not-ready"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

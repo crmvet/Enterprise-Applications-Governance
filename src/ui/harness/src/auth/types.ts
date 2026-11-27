@@ -14,6 +14,9 @@ export interface AuthSession {
   headers(): Promise<Record<string, string>>;
   // The API answered 401 not_signed_in: sign in again.
   onUnauthorized(): void;
+  // The API answered step_up_required (D-38): sign the person in again now, with a login prompt, and with the claims
+  // challenge when the error carried one. The person answers again once they are back.
+  stepUp(claimsChallenge: string | null): void;
   user(): SignedInUser | null;
   signOut(): Promise<void>;
   // Calls back when the sign-in state changes (a persona chosen, a sign-in problem). Returns the unsubscribe function.

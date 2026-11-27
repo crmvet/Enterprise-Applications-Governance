@@ -45,10 +45,14 @@
         "portfolioId": {
           "$ref": "../common.schema.json#/$defs/id",
           "x-entity": "O01 Portfolio"
+        },
+        "businessOwnerObjectId": {
+          "$ref": "../common.schema.json#/$defs/guid",
+          "description": "The person to name as business owner on the intake request the claim starts, found with find_people. Leave out to name the claimant."
         }
       },
       "additionalProperties": false,
-      "description": "Start a new application as Draft. Only a person's confirmation registers it."
+      "description": "Start a new application as Draft. Only a person's confirmation registers it. The claim starts an intake request (P01) for the new application, with the component on a draft application the request names."
     },
     "clientRequestId": {
       "$ref": "../common.schema.json#/$defs/clientRequestId"

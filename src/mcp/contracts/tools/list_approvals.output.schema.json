@@ -1,0 +1,514 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_approvals output",
+  "description": "The response envelope. On success, data lists approval requests (O10) with their decision, subject, rule, who is asked, the answer and the dates. Statements, labels and typed reasons are text people typed.",
+  "x-tool": "list_approvals",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRecordId",
+              "decision",
+              "subject",
+              "approvalRuleKey",
+              "isConsultation",
+              "askedRole",
+              "askedOwnerRole",
+              "askedPrincipal",
+              "outcome",
+              "approver",
+              "typedReason",
+              "countsTowardRequirement",
+              "requestedOn",
+              "respondedOn",
+              "expiresOn",
+              "otherPendingCount",
+              "isOwnProposal",
+              "recordUrl",
+              "canAnswer",
+              "cannotAnswer",
+              "nextTool"
+            ],
+            "properties": {
+              "approvalRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              },
+              "decision": {
+                "type": "object",
+                "required": [
+                  "decisionId",
+                  "decisionType",
+                  "statement",
+                  "status",
+                  "proposedBy",
+                  "isAiCreated"
+                ],
+                "properties": {
+                  "decisionId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  "decisionType": {
+                    "$ref": "../common.schema.json#/$defs/labelledKey",
+                    "description": "The Decision Type (C18)."
+                  },
+                  "statement": {
+                    "type": "string",
+                    "description": "What is decided.",
+                    "x-untrusted": true
+                  },
+                  "status": {
+                    "$ref": "../common.schema.json#/$defs/statusValue"
+                  },
+                  "proposedBy": {
+                    "description": "Who proposed the decision. Null for a seeded decision.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "isAiCreated": {
+                    "type": "boolean",
+                    "description": "True when an AI client drafted the decision."
+                  }
+                },
+                "additionalProperties": false
+              },
+              "subject": {
+                "type": "object",
+                "required": [
+                  "subjectKind",
+                  "subjectId",
+                  "label",
+                  "businessApplicationId",
+                  "applicationName"
+                ],
+                "properties": {
+                  "subjectKind": {
+                    "$ref": "../common.schema.json#/$defs/decisionSubjectKind"
+                  },
+                  "subjectId": {
+                    "description": "The subject row, or the domain key for a decision about a data domain.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/id"
+                      },
+                      {
+                        "$ref": "../common.schema.json#/$defs/key"
+                      }
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The subject's name or title.",
+                    "x-untrusted": true
+                  },
+                  "businessApplicationId": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O02 Business Application"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "applicationName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "approvalRuleKey": {
+                "type": "string",
+                "description": "The approval rule (C32) that asked, or the decision right (C31) of an accountable card."
+              },
+              "isConsultation": {
+                "type": "boolean",
+                "description": "True for a consultation: a recommendation, never counted."
+              },
+              "askedRole": {
+                "description": "The product role the request asks, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "askedOwnerRole": {
+                "description": "The owner role on the decision's application the request asks, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "askedPrincipal": {
+                "description": "The person the request asks by name, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outcome": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The approval outcome by meaning."
+              },
+              "approver": {
+                "description": "Who answered. Null while pending.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "typedReason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The reason the approver typed.",
+                    "x-untrusted": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "countsTowardRequirement": {
+                "type": "boolean",
+                "description": "As the engine stored it."
+              },
+              "requestedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "respondedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expiresOn": {
+                "description": "When the request expires. The engine refuses an answer after it.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "otherPendingCount": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Other pending requests on the same decision: who else is asked."
+              },
+              "isOwnProposal": {
+                "type": "boolean",
+                "description": "True when the caller proposed the decision. The separation rules (C40) decide whether their own answer counts."
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "The decision page, where the person answers."
+              },
+              "canAnswer": {
+                "type": "boolean",
+                "description": "True when the request is pending, asks the caller, and the engine would take their answer now (answer_approval). The page shows Approve and Reject only then."
+              },
+              "cannotAnswer": {
+                "description": "Set when the request asks the caller and the check refuses; null otherwise.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "description": "Why the engine would not take the caller's answer on a request that asks them (the approval answer check of answer_approval, run as a pre-check). The page hides Approve and Reject and shows this.",
+                    "required": [
+                      "code",
+                      "message",
+                      "separationRule"
+                    ],
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "The engine reason code, such as approval.answer-separation."
+                      },
+                      "message": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "description": "One plain sentence."
+                      },
+                      "separationRule": {
+                        "description": "The separation rule (C40) that refuses, when one does.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "nextTool": {
+                "description": "answer_approval when the request asks the person and they use the web app (D-38). Null for an AI client, which never answers an approval, and for a request that does not ask the caller.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/toolName"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "data": {
+                "description": "For a data decision: the domain, the classification, the governing rule and the AI flags. Null for any other decision.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "subjectKind",
+                      "domain",
+                      "classification",
+                      "rule",
+                      "reachesAi",
+                      "isDeidentified"
+                    ],
+                    "properties": {
+                      "subjectKind": {
+                        "enum": [
+                          "data-use",
+                          "data-mapping",
+                          "data-domain",
+                          "data-location"
+                        ]
+                      },
+                      "domain": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/dataDomainRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "classification": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "rule": {
+                        "description": "The governing rule of the use or the copy.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/dataHandlingRule"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "reachesAi": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "isDeidentified": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many requests match in all."
+        },
+        "answerableCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "view mine only: how many of the requests that ask the person they may answer now, as the engine's answer check judges it for them (for an AI client, for the person it acts for). A request a separation rule keeps the person from answering is listed after these, with canAnswer false and cannotAnswer saying why, and is not counted here. Null in the other views."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 approval waits for your answer. Answer each on its decision page.",
+      "data": {
+        "items": [
+          {
+            "approvalRecordId": "80000000-0000-4000-8000-000000000001",
+            "decision": {
+              "decisionId": "60000000-0000-4000-8000-000000000013",
+              "decisionType": {
+                "key": "tier",
+                "label": "Tier"
+              },
+              "statement": "Field visit planner is tier 2.",
+              "status": {
+                "label": "Proposed",
+                "meaning": "proposed"
+              },
+              "proposedBy": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)"
+              },
+              "isAiCreated": true
+            },
+            "subject": {
+              "subjectKind": "business-application",
+              "subjectId": "10000000-0000-4000-8000-000000000001",
+              "label": "Field visit planner",
+              "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+              "applicationName": "Field visit planner"
+            },
+            "approvalRuleKey": "tier-a",
+            "isConsultation": false,
+            "askedRole": {
+              "key": "platform-admin",
+              "label": "Platform admin"
+            },
+            "askedOwnerRole": null,
+            "askedPrincipal": null,
+            "outcome": {
+              "label": "Pending",
+              "meaning": "pending"
+            },
+            "approver": null,
+            "typedReason": null,
+            "countsTowardRequirement": false,
+            "requestedOn": "2026-11-21T10:05:00Z",
+            "respondedOn": null,
+            "expiresOn": "2026-11-28T10:05:00Z",
+            "otherPendingCount": 0,
+            "isOwnProposal": false,
+            "recordUrl": "https://product.example.org/records/decision/60000000-0000-4000-8000-000000000013",
+            "canAnswer": true,
+            "cannotAnswer": null,
+            "nextTool": "answer_approval"
+          }
+        ],
+        "totalCount": 1,
+        "answerableCount": 1
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].decision.statement",
+        "items[].subject.label",
+        "items[].typedReason"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

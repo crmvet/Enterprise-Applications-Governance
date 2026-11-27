@@ -1,0 +1,3409 @@
+{
+ "entities": [
+  {
+   "entity": "setting",
+   "code": "C04",
+   "name": "Setting",
+   "about": "One named switch with one value. Document 21, section 3.6 lists every setting.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "valueType",
+     "label": "Value type",
+     "help": "The value shape: text, number, yes-no, json, key:<entity> (or key:list-value:<list key>), or contract:<contract name>.",
+     "kind": "kept",
+     "required": true
+    },
+    {
+     "name": "value",
+     "label": "Value",
+     "help": "The value itself (Value Json). Null only where the setting says what null means.",
+     "kind": "setting-value",
+     "required": true
+    },
+    {
+     "name": "isLocked",
+     "label": "Is locked",
+     "help": "True when no configuration change may alter the row: the AI approval lock and the engine acceptance list.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "narrowsSettingKey",
+     "label": "Narrows setting",
+     "help": "On a portfolio row: the setting this row narrows for one portfolio. Only change-management-mode may be narrowed.",
+     "kind": "key",
+     "ref": "setting",
+     "working": true
+    },
+    {
+     "name": "portfolioId",
+     "label": "Portfolio",
+     "help": "The portfolio a narrowing row applies to. The most specific row wins.",
+     "kind": "kept",
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "status",
+   "code": "C05",
+   "name": "Status",
+   "about": "A configurable status label for one entity, mapped to one engine meaning.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "appliesToEntity",
+     "label": "Applies to entity",
+     "help": "The entity key the status belongs to, such as decision or change-request.",
+     "kind": "choice",
+     "values": [
+      "decision",
+      "intake-request",
+      "change-request",
+      "business-application",
+      "approval-record",
+      "document-link",
+      "claim",
+      "deployment-record",
+      "review",
+      "data-location",
+      "data-mapping",
+      "data-use"
+     ],
+     "required": true
+    },
+    {
+     "name": "engineMeaning",
+     "label": "Engine meaning",
+     "help": "The fixed meaning behind the label.",
+     "kind": "choice",
+     "values": [
+      "proposed",
+      "accepted",
+      "rejected",
+      "superseded",
+      "withdrawn",
+      "draft",
+      "submitted",
+      "in-progress",
+      "completed",
+      "cancelled",
+      "registered",
+      "archived",
+      "pending",
+      "approved",
+      "expired",
+      "recommendation-only",
+      "current",
+      "stale",
+      "missing",
+      "open",
+      "claimed",
+      "dismissed",
+      "succeeded",
+      "partly-succeeded",
+      "failed",
+      "not-deployed",
+      "due",
+      "done"
+     ],
+     "required": true
+    },
+    {
+     "name": "isDefaultForMeaning",
+     "label": "Is default for meaning",
+     "help": "True for the label the engine picks when it sets this meaning.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "value-list",
+   "code": "C06",
+   "name": "Value list",
+   "about": "A named list of labels with no engine behavior. The row key is its List Key.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "isExtensible",
+     "label": "Is extensible",
+     "help": "True when the client may add values.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "list-value",
+   "code": "C07",
+   "name": "List value",
+   "about": "One label in a value list. Its key is unique within its list.",
+   "parent": "value-list",
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "tier",
+   "code": "C08",
+   "name": "Tier",
+   "about": "A risk tier, ordered by rank.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "rank",
+     "label": "Rank",
+     "help": "Higher means more serious. Unique. The engine compares ranks, never tier numbers or labels.",
+     "kind": "integer",
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "tier-question",
+   "code": "C09",
+   "name": "Tier question",
+   "about": "A plain question that suggests a tier.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "questionText",
+     "label": "Question text",
+     "help": "The question as people read it.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "helpText",
+     "label": "Help text",
+     "help": "A short explanation with an example.",
+     "kind": "text"
+    },
+    {
+     "name": "appliesToKindKeys",
+     "label": "Applies to kind",
+     "help": "The application kinds that see this question. Empty means all.",
+     "kind": "keys",
+     "ref": "application-kind"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "tier-answer-option",
+   "code": "C10",
+   "name": "Tier answer option",
+   "about": "One allowed answer and the tier it implies. Its key is unique within its question.",
+   "parent": "tier-question",
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "answerText",
+     "label": "Answer text",
+     "help": "The answer as people read it.",
+     "kind": "long-text",
+     "required": true
+    },
+    {
+     "name": "impliedTierKey",
+     "label": "Implied tier",
+     "help": "The tier this answer suggests. The most serious answer wins.",
+     "kind": "key",
+     "ref": "tier",
+     "required": true
+    },
+    {
+     "name": "triggers",
+     "label": "Triggers",
+     "help": "Triggers Json: review types and gate requirements this answer adds.",
+     "kind": "kept"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "vocabulary-mapping",
+   "code": "C11",
+   "name": "Vocabulary mapping",
+   "about": "Joins one taxonomy row to a Microsoft or framework term. Links, not copies.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "sourceEntity",
+     "label": "Source entity",
+     "help": "The entity key of the mapped row, such as tier.",
+     "kind": "entity",
+     "required": true
+    },
+    {
+     "name": "sourceKey",
+     "label": "Source",
+     "help": "The key of the mapped row.",
+     "kind": "key",
+     "refFrom": "sourceEntity",
+     "required": true
+    },
+    {
+     "name": "vocabularyKey",
+     "label": "Vocabulary",
+     "help": "Which outside vocabulary, from the vocabulary value list.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "vocabulary",
+     "required": true
+    },
+    {
+     "name": "term",
+     "label": "Term",
+     "help": "The outside term, quoted as its source writes it.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "sourceUrl",
+     "label": "Source URL",
+     "help": "Where the term is defined.",
+     "kind": "url",
+     "required": true
+    },
+    {
+     "name": "checkedOn",
+     "label": "Checked on",
+     "help": "When the term was last checked at its source.",
+     "kind": "date",
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "lifecycle-stage",
+   "code": "C12",
+   "name": "Lifecycle stage",
+   "about": "A stage between idea and retirement.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "stageNumber",
+     "label": "Stage number",
+     "help": "Display number. Unique. Never used as logic.",
+     "kind": "integer",
+     "min": 0,
+     "required": true
+    },
+    {
+     "name": "stageRank",
+     "label": "Stage rank",
+     "help": "The order logic uses. Unique.",
+     "kind": "integer",
+     "required": true
+    },
+    {
+     "name": "engineMeaning",
+     "label": "Engine meaning",
+     "help": "Pre-live, live or retired.",
+     "kind": "choice",
+     "values": [
+      "pre-live",
+      "live",
+      "retired"
+     ],
+     "required": true
+    },
+    {
+     "name": "leadingOwnerRoleKey",
+     "label": "Leading owner role",
+     "help": "The owner role that leads work in this stage, when relative to the application.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "leadingRoleKey",
+     "label": "Leading role",
+     "help": "The product role that leads work in this stage, when organization-wide.",
+     "kind": "key",
+     "ref": "role"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "gate",
+   "code": "C13",
+   "name": "Gate",
+   "about": "A decision point after a stage.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "afterStageKey",
+     "label": "After stage",
+     "help": "The stage this gate follows.",
+     "kind": "key",
+     "ref": "lifecycle-stage",
+     "required": true
+    },
+    {
+     "name": "gateDecisionTypeKey",
+     "label": "Gate decision type",
+     "help": "The decision type that records passing the gate.",
+     "kind": "key",
+     "ref": "decision-type",
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "gate-requirement",
+   "code": "C14",
+   "name": "Gate requirement",
+   "about": "What must be true before a gate decision can be accepted.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "gateKey",
+     "label": "Gate",
+     "help": "The gate this requirement belongs to.",
+     "kind": "key",
+     "ref": "gate",
+     "required": true
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "Applies only at this tier.",
+     "kind": "key",
+     "ref": "tier"
+    },
+    {
+     "name": "applicationKindKey",
+     "label": "Application kind",
+     "help": "Applies only to this kind.",
+     "kind": "key",
+     "ref": "application-kind"
+    },
+    {
+     "name": "requirementKind",
+     "label": "Requirement kind",
+     "help": "Decision accepted, document current, review done, or owner assigned.",
+     "kind": "choice",
+     "values": [
+      "decision-accepted",
+      "document-current",
+      "review-done",
+      "owner-assigned",
+      "data-uses-declared",
+      "data-uses-decided"
+     ],
+     "required": true
+    },
+    {
+     "name": "requiredDecisionTypeKey",
+     "label": "Required decision type",
+     "help": "Set when the kind is decision-accepted.",
+     "kind": "key",
+     "ref": "decision-type"
+    },
+    {
+     "name": "requiredDocumentTypeKey",
+     "label": "Required document type",
+     "help": "Set when the kind is document-current.",
+     "kind": "key",
+     "ref": "document-type"
+    },
+    {
+     "name": "requiredReviewTypeKey",
+     "label": "Required review type",
+     "help": "Set when the kind is review-done.",
+     "kind": "key",
+     "ref": "review-type"
+    },
+    {
+     "name": "requiredOwnerRoleKey",
+     "label": "Required owner role",
+     "help": "Set when the kind is owner-assigned.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "guidelineKey",
+     "label": "Guideline",
+     "help": "The guideline this requirement applies.",
+     "kind": "key",
+     "ref": "guideline"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "application-kind",
+   "code": "C15",
+   "name": "Application kind",
+   "about": "The category of a business application.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "categoryKey",
+     "label": "Category",
+     "help": "A grouping label from the application-category value list.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "application-category"
+    },
+    {
+     "name": "defaultComponentKindKeys",
+     "label": "Default component kind",
+     "help": "Component kinds usually found in this kind of application.",
+     "kind": "keys",
+     "ref": "component-kind"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "component-kind",
+   "code": "C16",
+   "name": "Component kind",
+   "about": "The type of a technical component.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "sourceToolKey",
+     "label": "Source tool",
+     "help": "The tool that holds this kind, from the tool value list.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "tool",
+     "required": true
+    },
+    {
+     "name": "sourceTypeHint",
+     "label": "Source type hint",
+     "help": "The tool own type name, used to match gap check results.",
+     "kind": "text"
+    },
+    {
+     "name": "isGapCheckCovered",
+     "label": "Is gap check covered",
+     "help": "True when the gap check can see this kind.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "dependency-type",
+   "code": "C17",
+   "name": "Dependency type",
+   "about": "The kind of a dependency.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "inverseLabel",
+     "label": "Inverse label",
+     "help": "The label read from the other side, such as \"used by\".",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "countsForImpact",
+     "label": "Counts for impact",
+     "help": "True when the impact walk follows this type.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "decision-type",
+   "code": "C18",
+   "name": "Decision type",
+   "about": "The kind of a decision.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "needsOptionsConsidered",
+     "label": "Needs options considered",
+     "help": "True when the decision must list the options it rejected.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "defaultSubjectKind",
+     "label": "Default subject kind",
+     "help": "The entity key the decision is usually about.",
+     "kind": "entity",
+     "required": true
+    },
+    {
+     "name": "requiresApproval",
+     "label": "Requires approval",
+     "help": "True when approval rules decide who must approve. False sends one approval request to the holder of the accountable letter. Either way a person answers on the decision page, except for the locked list in engine-acceptable-decision-types.",
+     "kind": "yes-no",
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "decision-outcome",
+   "code": "C19",
+   "name": "Decision outcome",
+   "about": "One allowed result for a decision type. Its key is unique within its decision type.",
+   "parent": "decision-type",
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "nextLifecycleStageKey",
+     "label": "Next lifecycle stage",
+     "help": "The stage an accepted decision with this outcome moves the application to.",
+     "kind": "key",
+     "ref": "lifecycle-stage"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "change-type",
+   "code": "C20",
+   "name": "Change type",
+   "about": "The kind of a change.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "requiresAuthorization",
+     "label": "Requires authorization",
+     "help": "True when a change of this type needs a change authorization decision answered by a person on the decision page.",
+     "kind": "yes-no",
+     "required": true
+    },
+    {
+     "name": "requiresStandardModel",
+     "label": "Requires standard model",
+     "help": "True when a change of this type must name an active standard change model, which stands in for a person's authorization.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "allowsAuthorizationAfter",
+     "label": "Allows authorization after",
+     "help": "True when authorization may follow the change, as for emergencies.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "requiresReviewAfter",
+     "label": "Requires review after",
+     "help": "True when a post-change review is due.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "reviewDueDays",
+     "label": "Review due days",
+     "help": "Working days until the post-change review is due.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "standard-change-model",
+   "code": "C21",
+   "name": "Standard change model",
+   "about": "A pre-approved pattern for a standard change. None ship; the client lists its own.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "changeTypeKey",
+     "label": "Change type",
+     "help": "The standard change type this model belongs to.",
+     "kind": "key",
+     "ref": "change-type",
+     "required": true
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "The highest tier the model applies to.",
+     "kind": "key",
+     "ref": "tier"
+    },
+    {
+     "name": "conditions",
+     "label": "Conditions",
+     "help": "Conditions Json: what keeps a change standard.",
+     "kind": "kept",
+     "required": true
+    },
+    {
+     "name": "approvedByDecisionId",
+     "label": "Approved by decision",
+     "help": "The decision that listed this model.",
+     "kind": "kept",
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "document-type",
+   "code": "C22",
+   "name": "Document type",
+   "about": "A kind of document.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "defaultLinkKindKey",
+     "label": "Default link kind",
+     "help": "The link kind usually used.",
+     "kind": "key",
+     "ref": "link-kind"
+    },
+    {
+     "name": "freshnessDays",
+     "label": "Freshness days",
+     "help": "Days after the last check when a current document becomes stale.",
+     "kind": "integer",
+     "min": 1
+    },
+    {
+     "name": "templateUrl",
+     "label": "Template URL",
+     "help": "A link to a template in the playbook.",
+     "kind": "url"
+    },
+    {
+     "name": "currentNeedsPerson",
+     "label": "Current needs person",
+     "help": "True when \"current\" set by an AI client needs a person to confirm it.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "documentation-requirement",
+   "code": "C23",
+   "name": "Documentation requirement",
+   "about": "Which document type an application needs, by kind, tier and stage.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "documentTypeKey",
+     "label": "Document type",
+     "help": "The document type required.",
+     "kind": "key",
+     "ref": "document-type",
+     "required": true
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "Applies only at this tier.",
+     "kind": "key",
+     "ref": "tier"
+    },
+    {
+     "name": "applicationKindKey",
+     "label": "Application kind",
+     "help": "Applies only to this kind.",
+     "kind": "key",
+     "ref": "application-kind"
+    },
+    {
+     "name": "fromStageKey",
+     "label": "From stage",
+     "help": "The stage from which the document is required.",
+     "kind": "key",
+     "ref": "lifecycle-stage",
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "review-type",
+   "code": "C24",
+   "name": "Review type",
+   "about": "The kind of a review.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "producesDecisionTypeKey",
+     "label": "Produces decision type",
+     "help": "The decision type a finished review records.",
+     "kind": "key",
+     "ref": "decision-type",
+     "required": true
+    },
+    {
+     "name": "defaultOwnerRoleKey",
+     "label": "Default owner role",
+     "help": "The owner role that usually leads this review.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "review-cadence",
+   "code": "C25",
+   "name": "Review cadence",
+   "about": "How often a review type is due at a tier.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "reviewTypeKey",
+     "label": "Review type",
+     "help": "The review type.",
+     "kind": "key",
+     "ref": "review-type",
+     "required": true
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "The tier. A seed may use \"*\"; stored rows never do.",
+     "kind": "key",
+     "any": true,
+     "ref": "tier",
+     "required": true
+    },
+    {
+     "name": "intervalDays",
+     "label": "Interval days",
+     "help": "Days between reviews.",
+     "kind": "integer",
+     "min": 1,
+     "required": true
+    },
+    {
+     "name": "leadDays",
+     "label": "Lead days",
+     "help": "Days before the due date when the first reminder goes.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "escalateAfterDays",
+     "label": "Escalate after days",
+     "help": "Days after the due date when the deputy is asked.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "reminder-rule",
+   "code": "C26",
+   "name": "Reminder rule",
+   "about": "When to remind and when to escalate to the deputy.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "subjectKind",
+     "label": "Subject kind",
+     "help": "What is due: review, document, approval or claim.",
+     "kind": "choice",
+     "values": [
+      "review",
+      "document",
+      "approval",
+      "claim"
+     ],
+     "required": true
+    },
+    {
+     "name": "leadDays",
+     "label": "Lead days",
+     "help": "Days before due when the first reminder goes.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "repeatDays",
+     "label": "Repeat days",
+     "help": "Days between repeat reminders.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "escalateAfterDays",
+     "label": "Escalate after days",
+     "help": "Days after due when the deputy is asked.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "channelKey",
+     "label": "Channel",
+     "help": "Where the reminder goes.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "channel"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "party",
+   "code": "C27",
+   "name": "Party",
+   "about": "One of the seven parties of D-01. Common fields only.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "owner-role",
+   "code": "C28",
+   "name": "Owner role",
+   "about": "A responsibility for one business application.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "partyKey",
+     "label": "Party",
+     "help": "The party this owner role belongs to.",
+     "kind": "key",
+     "ref": "party",
+     "required": true
+    },
+    {
+     "name": "requiresDeputy",
+     "label": "Requires deputy",
+     "help": "True when every holder must have a deputy.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "maximumHolders",
+     "label": "Maximum holders",
+     "help": "How many principals may hold it for one application at once.",
+     "kind": "integer",
+     "min": 1
+    },
+    {
+     "name": "requiredRoleKey",
+     "label": "Required role",
+     "help": "The product role a holder must also hold.",
+     "kind": "key",
+     "ref": "role"
+    },
+    {
+     "name": "subjectKinds",
+     "label": "Subject kinds",
+     "help": "Where the role can be held: business-application, data-domain or data-location. Absent means business-application only.",
+     "kind": "choices",
+     "values": [
+      "business-application",
+      "data-domain",
+      "data-location"
+     ]
+    },
+    {
+     "name": "inheritsDown",
+     "label": "Inherits down",
+     "help": "True when a holder on a data domain answers for the domains below it that name no holder of their own.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "role",
+   "code": "C29",
+   "name": "Role",
+   "about": "A product-wide responsibility. A human role is held only through an Entra group. A workload role is held only through a Workload Grant.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "partyKey",
+     "label": "Party",
+     "help": "The party this role belongs to.",
+     "kind": "key",
+     "ref": "party",
+     "required": true
+    },
+    {
+     "name": "duties",
+     "label": "Duties",
+     "help": "The role's duties in plain text, for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "canChangeConfiguration",
+     "label": "Can change configuration",
+     "help": "True only for roles allowed to instruct and accept configuration changes.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "isReadOnly",
+     "label": "Is read only",
+     "help": "True for roles that never write, such as auditor and reader.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "isWorkloadRole",
+     "label": "Is workload role",
+     "help": "True for roles held by non-human workloads through a Workload Grant. A workload role never approves and is never bound to a group.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "allowsGuests",
+     "label": "Allows guests",
+     "help": "Whether guest users may hold the role.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "requiresJustInTime",
+     "label": "Requires just in time",
+     "help": "Whether the role group should use just-in-time membership. The product only checks and flags.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "role-group-binding",
+   "code": "C30",
+   "name": "Role group binding",
+   "about": "Binds one human role to one Entra group. Never in a shipped preset. The client binding patch writes it.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "roleKey",
+     "label": "Role",
+     "help": "The human role being bound. A workload role is refused.",
+     "kind": "key",
+     "ref": "role",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "entraGroupObjectId",
+     "label": "Entra group object",
+     "help": "The group's directory object ID, held through a Principal Reference of kind group.",
+     "kind": "kept",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "bindingMethod",
+     "label": "Binding method",
+     "help": "Dataverse group team, or Entra app role assignment.",
+     "kind": "choice",
+     "values": [
+      "dataverse-group-team",
+      "entra-app-role-assignment"
+     ],
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "bindingDetail",
+     "label": "Binding detail",
+     "help": "The team ID or app role value on the platform.",
+     "kind": "text",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "decision-right",
+   "code": "C31",
+   "name": "Decision right",
+   "about": "Who is responsible, accountable, consulted, informed, or (AI only) supports, for a decision type in a scope. Rows with identical scope form one rule group.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "decisionTypeKey",
+     "label": "Decision type",
+     "help": "The decision type.",
+     "kind": "key",
+     "ref": "decision-type",
+     "required": true
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "tier"
+    },
+    {
+     "name": "lifecycleStageKey",
+     "label": "Lifecycle stage",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "lifecycle-stage"
+    },
+    {
+     "name": "changeTypeKey",
+     "label": "Change type",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "change-type"
+    },
+    {
+     "name": "applicationKindKey",
+     "label": "Application kind",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "application-kind"
+    },
+    {
+     "name": "letter",
+     "label": "Letter",
+     "help": "Exactly one accountable per decision type and scope.",
+     "kind": "choice",
+     "values": [
+      "responsible",
+      "accountable",
+      "consulted",
+      "informed",
+      "supports"
+     ],
+     "required": true
+    },
+    {
+     "name": "ownerRoleKey",
+     "label": "Owner role",
+     "help": "The owner role holding the letter, when relative to the application.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "roleKey",
+     "label": "Role",
+     "help": "The product role holding the letter, when organization-wide. A supports row names neither.",
+     "kind": "key",
+     "ref": "role"
+    },
+    {
+     "name": "fallbackOwnerRoleKey",
+     "label": "Fallback owner role",
+     "help": "Only on an accountable row with ownerRoleKey. When the subject has no current holder of that owner role, the one approval request asks the holders of this owner role instead, then the Accountable Principal of the nearest portfolio that names one.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "subjectKind",
+     "label": "Subject kind",
+     "help": "Optional scope: the decision's subject kind, an entity key such as data-use, data-mapping, data-domain or business-application. A request that names none is about an application.",
+     "kind": "choice",
+     "values": [
+      "business-application",
+      "intake-request",
+      "change-request",
+      "deployment-record",
+      "technical-component",
+      "claim",
+      "review",
+      "configuration-draft",
+      "data-use",
+      "data-mapping",
+      "data-domain",
+      "data-location"
+     ]
+    },
+    {
+     "name": "classificationKey",
+     "label": "Classification",
+     "help": "Optional scope: the effective classification of the data the decision is about.",
+     "kind": "key",
+     "ref": "data-classification"
+    },
+    {
+     "name": "aiUse",
+     "label": "AI use",
+     "help": "Optional scope: true when the data use reaches AI, false when it does not.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "dataDomainLevelKey",
+     "label": "Data domain level",
+     "help": "Optional scope: the level of the data domain an ownership decision is about.",
+     "kind": "key",
+     "ref": "data-domain-level"
+    },
+    {
+     "name": "dataTaxonomyChange",
+     "label": "Data taxonomy change",
+     "help": "Optional scope of a configuration change: touches or loosens the data taxonomy, computed by the engine from the draft's diff.",
+     "kind": "choice",
+     "values": [
+      "touches",
+      "loosens"
+     ]
+    },
+    {
+     "name": "ownerSubject",
+     "label": "Owner subject",
+     "help": "Only with ownerRoleKey. Where that owner role is resolved: the data domain, its parent, a data location or the domains a configuration draft touches. Absent means the business application.",
+     "kind": "choice",
+     "values": [
+      "business-application",
+      "data-domain",
+      "parent-data-domain",
+      "data-location",
+      "touched-data-domains"
+     ]
+    },
+    {
+     "name": "portfolioId",
+     "label": "Portfolio",
+     "help": "Optional portfolio scope. Working set only.",
+     "kind": "kept",
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "approval-rule",
+   "code": "C32",
+   "name": "Approval rule",
+   "about": "Which approvals a decision type needs in a scope. The single most specific matching rule group applies whole.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "decisionTypeKey",
+     "label": "Decision type",
+     "help": "The decision type that needs this approval.",
+     "kind": "key",
+     "ref": "decision-type",
+     "required": true
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "tier"
+    },
+    {
+     "name": "lifecycleStageKey",
+     "label": "Lifecycle stage",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "lifecycle-stage"
+    },
+    {
+     "name": "changeTypeKey",
+     "label": "Change type",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "change-type"
+    },
+    {
+     "name": "applicationKindKey",
+     "label": "Application kind",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "application-kind"
+    },
+    {
+     "name": "targetStageKey",
+     "label": "Target stage",
+     "help": "Optional scope.",
+     "kind": "key",
+     "ref": "target-stage"
+    },
+    {
+     "name": "approverOwnerRoleKey",
+     "label": "Approver owner role",
+     "help": "The owner role that must approve. Exactly one of this, approverRoleKey and approverProposedOwners.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "approverRoleKey",
+     "label": "Approver role",
+     "help": "The product role that must approve.",
+     "kind": "key",
+     "ref": "role"
+    },
+    {
+     "name": "approverProposedOwners",
+     "label": "Approver proposed owners",
+     "help": "True when each person the decision proposes to make an owner must approve, by name: the successor and any new deputy of an ownership decision. A decision that names nobody new skips the rule.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "fallbackOwnerRoleKey",
+     "label": "Fallback owner role",
+     "help": "Only with approverOwnerRoleKey. When the application has no current holder of that owner role, or the decision ends its holder's assignment, the request asks the holders of this owner role instead, then the Accountable Principal of the nearest portfolio that names one.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "approvalMode",
+     "label": "Approval mode",
+     "help": "Everyone must approve, first to respond, or sequential.",
+     "kind": "choice",
+     "values": [
+      "everyone-must-approve",
+      "first-to-respond",
+      "sequential"
+     ],
+     "required": true
+    },
+    {
+     "name": "sequence",
+     "label": "Sequence",
+     "help": "Order within the rule group when the mode is sequential.",
+     "kind": "integer",
+     "min": 1
+    },
+    {
+     "name": "minimumCount",
+     "label": "Minimum count",
+     "help": "How many approvals from this role are needed. Defaults to 1. Never 0: there is no zero waiver.",
+     "kind": "integer",
+     "min": 1
+    },
+    {
+     "name": "timeoutDays",
+     "label": "Timeout days",
+     "help": "Days before the approval expires and is restarted or escalated.",
+     "kind": "integer",
+     "min": 0
+    },
+    {
+     "name": "requiresTypedReason",
+     "label": "Requires typed reason",
+     "help": "True when the approver must type a reason.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "isConsultation",
+     "label": "Is consultation",
+     "help": "True when the answer is advice only. It is stored as recommendation only and never counts.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "guidelineKey",
+     "label": "Guideline",
+     "help": "The guideline this rule applies.",
+     "kind": "key",
+     "ref": "guideline"
+    },
+    {
+     "name": "allowsGuests",
+     "label": "Allows guests",
+     "help": "Whether a guest's answer can count.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "subjectKind",
+     "label": "Subject kind",
+     "help": "Optional scope: the decision's subject kind, an entity key such as data-use, data-mapping, data-domain or business-application. A request that names none is about an application.",
+     "kind": "choice",
+     "values": [
+      "business-application",
+      "intake-request",
+      "change-request",
+      "deployment-record",
+      "technical-component",
+      "claim",
+      "review",
+      "configuration-draft",
+      "data-use",
+      "data-mapping",
+      "data-domain",
+      "data-location"
+     ]
+    },
+    {
+     "name": "classificationKey",
+     "label": "Classification",
+     "help": "Optional scope: the effective classification of the data the decision is about.",
+     "kind": "key",
+     "ref": "data-classification"
+    },
+    {
+     "name": "aiUse",
+     "label": "AI use",
+     "help": "Optional scope: true when the data use reaches AI, false when it does not.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "dataDomainLevelKey",
+     "label": "Data domain level",
+     "help": "Optional scope: the level of the data domain an ownership decision is about.",
+     "kind": "key",
+     "ref": "data-domain-level"
+    },
+    {
+     "name": "dataTaxonomyChange",
+     "label": "Data taxonomy change",
+     "help": "Optional scope of a configuration change: touches or loosens the data taxonomy, computed by the engine from the draft's diff.",
+     "kind": "choice",
+     "values": [
+      "touches",
+      "loosens"
+     ]
+    },
+    {
+     "name": "ownerSubject",
+     "label": "Owner subject",
+     "help": "Only with approverOwnerRoleKey. Where that owner role is resolved: the data domain, its parent, a data location or the domains a configuration draft touches. Absent means the business application.",
+     "kind": "choice",
+     "values": [
+      "business-application",
+      "data-domain",
+      "parent-data-domain",
+      "data-location",
+      "touched-data-domains"
+     ]
+    },
+    {
+     "name": "portfolioId",
+     "label": "Portfolio",
+     "help": "Optional portfolio scope. Working set only.",
+     "kind": "kept",
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "gate-policy",
+   "code": "C33",
+   "name": "Gate policy",
+   "about": "The gate level for one tier, change type and target stage. Every combination resolves to exactly one row.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "The tier. A seed may use \"*\".",
+     "kind": "key",
+     "any": true,
+     "ref": "tier",
+     "required": true
+    },
+    {
+     "name": "changeTypeKey",
+     "label": "Change type",
+     "help": "The change type. A seed may use \"*\".",
+     "kind": "key",
+     "any": true,
+     "ref": "change-type",
+     "required": true
+    },
+    {
+     "name": "targetStageKey",
+     "label": "Target stage",
+     "help": "The target stage. A seed may use \"*\".",
+     "kind": "key",
+     "any": true,
+     "ref": "target-stage",
+     "required": true
+    },
+    {
+     "name": "gateLevel",
+     "label": "Gate level",
+     "help": "Off, record, flag, advise or enforce.",
+     "kind": "choice",
+     "values": [
+      "off",
+      "record",
+      "flag",
+      "advise",
+      "enforce"
+     ],
+     "required": true
+    },
+    {
+     "name": "failMode",
+     "label": "Fail mode",
+     "help": "Required at enforce, absent otherwise.",
+     "kind": "choice",
+     "values": [
+      "fail-open",
+      "fail-closed"
+     ]
+    },
+    {
+     "name": "emergencyRule",
+     "label": "Emergency rule",
+     "help": "Emergency Rule Json: how an emergency passes and when its approval must follow.",
+     "kind": "kept"
+    },
+    {
+     "name": "aiOnlyCodeApprovalHandling",
+     "label": "AI only code approval handling",
+     "help": "Ignore, flag or stop, when the only code approval came from an AI. When absent, the setting default-ai-only-code-approval-handling applies.",
+     "kind": "choice",
+     "values": [
+      "ignore",
+      "flag",
+      "stop"
+     ]
+    },
+    {
+     "name": "flagNotify",
+     "label": "Flag notify",
+     "help": "Who is told about a flag. When absent, the setting default-flag-notify applies.",
+     "kind": "kept"
+    },
+    {
+     "name": "portfolioId",
+     "label": "Portfolio",
+     "help": "Optional portfolio scope. Working set only.",
+     "kind": "kept",
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "target-stage",
+   "code": "C34",
+   "name": "Target stage",
+   "about": "The ALM stage of a deployment target.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "rank",
+     "label": "Rank",
+     "help": "Order from development to production. Used for ordering only.",
+     "kind": "integer",
+     "required": true
+    },
+    {
+     "name": "isProduction",
+     "label": "Is production",
+     "help": "True for a production stage. The copy to test rule reads it, never a stage key. At least one stage has it.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "change-path",
+   "code": "C35",
+   "name": "Change path",
+   "about": "The routes a target expects deployments to arrive by.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "allowedRouteKeys",
+     "label": "Allowed route",
+     "help": "The deployment routes this path accepts.",
+     "kind": "keys",
+     "ref": "deployment-route",
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "deployment-route",
+   "code": "C36",
+   "name": "Deployment route",
+   "about": "How a deployment record arrived.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "engineMeaning",
+     "label": "Engine meaning",
+     "help": "Pipeline step, AI tool, person in app, or other.",
+     "kind": "choice",
+     "values": [
+      "pipeline-step",
+      "ai-tool",
+      "person-in-app",
+      "other"
+     ],
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "link-kind",
+   "code": "C37",
+   "name": "Link kind",
+   "about": "What a link points to, by tool and category.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "linkCategory",
+     "label": "Link category",
+     "help": "Delivery, pipeline, document, evidence, Microsoft resource or external change.",
+     "kind": "choice",
+     "values": [
+      "delivery",
+      "pipeline",
+      "document",
+      "evidence",
+      "microsoft-resource",
+      "external-change",
+      "data-location"
+     ],
+     "required": true
+    },
+    {
+     "name": "toolKey",
+     "label": "Tool",
+     "help": "The tool the link opens.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "tool",
+     "required": true
+    },
+    {
+     "name": "urlPattern",
+     "label": "URL pattern",
+     "help": "A regular expression a valid URL of this kind matches.",
+     "kind": "text"
+    },
+    {
+     "name": "idPattern",
+     "label": "ID pattern",
+     "help": "A regular expression a valid ID of this kind matches.",
+     "kind": "text"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "actor-kind",
+   "code": "C38",
+   "name": "Actor kind",
+   "about": "Who or what acted. Only person can approve.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "engineMeaning",
+     "label": "Engine meaning",
+     "help": "Person, AI client for a person, agent identity, pipeline, approval runner or engine.",
+     "kind": "choice",
+     "values": [
+      "person",
+      "ai-client-for-person",
+      "agent-identity",
+      "pipeline",
+      "approval-runner",
+      "engine"
+     ],
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "guideline",
+   "code": "C39",
+   "name": "Guideline",
+   "about": "One version of one numbered guideline, with local override.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "number",
+     "label": "Number",
+     "help": "The permanent number, such as G9.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "version",
+     "label": "Version",
+     "help": "Two parts: the first changes the rule, the second only the wording.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "rule",
+     "label": "Rule",
+     "help": "The rule in one line.",
+     "kind": "long-text",
+     "required": true
+    },
+    {
+     "name": "hubUrl",
+     "label": "Hub URL",
+     "help": "The canonical text. Null until the public hub location is decided.",
+     "kind": "kept"
+    },
+    {
+     "name": "chapter",
+     "label": "Chapter",
+     "help": "The playbook chapter it belongs to.",
+     "kind": "text"
+    },
+    {
+     "name": "supersedesKey",
+     "label": "Supersedes",
+     "help": "The earlier version this row replaces.",
+     "kind": "key",
+     "ref": "guideline"
+    },
+    {
+     "name": "localText",
+     "label": "Local text",
+     "help": "The client's own wording.",
+     "kind": "text",
+     "working": true
+    },
+    {
+     "name": "localUrl",
+     "label": "Local URL",
+     "help": "The client's own page.",
+     "kind": "url",
+     "working": true
+    },
+    {
+     "name": "isAdopted",
+     "label": "Is adopted",
+     "help": "False when the client chose not to adopt it.",
+     "kind": "yes-no",
+     "working": true
+    },
+    {
+     "name": "notAdoptedReason",
+     "label": "Not adopted reason",
+     "help": "Why not.",
+     "kind": "text",
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "separation-rule",
+   "code": "C40",
+   "name": "Separation rule",
+   "about": "A separation-of-duties rule: who must not be the same person, or which roles may not share an Entra group. The one shape for separation of duties.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "ruleKind",
+     "label": "Rule kind",
+     "help": "Approver differs, or roles in different groups.",
+     "kind": "choice",
+     "values": [
+      "approver-differs",
+      "roles-in-different-groups"
+     ],
+     "required": true
+    },
+    {
+     "name": "decisionTypeKey",
+     "label": "Decision type",
+     "help": "Applies to approvals for this decision type. Empty means every decision type that requires approval.",
+     "kind": "key",
+     "ref": "decision-type"
+    },
+    {
+     "name": "tierKey",
+     "label": "Tier",
+     "help": "Applies only at this tier.",
+     "kind": "key",
+     "ref": "tier"
+    },
+    {
+     "name": "targetStageKey",
+     "label": "Target stage",
+     "help": "Applies only for this target stage.",
+     "kind": "key",
+     "ref": "target-stage"
+    },
+    {
+     "name": "mustDifferFrom",
+     "label": "Must differ from",
+     "help": "For approver differs: who the approver must differ from.",
+     "kind": "choice",
+     "values": [
+      "proposer",
+      "instructing-admin",
+      "deployer",
+      "owner-role-holder",
+      "role-holder"
+     ]
+    },
+    {
+     "name": "mustDifferFromOwnerRoleKey",
+     "label": "Must differ from owner role",
+     "help": "Set when mustDifferFrom is owner-role-holder.",
+     "kind": "key",
+     "ref": "owner-role"
+    },
+    {
+     "name": "mustDifferFromRoleKey",
+     "label": "Must differ from role",
+     "help": "Set when mustDifferFrom is role-holder.",
+     "kind": "key",
+     "ref": "role"
+    },
+    {
+     "name": "roleKeys",
+     "label": "Role",
+     "help": "For roles in different groups: the roles that may not share an Entra group.",
+     "kind": "keys",
+     "ref": "role"
+    },
+    {
+     "name": "enforcement",
+     "label": "Enforcement",
+     "help": "Refuse; allow only with an accepted exception decision; or allow and flag.",
+     "kind": "choice",
+     "values": [
+      "refuse",
+      "exception-decision",
+      "flag"
+     ],
+     "required": true
+    },
+    {
+     "name": "exceptionDecisionTypeKey",
+     "label": "Exception decision type",
+     "help": "The decision type that records an exception, when enforcement is exception-decision.",
+     "kind": "key",
+     "ref": "decision-type"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "tool-policy",
+   "code": "C41",
+   "name": "Tool policy",
+   "about": "Which roles may call a tool, and how far an AI client may move a record through it.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "toolKey",
+     "label": "Tool",
+     "help": "The tool name, such as record_deployment. Stable, never reused.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "toolsetKey",
+     "label": "Toolset",
+     "help": "The toolset key.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "toolset",
+     "required": true
+    },
+    {
+     "name": "isEnabled",
+     "label": "Is enabled",
+     "help": "False hides the tool from every caller.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "allowedRoleKeys",
+     "label": "Allowed role",
+     "help": "The product roles that may call it.",
+     "kind": "keys",
+     "ref": "role",
+     "required": true
+    },
+    {
+     "name": "requiresOwnerRole",
+     "label": "Requires owner role",
+     "help": "True when the caller must also hold an owner role on the subject application.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "maxAiState",
+     "label": "Max AI state",
+     "help": "The highest state an AI client may leave a record in. Configuration can only tighten it.",
+     "kind": "choice",
+     "values": [
+      "read-only",
+      "draft",
+      "proposed",
+      "submitted",
+      "as-reported",
+      "link",
+      "candidate",
+      "withdrawn"
+     ],
+     "required": true
+    },
+    {
+     "name": "aiMaySubmit",
+     "label": "AI may submit",
+     "help": "For submit_record and request_architecture_review: per subject kind, whether an AI client may submit for a person.",
+     "kind": "kept"
+    },
+    {
+     "name": "callsPerPersonPerHour",
+     "label": "Calls per person per hour",
+     "help": "A rate limit per person.",
+     "kind": "integer",
+     "min": 1
+    },
+    {
+     "name": "release",
+     "label": "Release",
+     "help": "R1 or later.",
+     "kind": "choice",
+     "values": [
+      "r1",
+      "later"
+     ],
+     "required": true
+    },
+    {
+     "name": "descriptionOverride",
+     "label": "Description override",
+     "help": "An adopter's own wording of the tool description.",
+     "kind": "text"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "workload-grant",
+   "code": "C42",
+   "name": "Workload grant",
+   "about": "Gives one non-human principal one workload role, with a reason, the deciding decision and an expiry. Never an agent identity or agent user. Client facts only: no preset holds one.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "principalObjectId",
+     "label": "Principal object",
+     "help": "The directory object ID of the service principal or managed identity, held through a Principal Reference.",
+     "kind": "kept",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "workloadRoleKey",
+     "label": "Workload role",
+     "help": "The workload role it holds: a role with isWorkloadRole true.",
+     "kind": "key",
+     "ref": "role",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "reason",
+     "label": "Reason",
+     "help": "Why this principal needs the role, in plain words.",
+     "kind": "text",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "usesFederatedCredential",
+     "label": "Uses federated credential",
+     "help": "True when the principal signs in without a stored secret. False is flagged.",
+     "kind": "yes-no",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "bindingDetail",
+     "label": "Binding detail",
+     "help": "The application user ID on Dataverse, or the app role assignment ID on Azure.",
+     "kind": "text",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "expiresOn",
+     "label": "Expires on",
+     "help": "When the grant ends. Required: at most workload-grant-max-days after the day the grant is validated. Renewal is a new decision.",
+     "kind": "date",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "column-protection-rule",
+   "code": "C43",
+   "name": "Column protection rule",
+   "about": "How one column is protected, and which roles may read it.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "entity",
+     "label": "Entity",
+     "help": "The entity that holds the protected column, as an entity key such as approval-record.",
+     "kind": "entity",
+     "required": true
+    },
+    {
+     "name": "column",
+     "label": "Column",
+     "help": "The protected column, as a lowerCamelCase field name such as outcome.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "protectionKind",
+     "label": "Protection kind",
+     "help": "Engine-written, approval-writer-only, restricted read or masked read.",
+     "kind": "choice",
+     "values": [
+      "engine-written",
+      "approval-writer-only",
+      "restricted-read",
+      "masked-read"
+     ],
+     "required": true
+    },
+    {
+     "name": "readRoleKeys",
+     "label": "Read role",
+     "help": "The roles that may read the column. Used only for restricted and masked read.",
+     "kind": "keys",
+     "ref": "role"
+    },
+    {
+     "name": "guidelineKey",
+     "label": "Guideline",
+     "help": "The guideline this protection applies.",
+     "kind": "key",
+     "ref": "guideline"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "portfolio-access",
+   "code": "C44",
+   "name": "Portfolio access",
+   "about": "Links a top-level portfolio to an Entra group for portfolio-read mode. Client facts only.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "portfolioId",
+     "label": "Portfolio",
+     "help": "The top-level portfolio this row opens.",
+     "kind": "kept",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "entraGroupObjectId",
+     "label": "Entra group object",
+     "help": "The group whose members may read the portfolio in portfolio-read mode.",
+     "kind": "kept",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "bindingDetail",
+     "label": "Binding detail",
+     "help": "The owner team ID on Dataverse, or the group object ID used in row-level security on Azure.",
+     "kind": "text",
+     "required": true,
+     "working": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "known-client",
+   "code": "C45",
+   "name": "Known client",
+   "about": "One client app: its label, whether it is an AI client, and whether it may call the product.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "clientIdentifier",
+     "label": "Client identifier",
+     "help": "The registered application ID, or the Client ID Metadata Document URL.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "isAiClient",
+     "label": "Is AI client",
+     "help": "True when calls through this client are recorded as AI client for a person.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "isAllowed",
+     "label": "Is allowed",
+     "help": "False when the client may not call the product MCP server or API.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "notes",
+     "label": "Notes",
+     "help": "Who approved the client and any limits, in plain words.",
+     "kind": "long-text"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "data-classification",
+   "code": "C47",
+   "name": "Data classification",
+   "about": "A ranked sensitivity level in the tenant's Purview label names, with its default handling rules.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "rank",
+     "label": "Rank",
+     "help": "Higher means more sensitive. Unique among active rows. It follows the label priority order. The engine compares ranks, never labels.",
+     "kind": "integer",
+     "min": 1,
+     "required": true
+    },
+    {
+     "name": "impliedTierQuestionKey",
+     "label": "Implied tier question",
+     "help": "The tier question this class informs. In Balanced it is sensitivity.",
+     "kind": "key",
+     "ref": "tier-question"
+    },
+    {
+     "name": "impliedAnswerKey",
+     "label": "Implied answer",
+     "help": "The answer option of the implied tier question that data of this class implies. A key within that question; V52 checks it resolves.",
+     "kind": "key",
+     "ref": "tier-answer-option",
+     "parentFrom": "impliedTierQuestionKey"
+    },
+    {
+     "name": "defaultUseRule",
+     "label": "Default use rule",
+     "help": "Applies to reads and writes that do not reach AI.",
+     "kind": "choice",
+     "values": [
+      "allowed",
+      "decision",
+      "masked-only",
+      "never"
+     ],
+     "required": true
+    },
+    {
+     "name": "defaultAiUseRule",
+     "label": "Default AI use rule",
+     "help": "Applies to uses that reach AI.",
+     "kind": "choice",
+     "values": [
+      "allowed",
+      "decision",
+      "masked-only",
+      "never"
+     ],
+     "required": true
+    },
+    {
+     "name": "defaultCopyToTestRule",
+     "label": "Default copy to test rule",
+     "help": "Applies to production copies outside production.",
+     "kind": "choice",
+     "values": [
+      "allowed",
+      "decision",
+      "masked-only",
+      "never"
+     ],
+     "required": true
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "data-domain-level",
+   "code": "C48",
+   "name": "Data domain level",
+   "about": "One level of the business data domain tree of this install.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "rank",
+     "label": "Rank",
+     "help": "1 is the top. Unique among active rows. A child domain's level ranks higher than its parent's.",
+     "kind": "integer",
+     "min": 1,
+     "required": true
+    },
+    {
+     "name": "ownerRequired",
+     "label": "Owner required",
+     "help": "True when each domain at this level needs its own data owner, not an inherited one (DC-02).",
+     "kind": "yes-no"
+    },
+    {
+     "name": "declarable",
+     "label": "Declarable",
+     "help": "True (the default) when data uses and mappings may point at domains of this level.",
+     "kind": "yes-no"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "data-domain",
+   "code": "C49",
+   "name": "Data domain",
+   "about": "One node of the business data domain tree, held flat with its parent key.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "parentKey",
+     "label": "Parent",
+     "help": "The domain above this one. Absent at the top. No cycles.",
+     "kind": "key",
+     "ref": "data-domain"
+    },
+    {
+     "name": "levelKey",
+     "label": "Level",
+     "help": "This node's level.",
+     "kind": "key",
+     "ref": "data-domain-level",
+     "required": true
+    },
+    {
+     "name": "classificationKey",
+     "label": "Classification",
+     "help": "Required at the top. Below the top, absent means inherit the nearest classification above.",
+     "kind": "key",
+     "ref": "data-classification"
+    },
+    {
+     "name": "useRule",
+     "label": "Use rule",
+     "help": "A stricter use rule for this branch. Absent adds nothing here.",
+     "kind": "choice",
+     "values": [
+      "allowed",
+      "decision",
+      "masked-only",
+      "never"
+     ]
+    },
+    {
+     "name": "aiUseRule",
+     "label": "AI use rule",
+     "help": "A stricter AI use rule for this branch. Absent adds nothing here.",
+     "kind": "choice",
+     "values": [
+      "allowed",
+      "decision",
+      "masked-only",
+      "never"
+     ]
+    },
+    {
+     "name": "copyToTestRule",
+     "label": "Copy to test rule",
+     "help": "A stricter copy to test rule for this branch. Absent adds nothing here.",
+     "kind": "choice",
+     "values": [
+      "allowed",
+      "decision",
+      "masked-only",
+      "never"
+     ]
+    },
+    {
+     "name": "retentionClassKey",
+     "label": "Retention class",
+     "help": "How long the data is kept. Absent means inherit.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "retention-class"
+    },
+    {
+     "name": "examples",
+     "label": "Examples",
+     "help": "What belongs here, in plain words. AI clients use it to suggest mappings. An untrusted field.",
+     "kind": "long-text",
+     "max": 500
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  },
+  {
+   "entity": "data-platform",
+   "code": "C50",
+   "name": "Data platform",
+   "about": "A kind of data store from any vendor.",
+   "parent": null,
+   "fields": [
+    {
+     "name": "label",
+     "label": "Label",
+     "help": "The text people see. Can be translated.",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "label": "Description",
+     "help": "One or two plain sentences for people and agents.",
+     "kind": "long-text"
+    },
+    {
+     "name": "locationKindKey",
+     "label": "Location kind",
+     "help": "A grouping: app platform, CRM, ERP, relational database, document database, file store, lake, SaaS application, legacy or other.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "location-kind",
+     "required": true
+    },
+    {
+     "name": "vendorKey",
+     "label": "Vendor",
+     "help": "The vendor.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "data-vendor",
+     "required": true
+    },
+    {
+     "name": "instanceLabel",
+     "label": "Instance label",
+     "help": "What a top-level location is called: environment, server, account, org, host, tenant or workspace.",
+     "kind": "text",
+     "max": 50
+    },
+    {
+     "name": "storeLabel",
+     "label": "Store label",
+     "help": "What a child location is called: database, library, share or lakehouse. Absent means the platform has no child level.",
+     "kind": "text",
+     "max": 50
+    },
+    {
+     "name": "containerLabel",
+     "label": "Container label",
+     "help": "What the names on a mapping are called: table, schema.table, container, object, file or folder.",
+     "kind": "text",
+     "max": 50,
+     "required": true
+    },
+    {
+     "name": "defaultLinkKindKey",
+     "label": "Default link kind",
+     "help": "The link kind of category data-location a new location of this platform takes.",
+     "kind": "key",
+     "ref": "link-kind",
+     "required": true
+    },
+    {
+     "name": "idPattern",
+     "label": "ID pattern",
+     "help": "A regular expression a valid External Id of this platform matches.",
+     "kind": "text"
+    },
+    {
+     "name": "urlPattern",
+     "label": "URL pattern",
+     "help": "A regular expression a valid Url of this platform matches.",
+     "kind": "text"
+    },
+    {
+     "name": "estateKey",
+     "label": "Estate",
+     "help": "Later: the gap check estate that can confirm locations of this platform.",
+     "kind": "key",
+     "ref": "list-value",
+     "list": "estate"
+    },
+    {
+     "name": "sortOrder",
+     "label": "Sort order",
+     "help": "Display order only. Never used as logic.",
+     "kind": "integer"
+    }
+   ]
+  }
+ ],
+ "contracts": {
+  "origin": [
+   "shipped",
+   "local"
+  ],
+  "configuration-set-kind": [
+   "preset",
+   "working"
+  ],
+  "preset-kind": [
+   "full",
+   "overlay"
+  ],
+  "draft-status": [
+   "draft",
+   "submitted",
+   "activated",
+   "discarded"
+  ],
+  "discard-reason": [
+   "withdrawn",
+   "rejected",
+   "expired",
+   "rebase-conflict"
+  ],
+  "patch-operation": [
+   "upsert",
+   "retire"
+  ],
+  "area": [
+   "taxonomy",
+   "people",
+   "rules",
+   "gates",
+   "change-management",
+   "documentation",
+   "data"
+  ],
+  "status-entity": [
+   "decision",
+   "intake-request",
+   "change-request",
+   "business-application",
+   "approval-record",
+   "document-link",
+   "claim",
+   "deployment-record",
+   "review",
+   "data-location",
+   "data-mapping",
+   "data-use"
+  ],
+  "status-meaning": [
+   "proposed",
+   "accepted",
+   "rejected",
+   "superseded",
+   "withdrawn",
+   "draft",
+   "submitted",
+   "in-progress",
+   "completed",
+   "cancelled",
+   "registered",
+   "archived",
+   "pending",
+   "approved",
+   "expired",
+   "recommendation-only",
+   "current",
+   "stale",
+   "missing",
+   "open",
+   "claimed",
+   "dismissed",
+   "succeeded",
+   "partly-succeeded",
+   "failed",
+   "not-deployed",
+   "due",
+   "done"
+  ],
+  "lifecycle-meaning": [
+   "pre-live",
+   "live",
+   "retired"
+  ],
+  "gate-level": [
+   "off",
+   "record",
+   "flag",
+   "advise",
+   "enforce"
+  ],
+  "fail-mode": [
+   "fail-open",
+   "fail-closed"
+  ],
+  "approval-mode": [
+   "everyone-must-approve",
+   "first-to-respond",
+   "sequential"
+  ],
+  "decision-right-letter": [
+   "responsible",
+   "accountable",
+   "consulted",
+   "informed",
+   "supports"
+  ],
+  "actor-kind-meaning": [
+   "person",
+   "ai-client-for-person",
+   "agent-identity",
+   "pipeline",
+   "approval-runner",
+   "engine"
+  ],
+  "principal-kind": [
+   "user",
+   "group",
+   "agent-identity",
+   "agent-user",
+   "service-principal",
+   "managed-identity"
+  ],
+  "deployment-route-meaning": [
+   "pipeline-step",
+   "ai-tool",
+   "person-in-app",
+   "other"
+  ],
+  "link-category": [
+   "delivery",
+   "pipeline",
+   "document",
+   "evidence",
+   "microsoft-resource",
+   "external-change",
+   "data-location"
+  ],
+  "data-handling-rule": [
+   "allowed",
+   "decision",
+   "masked-only",
+   "never"
+  ],
+  "owner-subject": [
+   "business-application",
+   "data-domain",
+   "parent-data-domain",
+   "data-location",
+   "touched-data-domains"
+  ],
+  "data-taxonomy-change": [
+   "touches",
+   "loosens"
+  ],
+  "owner-subject-kind": [
+   "business-application",
+   "data-domain",
+   "data-location"
+  ],
+  "data-taxonomy-mode": [
+   "off",
+   "domains-optional",
+   "domains-required"
+  ],
+  "change-management-mode": [
+   "built-in",
+   "linked"
+  ],
+  "requirement-kind": [
+   "decision-accepted",
+   "document-current",
+   "review-done",
+   "owner-assigned",
+   "data-uses-declared",
+   "data-uses-decided"
+  ],
+  "ai-only-code-approval-handling": [
+   "ignore",
+   "flag",
+   "stop"
+  ],
+  "separation-rule-kind": [
+   "approver-differs",
+   "roles-in-different-groups"
+  ],
+  "separation-subject": [
+   "proposer",
+   "instructing-admin",
+   "deployer",
+   "owner-role-holder",
+   "role-holder"
+  ],
+  "separation-enforcement": [
+   "refuse",
+   "exception-decision",
+   "flag"
+  ],
+  "engine-acceptance-condition": [
+   "lowest-tier",
+   "standard-model"
+  ],
+  "intake-visibility": [
+   "own",
+   "all"
+  ],
+  "claim-visibility": [
+   "admins-and-claimant",
+   "all"
+  ],
+  "record-access-mode": [
+   "open-read",
+   "portfolio-read"
+  ],
+  "binding-method": [
+   "dataverse-group-team",
+   "entra-app-role-assignment"
+  ],
+  "reminder-subject-kind": [
+   "review",
+   "document",
+   "approval",
+   "claim"
+  ],
+  "standard-change-condition-kind": [
+   "max-tier-rank",
+   "target-stages-in",
+   "max-affected-applications",
+   "component-kinds-within",
+   "max-window-minutes",
+   "stated"
+  ],
+  "weekday": [
+   "monday",
+   "tuesday",
+   "wednesday",
+   "thursday",
+   "friday",
+   "saturday",
+   "sunday"
+  ],
+  "confirmation-act": [
+   "approval-card",
+   "confirmation-card",
+   "same-call",
+   "none"
+  ],
+  "protection-kind": [
+   "engine-written",
+   "approval-writer-only",
+   "restricted-read",
+   "masked-read"
+  ],
+  "max-ai-state": [
+   "read-only",
+   "draft",
+   "proposed",
+   "submitted",
+   "as-reported",
+   "link",
+   "candidate",
+   "withdrawn"
+  ],
+  "tool-release": [
+   "r1",
+   "later"
+  ]
+ }
+}

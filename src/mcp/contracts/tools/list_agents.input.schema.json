@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_agents input",
+  "description": "Every agent in one call: its autonomy level (agreed, waiting or missing), owners and owner gaps, its last security review, its go-live gate state, its flags and its data uses. The agent kinds are the application kinds the autonomy level gate requirement covers. A read for any role.",
+  "x-tool": "list_agents",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Words in the name, purpose or number."
+    },
+    "tierKeys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      }
+    },
+    "applicationKindKeys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key"
+      },
+      "description": "Leave out for the agent kinds of the configuration."
+    },
+    "autonomy": {
+      "enum": [
+        "any",
+        "agreed",
+        "missing"
+      ],
+      "default": "any"
+    },
+    "flaggedOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "description": "Only agents in this portfolio and the ones below it.",
+      "x-entity": "O01 Portfolio"
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "autonomy": "missing"
+    }
+  ]
+}

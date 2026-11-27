@@ -1,0 +1,119 @@
+{
+  "ok": true,
+  "summary": "Two exceptions stand or wait for answers.",
+  "data": {
+    "items": [
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000101",
+        "decisionType": {
+          "key": "exception",
+          "label": "Exception"
+        },
+        "subjectKind": "business-application",
+        "subjectId": "10000000-0000-4000-8000-000000000010",
+        "statement": "Contractor Portal may run without single sign-on until the vendor fix ships.",
+        "reason": "The vendor fix ships next quarter.",
+        "outcome": {
+          "key": "accept",
+          "label": "Accept"
+        },
+        "status": {
+          "label": "Accepted",
+          "meaning": "accepted"
+        },
+        "decider": {
+          "objectId": "20000000-0000-4000-8000-000000000002",
+          "displayLabel": "Owner (sample)"
+        },
+        "decidedOn": "2026-11-12T15:30:00Z",
+        "supersedes": null,
+        "supersededBy": null,
+        "amends": null,
+        "approvalsSummary": {
+          "required": 2,
+          "approved": 2,
+          "rejected": 0,
+          "pending": 0
+        },
+        "configurationSetVersion": 3,
+        "proposedBy": {
+          "objectId": "20000000-0000-4000-8000-000000000002",
+          "displayLabel": "Owner (sample)"
+        },
+        "isAiCreated": false,
+        "performedBy": {
+          "actorKind": "engine",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000002",
+            "displayLabel": "Owner (sample)"
+          },
+          "onBehalfOf": {
+            "objectId": "20000000-0000-4000-8000-000000000002",
+            "displayLabel": "Owner (sample)"
+          },
+          "clientAppLabel": "Approval runner",
+          "stampedOn": "2026-11-20T14:00:00Z",
+          "draftedBy": null
+        },
+        "recordUrl": "https://product.example.org/app/records/decision/60000000-0000-4000-8000-000000000101",
+        "subjectLabel": "Contractor Portal",
+        "exception": {
+          "standard": "Every application signs people in through Entra ID.",
+          "reviewOn": "2027-02-15"
+        },
+        "ownerChanges": []
+      },
+      {
+        "decisionId": "60000000-0000-4000-8000-000000000102",
+        "decisionType": {
+          "key": "exception",
+          "label": "Exception"
+        },
+        "subjectKind": "business-application",
+        "subjectId": "10000000-0000-4000-8000-000000000012",
+        "statement": "Route Planner may skip the load test for release 2.0.",
+        "reason": "The vendor fix ships next quarter.",
+        "outcome": null,
+        "status": {
+          "label": "Proposed",
+          "meaning": "proposed"
+        },
+        "decider": null,
+        "decidedOn": null,
+        "supersedes": null,
+        "supersededBy": null,
+        "amends": null,
+        "approvalsSummary": {
+          "required": 2,
+          "approved": 1,
+          "rejected": 0,
+          "pending": 1
+        },
+        "configurationSetVersion": 3,
+        "proposedBy": {
+          "objectId": "20000000-0000-4000-8000-000000000002",
+          "displayLabel": "Owner (sample)"
+        },
+        "isAiCreated": false,
+        "performedBy": null,
+        "recordUrl": "https://product.example.org/app/records/decision/60000000-0000-4000-8000-000000000102",
+        "subjectLabel": "Route Planner",
+        "exception": {
+          "standard": "A tier 1 release passes a load test.",
+          "reviewOn": "2026-12-20"
+        },
+        "ownerChanges": []
+      }
+    ]
+  },
+  "asOf": "2026-11-22T09:00:00Z",
+  "configurationSetVersion": 3,
+  "couldNotRead": [],
+  "warnings": [],
+  "untrustedFields": [
+    "items[].statement",
+    "items[].reason"
+  ],
+  "nextSteps": [],
+  "correlationId": "harness-open-exceptions"
+}

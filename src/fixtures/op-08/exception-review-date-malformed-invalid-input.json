@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "tags": [
+    "exception-fields"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "case": "exception-review-date-malformed-invalid-input",
+  "description": "An exception review date that is not a date is invalid input.",
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-53",
+    "after": {
+      "exceptionReviewOn": "next spring"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "exception",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "createdByPrincipal": "fixture-person-1"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

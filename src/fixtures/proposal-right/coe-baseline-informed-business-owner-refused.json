@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "coe-baseline-informed-business-owner-refused",
+  "description": "The Microsoft CoE baseline makes the business owner informed on go-live. Informed is told after, so it never proposes; the product owner, consulted, may.",
+  "snapshot": {
+    "presetKey": "microsoft-coe-baseline"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "go-live",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [],
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "decision.propose-not-allowed",
+        "severity": "error",
+        "entity": "Decision Right",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

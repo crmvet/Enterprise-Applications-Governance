@@ -80,7 +80,8 @@ public sealed class ConfigurationEntity
 }
 
 // The configuration entities a seed, a snapshot or a patch can hold.
-// C01 to C03 and C46 are the set, version, preset and draft records themselves, so they are not listed.
+// C01 to C03 and C46 are the set, version, preset and draft records themselves, so they are not listed. C47 to C50 are
+// the data taxonomy's configuration entities.
 public static class ConfigurationEntities
 {
     private static readonly ConfigurationEntity[] Entries =
@@ -136,6 +137,13 @@ public static class ConfigurationEntities
         new("column-protection-rule", "C43", isProposal: true),
         new("portfolio-access", "C44", isProposal: true),
         new("known-client", "C45", isProposal: true),
+
+        // The data taxonomy (D-37, settled by D-41; docs/architecture/data-taxonomy.md). Data domains are flat rows
+        // with a parent key, so no child entity is needed.
+        new("data-classification", "C47"),
+        new("data-domain-level", "C48"),
+        new("data-domain", "C49"),
+        new("data-platform", "C50"),
     };
 
     private static readonly Dictionary<string, ConfigurationEntity> ByKey = Entries.ToDictionary(e => e.Key, StringComparer.Ordinal);

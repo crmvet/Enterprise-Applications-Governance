@@ -55,6 +55,41 @@
       "toolKey": "power-platform"
     },
     { "key": "entra-object", "label": "Entra object", "linkCategory": "microsoft-resource", "toolKey": "entra" },
-    { "key": "itsm-change", "label": "ITSM change", "linkCategory": "external-change", "toolKey": "itsm" }
+    { "key": "itsm-change", "label": "ITSM change", "linkCategory": "external-change", "toolKey": "itsm" },
+    {
+      "key": "dataverse-environment",
+      "label": "Dataverse environment",
+      "description": "A Dataverse or Dynamics 365 environment that holds data (data taxonomy, D-37).",
+      "linkCategory": "data-location",
+      "toolKey": "power-platform"
+    },
+    {
+      "key": "azure-data-resource",
+      "label": "Azure data resource",
+      "description": "An Azure SQL server or database, a Cosmos DB account or another Azure data resource, by its resource ID.",
+      "linkCategory": "data-location",
+      "toolKey": "azure"
+    },
+    {
+      "key": "sharepoint-location",
+      "label": "SharePoint location",
+      "description": "A SharePoint site or library that holds data.",
+      "linkCategory": "data-location",
+      "toolKey": "sharepoint"
+    },
+    {
+      "key": "fabric-item",
+      "label": "Fabric item",
+      "description": "A Fabric workspace or item, such as a lakehouse, keyed on its stable workspace and item IDs.",
+      "linkCategory": "data-location",
+      "toolKey": "fabric"
+    },
+    {
+      "key": "external-data-system",
+      "label": "External data system",
+      "description": "Any other store: a SaaS tenant, a server, a host or a legacy system, by its own ID or URL.",
+      "linkCategory": "data-location",
+      "toolKey": "other"
+    }
   ]
 }

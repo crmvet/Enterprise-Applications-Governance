@@ -11,6 +11,11 @@
     "presetKey": "balanced",
     "operations": [
       {
+        "op": "retire",
+        "entity": "standard-change-model",
+        "key": "routine-maintenance"
+      },
+      {
         "op": "upsert",
         "entity": "standard-change-model",
         "key": "only-target-stages-in",

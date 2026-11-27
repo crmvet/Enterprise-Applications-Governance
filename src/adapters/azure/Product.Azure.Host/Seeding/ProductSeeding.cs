@@ -111,7 +111,8 @@ public static class ProductSeeding
     /// <summary>
     /// Seeds a demo into an empty store: version 1 compiled from the preset, the overlays and the seed patch (principal
     /// kinds taken from the seed rows' Principal References), then the seed rows. Refuses a store that already has a
-    /// version in force.
+    /// version in force. Version 1's Published On is <paramref name="seededOnUtc"/>, the seed moment (the validation date
+    /// when none is given), so "in force since" and the configuration review date never move with the clock (wave 4b verify round).
     /// </summary>
     public static SeedResult SeedDemo(
         IProductStore store,
@@ -120,7 +121,8 @@ public static class ProductSeeding
         IEnumerable<string>? overlays,
         JsonTreeNode? bindingOperations,
         JsonTreeNode? rows,
-        DateTime validatedOnUtc)
+        DateTime validatedOnUtc,
+        DateTime? seededOnUtc = null)
     {
         if (store == null)
         {
@@ -133,7 +135,7 @@ public static class ProductSeeding
         }
 
         CompiledSnapshot snapshot = CompileVersion(catalog, presetKey, overlays, bindingOperations, PrincipalKinds(rows), validatedOnUtc);
-        store.SeedVersion(snapshot);
+        store.SeedVersion(snapshot, seededOnUtc ?? validatedOnUtc);
         int seeded = rows == null ? 0 : SeedRows(store, rows);
         return new SeedResult(snapshot.ConfigurationSetKey, snapshot.VersionNumber, snapshot.ContentHash, seeded);
     }

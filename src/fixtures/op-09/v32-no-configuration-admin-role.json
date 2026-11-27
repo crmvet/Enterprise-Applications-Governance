@@ -46,6 +46,20 @@
         "severity": "error",
         "ruleId": "V32",
         "entity": "Approval Rule",
+        "ref": "config-data-loosens-admin"
+      },
+      {
+        "code": "role.config-admin-missing",
+        "severity": "error",
+        "ruleId": "V32",
+        "entity": "Approval Rule",
+        "ref": "config-data-touches-admin"
+      },
+      {
+        "code": "role.config-admin-missing",
+        "severity": "error",
+        "ruleId": "V32",
+        "entity": "Approval Rule",
         "ref": "configuration-change-approval"
       },
       {

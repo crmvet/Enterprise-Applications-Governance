@@ -1,11 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "propose_owner_change input",
-  "description": "Hands over, adds or ends an owner role. It records an ownership decision as Proposed. The current and new holders confirm on approval cards, as the approval rules say. Nothing changes until the decision is accepted. Each change needs addObjectId, endAssignmentId or both.",
+  "description": "Hand over or add an owner of an application, a data domain or a data location. Records a proposed ownership decision (O09) about the one subject named; the owner assignments (O06) start only when the decision is accepted. A data domain's owners are proposed by the platform admin, the data governance lead or a data owner of the domain or a domain above it; a location's by the platform admin, the data governance lead or its technical owner (docs/architecture/data-taxonomy.md, Appointing owners). The owner role must be one that can be held on the subject (C28 Subject Kinds).",
   "x-tool": "propose_owner_change",
   "type": "object",
   "required": [
-    "businessApplicationId",
     "changes",
     "reason"
   ],
@@ -13,7 +12,7 @@
     "businessApplicationId": {
       "$ref": "../common.schema.json#/$defs/id",
       "x-entity": "O02 Business Application",
-      "description": "The application."
+      "description": "The application. Give exactly one of businessApplicationId, dataDomainKey and dataLocationId."
     },
     "changes": {
       "type": "array",
@@ -76,6 +75,16 @@
     },
     "validateOnly": {
       "$ref": "../common.schema.json#/$defs/validateOnly"
+    },
+    "dataDomainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "The data domain whose owners change (data taxonomy slice 3)."
+    },
+    "dataLocationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "The data location whose technical owner changes (data taxonomy slice 3)."
     }
   },
   "additionalProperties": false,
@@ -92,6 +101,23 @@
       ],
       "reason": "The current owner moves to another team in December.",
       "clientRequestId": "req-0005"
+    }
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "businessApplicationId"
+      ]
+    },
+    {
+      "required": [
+        "dataDomainKey"
+      ]
+    },
+    {
+      "required": [
+        "dataLocationId"
+      ]
     }
   ]
 }

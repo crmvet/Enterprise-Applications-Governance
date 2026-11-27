@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_data_location input",
+  "description": "This store exists, moved, or is gone: registers or changes up to 100 data locations (O25), each held as a link with an external ID or a URL and the date it was last seen. A location is matched again on its platform and external ID (or URL). An AI client's location is a draft until a person confirms it. Connection strings, keys and passwords are refused (G-22). A location goes two levels deep at most: an instance, then a store inside it (G-24).",
+  "x-tool": "save_data_location",
+  "type": "object",
+  "required": [
+    "items"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "dataLocationId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O25 Data Location",
+            "description": "The location to change. Leave it out to register one."
+          },
+          "platformKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C50 Data Platform",
+            "description": "The kind of store."
+          },
+          "parentLocationId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O25 Data Location",
+            "description": "The instance this store sits in."
+          },
+          "targetStageKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C34 Target Stage",
+            "description": "Required on a top-level location. A child takes its parent's stage."
+          },
+          "deploymentTargetId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O15 Deployment Target",
+            "description": "When the store is a deployment target the register knows."
+          },
+          "hostedByApplicationId": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O02 Business Application",
+            "description": "The business application this system is."
+          },
+          "linkKindKey": {
+            "$ref": "../common.schema.json#/$defs/key",
+            "x-entity": "C37 Link Kind",
+            "description": "A link kind of the data-location category. The platform's default when left out."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The tool's own ID. Give this or url.",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "url": {
+            "$ref": "../common.schema.json#/$defs/url",
+            "description": "Opens the location in its own tool."
+          },
+          "labelAsSeen": {
+            "type": "string",
+            "description": "The name as seen.",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "seenNow": {
+            "type": "boolean",
+            "description": "True records that the location was seen now."
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "True confirms the location. A person's save confirms unless this is false. An AI client never confirms (G-21)."
+          },
+          "retire": {
+            "type": "boolean",
+            "description": "True retires the location (Retired On today) instead of deleting it."
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "The locations to save.",
+      "minItems": 1,
+      "maxItems": 100
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "items": [
+        {
+          "platformKey": "ibm-i",
+          "targetStageKey": "production",
+          "externalId": "payroll-host-01",
+          "labelAsSeen": "Payroll host",
+          "seenNow": true
+        }
+      ]
+    }
+  ]
+}

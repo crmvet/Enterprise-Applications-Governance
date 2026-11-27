@@ -308,7 +308,8 @@ public sealed class SecurityTests
         string intake = draft["data"]!["recordId"]!.GetValue<string>();
         JsonNode submitted = await host.Call(Personas.Priya, "submit_record", "{\"subjectKind\":\"intake-request\",\"subjectId\":\"" + intake + "\"}");
         Assert.True(submitted["ok"]!.GetValue<bool>(), submitted.ToJsonString());
-        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray())!;
+        // The triage card; Balanced also opens three consultation cards on an intake (document 21, B21-9).
+        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray(), c => !c!["isConsultation"]!.GetValue<bool>())!;
         return (card["approvalRecordId"]!.GetValue<string>(), submitted["data"]!["decisionId"]!.GetValue<string>());
     }
 

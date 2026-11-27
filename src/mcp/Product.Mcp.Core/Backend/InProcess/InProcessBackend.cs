@@ -7,6 +7,7 @@ using Product.Engine.Configuration.Snapshots;
 using Product.Engine.Core;
 using Product.Engine.Core.Canonical;
 using Product.Engine.Core.Contract;
+using Product.Engine.Core.Reasons;
 using Product.Engine.Core.Snapshots;
 using Product.Engine.Runtime;
 using Product.Engine.Runtime.Callers;
@@ -34,6 +35,14 @@ public sealed class InProcessBackendOptions
     public IInventoryReader? Inventory { get; set; }
 
     public PlaybookIndex Playbook { get; set; } = PlaybookIndex.Empty;
+
+    // The host settings that are safe to show on the Admin page, read fresh for each get_admin_status call (document 24,
+    // B24-18). Null: the read says the host gave none.
+    public Func<HostFacts>? HostFacts { get; set; }
+
+    // The approval outbox the host keeps, for the platform admin's retry (retry_approval_card; document 24, B24-22). Null:
+    // the tool answers that this host keeps no outbox.
+    public IApprovalOutboxPort? ApprovalOutbox { get; set; }
 }
 
 // The backend of the Azure binding (document 24, sections 4.4, 8.3 and 9.2): the engine in the same process as the MCP
@@ -45,6 +54,25 @@ public sealed class InProcessBackend : IGovernanceBackend
     private readonly EngineRuntime _runtime;
     private readonly IRecordStore _records;
     private readonly IConfigurationStore _configuration;
+
+    // When each configuration version was published, by set, version and content hash: a Configuration Set Version row
+    // is append-only (class A), so it is read once per process, not on every call (document 25, B25-23).
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime?> _publishedOn = new(StringComparer.Ordinal);
+
+    // The oldest audit entry's moment, once read (VersionPublishedOn), and the write generation of the last read that
+    // found none, so a store with no audit entry is not read again until this process writes.
+    private DateTime? _oldestAuditOn;
+    private long _oldestAuditMissedAt = -1;
+
+    // How many write calls this process has started (wave 4b review): a write empties the list cache (CachedList) and lets
+    // the oldest audit entry be read again.
+    private long _writeGeneration;
+
+    // The computed lists of get_data_gaps and list_data_uses, kept for their later pages (CachedList). At most
+    // ListCacheSize entries; each lives ListCacheLife.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, ListCacheEntry> _listCache = new(StringComparer.Ordinal);
+    private const int ListCacheSize = 64;
+    private static readonly TimeSpan ListCacheLife = TimeSpan.FromSeconds(60);
 
     public InProcessBackend(
         EngineRuntime runtime,
@@ -100,15 +128,18 @@ public sealed class InProcessBackend : IGovernanceBackend
         }
 
         var roles = new List<RoleGrant>();
-        foreach (RuleTrace trace in resolution.Trace.Where(t => t.Entity == "Role Group Binding"))
+        var bindings = resolution.Trace.Where(t => t.Entity == "Role Group Binding")
+            .Select(t => snapshot.Snapshot.TryGetRow("role-group-binding", t.Key, out SnapshotRow? binding) ? binding : null)
+            .Where(b => b != null).Select(b => b!).ToList();
+
+        // The labels of the caller's role groups, in one store read for all of them.
+        IReadOnlyList<StoredRow> groupRows = _records.QueryIn("principal-reference", "entraObjectId", bindings.Select(b => Js.Text(b.Columns, "entraGroupObjectId")));
+        foreach (SnapshotRow binding in bindings)
         {
-            if (snapshot.Snapshot.TryGetRow("role-group-binding", trace.Key, out SnapshotRow? binding))
-            {
-                string role = Js.Text(binding.Columns, "roleKey")!;
-                string group = Js.Text(binding.Columns, "entraGroupObjectId")!;
-                string roleLabel = snapshot.Snapshot.TryGetRow("role", role, out SnapshotRow? roleRow) ? Js.Text(roleRow.Columns, "label") ?? role : role;
-                roles.Add(new RoleGrant(role, roleLabel, group, GroupLabel(group)));
-            }
+            string role = Js.Text(binding.Columns, "roleKey")!;
+            string group = Js.Text(binding.Columns, "entraGroupObjectId")!;
+            string roleLabel = snapshot.Snapshot.TryGetRow("role", role, out SnapshotRow? roleRow) ? Js.Text(roleRow.Columns, "label") ?? role : role;
+            roles.Add(new RoleGrant(role, roleLabel, group, groupRows.FirstOrDefault(r => r.Text("entraObjectId") == group)?.Text("displayLabel") ?? group));
         }
 
         string actorKind = resolution.Actor.ActorKind == ActorKindMeaning.AiClientForPerson ? "ai-client-for-person" : EngineContract.ActorKindMeanings.ToWire(resolution.Actor.ActorKind);
@@ -140,17 +171,118 @@ public sealed class InProcessBackend : IGovernanceBackend
             : new CallerIdentity(caller.ObjectId, caller.PrincipalKind, entry, caller.GroupObjectIds, clientApp, true);
     }
 
-    private string GroupLabel(string groupObjectId)
-    {
-        StoredRow? row = _records.Query(RowQuery.For("principal-reference").Where("entraObjectId", groupObjectId)).FirstOrDefault();
-        return row?.Text("displayLabel") ?? groupObjectId;
-    }
-
     private DateTime? PublishedOn(CompiledSnapshot snapshot)
     {
+        string key = snapshot.ConfigurationSetKey + "|" + snapshot.VersionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + snapshot.ContentHash;
+        if (_publishedOn.TryGetValue(key, out DateTime? known))
+        {
+            return known;
+        }
+
         StoredRow? version = _records.Query(RowQuery.For("configuration-set-version").Where("configurationSet", snapshot.ConfigurationSetKey))
             .FirstOrDefault(r => r.Number("versionNumber") == snapshot.VersionNumber);
-        return Js.ParseMoment(version?.Text("publishedOn")) ?? Js.ParseMoment(version?.Text("engineCheckedOn"));
+        DateTime? published = VersionPublishedOn(version);
+        if (version != null && published.HasValue)
+        {
+            _publishedOn[key] = published;
+        }
+
+        return published;
+    }
+
+    // When a configuration version came into force (wave 4b verify round; document 21, section 3.6): its Published On, else its
+    // Engine Checked On, else the moment of the oldest audit entry (a version 1 seeded before the seed wrote Published On:
+    // nothing the product recorded comes before it). Null only for a store with neither, and the caller then answers now.
+    // So "in force since" and the review due date stay the same across calls and restarts.
+    internal DateTime? VersionPublishedOn(StoredRow? version)
+    {
+        return Js.ParseMoment(version?.Text("publishedOn")) ?? Js.ParseMoment(version?.Text("engineCheckedOn")) ?? OldestAuditOn();
+    }
+
+    // The oldest audit entry's moment, read once per process when found (entries are append-only, and a later one is
+    // never older).
+    private DateTime? OldestAuditOn()
+    {
+        if (_oldestAuditOn.HasValue)
+        {
+            return _oldestAuditOn;
+        }
+
+        long generation = System.Threading.Interlocked.Read(ref _writeGeneration);
+        if (System.Threading.Interlocked.Read(ref _oldestAuditMissedAt) == generation)
+        {
+            return null;
+        }
+
+        DateTime? oldest = null;
+        foreach (StoredRow entry in _records.Query(RowQuery.For("audit-entry")))
+        {
+            DateTime? on = Js.ParseMoment(entry.Text("occurredOn"));
+            if (on.HasValue && (!oldest.HasValue || on.Value < oldest.Value))
+            {
+                oldest = on;
+            }
+        }
+
+        if (oldest.HasValue)
+        {
+            _oldestAuditOn = oldest;
+        }
+        else
+        {
+            System.Threading.Interlocked.Exchange(ref _oldestAuditMissedAt, generation);
+        }
+
+        return oldest;
+    }
+
+    // A computed list for the pages of one query (wave 4b review; document 25, B25-23): get_data_gaps and list_data_uses work
+    // out the whole list (every finding, every use with its OP-16 state) and then page it, which took 3.7 s and 2.4 s a
+    // page at 2,000 applications. The first page (no skip token) always computes and keeps the list; a later page of the
+    // same query (key: tool, caller, roles, configuration content hash and the input without top and skipToken) reads the
+    // kept list when it is less than 60 seconds old and no write call started in this process since. So the pages of one
+    // list are one consistent reading, at most a minute old, and a write here is seen at once.
+    internal T CachedList<T>(string key, bool laterPage, DateTime now, Func<T> compute)
+        where T : class
+    {
+        long generation = System.Threading.Interlocked.Read(ref _writeGeneration);
+        if (laterPage && _listCache.TryGetValue(key, out ListCacheEntry? kept) && kept.Generation == generation && now >= kept.At && now - kept.At <= ListCacheLife && kept.Value is T value)
+        {
+            return value;
+        }
+
+        T computed = compute();
+        if (_listCache.Count >= ListCacheSize)
+        {
+            foreach (string stale in _listCache.Where(p => p.Value.Generation != generation || now - p.Value.At > ListCacheLife || now < p.Value.At).Select(p => p.Key).ToList())
+            {
+                _listCache.TryRemove(stale, out _);
+            }
+
+            if (_listCache.Count >= ListCacheSize)
+            {
+                _listCache.Clear();
+            }
+        }
+
+        _listCache[key] = new ListCacheEntry(computed, now, generation);
+        return computed;
+    }
+
+    private sealed class ListCacheEntry
+    {
+        public ListCacheEntry(object value, DateTime at, long generation)
+        {
+            Value = value;
+            At = at;
+            Generation = generation;
+        }
+
+        public object Value { get; }
+
+        public DateTime At { get; }
+
+        public long Generation { get; }
     }
 
     // ---- Tools ----
@@ -174,6 +306,36 @@ public sealed class InProcessBackend : IGovernanceBackend
 
         JsonTreeNode arguments = invocation.Arguments;
         bool validateOnly = Js.Flag(arguments, "validateOnly") == true;
+
+        // A tool whose engine work runs in calls of its own before its answer is read (run_due_state_refresh: each item of
+        // the refresh commits in its own transaction; move_data_references: an AI client's preview is the person's own dry
+        // run). A refusal there is the tool's answer. A first step that has nothing to do for this call answers null.
+        RuntimeOutcome? prepared = null;
+        if (handler.Before != null)
+        {
+            try
+            {
+                prepared = handler.Before(this, session, invocation);
+            }
+            catch (ToolFailureException failure)
+            {
+                return ToolResult.Failure(failure.Error);
+            }
+
+            if (prepared != null && !prepared.Succeeded)
+            {
+                Reason? refusal = prepared.Reasons.FirstOrDefault(r => r.Severity == ReasonSeverity.Error);
+                IEnumerable<string> refusalRules = refusal != null && ReasonCatalog.TryGet(refusal.Code, out ReasonCodeInfo? refusalInfo) ? refusalInfo.RuleIds : Enumerable.Empty<string>();
+                return ToolResult.Failure(EngineErrorMap.Map(prepared, Contracts, session.ActorKind == "ai-client-for-person"), configurationSetVersion: prepared.ConfigurationVersion, refusalReasonCode: refusal?.Code, refusalRuleIds: refusalRules);
+            }
+        }
+
+        // A write call empties the list cache, before it runs (a page read while it runs computes afresh) and after.
+        if (!handler.ReadOnly)
+        {
+            System.Threading.Interlocked.Increment(ref _writeGeneration);
+        }
+
         var request = new ComposeRequest(invocation.Tool.Name, Js.Without(arguments, "clientRequestId", "validateOnly"))
         {
             ReadOnly = handler.ReadOnly,
@@ -188,7 +350,7 @@ public sealed class InProcessBackend : IGovernanceBackend
         {
             outcome = _runtime.Compose(Identity(session.Caller), request, call =>
             {
-                scope = new ToolScope(this, call, session, invocation);
+                scope = new ToolScope(this, call, session, invocation, prepared);
                 return handler.Run(scope);
             });
         }
@@ -196,10 +358,19 @@ public sealed class InProcessBackend : IGovernanceBackend
         {
             return ToolResult.Failure(failure.Error);
         }
+        finally
+        {
+            if (!handler.ReadOnly)
+            {
+                System.Threading.Interlocked.Increment(ref _writeGeneration);
+            }
+        }
 
         if (!outcome.Succeeded)
         {
-            return ToolResult.Failure(EngineErrorMap.Map(outcome, Contracts, session.ActorKind == "ai-client-for-person"), configurationSetVersion: outcome.ConfigurationVersion);
+            Reason? first = outcome.Reasons.FirstOrDefault(r => r.Severity == ReasonSeverity.Error);
+            IEnumerable<string> ruleIds = first != null && ReasonCatalog.TryGet(first.Code, out ReasonCodeInfo? info) ? info.RuleIds : Enumerable.Empty<string>();
+            return ToolResult.Failure(EngineErrorMap.Map(outcome, Contracts, session.ActorKind == "ai-client-for-person"), configurationSetVersion: outcome.ConfigurationVersion, refusalReasonCode: first?.Code, refusalRuleIds: ruleIds);
         }
 
         JsonTreeNode payload = outcome.Payload ?? Js.EmptyObject;
@@ -218,7 +389,7 @@ public sealed class InProcessBackend : IGovernanceBackend
             warnings.Add(new ToolWarning("This clientRequestId was used before with the same request, so the first result is returned and nothing new was written.", "request.replayed"));
         }
 
-        if (request.DryRun)
+        if (request.DryRun || (prepared != null && validateOnly))
         {
             warnings.Add(new ToolWarning("validateOnly was true: every rule ran and nothing was written.", "request.validate-only"));
         }
@@ -228,6 +399,43 @@ public sealed class InProcessBackend : IGovernanceBackend
             .Select(m => new KeyValuePair<string, int>(m.Key, m.Value.TryGetInt64(out long n) ? (int)n : 0));
         int? version = outcome.ConfigurationVersion.HasValue && outcome.ConfigurationVersion.Value != session.ConfigurationSetVersion ? outcome.ConfigurationVersion : null;
         return ToolResult.Success(data, Js.Text(payload, "summary") ?? invocation.Tool.Name + " answered.", Js.Text(payload, "recordUrl"), warnings, nextSteps, couldNotRead, version);
+    }
+
+    // ---- Refused calls ----
+
+    // One Audit Entry, operation call-refused, in a transaction of its own, written by the engine as the caller's nested
+    // write (document 26, section 9.4; document 25, B25-13). It holds the tool, the record the call named, the fixed error
+    // code, the rule key, the engine's reason code and the rules behind it, never the arguments or a message.
+    public void RecordRefusal(BackendSession session, RefusedCall refused)
+    {
+        if (session == null || refused == null)
+        {
+            return;
+        }
+
+        JsonTreeNode details = Js.Obj(
+            ("tool", JsonTreeNode.FromString(refused.ToolName)),
+            ("knownTool", JsonTreeNode.FromBoolean(refused.KnownTool)),
+            ("code", JsonTreeNode.FromString(refused.Error.Code)),
+            ("ruleKey", Js.OptStr(refused.Error.RuleKey)),
+            ("field", Js.OptStr(refused.Error.Field)),
+            ("reasonCode", Js.OptStr(refused.ReasonCode)),
+            ("ruleIds", Js.Strs(refused.RuleIds)),
+            // The engine's own words for a rule refusal, which name the rule, the domain and where the rule is set (G-25),
+            // so the activity and audit pages say what the caller was told. Engine rule messages are built from the
+            // configuration and the stored rows, never from the call's arguments; no other refusal keeps a message.
+            ("message", refused.Error.Code == McpErrorCodes.RuleViolation && refused.ReasonCode != null ? JsonTreeNode.FromString(refused.Error.Message) : JsonTreeNode.Null),
+            ("guideline", Js.OptStr(refused.Error.Guideline ?? GuidelineRefs.ForRefusal(refused.ReasonCode, refused.Error.Code, refused.KnownTool))),
+            ("entry", JsonTreeNode.FromString(session.Caller.Entry == CallerEntry.Person ? "person" : "ai-client")));
+        try
+        {
+            _runtime.RecordRefusedCall(Identity(session.Caller), refused.ToolName, refused.RowId, details, refused.CorrelationId);
+        }
+        catch (Exception e) when (!(e is OutOfMemoryException))
+        {
+            // The refusal already answered the caller. A store that cannot take the record loses this one event; the
+            // server's telemetry still has the refused call.
+        }
     }
 
     // ---- Resources ----
@@ -254,7 +462,7 @@ public sealed class InProcessBackend : IGovernanceBackend
                 ("configurationSetKey", JsonTreeNode.FromString(snapshot.ConfigurationSetKey)),
                 ("version", JsonTreeNode.FromInt64(snapshot.VersionNumber)),
                 ("contentHash", JsonTreeNode.FromString(snapshot.ContentHash)),
-                ("publishedOn", Js.Utc(PublishedOn(snapshot) ?? now)),
+                ("publishedOn", Js.Utc(PublishedOn(snapshot) ?? VersionPublishedOn(null) ?? now)),
                 ("asOf", Js.Utc(now))));
         }
 
@@ -319,12 +527,17 @@ public sealed class InProcessBackend : IGovernanceBackend
 // One tool's implementation on this backend.
 internal sealed class ToolHandler
 {
-    public ToolHandler(bool readOnly, Func<ToolScope, JsonTreeNode> run, bool usesClientRequestId = true)
+    public ToolHandler(bool readOnly, Func<ToolScope, JsonTreeNode> run, bool usesClientRequestId = true, Func<InProcessBackend, BackendSession, ToolInvocation, RuntimeOutcome?>? before = null)
     {
         ReadOnly = readOnly;
         Run = run;
         UsesClientRequestId = usesClientRequestId;
+        Before = before;
     }
+
+    // The tool's own engine work, run before its composed call (ToolScope.Prepared), or null for a composed tool. It
+    // answers null when it has nothing to do for a call.
+    public Func<InProcessBackend, BackendSession, ToolInvocation, RuntimeOutcome?>? Before { get; }
 
     // A read: the snapshot is loaded for reading and the handler writes nothing.
     public bool ReadOnly { get; }

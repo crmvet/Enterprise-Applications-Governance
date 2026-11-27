@@ -47,6 +47,10 @@
       "type": "boolean",
       "description": "The owner's statement that it uses AI."
     },
+    "holdsNoBusinessData": {
+      "type": "boolean",
+      "description": "The owner's statement that the application holds and moves no business data (O02 Holds No Business Data), which meets the data-uses-declared gate requirement. On a registered application this is the only field that changes, a person who owns it or the platform admin sets it, and the name must be given as it is. An AI client never sets it on a registered application."
+    },
     "proposedOwners": {
       "type": "array",
       "minItems": 1,

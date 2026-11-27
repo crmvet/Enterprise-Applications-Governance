@@ -98,6 +98,53 @@ public sealed class GraphDirectoryReader : IDirectoryReader
         return DirectoryAnswer<IReadOnlyList<DirectoryObject>>.Of(members);
     }
 
+    /// <summary>
+    /// The groups among <paramref name="groupObjectIds"/> the member is in, in one paged read for the member: their
+    /// transitive group memberships (security review: list_teams with memberObjectId read every team's members,
+    /// one Graph call each).
+    /// </summary>
+    public DirectoryAnswer<IReadOnlyList<string>> MemberGroups(BackendCaller asPerson, string memberObjectId, IReadOnlyList<string> groupObjectIds, out int notRead)
+    {
+        notRead = 0;
+        if (PersonOnly<IReadOnlyList<string>>(asPerson) is { } refused)
+        {
+            return refused;
+        }
+
+        if (!DirectoryJson.IsGuid(memberObjectId) || groupObjectIds == null || groupObjectIds.Count == 0)
+        {
+            return DirectoryAnswer<IReadOnlyList<string>>.Of(Array.Empty<string>());
+        }
+
+        DirectoryReply reply = _http.GetPages(asPerson, Graph + "users/" + memberObjectId + "/transitiveMemberOf/microsoft.graph.group?$count=true&$top=999&$select=id", AdvancedQuery);
+        if (!reply.Answered)
+        {
+            return DirectoryAnswer<IReadOnlyList<string>>.Unavailable(reply.Problem!);
+        }
+
+        if (reply.Status == 404)
+        {
+            return DirectoryAnswer<IReadOnlyList<string>>.Of(Array.Empty<string>());
+        }
+
+        if (!reply.Ok)
+        {
+            return DirectoryAnswer<IReadOnlyList<string>>.Unavailable(Problem(reply, "read the groups a person is in", "GroupMember.Read.All and User.Read.All"));
+        }
+
+        var wanted = new HashSet<string>(groupObjectIds, StringComparer.OrdinalIgnoreCase);
+        var found = new List<string>();
+        foreach (JsonObject item in reply.Items)
+        {
+            if (DirectoryJson.Text(item, "id") is string id && wanted.Contains(id))
+            {
+                found.Add(groupObjectIds.First(g => string.Equals(g, id, StringComparison.OrdinalIgnoreCase)));
+            }
+        }
+
+        return DirectoryAnswer<IReadOnlyList<string>>.Of(found);
+    }
+
     /// <inheritdoc />
     public DirectoryAnswer<DirectoryObject?> Group(BackendCaller asPerson, string groupObjectId)
     {

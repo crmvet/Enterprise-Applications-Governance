@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "dependency-two-targets-refused",
+  "description": "A dependency points to exactly one of To Application and To Component. An update that adds a component to a dependency on an application leaves both (document 22, O04 rules; document 25, B25-13). Refused.",
+  "tags": [
+    "dependency-shape"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "dependency",
+    "operation": "update",
+    "rowId": "fixture-dependency-1",
+    "after": {
+      "toComponent": "fixture-component-1"
+    }
+  },
+  "facts": {
+    "before": {
+      "fromApplication": "fixture-app-1",
+      "toApplication": "fixture-app-2",
+      "dependencyType": "reads-data-from"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "dependency.target-invalid"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "dependency.target-invalid",
+        "severity": "error",
+        "ref": "fixture-dependency-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

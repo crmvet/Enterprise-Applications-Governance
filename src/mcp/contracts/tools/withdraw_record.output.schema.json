@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "withdraw_record output",
-  "description": "The response envelope. On success, data is the write result for the withdrawn record, with the approval cards the engine cancelled. An intake request, a change request or a decision becomes withdrawn. An application draft becomes archived. A configuration draft becomes discarded, with discard reason withdrawn.",
+  "description": "The response envelope. On success, data is the write result for the withdrawn record, with the approval requests the engine cancelled. An intake request, a change request or a decision becomes withdrawn. An application draft becomes archived. A configuration draft becomes discarded, with discard reason withdrawn.",
   "x-tool": "withdraw_record",
   "x-ai-write-states": [
     "withdrawn"
@@ -31,7 +31,10 @@
             "change-request",
             "decision",
             "application-draft",
-            "configuration-draft"
+            "configuration-draft",
+            "data-use",
+            "data-mapping",
+            "data-location"
           ]
         },
         "subjectId": {
@@ -57,7 +60,7 @@
             "$ref": "../common.schema.json#/$defs/id",
             "x-entity": "O10 Approval Record"
           },
-          "description": "Pending approval records the engine marked cancelled. The approval runner cancels the cards."
+          "description": "Pending approval records the engine marked cancelled. An answer given to one of them later is refused."
         },
         "withdrawnDecisionId": {
           "description": "For a submitted configuration draft: its Proposed decision, now withdrawn. Null otherwise.",
@@ -159,7 +162,7 @@
   "examples": [
     {
       "ok": true,
-      "summary": "The change request is withdrawn. One pending card was cancelled.",
+      "summary": "The change request is withdrawn. One pending approval request was cancelled.",
       "data": {
         "recordId": "d0000000-0000-4000-8000-000000000001",
         "status": {

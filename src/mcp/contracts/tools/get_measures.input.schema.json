@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_measures input",
+  "description": "The nine default measures and the ten slide-back signals (playbook chapters 17 and 19), computed from the records the product keeps over equal windows that end today, each with the rows behind it. A read for any role. Targets and thresholds come from the measure-targets and signal-thresholds settings (configuration rows), and each signal lists the decisions it led to.",
+  "x-tool": "get_measures",
+  "type": "object",
+  "properties": {
+    "windowDays": {
+      "type": "integer",
+      "minimum": 7,
+      "maximum": 365,
+      "default": 30,
+      "description": "Days in each window."
+    },
+    "windows": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12,
+      "default": 6,
+      "description": "How many windows, the newest ending today."
+    },
+    "measureKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "List the rows behind this measure."
+    },
+    "signalNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "List the rows behind this signal."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "measureKey": "owner-coverage"
+    }
+  ]
+}

@@ -19,6 +19,9 @@
     },
     {
       "text": "Self-approval at tier 3 needs an accepted exception decision each time. Once a second person can approve, the exception is no longer needed."
+    },
+    {
+      "text": "Bind the data governance lead role to the platform admin's group in the client binding patch, so someone appoints the owners of top-level data domains and keeps the data locations. A preset holds no bindings, so the overlay says it here (docs/architecture/data-taxonomy.md)."
     }
   ]
 }

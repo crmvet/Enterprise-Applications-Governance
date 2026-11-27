@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_data_gaps input",
+  "description": "What is missing, broken or waiting in the data? Runs the data checks DC-01 to DC-14 (OP-17) for one domain (with or without the domains below it), one application, one location, one person, or everything, and names the tool that fixes each finding. Writes nothing.",
+  "x-tool": "get_data_gaps",
+  "type": "object",
+  "properties": {
+    "domainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "Only findings about this domain."
+    },
+    "includeSubtree": {
+      "type": "boolean",
+      "default": true,
+      "description": "With domainKey: also the domains below it."
+    },
+    "applicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only findings about this application and its uses."
+    },
+    "locationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "Only findings about this location and what sits there."
+    },
+    "principalObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only findings that name this person, such as the domains they own."
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 14,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "DC-01",
+          "DC-02",
+          "DC-03",
+          "DC-04",
+          "DC-05",
+          "DC-06",
+          "DC-07",
+          "DC-08",
+          "DC-09",
+          "DC-10",
+          "DC-11",
+          "DC-12",
+          "DC-13",
+          "DC-14"
+        ]
+      },
+      "description": "Only these checks."
+    },
+    "severities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ]
+      },
+      "description": "Only findings of these weights."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "domainKey": "people"
+    }
+  ]
+}

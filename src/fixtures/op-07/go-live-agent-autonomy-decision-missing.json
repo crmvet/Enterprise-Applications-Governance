@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-07",
   "case": "go-live-agent-autonomy-decision-missing",
-  "description": "An agent also needs an agreed autonomy level before go-live (guideline G17). Without that accepted decision the gate is not ready.",
+  "description": "An agent also needs an agreed autonomy level before go-live (guideline G17). Without that accepted decision the gate is not ready. A data owner is named, as Balanced asks at tiers 2 and 3.",
   "workingDefaults": [
     9
   ],
@@ -29,7 +29,10 @@
           "status": "current"
         }
       ]
-    }
+    },
+    "assignedOwnerRoleKeys": [
+      "data-owner"
+    ]
   },
   "expected": {
     "outcome": "not-ready",
@@ -52,6 +55,14 @@
           "met": false,
           "reasonCode": "gate.requirement-decision-missing",
           "guidelineKey": "g17",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-data-owner-tier-2",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "data-owner",
+          "met": true,
+          "guidelineKey": "g2",
           "triggered": false
         },
         {

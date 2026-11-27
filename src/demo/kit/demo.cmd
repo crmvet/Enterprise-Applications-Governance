@@ -1,0 +1,3 @@
+@echo off
+rem The demo kit on Windows (README.md next to this file): demo local up, demo check --base http://127.0.0.1:5080, ...
+node "%~dp0demo.mjs" %*

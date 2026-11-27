@@ -1,0 +1,16 @@
+{
+  "description": "The demo's fictional Power Platform inventory file (wave 4b review), read by DemoInventoryReader in the Demo environment and on a local run with the directory mode Demo (Product:Directory:DemoInventoryFile, default seed/demo-inventory.json). The reader serves every registered component of a covered kind and the item of every unregistered claim from the store; this file adds the items below, which no application holds yet, and leaves out the External Ids under absent. So the first 'Run the gap check' of a demo (S-22.15) opens one claim, for the Depot fuel log flow, and raises two vanished claims: the Send planned work notices flow of Customer Notice Sender, which its maker rebuilt in a new solution with a new ID, and the Route purchase approvals flow of Purchase Approvals, which sits in an environment the admin role does not read. A second run opens nothing new. Every ID, name and link is fictional.",
+  "items": [
+    {
+      "externalId": "flow-depot-fuel-log",
+      "labelAsSeen": "Depot fuel log",
+      "componentKindKey": "cloud-flow",
+      "targetAsSeen": "Field Ops Prod",
+      "url": "https://flows.example.org/field-ops-prod/flow-depot-fuel-log"
+    }
+  ],
+  "absent": [
+    "flow-7c14e8",
+    "flow-4d68b1"
+  ]
+}

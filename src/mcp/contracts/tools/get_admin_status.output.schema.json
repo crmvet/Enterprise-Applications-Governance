@@ -1,0 +1,833 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_admin_status output",
+  "description": "The response envelope. On success, data holds the host settings, the engine and configuration, the Tool Policy, the clients, the notices, the outbox and the actions.",
+  "x-tool": "get_admin_status",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "host",
+        "engine",
+        "configuration",
+        "toolPolicy",
+        "clients",
+        "notices",
+        "outbox",
+        "actions"
+      ],
+      "properties": {
+        "host": {
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "Null when the host gave no settings.",
+              "required": [
+                "environmentName",
+                "isDemo",
+                "stepUpMode",
+                "dueStateRefresh",
+                "store"
+              ],
+              "properties": {
+                "environmentName": {
+                  "type": "string"
+                },
+                "isDemo": {
+                  "type": "boolean"
+                },
+                "stepUpMode": {
+                  "type": "string",
+                  "description": "off, fresh-sign-in or authentication-context."
+                },
+                "dueStateRefresh": {
+                  "type": "object",
+                  "required": [
+                    "enabled",
+                    "hourUtc",
+                    "schedule"
+                  ],
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "hourUtc": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schedule": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "store": {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "schemaVersion",
+                    "requiredSchemaVersion"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schemaVersion": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "requiredSchemaVersion": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "engine": {
+          "type": "object",
+          "required": [
+            "engineVersion",
+            "snapshotSchemaVersion"
+          ],
+          "properties": {
+            "engineVersion": {
+              "type": "string"
+            },
+            "snapshotSchemaVersion": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "configuration": {
+          "type": "object",
+          "required": [
+            "configurationSetKey",
+            "version",
+            "contentHash",
+            "publishedOn",
+            "reviewDueOn",
+            "openDrafts"
+          ],
+          "properties": {
+            "configurationSetKey": {
+              "type": "string"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "contentHash": {
+              "$ref": "../common.schema.json#/$defs/contentHash"
+            },
+            "publishedOn": {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            "reviewDueOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "openDrafts": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "toolPolicy": {
+          "type": "object",
+          "required": [
+            "source",
+            "rows"
+          ],
+          "properties": {
+            "source": {
+              "enum": [
+                "configuration",
+                "shipped-seed"
+              ]
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/policyLine"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "clients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label",
+              "isKnown",
+              "isAiClient",
+              "isAllowed",
+              "calls",
+              "refused",
+              "drafts",
+              "lastCallOn"
+            ],
+            "properties": {
+              "key": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": "string",
+                "x-untrusted": true
+              },
+              "isKnown": {
+                "type": "boolean",
+                "description": "True when the Known Client list holds it."
+              },
+              "isAiClient": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAllowed": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "calls": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Write calls and refused calls in the window. Reads leave no record."
+              },
+              "refused": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "drafts": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Rows it drafted in the window."
+              },
+              "lastCallOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notices": {
+          "type": "object",
+          "required": [
+            "days",
+            "lastRefreshChangeOn",
+            "recentRuns",
+            "reminders",
+            "escalations",
+            "overdue",
+            "flagNotices",
+            "items"
+          ],
+          "properties": {
+            "days": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lastRefreshChangeOn": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/dateTime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recentRuns": {
+              "type": "array",
+              "description": "The last runs of the due-state refresh in the window, newest first (at most 5): when, who ran it (the timer or a person), its counts, and the reviews it opened, with links (product review: the Admin page could not show what the run before the demo did).",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ranOn",
+                  "trigger",
+                  "ranBy",
+                  "reviewsOpened",
+                  "reviewsOverdue",
+                  "documentsStale",
+                  "notices",
+                  "reviews"
+                ],
+                "properties": {
+                  "ranOn": {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  "trigger": {
+                    "type": "string",
+                    "description": "timer, or person for a run a platform admin started."
+                  },
+                  "ranBy": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The person who ran it; null for the timer."
+                  },
+                  "reviewsOpened": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reviewsOverdue": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "documentsStale": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "notices": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Reminders, escalations and flag notices sent."
+                  },
+                  "reviews": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "reviewId",
+                        "label",
+                        "recordUrl"
+                      ],
+                      "properties": {
+                        "reviewId": {
+                          "$ref": "../common.schema.json#/$defs/id"
+                        },
+                        "label": {
+                          "type": "string",
+                          "description": "Such as \"Access check: Identity Directory Sync, due 23 Nov 2026\"."
+                        },
+                        "recordUrl": {
+                          "$ref": "../common.schema.json#/$defs/recordUrl"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "reminders": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "escalations": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "overdue": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "flagNotices": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "notice",
+                  "subjectKind",
+                  "entity",
+                  "rowId",
+                  "label",
+                  "businessApplicationId",
+                  "applicationName",
+                  "ruleKey",
+                  "reminderNumber",
+                  "escalated",
+                  "channel",
+                  "dueOn",
+                  "to",
+                  "recordUrl"
+                ],
+                "properties": {
+                  "notice": {
+                    "enum": [
+                      "remind",
+                      "repeat",
+                      "escalate",
+                      "overdue",
+                      "expired",
+                      "flag"
+                    ],
+                    "description": "remind, repeat and escalate follow the reminder rule (OP-11); overdue is a review's first late day; expired is the escalation of an approval request at its Expires On; flag is a flagged deployment."
+                  },
+                  "subjectKind": {
+                    "enum": [
+                      "review",
+                      "document",
+                      "approval",
+                      "claim",
+                      "deployment"
+                    ]
+                  },
+                  "entity": {
+                    "type": "string",
+                    "description": "The entity key of the record the notice is about."
+                  },
+                  "rowId": {
+                    "$ref": "../common.schema.json#/$defs/id"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The record in words."
+                  },
+                  "businessApplicationId": {
+                    "description": "The record's application, when known.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O02 Business Application"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "applicationName": {
+                    "description": "Its name.",
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "ruleKey": {
+                    "description": "The reminder rule that caused it. Null for overdue, expired and flag.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/key",
+                        "x-entity": "C26 Reminder Rule"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "reminderNumber": {
+                    "description": "The step of the rule for this item, from 1.",
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "escalated": {
+                    "type": "boolean",
+                    "description": "True when it went to the deputy, else the accountable holder."
+                  },
+                  "channel": {
+                    "description": "The channel (C38 channel list) the message goes out on.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "dueOn": {
+                    "description": "The date the steps count from.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "to": {
+                    "type": "object",
+                    "required": [
+                      "people",
+                      "roles",
+                      "ownerRole",
+                      "toDeputies"
+                    ],
+                    "properties": {
+                      "people": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "../common.schema.json#/$defs/principalRef"
+                        }
+                      },
+                      "roles": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "../common.schema.json#/$defs/labelledKey"
+                        },
+                        "description": "Product roles: their bound groups are read live when the message goes out."
+                      },
+                      "ownerRole": {
+                        "description": "The owner role the people hold, when they are its holders or deputies.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "toDeputies": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "recordUrl": {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "The newest 25, for the platform admin and the auditor."
+            }
+          },
+          "additionalProperties": false
+        },
+        "outbox": {
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "Null when the host keeps no outbox.",
+              "required": [
+                "counts",
+                "attention"
+              ],
+              "properties": {
+                "counts": {
+                  "type": "object",
+                  "required": [
+                    "pending",
+                    "claimed",
+                    "sent",
+                    "answered",
+                    "expired",
+                    "cancelled",
+                    "failed"
+                  ],
+                  "properties": {
+                    "pending": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "claimed": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "sent": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "answered": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "expired": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "cancelled": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "failed": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "attention": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "approvalRecordId",
+                      "decisionId",
+                      "state",
+                      "attempts",
+                      "enqueuedOn",
+                      "updatedOn",
+                      "recordUrl"
+                    ],
+                    "properties": {
+                      "approvalRecordId": {
+                        "type": "string"
+                      },
+                      "decisionId": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/id",
+                            "x-entity": "O09 Decision"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "state": {
+                        "type": "string"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "enqueuedOn": {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      "updatedOn": {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      "recordUrl": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/recordUrl"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "Failed rows, and rows sent long ago that still wait for an answer."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "tool",
+              "label",
+              "allowed",
+              "why"
+            ],
+            "properties": {
+              "tool": {
+                "$ref": "../common.schema.json#/$defs/toolName"
+              },
+              "label": {
+                "type": "string"
+              },
+              "allowed": {
+                "type": "boolean"
+              },
+              "why": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "policyLine": {
+      "type": "object",
+      "required": [
+        "tool",
+        "number",
+        "toolset",
+        "access",
+        "entries",
+        "release",
+        "isEnabled",
+        "isServed",
+        "allowedRoleKeys",
+        "anyoneSignedIn",
+        "relations",
+        "maxAiState",
+        "aiMaySubmit",
+        "callsPerPersonPerHour"
+      ],
+      "properties": {
+        "tool": {
+          "$ref": "../common.schema.json#/$defs/toolName"
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "toolset": {
+          "type": "string"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "release": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "isServed": {
+          "type": "boolean"
+        },
+        "allowedRoleKeys": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          }
+        },
+        "anyoneSignedIn": {
+          "type": "boolean"
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxAiState": {
+          "type": "string"
+        },
+        "aiMaySubmit": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "callsPerPersonPerHour": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

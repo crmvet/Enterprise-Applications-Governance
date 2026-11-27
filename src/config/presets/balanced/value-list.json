@@ -8,7 +8,10 @@
       "values": [
         { "key": "support-tier", "label": "Power Platform support tier" },
         { "key": "copilot-studio-zone", "label": "Copilot Studio zone" },
-        { "key": "agent-risk-tier", "label": "Agent risk tier" }
+        { "key": "agent-risk-tier", "label": "Agent risk tier" },
+        { "key": "purview-sensitivity-label", "label": "Purview sensitivity label" },
+        { "key": "fabric-domain", "label": "Fabric domain" },
+        { "key": "purview-governance-domain", "label": "Purview governance domain" }
       ]
     },
     {
@@ -25,6 +28,7 @@
         { "key": "planner", "label": "Planner" },
         { "key": "azure", "label": "Azure" },
         { "key": "itsm", "label": "ITSM tool" },
+        { "key": "fabric", "label": "Microsoft Fabric" },
         { "key": "other", "label": "Other" }
       ]
     },
@@ -126,7 +130,7 @@
         { "key": "partly-succeeded", "label": "Partly succeeded" },
         { "key": "failed", "label": "Failed" },
         { "key": "rolled-back", "label": "Rolled back" },
-        { "key": "cancelled", "label": "Cancelled" }
+        { "key": "cancelled", "label": "Canceled" }
       ]
     },
     {
@@ -185,6 +189,63 @@
         { "key": "low", "label": "Low" },
         { "key": "medium", "label": "Medium" },
         { "key": "high", "label": "High" }
+      ]
+    },
+    {
+      "key": "location-kind",
+      "label": "Location kind",
+      "description": "A grouping of data platforms (data taxonomy, D-37).",
+      "isExtensible": true,
+      "values": [
+        { "key": "app-platform", "label": "App platform" },
+        { "key": "crm", "label": "CRM" },
+        { "key": "erp", "label": "ERP" },
+        { "key": "relational-database", "label": "Relational database" },
+        { "key": "document-database", "label": "Document database" },
+        { "key": "file-store", "label": "File store" },
+        { "key": "lake", "label": "Lake" },
+        { "key": "saas-application", "label": "SaaS application" },
+        { "key": "legacy", "label": "Legacy" },
+        { "key": "other", "label": "Other" }
+      ]
+    },
+    {
+      "key": "data-vendor",
+      "label": "Data vendor",
+      "description": "The vendor of a data platform (data taxonomy, D-37). Not only Microsoft.",
+      "isExtensible": true,
+      "values": [
+        { "key": "microsoft", "label": "Microsoft" },
+        { "key": "salesforce", "label": "Salesforce" },
+        { "key": "sap", "label": "SAP" },
+        { "key": "oracle", "label": "Oracle" },
+        { "key": "ibm", "label": "IBM" },
+        { "key": "workday", "label": "Workday" },
+        { "key": "servicenow", "label": "ServiceNow" },
+        { "key": "other", "label": "Other" }
+      ]
+    },
+    {
+      "key": "retention-class",
+      "label": "Retention class",
+      "description": "How long a data domain's data is kept (data taxonomy, D-37). The retention decision at retirement reads it.",
+      "isExtensible": true,
+      "values": [
+        { "key": "keep-1-year", "label": "Keep 1 year" },
+        { "key": "keep-3-years", "label": "Keep 3 years" },
+        { "key": "keep-7-years", "label": "Keep 7 years" },
+        { "key": "keep-10-years", "label": "Keep 10 years" }
+      ]
+    },
+    {
+      "key": "access-approach",
+      "label": "Access approach",
+      "description": "How an application reaches data (guideline G8; playbook chapter 13, step 3).",
+      "isExtensible": true,
+      "values": [
+        { "key": "as-signed-in-person", "label": "As the signed-in person" },
+        { "key": "as-app-identity", "label": "As the application's own identity" },
+        { "key": "read-only-for-person", "label": "Read-only for the person" }
       ]
     }
   ]

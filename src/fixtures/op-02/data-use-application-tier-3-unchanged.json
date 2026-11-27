@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "data-use-application-tier-3-unchanged",
+  "description": "A data-use decision about a whole application at tier 3 keeps the tier 3 group, now scoped to the application subject: a request that names no subject kind is about an application.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-use",
+    "tierKey": "tier-3",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "data-use-tier-3-data-owner"
+        },
+        {
+          "ruleKey": "data-use-tier-3-security"
+        }
+      ]
+    }
+  }
+}

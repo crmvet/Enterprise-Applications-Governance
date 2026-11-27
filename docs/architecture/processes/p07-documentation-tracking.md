@@ -1,6 +1,6 @@
 # P07 Documentation tracking
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-19](../../../src/docs/demo/scenarios/S-19-decision-log-and-documents.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -32,7 +32,7 @@ Each document has a named document owner, who is a person. By default it is the 
 2. **Ask.** The owner, or their AI client, asks "what documentation is missing or stale for my app?"
 3. **Write outside.** The owner's AI tool writes the page, for example with the Azure DevOps MCP Server's wiki tool, or through git. The product is not involved.
 4. **Record.** The AI tool records the link with the status draft or current. The product does not assume the write succeeded. It stores what it is told, with who performed it.
-5. **Confirm when it matters.** For a document a gate needs, "current" set by an AI client stays a claim until the document owner confirms it on a confirmation card ([P10](p10-ai-draft-and-human-accept.md)). Other documents accept "current" from the AI client, with the AI shown as the performer. Which act counts as a person's here is an open design question.
+5. **Confirm when it matters.** For a document a gate needs, "current" set by an AI client stays a claim until the document owner confirms it through a confirmation request ([P10](p10-ai-draft-and-human-accept.md)). Other documents accept "current" from the AI client, with the AI shown as the performer. Which act counts as a person's here is an open design question.
 6. **Check.** When a person or their AI tool confirms the document is still true, the product records the date it was last checked. The product does not read the document.
 7. **Go stale.** At the stale date (the last check plus the freshness period for that document type), the daily refresh moves the document from current to stale, reminds the document owner, and escalates to the deputy.
 8. **Gate.** A gate decision that needs a current document cannot be accepted while that document is missing or stale.
@@ -45,11 +45,11 @@ Each document has a named document owner, who is a person. By default it is the 
 | Evidence link | When a document is evidence for a decision |
 | Audit entry | Each reminder and escalation |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
-| A document a gate needs is current | The document owner, on a confirmation card | First to respond |
+| A document a gate needs is current | The document owner, through a confirmation request | First to respond |
 
 No other approvals. The documents themselves are approved, if at all, in the tool where they live.
 
@@ -61,7 +61,7 @@ No other approvals. The documents themselves are approved, if at all, in the too
 - Which gates need which documents to be current.
 - When reminders go out and when they escalate.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 
@@ -83,7 +83,7 @@ Every tool runs as the signed-in person.
 | Missing documents | Worked out by the rules engine in the one Azure Functions app when read. No row is stored |
 | Stale refresh | A timer-triggered function that runs the daily refresh |
 | Reminders | The notification flow next to the approval runner |
-| Confirmation cards | The approval runner ([approval cards](README.md#approval-cards)) |
+| Confirmation notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
 
 ## Microsoft sources
 

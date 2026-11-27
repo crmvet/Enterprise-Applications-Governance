@@ -40,25 +40,31 @@ internal static class DemoSeed
     public static CompiledSnapshot Version => LazyVersion.Value;
 
     // Seeds the demo into a row store (the HTTP host's SQLite file) through the seeding the local server's seed command
-    // uses. moreOperations, a JSON array of client binding operations, goes after the demo binding's own.
-    public static SeedResult Into(IProductStore store, string? moreOperations = null)
+    // uses. moreOperations, a JSON array of client binding operations, goes after the demo binding's own; draftOperations,
+    // a JSON array of configuration operations (such as a data domain tree), goes in a draft patch after them.
+    public static SeedResult Into(IProductStore store, string? moreOperations = null, string? draftOperations = null)
     {
-        return ProductSeeding.SeedDemo(store, Catalog, Preset, null, BindingWith(moreOperations), Rows, ValidatedOn);
+        return ProductSeeding.SeedDemo(store, Catalog, Preset, null, BindingWith(moreOperations, draftOperations), Rows, ValidatedOn);
     }
 
     // The demo binding with more operations after its own.
-    public static JsonTreeNode BindingWith(string? moreOperations)
+    public static JsonTreeNode BindingWith(string? moreOperations, string? draftOperations = null)
     {
-        if (string.IsNullOrEmpty(moreOperations))
+        if (string.IsNullOrEmpty(moreOperations) && string.IsNullOrEmpty(draftOperations))
         {
             return Binding;
         }
 
         JsonNode binding = JsonNode.Parse(CanonicalJson.Write(Binding, CanonicalProfile.Request))!;
         JsonArray operations = binding["bindingOperations"]!.AsArray();
-        foreach (JsonNode? operation in JsonNode.Parse(moreOperations)!.AsArray())
+        foreach (JsonNode? operation in string.IsNullOrEmpty(moreOperations) ? new JsonArray() : JsonNode.Parse(moreOperations)!.AsArray())
         {
             operations.Add(operation!.DeepClone());
+        }
+
+        if (!string.IsNullOrEmpty(draftOperations))
+        {
+            binding["draftOperations"] = JsonNode.Parse(draftOperations)!.AsArray();
         }
 
         return CanonicalJson.Parse(binding.ToJsonString());
@@ -67,7 +73,8 @@ internal static class DemoSeed
     // Seeds the same demo into an in-memory store (the in-process world).
     public static void Into(InMemoryStore store)
     {
-        store.SeedVersion(Version);
+        // Published On as the seed command writes it when no seed moment is given: the validation date (wave 4b verify round).
+        store.SeedVersion(Version, ValidatedOn);
         foreach (JsonTreeNode row in Js.Items(Rows, "rows"))
         {
             store.Seed(Js.Text(row, "entity")!, Js.Member(row, "columns")!, Js.Text(row, "id"), Js.Text(row, "key"));

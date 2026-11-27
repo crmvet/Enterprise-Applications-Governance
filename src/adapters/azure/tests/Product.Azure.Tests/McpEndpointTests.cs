@@ -47,9 +47,11 @@ public sealed class McpEndpointTests
         Assert.Equal(200, call.Status);
         string[] listed = call.Json!["result"]!["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()).OrderBy(n => n, StringComparer.Ordinal).ToArray();
         ToolPolicySet policy = ToolPolicySet.From(DemoSeed.Version.Snapshot, ContractSet.Embedded);
-        string[] published = ContractSet.Embedded.Tools.Where(policy.IsServed).Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal).ToArray();
+        // A tool served only to a person (answer_approval, D-38) is never listed on the MCP endpoint, whatever the roles.
+        string[] published = ContractSet.Embedded.Tools.Where(t => policy.IsServed(t) && !t.IsPersonOnly).Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal).ToArray();
         Assert.NotEmpty(published);
         Assert.Equal(published, listed);
+        Assert.DoesNotContain("answer_approval", listed);
         Assert.DoesNotContain(listed, n => new[] { "approve", "accept", "reject", "authorize", "activate" }.Any(v => n.StartsWith(v + "_", StringComparison.Ordinal)));
 
         // Each listed tool carries its contract's schemas.

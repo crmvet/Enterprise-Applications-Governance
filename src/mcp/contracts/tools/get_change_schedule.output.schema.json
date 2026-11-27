@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_change_schedule output",
-  "description": "The response envelope. On success, data lists planned changes sorted by window start. authorized is true only when an accepted authorization decision exists, or a linked change has an authorization fact.",
+  "description": "The response envelope. On success, data lists planned changes sorted by window start. authorized is true only when an accepted authorization decision exists, or a linked change has an authorization fact. authorizationStatus is the authorization decision's own state, so a change whose authorization was rejected reads rejected.",
   "x-tool": "get_change_schedule",
   "x-ai-write-states": [
     "read-only"
@@ -41,7 +41,8 @@
               "windowEnd",
               "changeType",
               "status",
-              "authorized"
+              "authorized",
+              "authorizationStatus"
             ],
             "properties": {
               "changeRequestId": {
@@ -132,6 +133,17 @@
               "authorized": {
                 "type": "boolean",
                 "description": "True when the change is authorized."
+              },
+              "authorizationStatus": {
+                "description": "The authorization decision's status by meaning: proposed while people answer, accepted, rejected or withdrawn. Null when the change has no authorization decision yet.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/statusValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -170,7 +182,11 @@
               "label": "Submitted",
               "meaning": "submitted"
             },
-            "authorized": false
+            "authorized": false,
+            "authorizationStatus": {
+              "label": "Proposed",
+              "meaning": "proposed"
+            }
           }
         ]
       },

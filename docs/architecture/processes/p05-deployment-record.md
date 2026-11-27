@@ -1,6 +1,6 @@
 # P05 Deployment record
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-05](../../../src/docs/demo/scenarios/S-05-changes-and-deployments.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -61,9 +61,9 @@ The design publishes copy-paste record steps as samples. They are designed to:
 | Evidence link | The run, and the organization's own release record |
 | Change request | Gets a suggested result from its deployments |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-None in this process. Follow-up decisions go on [approval cards](README.md#approval-cards) through [P03](p03-change-management.md).
+None in this process. Follow-up decisions go through [the approval path](README.md#approval-cards) of [P03](p03-change-management.md).
 
 ## What an organization can configure
 
@@ -74,7 +74,7 @@ None in this process. Follow-up decisions go on [approval cards](README.md#appro
 - Who is told about flags.
 - The recorded grant for each pipeline identity, with its expiry.
 
-## Designed MCP tools
+## MCP tools
 
 AI tools reach these through the MCP server, as the signed-in person. A pipeline step calls the API directly, not MCP.
 

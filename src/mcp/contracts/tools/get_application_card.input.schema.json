@@ -16,7 +16,7 @@
     "sections": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 9,
+      "maxItems": 10,
       "uniqueItems": true,
       "items": {
         "enum": [
@@ -28,7 +28,8 @@
           "deployments",
           "documents",
           "reviews",
-          "links"
+          "links",
+          "data"
         ]
       },
       "default": [
@@ -40,7 +41,8 @@
         "deployments",
         "documents",
         "reviews",
-        "links"
+        "links",
+        "data"
       ],
       "description": "Only these sections. Every section by default."
     }

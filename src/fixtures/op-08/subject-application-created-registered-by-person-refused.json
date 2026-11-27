@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-application-created-registered-by-person-refused",
+  "description": "A person creates an application already registered, at a later stage. Registration and the stage come only from an accepted decision (RA-04, G-13). Refused.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "entity": "business-application",
+    "operation": "create",
+    "after": {
+      "name": "Visit planner",
+      "purpose": "Plan store visits on the phone",
+      "applicationKind": "power-platform-app",
+      "status": "app-registered",
+      "lifecycleStage": "prioritize-and-fund"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "reasons": [
+      {
+        "code": "engine.effect-only",
+        "severity": "error"
+      },
+      {
+        "code": "register.decision-required",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

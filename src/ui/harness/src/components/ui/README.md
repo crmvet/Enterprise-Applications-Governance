@@ -13,6 +13,8 @@ Changes made here:
   info, warning, error, success);
 - `tabs.tsx`, `button.tsx`, `dialog.tsx` and `sheet.tsx` use the Academy palette (light only): white fills on the gray
   page, navy text and overlays, AA contrast for unselected tabs;
+- `textarea.tsx`, `label.tsx` and `checkbox.tsx` (added on 2026-11-24 for the action sheets' forms) use the same
+  palette: white fills, navy label text, and no dark variants;
 - `toast.tsx` is written for this product on the Radix Toast primitive in the shadcn style. sonner is not used, because
   it writes a style tag at run time.
 

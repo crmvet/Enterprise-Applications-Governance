@@ -41,6 +41,10 @@ public sealed class SqlServerStoreOptions
 // only checks that a deployment identity has applied the migrations this build needs (SqlServerMigrations).
 public sealed class SqlServerProductStore : RowStore
 {
+    public override string StoreKind => "azure-sql";
+
+    public override int? RequiredSchemaVersion => SqlServerMigrations.RequiredVersion;
+
     public SqlServerProductStore(SqlServerStoreOptions options)
         : this(options ?? throw new ArgumentNullException(nameof(options)), Check(options), EntityCatalog.Embedded)
     {

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "review-done-with-accepted-outcome-allowed",
+  "description": "The architect marks an architecture review done, with Done On, Reviewer and the review's Outcome Decision, a design decision about the same application that is accepted (document 22, O21; document 25, B25-12). The engine writes the meaning copy done.",
+  "tags": [
+    "review-done"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-3",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "review",
+    "operation": "update",
+    "rowId": "fixture-review-1",
+    "after": {
+      "status": "review-done",
+      "doneOn": "2026-11-24",
+      "reviewer": "fixture-person-3",
+      "outcomeDecision": "fixture-decision-9"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "due",
+      "reviewType": "architecture",
+      "businessApplication": "fixture-app-1",
+      "dueOn": "2026-11-30"
+    },
+    "reviewOutcome": {
+      "decisionId": "fixture-decision-9",
+      "statusMeaning": "accepted",
+      "decisionTypeKey": "design",
+      "subjectApplicationId": "fixture-app-1"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "done",
+        "performedByActorKind": "person"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

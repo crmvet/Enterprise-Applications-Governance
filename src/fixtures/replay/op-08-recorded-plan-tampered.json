@@ -31,6 +31,8 @@
         "clientApp": "Fixture Client",
         "configurationSetVersion": 1,
         "createdByPrincipal": "fixture-person-1",
+        "draftedByClientApp": "Fixture Client",
+        "draftedForPrincipal": "fixture-person-1",
         "engineCheckedOn": "2026-11-22T09:00:00Z",
         "engineVersion": "0.1.0",
         "isAiCreated": true,
@@ -50,7 +52,7 @@
         "severity": "info"
       }
     ],
-    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "snapshotHash": "a969fa02ff0bfe8fb6621507738404ef83f7963ef5e910b0c0b43ce8bc59765c",
     "trace": [
       {
         "entity": "Status",

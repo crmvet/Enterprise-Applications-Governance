@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_review input",
+  "description": "One review for its record page: the review with its description, the evidence linked to it, its outcome decision, the cadence that sets its next due date, the gates it feeds and whether each is met, and whether the caller may complete it now.",
+  "x-tool": "get_review",
+  "type": "object",
+  "required": [
+    "reviewId"
+  ],
+  "properties": {
+    "reviewId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O21 Review",
+      "description": "The review."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "reviewId": "60000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

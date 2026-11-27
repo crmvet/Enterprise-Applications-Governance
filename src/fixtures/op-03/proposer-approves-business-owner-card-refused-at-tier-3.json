@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-03",
+  "case": "proposer-approves-business-owner-card-refused-at-tier-3",
+  "description": "The same tier 3 ownership decision, but the successor who proposed it also answers the business owner's card. That answer is a check on their own proposal, so no-self-approval-tier-3 keeps it from counting, and the decision stays pending.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "scope": {
+      "decisionTypeKey": "ownership",
+      "tierKey": "tier-3"
+    }
+  },
+  "facts": {
+    "requiredApprovals": [
+      {
+        "source": "approval-rule",
+        "ruleKey": "ownership-business-owner",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 1,
+        "timeoutDays": 10,
+        "requiresTypedReason": false,
+        "approverOwnerRoleKey": "business-owner",
+        "fallbackOwnerRoleKey": "sponsor"
+      },
+      {
+        "source": "approval-rule",
+        "ruleKey": "ownership-proposed-owners",
+        "isConsultation": false,
+        "approvalMode": "everyone-must-approve",
+        "minimumCount": 1,
+        "timeoutDays": 10,
+        "requiresTypedReason": false,
+        "approverProposedOwners": true,
+        "guidelineKey": "g2"
+      }
+    ],
+    "records": [
+      {
+        "approvalRecordId": "r1",
+        "ruleKey": "ownership-business-owner",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-successor",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": false,
+        "respondedOnUtc": "2026-11-24T08:00:00Z",
+        "expiresOnUtc": "2026-12-04T08:00:00Z"
+      },
+      {
+        "approvalRecordId": "r2",
+        "ruleKey": "ownership-proposed-owners",
+        "outcome": "approved",
+        "responderPrincipalId": "fixture-person-successor",
+        "responderActorKind": "person",
+        "responderPrincipalKind": "user",
+        "responderHoldsRequiredRole": true,
+        "hasTypedReason": false,
+        "respondedOnUtc": "2026-11-24T08:00:00Z",
+        "expiresOnUtc": "2026-12-04T08:00:00Z"
+      }
+    ],
+    "parties": {
+      "proposerPrincipalId": "fixture-person-successor"
+    }
+  },
+  "expected": {
+    "outcome": "pending",
+    "payload": {
+      "overall": "pending"
+    },
+    "reasons": [
+      {
+        "code": "approval.separation-refused",
+        "severity": "warning",
+        "entity": "Approval Record",
+        "ref": "r1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "renew_approval_request input",
+  "description": "Ask again: the same decision asks the same role once more, with the expiry its rule gives. Only for a request that expired, or one in the last 48 hours of its time, while its decision is proposed. Only the proposer of the decision or a platform admin, in the web app. The engine writes it and the audit trail records who asked.",
+  "x-tool": "renew_approval_request",
+  "type": "object",
+  "required": [
+    "approvalRecordId"
+  ],
+  "properties": {
+    "approvalRecordId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O10 Approval Record",
+      "description": "The request to ask again."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "approvalRecordId": "00000000-0000-4000-8000-000000000701"
+    }
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_portfolio output",
+  "description": "The response envelope. On success, data is the write result for the portfolio (O01) with its name, level, place in the tree, accountable person and whether it is active.",
+  "x-tool": "save_portfolio",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the portfolio.",
+      "required": [
+        "portfolioId",
+        "portfolio"
+      ],
+      "properties": {
+        "portfolioId": {
+          "description": "Null only for a validateOnly check of a new portfolio.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O01 Portfolio"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "portfolio": {
+          "type": "object",
+          "required": [
+            "name",
+            "level",
+            "parentPortfolioId",
+            "path",
+            "accountablePrincipal",
+            "isActive"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The portfolio name.",
+              "x-untrusted": true
+            },
+            "level": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/labelledKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "parentPortfolioId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O01 Portfolio"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "portfolioId",
+                  "name"
+                ],
+                "properties": {
+                  "portfolioId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O01 Portfolio"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The portfolio name.",
+                    "x-untrusted": true
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "From the top of the tree down to this portfolio."
+            },
+            "accountablePrincipal": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/principalRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isActive": {
+              "type": "boolean",
+              "description": "False once retired."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The portfolio Field operations is created.",
+      "data": {
+        "recordId": "90000000-0000-4000-8000-000000000001",
+        "status": null,
+        "performedBy": {
+          "actorKind": "person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)",
+            "principalKind": "user"
+          },
+          "onBehalfOf": null,
+          "clientApp": {
+            "appId": "40000000-0000-4000-8000-000000000009",
+            "label": "Web app"
+          }
+        },
+        "isAiCreated": false,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-24T09:00:00Z"
+        },
+        "created": true,
+        "portfolioId": "90000000-0000-4000-8000-000000000001",
+        "portfolio": {
+          "name": "Field operations",
+          "level": {
+            "key": "portfolio",
+            "label": "Portfolio"
+          },
+          "parentPortfolioId": null,
+          "path": [
+            {
+              "portfolioId": "90000000-0000-4000-8000-000000000001",
+              "name": "Field operations"
+            }
+          ],
+          "accountablePrincipal": null,
+          "isActive": true
+        }
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

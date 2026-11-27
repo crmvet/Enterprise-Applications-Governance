@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Worker" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
     <PackageReference Include="Azure.Identity" />
@@ -31,6 +32,16 @@
 
   <ItemGroup>
     <None Update="host.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!--
+    The fictional demo personas (D-39), read only when a demo install runs the app in the Demo environment and points
+    Product:WebApp:DemoPersonasFile at it (the template does both when PRODUCT_DEMO_PERSONAS is true). Fictional IDs only.
+  -->
+  <ItemGroup>
+    <None Include="..\seed\demo-personas.json" Link="seed\demo-personas.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- The optional demo inventory file of the gap check in a demo (DemoInventoryReader; wave 4b). The wildcard copies
+         nothing when the seed has no such file. Fictional items only. -->
+    <None Include="..\seed\demo-inventory*.json" Link="seed\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!--

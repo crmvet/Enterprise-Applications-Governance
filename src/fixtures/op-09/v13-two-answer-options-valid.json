@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-09",
   "case": "v13-two-answer-options-valid",
-  "description": "A draft retires one of the three answers to the sensitivity question. Two active answers remain, each implying an active tier, so V13 passes.",
+  "description": "A draft retires one of the three answers to the sensitivity question. Two active answers remain, each implying an active tier, so V13 passes. The internal classification implies the restricted answer instead, so V52 holds (data taxonomy).",
   "ruleIds": [
     "V13"
   ],
@@ -13,6 +13,14 @@
         "op": "retire",
         "entity": "tier-answer-option",
         "key": "sensitivity/internal"
+      },
+      {
+        "op": "upsert",
+        "entity": "data-classification",
+        "key": "internal",
+        "values": {
+          "impliedAnswerKey": "restricted"
+        }
       }
     ]
   },

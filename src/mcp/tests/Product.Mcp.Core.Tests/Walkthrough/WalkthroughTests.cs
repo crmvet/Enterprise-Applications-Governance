@@ -75,23 +75,26 @@ public sealed class WalkthroughTests
         Assert.Equal("ai-client-for-person", Text(Data(draft), "performedBy.actorKind"));
         Assert.Equal("Claude Code", Text(Data(draft), "performedBy.clientApp.label"));
         Assert.Equal(true, Js.Flag(Data(draft), "isAiCreated"));
+        // The tier answers come before the submit: a submitted request keeps its answers (security review 2026-11-24).
+        JsonTreeNode tier = Ok(w.Call("1", PriyaAi, W.TokenPriya, "answer_tier_questions", "{\"intakeRequestId\":\"" + intake + "\",\"answers\":[{\"questionKey\":\"data-change\",\"answerKey\":\"as-user\"},{\"questionKey\":\"sensitivity\",\"answerKey\":\"internal\"},{\"questionKey\":\"reach\",\"answerKey\":\"department\"},{\"questionKey\":\"failure-impact\",\"answerKey\":\"team-slowed\"}]}"));
+        Assert.Equal("tier-2", Text(Data(tier), "computedTier.key"));
         JsonTreeNode submittedIntake = Ok(w.Call("1", PriyaAi, W.TokenPriya, "submit_record", "{\"subjectKind\":\"intake-request\",\"subjectId\":\"" + intake + "\",\"note\":\"Ready for triage\"}"));
         Assert.Equal("submitted", Text(Data(submittedIntake), "status.meaning"));
         Assert.Equal("null", Text(Data(submittedIntake), "engineAccepted"));
-        JsonTreeNode triageCard = Assert.Single(Js.Items(Data(submittedIntake), "approvalsRequested"));
+        IReadOnlyList<JsonTreeNode> intakeCards = Js.Items(Data(submittedIntake), "approvalsRequested");
+        JsonTreeNode triageCard = Assert.Single(intakeCards, c => !Js.Flag(c, "isConsultation").GetValueOrDefault());
         Assert.Equal("platform-admin", Js.Text(triageCard, "requiredRoleKey"));
+        Assert.Equal(new[] { "architect", "pmo", "security-reviewer" }, intakeCards.Where(c => Js.Flag(c, "isConsultation") == true).Select(c => Js.Text(c, "requiredRoleKey")!).OrderBy(k => k, StringComparer.Ordinal).ToArray());
         Assert.Equal("proposed", w.Store.Get("decision", Text(Data(submittedIntake), "decisionId"))!.Text("statusMeaning"));
         Step(
             "1",
             "A maker asks for a new app, and the AI files the intake",
             "Priya Castell, a maker in field operations, asks Claude Code",
             "Our inspectors still fill in paper forms. Submit an intake for a new field inspections app for me.",
-            "Claude Code listed " + toolNames.Length + " tools for Priya's roles (none of them can approve), checked for duplicates and found Inspection Scheduler, saved the intake as a draft stamped `ai-client-for-person` and AI-created, then submitted it, which the Tool Policy lets an AI client do for a person (AI May Submit, working default question 9). The engine moved the intake to submitted and opened one triage card for a platform admin (the intake decision right); it accepted nothing.",
+            "Claude Code listed " + toolNames.Length + " tools for Priya's roles (none of them can approve), checked for duplicates and found Inspection Scheduler, saved the intake as a draft stamped `ai-client-for-person` and AI-created, answered the tier questions with Priya (OP-01 computed Tier 2 from the four answers, as a suggestion only: the tier is set by an accepted tier decision, never by an AI's answers), then submitted it, which the Tool Policy lets an AI client do for a person (AI May Submit, working default question 9). The engine moved the intake to submitted and opened one triage card for a platform admin (the intake decision right), and three consultation cards for the architect, the PMO and the security reviewer, whose answers are advice only (P01 step 5); it accepted nothing.",
             new[] { "tools/call submit_record" });
 
-        // ---- Step 2: the tier is assessed and the app registered with owners ----
-        JsonTreeNode tier = Ok(w.Call("2", PriyaAi, W.TokenPriya, "answer_tier_questions", "{\"intakeRequestId\":\"" + intake + "\",\"answers\":[{\"questionKey\":\"data-change\",\"answerKey\":\"as-user\"},{\"questionKey\":\"sensitivity\",\"answerKey\":\"internal\"},{\"questionKey\":\"reach\",\"answerKey\":\"department\"},{\"questionKey\":\"failure-impact\",\"answerKey\":\"team-slowed\"}]}"));
-        Assert.Equal("tier-2", Text(Data(tier), "computedTier.key"));
+        // ---- Step 2: the app is registered with owners ----
         JsonTreeNode app = Ok(w.Call("2", PriyaAi, W.TokenPriya, "save_application_draft", "{\"name\":\"Field Inspections\",\"purpose\":\"Record site inspections on the phone, offline, and send the results to the register\",\"applicationKindKey\":\"power-platform-app\",\"portfolioId\":\"" + W.FieldOperations
             + "\",\"buildPathKey\":\"citizen\",\"intakeRequestId\":\"" + intake + "\",\"proposedOwners\":[{\"ownerRoleKey\":\"business-owner\",\"objectId\":\"" + W.Nadia + "\"},{\"ownerRoleKey\":\"technical-owner\",\"objectId\":\"" + W.Priya + "\"}],"
             + "\"components\":[{\"componentKindKey\":\"canvas-app\",\"externalId\":\"" + W.FieldInspectionsCanvas + "\",\"url\":\"https://make.powerapps.com/environments/field-ops-prod/apps/209\",\"labelAsSeen\":\"Field Inspections\"}]}"));
@@ -103,7 +106,8 @@ public sealed class WalkthroughTests
         Assert.Empty(w.Store.Query(RowQuery.For("owner-assignment").Where("businessApplication", appId)));
         Assert.Null(w.Store.Get("business-application", appId)!.Text("tier"));
 
-        // The stand-in for the update-subject effect, which is not built yet: test setup.
+        // Test setup for three acceptances this walk does not show: the triage, tier and ownership decisions. Their
+        // update-subject effect is built (document 25, B25-8) and writes these columns and rows when they are accepted.
         const string registered = "{\"status\":\"app-registered\",\"statusMeaning\":\"registered\",\"tier\":\"tier-2\",\"lifecycleStage\":\"build\",\"stageSince\":\"2026-11-23T09:00:00Z\",\"recordNumber\":\"APP-0105\"}";
         string businessOwner = "{\"businessApplication\":\"" + appId + "\",\"ownerRole\":\"business-owner\",\"principal\":\"" + W.Nadia + "\",\"isDeputy\":false,\"startOn\":\"2026-11-23\"}";
         string technicalOwner = "{\"businessApplication\":\"" + appId + "\",\"ownerRole\":\"technical-owner\",\"principal\":\"" + W.Priya + "\",\"isDeputy\":false,\"startOn\":\"2026-11-23\"}";
@@ -112,7 +116,7 @@ public sealed class WalkthroughTests
         w.Store.Seed("owner-assignment", technicalOwner, id: "00000000-0000-4000-8000-000000000557");
         w.Recorder.AddSeed(
             "2",
-            "Stand-in for the update-subject effect, which is not built yet. In the design the person confirms the registration on a confirmation card, and the accepted tier and ownership decisions write these columns and rows. Here the runner writes them so the walk can go on. No engine write, no decision accepted.",
+            "Stand-in for three acceptances this walk does not show: the triage decision (the registration and the stage), the tier decision (Tier 2) and the ownership decision (the two owner rows). When those decisions are accepted, the engine's update-subject effect writes exactly these columns and rows. This walk answers only the go-live card, so the runner writes the end state as test setup. No engine write, no decision accepted.",
             new JsonObject
             {
                 ["business-application " + appId] = JsonNode.Parse(registered),
@@ -122,13 +126,13 @@ public sealed class WalkthroughTests
             w.Clock.UtcNow);
         Step(
             "2",
-            "The tier is assessed, and the app is registered with its owners",
+            "The app is registered with its owners",
             "Priya Castell asks Claude Code",
-            "Answer the tier questions with me, then register the app with Nadia Ferreira as business owner and me as technical owner.",
-            "OP-01 computed Tier 2 from the four answers, as a suggestion only: the tier is set by an accepted tier decision, never by an AI's answers. save_application_draft kept Field Inspections a draft, put the two owners on a proposed ownership decision instead of writing owner rows, and warned `confirmation-card.not-sent` (a warning of the MCP tool, not an engine reason code), because registration needs the person's confirmation card.",
+            "Register the app with Nadia Ferreira as business owner and me as technical owner.",
+            "save_application_draft kept Field Inspections a draft, put the two owners on a proposed ownership decision instead of writing owner rows, and warned `confirmation-card.not-sent` (a warning of the MCP tool, not an engine reason code), because registration needs the person's confirmation card.",
             new[] { "tools/call save_application_draft", "InMemoryStore" },
             false,
-            "Not built yet: the update-subject effect that writes the registration, the tier and the owner rows once those decisions are accepted. The runner writes them as test setup (the seed below), so the rest of the walk has a registered Tier 2 app with Nadia as business owner. The ownership decision itself stays proposed in this walk.");
+            "Not shown in this walk: the triage, tier and ownership decisions being accepted. Their update-subject effect writes the registration, the tier and the owner rows; here the runner writes that end state as test setup (the seed below), so the rest of the walk has a registered Tier 2 app with Nadia as business owner. The ownership decision itself stays proposed in this walk.");
 
         // ---- Step 3: the AI proposes the go-live and sends it for approval ----
         w.Clock.UtcNow = new DateTime(2026, 11, 24, 10, 0, 0, DateTimeKind.Utc);
@@ -173,13 +177,21 @@ public sealed class WalkthroughTests
         Assert.Contains(tryAccept.Reasons, r => r.Code == "decision.accept-by-engine-only");
         Assert.Contains(tryAccept.Reasons, r => r.Code == "ai.status-not-allowed");
         Assert.Equal(McpErrorCodes.AiCannotDoThis, EngineErrorMap.Map(tryAccept, ContractSet.Embedded, true).Code);
-        Assert.Equal(before, w.Store.Dump());
+
+        // Nothing changed but the record of the refused attempt: one audit entry for the tool name that does not exist, in a
+        // transaction of its own, stamped as the AI client acting for Priya (document 25, B25-13). The table door writes
+        // through the engine directly, outside the server, so only the server's refusal is recorded.
+        Assert.Equal(StripAudit(before), w.Store.DumpWithout("audit-entry"));
+        StoredRow refusedEntry = Assert.Single(w.Store.Rows("audit-entry"), a => a.Text("operation") == "call-refused");
+        Assert.Equal("approve_decision", refusedEntry.Text("entityName"));
+        Assert.Equal("ai-client-for-person", refusedEntry.Text("actorKind"));
+        Assert.Equal(W.Priya, refusedEntry.Text("onBehalfOf"));
         Step(
             "4",
             "The AI client tries to approve it, and cannot",
             "Priya Castell asks Claude Code",
             "Nadia said yes in the hallway. Approve the go-live for her so we keep Thursday.",
-            "No tool approves, so the server answers `not_found` for approve_decision. Then the same AI client, stamped `ai-client-for-person`, tries the engine's table door directly: writing the card's outcome is refused with `ai.status-not-allowed` and `approval.outcome-writer` (only the approval runner writes an answer), and writing the decision as accepted is refused with `ai.status-not-allowed` and `decision.accept-by-engine-only` (only the engine accepts, when counted approvals meet the rule). The server's own map turns both into the fixed code `ai_cannot_do_this`. The store is byte for byte what it was.",
+            "No tool approves, so the server answers `not_found` for approve_decision. Then the same AI client, stamped `ai-client-for-person`, tries the engine's table door directly: writing the card's outcome is refused with `ai.status-not-allowed` and `approval.outcome-writer` (only the approval runner writes an answer), and writing the decision as accepted is refused with `ai.status-not-allowed` and `decision.accept-by-engine-only` (only the engine accepts, when counted approvals meet the rule). The server's own map turns both into the fixed code `ai_cannot_do_this`. The store is what it was, but for one audit entry that records the refused call to approve_decision, who tried it and through which client: the AI activity page lists it.",
             new[] { "tools/call approve_decision", "table write" },
             true,
             "The table door stands for any route that is not this server's tools, such as a generic table write. The engine refuses these writes whatever the tool or route, and in the design the AI approval lock ships locked.");
@@ -195,6 +207,8 @@ public sealed class WalkthroughTests
         StoredRow accepted = w.Store.Get("decision", decision)!;
         Assert.Equal("accepted", accepted.Text("statusMeaning"));
         Assert.Equal("engine", accepted.Text("performedByActorKind"));
+        Assert.Contains(answered.Writes, x => x.Entity == "change-request" && x.Effect == EffectKind.UpdateSubject);
+        Assert.Equal("in-progress", w.Store.Get("change-request", changeId)!.Text("statusMeaning"));
         Assert.True(w.Store.Get("approval-record", card.Id)!.Flag("countsTowardRequirement"));
         JsonTreeNode ready = Ok(w.Call("5", PriyaAi, W.TokenPriya, "get_approval_status", "{\"subjectKind\":\"change-request\",\"subjectId\":\"" + changeId + "\"}"));
         Assert.Equal(true, Js.Flag(Data(ready), "ready"));
@@ -204,7 +218,7 @@ public sealed class WalkthroughTests
             "The business owner answers the card, and the engine accepts the decision",
             "Nadia Ferreira, the business owner, answers the approval card in Teams",
             "Approve. Tested with two inspectors; go ahead on Thursday morning.",
-            "The approval runner, which holds `approval-writer` through its Workload Grant, wrote Nadia's answer: a person, signed in as a user, holding the required owner role, with a typed reason. In the same transaction the engine recomputed the approvals (OP-03 satisfied), marked the answer as counting and accepted the decision itself (effect `accept-decision`, performed by `engine`). The AI's next read shows ready true; no AI wrote any of it.",
+            "The approval runner, which holds `approval-writer` through its Workload Grant, wrote Nadia's answer: a person, signed in as a user, holding the required owner role, with a typed reason. In the same transaction the engine recomputed the approvals (OP-03 satisfied), marked the answer as counting, accepted the decision itself (effect `accept-decision`, performed by `engine`) and applied it: the change request moved to in progress, which Balanced labels Scheduled (effect `update-subject`). The AI's next read shows ready true; no AI wrote any of it.",
             new[] { "approval writer", "tools/call get_approval_status" },
             false,
             "Not connected yet: the approval runner itself. No card went to Teams. The runner makes the write the approval runner will make, as its workload identity, with Nadia's answer, and the engine does the rest.");
@@ -240,7 +254,7 @@ public sealed class WalkthroughTests
             "At the MCP door the pipeline's app-only token is refused with HTTP 403 and `not_authorized`: pipelines do not use MCP. Through the record endpoint path, holding `deployment-recorder` through its Workload Grant, both runs are recorded with the route `pipeline-step` and gate level advise (Tier 2, production). Run 118 lies inside the authorized change window and is clean: no flag. Run 121 is recorded too, but flagged outside the window (`gate.outside-window`, isOutsideWindow true), because a record step reports and never stops a deployment.",
             new[] { "POST /api/deployments" },
             false,
-            "Not built yet: the record endpoint's HTTP host, so no HTTP request is made. The runner checks the pipeline's body against the endpoint's request schema, then calls the engine entry the host will call (RecordDeployment) as the pipeline's workload identity.");
+            "No HTTP request here: the walk has no network listener. The host serves the record endpoint, and its tests replay this step over HTTP. The runner checks the pipeline's body against the endpoint's request schema, then calls the engine entry the host calls (RecordDeployment) as the pipeline's workload identity.");
 
         // ---- Step 7: the gap check finds an app nobody registered ----
         w.Clock.UtcNow = new DateTime(2026, 11, 27, 8, 0, 0, DateTimeKind.Utc);
@@ -256,7 +270,8 @@ public sealed class WalkthroughTests
         var grew = rowsAfter.Where(e => !rowsBefore.TryGetValue(e.Key, out int n) || n != e.Value).ToDictionary(e => e.Key, e => e.Value - (rowsBefore.TryGetValue(e.Key, out int n) ? n : 0));
         Assert.Equal(1, grew["gap-check-run"]);
         Assert.Equal(1, grew["claim"]);
-        Assert.Equal(new[] { "claim", "gap-check-run" }, grew.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray());
+        Assert.Equal(1, grew["audit-entry"]);
+        Assert.Equal(new[] { "audit-entry", "claim", "gap-check-run" }, grew.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray());
         Assert.DoesNotContain(rowsAfter.Keys, k => k.Contains("inventory", StringComparison.Ordinal));
         Assert.DoesNotContain(w.Store.Rows("claim").Single().Columns.Members, m => m.Key == "Crew Overtime Tracker");
         Assert.NotEqual(dumpBefore, w.Store.Dump());
@@ -265,7 +280,7 @@ public sealed class WalkthroughTests
             "The gap check finds an app nobody registered",
             "Owen Achterberg, platform admin, asks Claude Code",
             "Run the gap check on the Power Platform inventory.",
-            "OP-13 compared the inventory page (4 apps) with the register: Inspection Scheduler, Route Planner and Field Inspections are registered components, so only their last seen dates moved; Crew Overtime Tracker is not, so the engine opened one claim with Priya Castell as the suggested claimant. The store gained exactly one gap check run and one claim, and no inventory rows: the product keeps links and claims, never a copy of the inventory.",
+            "OP-13 compared the inventory page (4 apps) with the register: Inspection Scheduler, Route Planner and Field Inspections are registered components, so only their last seen dates moved; Crew Overtime Tracker is not, so the engine opened one claim with Priya Castell as the suggested claimant. The store gained exactly one gap check run, one claim and the audit entry of the call, and no inventory rows: the product keeps links and claims, never a copy of the inventory.",
             new[] { "tools/call run_gap_check" });
 
         // ---- Step 8: who owns it, and what breaks if the old app retires ----
@@ -361,7 +376,7 @@ public sealed class WalkthroughTests
             ["intro"] = "A scripted story through the product's MCP server core, run offline in one process: an in-memory store instead of a database, a mock sign-in instead of Entra, and the Balanced preset in force. Named, fictional people ask Claude Code for things, and every request and answer below is the real output of the code in src/, trimmed for reading. It is a design walk, not a product.",
             ["about"] = new JsonArray(
                 "The runner is a test in the MCP test project. It sends what an MCP client sends: `initialize`, `tools/list`, then `tools/call` with JSON arguments and the person's bearer token. The token is a mock value: the mock identity maps it to a person and the groups the person is in, and the client binding patch of the configuration maps those groups to roles. Nothing reaches a network, and nothing listens on a port.",
-                "Some calls are not MCP, because the caller is not an AI client: the approval runner writing the business owner's answer, the release pipeline recording deployments through the record endpoint path, and, in step 4, an AI client trying the engine's table door. One entry is a runner seed: a stand-in for an engine effect that is not built yet, marked as such.",
+                "Some calls are not MCP, because the caller is not an AI client: the approval runner writing the business owner's answer, the release pipeline recording deployments through the record endpoint path, and, in step 4, an AI client trying the engine's table door. One entry is a runner seed: a stand-in for decisions the walk does not answer, marked as such.",
                 "The test asserts every outcome this page states, and it compares the outcome of every exchange (ok, the fixed error code, the reason codes) with the checked-in transcript, so the page cannot quietly drift from the code. Each step shows its main calls with the request and the answer as JSON; its other calls are folded below them. Long fields are cut, and each box says what was left out."),
             ["configuration"] = new JsonObject
             {
@@ -381,7 +396,7 @@ public sealed class WalkthroughTests
             ["files"] = new JsonArray(
                 "The runner: `src/mcp/tests/Product.Mcp.Core.Tests/Walkthrough/` (`WalkthroughWorld.cs` holds the world and the recorder, `WalkthroughTests.cs` the story). It runs in the test step of `src/tools/ci.mjs` in about a second.",
                 "The transcript: `src/demo/walkthrough/transcript.json`, every exchange in full (tools/list keeps each tool's name, annotations and schema size). The page: `src/demo/walkthrough/render-page.mjs` renders it. How to run both again: `src/demo/walkthrough/README.md`.",
-                "Stood in for, because not built yet: the update-subject effect (step 2 seeds the registration, the tier and the owner rows), the record endpoint's HTTP host (step 6 calls the engine entry the host will call) and the approval runner itself (step 5 makes its write)."),
+                "Stood in for: the acceptances the walk does not show (step 2 seeds the registration, the tier and the owner rows their update-subject effect would write), and, because the walk has no network listener, the record endpoint's HTTP route (step 6 calls the engine entry the host calls) and the approval runner, a flow template outside the walk (step 5 makes its write)."),
             ["steps"] = new JsonArray(steps.Select(s => (JsonNode)s).ToArray()),
             ["exchanges"] = exchanges,
         };
@@ -401,6 +416,12 @@ public sealed class WalkthroughTests
     private static string Digest(JsonNode exchange)
     {
         return exchange["step"] + " " + exchange["channel"] + " " + exchange["entryPoint"] + " " + exchange["outcome"]!.ToJsonString();
+    }
+
+    // A store dump without its audit entries, to compare with DumpWithout("audit-entry").
+    private static string StripAudit(string dump)
+    {
+        return string.Join("\n", dump.Split('\n').Where(line => !line.StartsWith("audit-entry ", StringComparison.Ordinal)));
     }
 
     private static Dictionary<string, int> RowsByEntity(string dump)

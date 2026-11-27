@@ -31,7 +31,7 @@ Rules that live in many low-code places drift apart, and any path that skips the
 - **The engine binding changed with D-26.** The engine is now designed as a portable .NET library inside the one Azure service. The API is the only write path. The rules stay configuration.
 - **The library is portable on purpose.** It has no database driver and makes no outbound calls, and it targets more than one .NET version. A Dataverse edition could be added later without rewriting the rules. That is an option, not a plan.
 - **Configuration lives as rows in the data store,** with JSON where a structure is complex. Presets ship as JSON seed files. The seed is never the live copy: the live copy is the active configuration version in the organization's own database. The engine reads a cached snapshot of that version.
-- **A configuration change is itself a decision.** An admin tells an AI what to change. The AI drafts it, the engine validates it, and the change takes effect only when a configuration admin accepts it on an approval card.
+- **A configuration change is itself a decision.** An admin tells an AI what to change. The AI drafts it, the engine validates it, and the change takes effect only when a configuration admin accepts it on an approval card. Later, [D-38](D-38-a-person-answers-an-approval-on-the-decision-page.md) moved the default place a person answers to the decision page in the web app.
 - **Some rules no configuration can turn off.** They are part of the engine contract. AI never approves, and every decision is accepted by a person, apart from a short locked list.
 - **The source is open.** The engine's source is public under the MIT License (D-27), so anyone can read how the rules are enforced.
 

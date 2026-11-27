@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v20-consent-without-approval-allowed",
+  "description": "A consent rule (Approver Proposed Owners) on the priority decision type, which does not require approval: a consent never stands for the decision's own card, so V20 passes (document 25, B25-18; Balanced ships one for intake).",
+  "ruleIds": [
+    "V20"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "approval-rule",
+        "key": "priority-proposed-owners",
+        "values": {
+          "label": "Each proposed owner accepts",
+          "decisionTypeKey": "priority",
+          "approverProposedOwners": true,
+          "approvalMode": "everyone-must-approve"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true,
+      "issues": []
+    }
+  }
+}

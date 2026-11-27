@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "data-use-undecided-not-ready",
+  "description": "One open use is still needed, proposed, breaks a rule or has no one to ask, so the design gate is not ready (data-uses-decided, data-use).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "design",
+    "tierKey": "tier-3",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "documentation": {
+      "complete": true,
+      "items": [
+        {
+          "requirementKey": "adr-tier-3",
+          "documentTypeKey": "architecture-decision-record",
+          "status": "current",
+          "documentLinkId": "fixture-link-a1"
+        }
+      ],
+      "missingCount": 0,
+      "draftCount": 0,
+      "staleCount": 0
+    },
+    "dataUses": {
+      "declaredCount": 3,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 1,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "reasons": [
+      {
+        "code": "gate.requirement-data-uses-undecided",
+        "ref": "design-data-uses-decided-tier-3"
+      },
+      {
+        "code": "gate.not-ready"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

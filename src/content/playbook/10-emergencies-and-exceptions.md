@@ -20,7 +20,7 @@
 ## The emergency path (default)
 
 1. **Use it only when it fits.** A production fault or a security exposure that cannot wait for the normal path.
-2. **Get the yes, by name.** The change manager authorizes the emergency at once, on an approval card. There is no separate emergency approver role in the default configuration; the change manager's approval rule for the emergency type is the answer to "who may approve acceleration".
+2. **Get the yes, by name.** The change manager authorizes the emergency at once, on the decision page. There is no separate emergency approver role in the default configuration; the change manager's approval rule for the emergency type is the answer to "who may approve acceleration".
 3. **Cut the narrowest switch first.** When an app reaches more than it should, disable the app's identity or remove a role, record what it held, then fix normally.
 4. **Still test, still use the pipeline.** Run the shortest test that proves the fix, then deploy a new, higher version through the same pipeline. Anything done by hand is recorded and flagged as such.
 5. **Record at the time.** The emergency change is recorded when it happens. The record may be completed after the deployment, within the follow-up time your configuration sets.
@@ -74,7 +74,7 @@
 ## How AI changes this
 
 - An AI can produce a fix in minutes. That tempts a manual push straight into production, around the approver and the pipeline.
-- The emergency path keeps both. A named person approves on a card, and the fix goes through the same pipeline as a new, higher version.
+- The emergency path keeps both. A named person approves on the decision page, and the fix goes through the same pipeline as a new, higher version.
 - An AI-made fix is still tested before it ships, with the shortest test that proves it.
 - The AI drafts the review afterwards, from the change and deployment records. A person completes it and records the outcome. No AI may approve an emergency.
 

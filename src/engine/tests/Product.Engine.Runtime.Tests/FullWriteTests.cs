@@ -61,30 +61,51 @@ public sealed class FullWriteTests
         Assert.Equal("computed", RuntimeJsonTestHelpers.Text(assessed.Results["OP-01"], "outcome"));
     }
 
-    // A lowest-tier intake is on the locked list, so the engine accepts it with no card (OP-02 engine-accept; G-17), after
-    // the accept gate's readiness (G-14: Balanced's accept gate needs a business owner, which the linked application has).
-    // WORKING DEFAULT (open design question 8): the locked list holds lowest-tier intake.
+    // A lowest-tier intake for a new application is on the locked list, so the engine accepts it with no card (OP-02
+    // engine-accept; G-17), after the accept gate's readiness (G-14: Balanced's accept gate needs a business owner, whom
+    // the request names). The named person consents first (B25-18): the request opens only their consent, and the engine
+    // accepts the decision on its own basis once they give it. WORKING DEFAULT (open design question 8): the locked list
+    // holds lowest-tier intake.
     [Fact]
-    public void ALowestTierIntakeIsAcceptedByTheEngineWithNoCard()
+    public void ALowestTierIntakeIsAcceptedByTheEngineOnceTheNamedOwnerConsents()
     {
         Harness h = Harness.Create();
-        string decision = h.IntakeDecision(tierTwo: false);
+        string decision = h.IntakeDecision(tierTwo: false, linkApplication: false, businessOwner: Harness.Person2);
         Assert.Equal("proposed", Harness.Text(h.Row("decision", decision), "statusMeaning"));
 
         RuntimeOutcome request = Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision));
         Assert.Equal("engine-accept", RuntimeJsonTestHelpers.Text(request.Payload, "outcome"));
-        Assert.True(RuntimeJsonTestHelpers.Flag(request.Payload, "accepted"));
-        Assert.True(request.HasReason(ReasonCodes.DecisionEngineAccepted));
-        Assert.Equal("ready", RuntimeJsonTestHelpers.Text(request.Results["OP-07"], "outcome"));
+        Assert.False(RuntimeJsonTestHelpers.Flag(request.Payload, "accepted"));
+        Assert.True(RuntimeJsonTestHelpers.Flag(request.Payload, "waitingForConsent"));
+        Assert.True(request.HasReason(ReasonCodes.DecisionConsentWaiting));
+        string consent = h.ConsentRecord(request.Payload);
+        Assert.Single(h.Store.Rows("approval-record"));
+        Assert.Equal("proposed", Harness.Text(h.Row("decision", decision), "statusMeaning"));
+
+        RuntimeOutcome answered = Harness.Ok(h.Answer(consent, "approval-approved", Harness.Person2));
+        Assert.Equal("ready", RuntimeJsonTestHelpers.Text(answered.Results["OP-07"], "outcome"));
 
         StoredRow accepted = h.Row("decision", decision);
         Assert.Equal("accepted", Harness.Text(accepted, "statusMeaning"));
         Assert.Equal("2026-11-22T09:00:00Z", Harness.Text(accepted, "decidedOn"));
         Assert.Equal("engine", Harness.Text(accepted, "performedByActorKind"));
-        Assert.Empty(h.Store.Rows("approval-record"));
         StoredRow audit = h.Store.Rows("audit-entry").Single(a => Harness.Text(a, "operation") == "decision-accepted");
         Assert.Equal("engine-accept", RuntimeJsonTestHelpers.Text(audit.Column("changedValuesJson"), "basis"));
-        Assert.Contains(request.Writes, w => w.Entity == "decision" && w.Effect == EffectKind.AcceptDecision && w.IsEngineNested);
+        Assert.Contains(answered.Writes, w => w.Entity == "decision" && w.Effect == EffectKind.AcceptDecision && w.IsEngineNested);
+    }
+
+    // Security review 2026-11-24 (document 25, B25-15): a lowest-tier intake linked to an application already in the
+    // register is never accepted by the engine. It goes on a card to the accountable holder, so a person decides.
+    [Fact]
+    public void ALowestTierIntakeLinkedToARegisteredApplicationGoesToAPerson()
+    {
+        Harness h = Harness.Create();
+        string decision = h.IntakeDecision(tierTwo: false);
+        RuntimeOutcome request = Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision));
+        Assert.Equal("required", RuntimeJsonTestHelpers.Text(request.Payload, "outcome"));
+        Assert.False(request.HasReason(ReasonCodes.DecisionEngineAccepted));
+        Assert.Equal("proposed", Harness.Text(h.Row("decision", decision), "statusMeaning"));
+        Assert.NotEmpty(h.Store.Rows("approval-record"));
     }
 
     // Without a business owner the accept gate is not ready: the decision stays proposed and no card goes out.
@@ -111,7 +132,7 @@ public sealed class FullWriteTests
         string decision = h.IntakeDecision(tierTwo: true);
         RuntimeOutcome request = Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision));
         Assert.Equal("required", RuntimeJsonTestHelpers.Text(request.Payload, "outcome"));
-        string record = Assert.Single(RuntimeJsonTestHelpers.Strings(request.Payload, "approvalRecordIds"));
+        string record = h.CountingRecord(request.Payload);
         StoredRow pending = h.Row("approval-record", record);
         Assert.Equal("pending", Harness.Text(pending, "outcomeMeaning"));
         Assert.Equal("intake-a", Harness.Text(pending, "decisionRight"));
@@ -135,11 +156,17 @@ public sealed class FullWriteTests
 
         StoredRow accepted = h.Row("decision", decision);
         Assert.Equal("accepted", Harness.Text(accepted, "statusMeaning"));
-        // Effects run in plan order, depth first: the recompute (and the acceptance it causes) before the answer's own
-        // Audit Entry.
+        // Effects run in plan order, depth first: the recompute (and the acceptance it causes, which cancels the three
+        // consultation cards still pending: the architect, the PMO and the security reviewer) before the answer's own Audit
+        // Entry.
         Assert.Equal(new[] { "decision-accepted", "approval-outcome-written" }, h.Store.Rows("audit-entry").Select(a => Harness.Text(a, "operation")).ToArray());
+        Assert.Equal(3, h.Store.Rows("approval-record").Count(r => r.Flag("isConsultation") && Harness.Text(r, "outcomeMeaning") == "cancelled"));
         Assert.Equal(
-            new[] { "update approval-record", "update approval-record (recompute-approvals)", "update decision (accept-decision)", "create audit-entry (write-audit-entry)", "create audit-entry (write-audit-entry)" },
+            new[]
+            {
+                "update approval-record", "update approval-record (recompute-approvals)", "update decision (accept-decision)", "create audit-entry (write-audit-entry)",
+                "update approval-record (recompute-approvals)", "update approval-record (recompute-approvals)", "update approval-record (recompute-approvals)", "create audit-entry (write-audit-entry)",
+            },
             answer.Writes.Select(w => EngineContract.WriteOperations.ToWire(w.Operation) + " " + w.Entity + (w.Effect.HasValue ? " (" + EngineContract.EffectKinds.ToWire(w.Effect.Value) + ")" : string.Empty)).ToArray());
     }
 
@@ -150,7 +177,7 @@ public sealed class FullWriteTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         RuntimeOutcome ai = Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2, actorKind: "ai-client"));
         Assert.True(ai.HasReason(ReasonCodes.ApprovalAiActorNotCounted));
@@ -160,7 +187,7 @@ public sealed class FullWriteTests
 
         Harness other = Harness.Create();
         string second = other.IntakeDecision(tierTwo: true);
-        string card = RuntimeJsonTestHelpers.Strings(Harness.Ok(other.Runtime.RequestApprovals(Harness.AiClientOf1, second)).Payload, "approvalRecordIds").Single();
+        string card = other.CountingRecord(Harness.Ok(other.Runtime.RequestApprovals(Harness.AiClientOf1, second)).Payload);
         Harness.Ok(other.Answer(card, "approval-rejected", Harness.Person2, typedReason: "Duplicate of an existing app"));
         Assert.Equal("rejected", Harness.Text(other.Row("decision", second), "statusMeaning"));
     }
@@ -172,7 +199,7 @@ public sealed class FullWriteTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         string before = h.Store.Dump();
         RuntimeOutcome byPerson = h.Runtime.Write(Harness.PersonTwo, WriteCommand.Update("approval-record", record, "{\"outcome\":\"approval-approved\",\"approver\":\"" + Harness.Person2 + "\",\"approverActorKind\":\"person\",\"approverPrincipalKind\":\"user\"}"));
@@ -200,7 +227,7 @@ public sealed class FullWriteTests
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
         string other = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
         Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));
         string after = h.Store.Dump();
 
@@ -289,6 +316,36 @@ public sealed class FullWriteTests
         Assert.Equal(first.RowId, replay.RowId);
         Assert.Empty(replay.Writes);
         Assert.Equal(dump, h.Store.Dump());
+    }
+
+    // A retired target keeps its records and takes no new deployment (document 24, B24-18; document 25, B25-19): the record
+    // step refuses one that finished on or after the retirement day, with the reason, and writes nothing; a replay of a
+    // record made before, and a late report of a deployment that finished before the retirement day, are still taken.
+    [Fact]
+    public void ARetiredTargetRefusesANewDeploymentAndKeepsItsHistory()
+    {
+        Harness h = Harness.Create();
+        RuntimeOutcome before = Harness.Ok(h.Runtime.RecordDeployment(Harness.BuildPipeline, Report(h, "run-1101-prod")));
+        StoredRow target = h.Row("deployment-target", h.TargetId);
+        h.Store.Tamper("deployment-target", target.Id, RuntimeJsonTestHelpers.With(RuntimeJsonTestHelpers.With(target.Columns, "retiredOn", JsonTreeNode.FromString("2026-11-22")), "retiredReason", JsonTreeNode.FromString("Replaced by the new production environment.")));
+        string dump = h.Store.Dump();
+
+        RuntimeOutcome refused = h.Runtime.RecordDeployment(Harness.BuildPipeline, Report(h, "run-1102-prod"));
+        Assert.Equal("refused", refused.Outcome);
+        Assert.True(refused.HasReason(ReasonCodes.DeploymentTargetRetired));
+        Assert.Contains("retired on 2026-11-22 (Replaced by the new production environment)", refused.Reasons.First(r => r.Code == ReasonCodes.DeploymentTargetRetired).Message, StringComparison.Ordinal);
+        Assert.Equal(dump, h.Store.Dump());
+
+        RuntimeOutcome replay = Harness.Ok(h.Runtime.RecordDeployment(Harness.BuildPipeline, Report(h, "run-1101-prod")));
+        Assert.Equal(before.RowId, replay.RowId);
+        DeploymentReport late = Report(h, "run-1103-prod");
+        RuntimeOutcome taken = Harness.Ok(h.Runtime.RecordDeployment(Harness.BuildPipeline, new DeploymentReport(late.IdempotencyKey, late.ApplicationId, late.ArtifactName, late.Version, new DateTime(2026, 11, 21, 8, 30, 0, DateTimeKind.Utc))
+        {
+            TargetExternalId = late.TargetExternalId,
+            ArtifactKindKey = late.ArtifactKindKey,
+            CodeApprovalKind = CodeApprovalKind.Person,
+        }));
+        Assert.True(taken.Created);
     }
 
     // An expired grant admits no app-only token, a workload without the deployment recorder role cannot record, and a
@@ -393,7 +450,7 @@ public sealed class FullWriteTests
         {
             Harness h = Harness.Create();
             string decision = h.IntakeDecision(tierTwo: true);
-            string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+            string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
             Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));
             Harness.Ok(h.Runtime.RecordDeployment(Harness.BuildPipeline, Report(h, "run-2001-prod")));
             return h.Store.Dump();

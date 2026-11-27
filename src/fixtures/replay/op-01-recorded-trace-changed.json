@@ -22,10 +22,12 @@
       "missingQuestionKeys": [],
       "proposedIsLower": false,
       "triggeredGateRequirementKeys": [],
-      "triggeredReviewTypeKeys": []
+      "triggeredReviewTypeKeys": [
+        "architecture"
+      ]
     },
     "reasons": [],
-    "snapshotHash": "e4faf9d168385a0dbb8c756ddeb9280fc5a4c7689d265c30c2740931814430eb",
+    "snapshotHash": "a969fa02ff0bfe8fb6621507738404ef83f7963ef5e910b0c0b43ce8bc59765c",
     "trace": [
       {
         "entity": "Tier Answer Option",

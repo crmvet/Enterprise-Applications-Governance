@@ -3,7 +3,9 @@
 // 2. The viewer's own time zone becomes the display zone.
 // 3. <base>config.json says which API and which sign-in to use; a bad file shows its problems instead of the app.
 // 4. Sign-in: Entra ID through MSAL, or the fictional development persona on a loopback host.
-// 5. The shell renders the four pages over the REST API. The fixture client is never part of this build.
+// 5. In a demo install, the demo persona switch (D-39): config.json lists the personas, and the API client sends the
+//    chosen one in X-Product-Demo-Persona. Everywhere else the list is empty and nothing is sent.
+// 6. The shell renders the pages over the REST API. The fixture client is never part of this build.
 import '../styles/globals.css';
 import { CircleAlert } from 'lucide-react';
 import { StrictMode, type ReactNode } from 'react';
@@ -16,6 +18,7 @@ import { createApiClient } from '../data/apiClient';
 import { configureDisplayZone } from '../data/format';
 import { AppShell, type AppAuth } from './AppShell';
 import { loadConfig } from './config';
+import { createDemoPersonaSwitch, DEMO_PERSONA_STORE_KEY } from './demoPersona';
 import { normalizeBase } from './routes';
 
 function render(root: Root, children: ReactNode) {
@@ -87,8 +90,9 @@ async function start() {
     return;
   }
 
-  const api = createApiClient({ apiBase: config.apiBase, auth, fetch: window.fetch.bind(window) });
-  render(root, <AppShell auth={auth} api={api} base={base} demo={config.demo} />);
+  const demoPersonas = createDemoPersonaSwitch(config.demoPersonas, sessionPersonaStore(() => window.sessionStorage, DEMO_PERSONA_STORE_KEY));
+  const api = createApiClient({ apiBase: config.apiBase, auth, fetch: window.fetch.bind(window), extraHeaders: () => demoPersonas.headers() });
+  render(root, <AppShell auth={auth} api={api} base={base} demo={config.demo} demoPersonas={demoPersonas} />);
 }
 
 void start();

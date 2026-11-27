@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-rejected-decision-changes-nothing",
+  "description": "The engine rejects a change authorization when its approvals are rejected. A rejected decision changes nothing but itself: no update-subject write and no subject Audit Entry.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-32",
+    "after": {
+      "status": "decision-rejected",
+      "decidedOn": "2026-11-22T09:00:00Z"
+    },
+    "nestedEffect": "recompute-approvals"
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "change-authorization",
+      "subjectKind": "change-request",
+      "subjectChangeRequest": "fixture-change-3",
+      "outcome": "authorize"
+    },
+    "subject": {
+      "changeRequest": {
+        "id": "fixture-change-3",
+        "statusMeaning": "submitted"
+      }
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "effects": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

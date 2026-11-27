@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Demo kit scenarios",
+  "description": "The scenario catalog the demo kit reads (src/demo/kit/scenarios.json): each scenario of the demo with its personas, use cases, screens, end-to-end spec and the preconditions \"demo check\" proves before a demo. A precondition is a read the kit makes as a persona (a list with a count of matching items, or one value), or a persona's pending count. Every name is fictional.",
+  "type": "object",
+  "required": [
+    "description",
+    "personaCount",
+    "scenarios"
+  ],
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "personaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "How many personas the demo has (src/adapters/azure/seed/demo-personas.json)."
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/scenario"
+      }
+    },
+    "runs": {
+      "type": "object",
+      "description": "The runs and role tracks demo play can play (demo play run-15, demo play pmo): each names its steps in order, and the steps to play off-screen before it (before).",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "title",
+          "doc",
+          "steps"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "doc": {
+            "type": "string"
+          },
+          "before": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^S-\\d\\d\\.\\d+$"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^S-\\d\\d\\.\\d+$"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "personas",
+        "useCases",
+        "screens",
+        "preconditions"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^S-[0-9]{2}$",
+          "description": "The scenario ID, S-01 and on. Step IDs of the presenter scripts and the end-to-end test titles start with it."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "story": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The time slot of the guided story (src/docs/demo/run-15-minutes.md), such as 5:00-7:00, or null for a scenario outside it."
+        },
+        "personas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+$"
+          }
+        },
+        "useCases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "screens": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/app/"
+          }
+        },
+        "spec": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The end-to-end spec file in src/tests/e2e that plays it, or null until the suite has one."
+        },
+        "script": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The presenter script in src/docs/demo, or null until the documentation has one."
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The story section the scenario belongs to (W1 to W12 in src/docs/demo/scenarios.md), or null."
+        },
+        "reset": {
+          "type": "string",
+          "description": "How to get the scenario ready again after it was played."
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/precondition"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "precondition": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What must hold, in plain words. The check prints it when it does not."
+        },
+        "as": {
+          "type": "string",
+          "pattern": "^[a-z]+$",
+          "description": "The persona the read is made as."
+        },
+        "tool": {
+          "type": "string",
+          "pattern": "^[a-z_]+$",
+          "description": "The read tool, called on POST /api/{tool}."
+        },
+        "input": {
+          "type": "object",
+          "description": "The tool's input. A value {\"$lookup\": {\"tool\", \"input\", \"list\", \"where\", \"pick\"}} is the field pick of the first item of that read that meets where, such as a portfolio's ID by its name."
+        },
+        "list": {
+          "type": "string",
+          "description": "The dot path of the list in the answer (default data.items). Paged lists are read to the end unless page is false."
+        },
+        "page": {
+          "type": "boolean",
+          "description": "False: read one answer only, for a list that is not paged."
+        },
+        "where": {
+          "$ref": "#/$defs/where"
+        },
+        "count": {
+          "$ref": "#/$defs/bounds"
+        },
+        "value": {
+          "type": "string",
+          "description": "The dot path of one value in the answer, such as data.ownerGaps, instead of a list: it meets expect, or, for an object such as data.counts, where."
+        },
+        "needs": {
+          "enum": [
+            "ai-client"
+          ],
+          "description": "ai-client: the precondition reads work the director made as Claude Code, so it is checked only when the director could (a local server, or a demo install with the operator's Claude Code token), and skipped otherwise."
+        },
+        "expect": {
+          "$ref": "#/$defs/matcher"
+        },
+        "pending": {
+          "type": "string",
+          "pattern": "^[a-z]+$",
+          "description": "A persona whose pending count is checked, instead of a read."
+        },
+        "field": {
+          "enum": [
+            "approvalsAskedOfThem",
+            "ofWhichOwnProposal",
+            "waitingOnOthers",
+            "drafts",
+            "aiDrafts",
+            "reviews",
+            "documents",
+            "ownerGaps",
+            "claims",
+            "queue"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "as",
+            "tool"
+          ],
+          "not": {
+            "required": [
+              "pending"
+            ]
+          }
+        },
+        {
+          "required": [
+            "pending",
+            "field"
+          ],
+          "not": {
+            "required": [
+              "tool"
+            ]
+          }
+        }
+      ]
+    },
+    "where": {
+      "type": "object",
+      "description": "Dot paths of an item, each with the matcher its value must meet.",
+      "additionalProperties": {
+        "$ref": "#/$defs/matcher"
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "equals": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "matcher": {
+      "description": "A plain value is equality (text ignores case). An object names one or more tests: equals, contains (text), in, min, max, exists, some and none (an array with an element that meets, or none that meets, a nested where), length (an array's length meets a nested matcher).",
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "equals": {},
+            "contains": {
+              "type": "string"
+            },
+            "in": {
+              "type": "array"
+            },
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "exists": {
+              "type": "boolean"
+            },
+            "some": {
+              "$ref": "#/$defs/where"
+            },
+            "none": {
+              "$ref": "#/$defs/where"
+            },
+            "length": {
+              "$ref": "#/$defs/matcher"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "complete_change output",
+  "description": "The response envelope. On success, data is the write result for the Change Request (O11), now completed, stamped as the person's own act, with its result and the post-change review the engine opened, if any.",
+  "x-tool": "complete_change",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Change Request (O11).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "properties": {
+            "meaning": {
+              "const": "completed"
+            }
+          }
+        },
+        "result": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The result, from the change result value list."
+        },
+        "postChangeReviewId": {
+          "description": "The post-change review the engine opened. Null when none was needed, or one was opened before.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O21 Review"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceLinkIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O20 Evidence Link"
+          },
+          "description": "The Evidence Link rows written."
+        }
+      },
+      "required": [
+        "result",
+        "postChangeReviewId",
+        "evidenceLinkIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The change Asset Register 7.2 is closed with the result succeeded.",
+      "data": {
+        "recordId": "d0000000-0000-4000-8000-000000000002",
+        "status": {
+          "label": "Closed",
+          "meaning": "completed"
+        },
+        "performedBy": {
+          "actorKind": "person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000003",
+            "displayLabel": "Architect (sample)"
+          },
+          "onBehalfOf": null,
+          "clientApp": null
+        },
+        "isAiCreated": false,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-24T09:00:00Z"
+        },
+        "created": false,
+        "result": {
+          "key": "succeeded",
+          "label": "Succeeded"
+        },
+        "postChangeReviewId": null,
+        "evidenceLinkIds": []
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/change-request/d0000000-0000-4000-8000-000000000002"
+      },
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "correlationId": "corr-0001",
+      "nextSteps": []
+    }
+  ]
+}

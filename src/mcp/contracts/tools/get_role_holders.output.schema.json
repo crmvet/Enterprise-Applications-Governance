@@ -49,8 +49,11 @@
           "description": "The members Graph lets the person see."
         },
         "readFrom": {
-          "const": "Entra, live",
-          "description": "Members are read live and never stored."
+          "enum": [
+            "Entra, live",
+            "Demo personas"
+          ],
+          "description": "Members are read live and never stored. A demo install or a local run reads them from the demo personas instead of Entra."
         },
         "note": {
           "description": "A plain note, such as the Dataverse group team delay of up to 8 hours.",

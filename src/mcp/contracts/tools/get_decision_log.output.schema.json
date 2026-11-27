@@ -47,7 +47,13 @@
               "amends",
               "approvalsSummary",
               "configurationSetVersion",
-              "recordUrl"
+              "recordUrl",
+              "proposedBy",
+              "isAiCreated",
+              "performedBy",
+              "subjectLabel",
+              "exception",
+              "ownerChanges"
             ],
             "properties": {
               "decisionId": {
@@ -62,7 +68,15 @@
                 "$ref": "../common.schema.json#/$defs/decisionSubjectKind"
               },
               "subjectId": {
-                "$ref": "../common.schema.json#/$defs/id"
+                "description": "The subject row, or the domain key for a decision about a data domain.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id"
+                  },
+                  {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  }
+                ]
               },
               "statement": {
                 "type": "string",
@@ -152,8 +166,105 @@
                 "minimum": 1,
                 "description": "The configuration set version the decision was judged by."
               },
+              "ownerChanges": {
+                "type": "array",
+                "description": "For an ownership decision: each proposed owner change, as its owner role key, whether it is a deputy's (an end takes the flag of the assignment it ends) and whether it adds or ends an assignment. Pages match a waiting change to an owner role by these keys, never by the words of the statement. Empty for any other decision.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ownerRoleKey",
+                    "isDeputy",
+                    "change"
+                  ],
+                  "properties": {
+                    "ownerRoleKey": {
+                      "$ref": "../common.schema.json#/$defs/key"
+                    },
+                    "isDeputy": {
+                      "type": "boolean"
+                    },
+                    "change": {
+                      "enum": [
+                        "add",
+                        "end"
+                      ]
+                    }
+                  }
+                }
+              },
+              "proposedBy": {
+                "description": "Who proposed the decision, as set once when it was created: the admin who instructed a configuration draft, else the person an AI client drafted it for, else its creator. Never the person whose answer accepted it. Null for a seeded decision.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+              },
+              "performedBy": {
+                "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "recordUrl": {
-                "$ref": "../common.schema.json#/$defs/url"
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              },
+              "subjectLabel": {
+                "type": "string",
+                "description": "What the decision is about, as people know it: the application, the request, the change or the deployment.",
+                "x-untrusted": true
+              },
+              "exception": {
+                "description": "For an exception decision: the standard it departs from and the date it is reviewed again (B24-9). Null for any other decision.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "standard",
+                      "reviewOn"
+                    ],
+                    "properties": {
+                      "standard": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "x-untrusted": true
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "reviewOn": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/date"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -205,7 +316,29 @@
               "pending": 0
             },
             "configurationSetVersion": 3,
-            "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000013"
+            "proposedBy": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Owner (sample)"
+            },
+            "isAiCreated": false,
+            "performedBy": {
+              "actorKind": "engine",
+              "principal": {
+                "objectId": "20000000-0000-4000-8000-000000000002",
+                "displayLabel": "Owner (sample)"
+              },
+              "onBehalfOf": {
+                "objectId": "20000000-0000-4000-8000-000000000002",
+                "displayLabel": "Owner (sample)"
+              },
+              "clientAppLabel": "Approval runner",
+              "stampedOn": "2026-11-20T14:00:00Z",
+              "draftedBy": null
+            },
+            "recordUrl": "https://product.example.org/records/60000000-0000-4000-8000-000000000013",
+            "subjectLabel": "Field visit planner",
+            "exception": null,
+            "ownerChanges": []
           }
         ]
       },

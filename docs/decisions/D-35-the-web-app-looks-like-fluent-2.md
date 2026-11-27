@@ -20,7 +20,7 @@ D-32 moved the web app from Fluent UI to shadcn/ui and kept the Academy palette.
 
 ## Why
 
-The product's users are owners, reviewers and admins on Microsoft estates. A look they already know makes the pages easy to read from the first visit, and it sits well next to the approval cards in Teams and Outlook.
+The people the product is designed for are owners, reviewers and admins on Microsoft estates. A look they already know makes the pages easy to read from the first visit, and it sits well next to the approval cards in Teams and Outlook.
 
 ## Consequences
 

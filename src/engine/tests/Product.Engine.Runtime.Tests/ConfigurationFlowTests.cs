@@ -68,6 +68,30 @@ public sealed class ConfigurationFlowTests
         Assert.Equal(2, h.Row("deployment-record", after.RowId!).Number("configurationSetVersion"));
     }
 
+    // A standard change model counts once a person approved it (OP-12). The configuration change decision that lists it is
+    // that approval: activation names the decision as the model's Approved By Decision (document 21, B21-9; document 25,
+    // B25-14). Here the admin approves Balanced's shipped model, routine-maintenance, which ships with none.
+    [Fact]
+    public void ActivationNamesTheAcceptedDecisionAsTheApprovalOfAModelItLists()
+    {
+        Harness h = Harness.Create();
+        Assert.Null(h.Store.GetByKey("standard-change-model", "routine-maintenance")!.Text("approvedByDecisionId"));
+        const string Patch = "{\"schemaVersion\":\"1.0\",\"manifest\":{\"kind\":\"patch\",\"baseVersionNumber\":1},\"operations\":["
+            + "{\"op\":\"upsert\",\"entity\":\"standard-change-model\",\"key\":\"routine-maintenance\",\"values\":{\"label\":\"Routine maintenance in a short window\"}}]}";
+        RuntimeOutcome proposed = Harness.Ok(h.Runtime.ProposeConfigurationChange(Harness.AiClientOf1, new ConfigurationProposal(CanonicalJson.Parse(Patch), 1, "Approve the shipped routine maintenance model.")));
+        string draft = proposed.RowId!;
+        RuntimeOutcome submitted = Harness.Ok(h.Runtime.SubmitConfigurationDraft(Harness.AiClientOf1, draft));
+        string decision = submitted.RowId!;
+        string record = Assert.Single(RuntimeJsonTestHelpers.Strings(submitted.Payload, "approvalRecordIds"));
+
+        RuntimeOutcome answer = Harness.Ok(h.Answer(record, "approval-approved", Harness.Person1, typedReason: "The model fits our routine maintenance."));
+        Assert.Equal("activated", RuntimeJsonTestHelpers.Text(answer.Results["activation"], "outcome"));
+        Assert.Equal(decision, h.Store.GetByKey("standard-change-model", "routine-maintenance")!.Text("approvedByDecisionId"));
+
+        // The draft keeps the change as the admin wrote it.
+        Assert.DoesNotContain("approvedByDecisionId", CanonicalJson.Write(h.Row("configuration-draft", draft).Column("changeJson")!, CanonicalProfile.Snapshot), StringComparison.Ordinal);
+    }
+
     // An accepted draft that fails OP-09 at activation is discarded with its reason, and no version is created (document
     // 21, C46 Discard Reason). Here the grant runs longer than workload-grant-max-days from the activation date (V28).
     [Fact]

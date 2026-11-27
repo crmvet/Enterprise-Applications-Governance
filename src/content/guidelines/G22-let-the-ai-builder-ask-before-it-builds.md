@@ -11,7 +11,7 @@
 
 **Why it matters.** When a build takes a day, a review at the end means rework or a rubber stamp. By then the AI has already chosen the data, the identity and the audience. An AI client follows only what it can reach while it works, so governance has to answer inside the build, not after it.
 
-**How the product is designed to support it.** It is designed to answer these questions through its own MCP server, for the signed-in person, while the AI client builds. It is designed so a tier answer from the AI client is a draft assessment, never a decision, and so that no tool it ships can approve anything.
+**How the product is designed to support it.** It is designed to answer these questions through its own MCP server, for the signed-in person, while the AI client builds. It is designed so a tier answer from the AI client is a draft assessment, never a decision. No tool an AI client is served approves anything. The answer tool, `answer_approval`, is served only to a person signed in to the web app, who answers on the decision page.
 
 ## Microsoft anchors
 
@@ -28,6 +28,6 @@
   2. The AI client checks whether the app already exists, gets the tier questions, and drafts the answers for the person to check.
   3. It asks what the tier needs, who owns the app, what depends on it, and which documents are missing or stale.
   4. It drafts the intake or the change, and writes the documents in the team's own tools.
-  5. It submits for the person. A submission is a request; a person decides on an approval card (G17).
+  5. It submits for the person. A submission is a request; a person decides on the decision page in the web app (G17). An install may also switch on the approval runner (the optional flows that send approval notices). It is designed to send an answerable card in Outlook or Teams and relay the answer. The product takes a relayed card answer only while step-up sign-in (a fresh sign-in before each answer) is off.
 - **Done when:** every app or change started with an AI client has a register entry from before the build, and every decision on it was made by a person.
 - **Evidence:** intake and change records created before the first deployment, the performed-by marks on them, and the approval history with human approvers.

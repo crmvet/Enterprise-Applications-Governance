@@ -39,6 +39,7 @@ public sealed class OperationTests
     [InlineData("op-12")]
     [InlineData("op-13")]
     [InlineData("op-14")]
+    [InlineData("proposal-right")]
     public void EveryOperationHasPassingAndRefusingFixtures(string folder)
     {
         List<FixtureResult> results = FixtureRunner.ForSourceRoot(TestData.Root).RunFolder(Path.Combine(TestData.Root, "fixtures", folder)).ToList();
@@ -84,7 +85,7 @@ public sealed class OperationTests
                 EngineOperation.EvaluateTier, EngineOperation.ResolveRequiredApprovals, EngineOperation.EvaluateApprovalStatus, EngineOperation.EvaluateGateDecision,
                 EngineOperation.CheckChangeWindow, EngineOperation.EvaluateDocumentationCompleteness, EngineOperation.EvaluateGateReadiness, EngineOperation.GuardWrite,
                 EngineOperation.WalkImpact, EngineOperation.ComputeDueDates, EngineOperation.EvaluateStandardChange, EngineOperation.CompareGapCheckResult,
-                EngineOperation.EvaluateLinkedAuthorization,
+                EngineOperation.EvaluateLinkedAuthorization, EngineOperation.ResolveDataDomain, EngineOperation.EvaluateDataUse, EngineOperation.RunDataChecks,
             },
             built);
 
@@ -255,7 +256,8 @@ public sealed class OperationTests
                             if (result.Outcome == "engine-accept")
                             {
                                 Assert.True(type.Key == EngineKeys.IntakeDecisionType && tier != null && TierRank(snapshot, tier) == lowestRank, at + " was accepted without a card");
-                                Assert.Empty(result.Payload!.Requirements);
+                                // Only consents of the people it would make owners (document 25, B25-18), never a person's card.
+                                Assert.All(result.Payload!.Requirements, r => Assert.True(r.ApproverProposedOwners, at + " holds a requirement that is not a consent"));
                             }
                             else if (result.Outcome == OperationOutcomes.Refused)
                             {
@@ -270,7 +272,8 @@ public sealed class OperationTests
                                 {
                                     Assert.False(r.IsConsultation);
                                     Assert.True(r.MinimumCount >= 1, at);
-                                    Assert.True((r.ApproverRoleKey == null) != (r.ApproverOwnerRoleKey == null), at);
+                                    Assert.True((r.ApproverRoleKey == null ? 0 : 1) + (r.ApproverOwnerRoleKey == null ? 0 : 1) + (r.ApproverProposedOwners ? 1 : 0) == 1, at);
+                                    Assert.False(r.ApproverProposedOwners && result.Payload.Requirements.All(o => o.ApproverProposedOwners), at + " counts only the proposed owners");
                                     Assert.False(r.ApproverRoleKey != null && workloadOrReadOnly.Contains(r.ApproverRoleKey), at + " asks a workload or read-only role");
                                 });
                             }

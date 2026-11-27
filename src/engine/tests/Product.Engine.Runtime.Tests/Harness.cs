@@ -181,11 +181,12 @@ internal sealed class Harness
 
     // An AI client files an intake request for person 1 (linked to the estate's application when asked), a tier
     // assessment and an intake decision. Returns the decision ID.
-    public string IntakeDecision(bool tierTwo, bool linkApplication = true)
+    public string IntakeDecision(bool tierTwo, bool linkApplication = true, string? businessOwner = null)
     {
         RuntimeOutcome intake = Ok(Runtime.Write(AiClientOf1, WriteCommand.Create("intake-request",
             "{\"requester\":\"" + Person1 + "\",\"title\":\"Fixture travel requests\",\"need\":\"Replace the shared spreadsheet\",\"proposedKind\":\"power-platform-app\","
-            + (linkApplication ? "\"businessApplication\":\"" + ApplicationId + "\"," : string.Empty) + "\"status\":\"intake-submitted\"}")));
+            + (linkApplication ? "\"businessApplication\":\"" + ApplicationId + "\"," : string.Empty)
+            + (businessOwner == null ? string.Empty : "\"businessOwner\":\"" + businessOwner + "\",") + "\"status\":\"intake-submitted\"}")));
         Ok(Runtime.Write(AiClientOf1, WriteCommand.Create("tier-assessment",
             "{\"intakeRequest\":\"" + intake.RowId + "\",\"answersJson\":" + Answers(tierTwo) + ",\"assessedBy\":\"" + Person1 + "\"}")));
         RuntimeOutcome decision = Ok(Runtime.Write(AiClientOf1, WriteCommand.Create("decision",
@@ -199,6 +200,25 @@ internal sealed class Harness
         string after = "{\"outcome\":\"" + outcome + "\",\"approver\":\"" + approver + "\",\"approverActorKind\":\"" + actorKind + "\",\"approverPrincipalKind\":\"" + principalKind
             + "\",\"respondedOn\":\"2026-11-22T09:00:00Z\",\"approverHoldsRequiredRole\":true,\"channel\":\"teams\"" + (typedReason == null ? string.Empty : ",\"typedReason\":\"" + typedReason + "\"") + "}";
         return Runtime.Write(ApprovalRunner, WriteCommand.Update("approval-record", recordId, after));
+    }
+
+    // The one counting record among those a request opened. Balanced also opens consultation cards (document 21, B21-9:
+    // the architect, the PMO and the security reviewer on an intake), which never count.
+    // A business owner the intake names consents on a record of their own (document 25, B25-18), which this leaves out.
+    public string CountingRecord(JsonTreeNode? payload)
+    {
+        return Assert.Single(RuntimeJsonTestHelpers.Strings(payload, "approvalRecordIds"), id => !Row("approval-record", id).Flag("isConsultation") && !IsConsent(id));
+    }
+
+    // The consent record of the business owner an intake names (B25-18), asked by name.
+    public string ConsentRecord(JsonTreeNode? payload)
+    {
+        return Assert.Single(RuntimeJsonTestHelpers.Strings(payload, "approvalRecordIds"), IsConsent);
+    }
+
+    private bool IsConsent(string id)
+    {
+        return Row("approval-record", id).Text("approvalRule") == "intake-business-owner-consent";
     }
 
     public Ports.StoredRow Row(string entity, string id)

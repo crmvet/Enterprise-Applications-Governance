@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "ownership-subdomain-parent-owner",
+  "description": "An ownership decision about a lower domain goes to the owner of its parent domain (docs/architecture/data-taxonomy.md, Appointing owners).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "ownership",
+    "subjectKind": "data-domain",
+    "dataDomainLevelKey": "subdomain",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "ownership-domain-parent-owner",
+          "approverOwnerRoleKey": "data-owner",
+          "ownerSubject": "parent-data-domain"
+        },
+        {
+          "ruleKey": "ownership-domain-proposed-owners"
+        }
+      ]
+    }
+  }
+}

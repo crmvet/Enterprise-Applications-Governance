@@ -25,12 +25,17 @@
         "OP-12",
         "OP-13",
         "OP-14",
+        "OP-15",
+        "OP-16",
+        "OP-17",
         "rebase",
         "activate",
-        "bootstrap"
+        "bootstrap",
+        "proposal-right",
+        "approval-answer"
       ],
-      "description": "The engine operation under test: OP-01 to OP-14 (document 25, section 5.2), or a configuration operation of document 21 that has no OP number, such as rebase (document 21, section 4.5), activate (document 25, section 6.4) or bootstrap (document 21, section 4.8).",
-      "$comment": "rebase, activate and bootstrap are proposals of this schema: documents 21 and 25 name the operations, but give them no ID or outcome words. The other configuration operations (upgrade draft, revert, seed staging, draft expiry) are added the same way."
+      "description": "The engine operation under test: OP-01 to OP-14 (document 25, section 5.2), a configuration operation of document 21 that has no OP number, such as rebase (document 21, section 4.5), activate (document 25, section 6.4) or bootstrap (document 21, section 4.8), proposal-right, the check of who may propose a decision (document 24, tool 17; B24-5), or approval-answer, the check a person's own answer to an approval passes before the engine writes it (D-38; document 26, AN-01 and AN-02).",
+      "$comment": "rebase, activate, bootstrap, proposal-right and approval-answer are proposals of this schema: documents 21, 24, 25 and 26 name the operations, but give them no ID or outcome words. The other configuration operations (upgrade draft, revert, seed staging, draft expiry) are added the same way."
     },
     "case": {
       "$ref": "config-bundle.schema.json#/$defs/key",
@@ -51,7 +56,7 @@
       "type": "array",
       "items": { "type": "string", "pattern": "^(V[0-9]{2}|G-[0-9]{2})$" },
       "uniqueItems": true,
-      "description": "The validation rules (V01 to V44) or guard rules (G-01 to G-17) the case covers."
+      "description": "The validation rules (V01 to V60) or guard rules (G-01 to G-25) the case covers."
     },
     "workingDefaults": {
       "type": "array",
@@ -411,6 +416,44 @@
       }
     },
     {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-15" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "input": { "$ref": "#/$defs/dataDomainInput" },
+          "facts": { "$ref": "#/$defs/dataOwnerFacts" },
+          "expected": { "properties": { "outcome": { "enum": ["resolved", "invalid-input", "refused", "not-found", "conflict", "unavailable"] } } }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-16" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "input": { "$ref": "#/$defs/dataUseInput" },
+          "facts": { "$ref": "#/$defs/dataUseFacts" },
+          "expected": {
+            "properties": {
+              "outcome": {
+                "enum": ["not-needed", "needed", "proposed", "allowed", "denied", "re-decide", "breaks-rule", "no-one-to-ask", "invalid-input", "refused", "not-found", "conflict", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-17" } } },
+      "then": {
+        "properties": {
+          "input": { "$ref": "#/$defs/dataChecksInput" },
+          "facts": { "$ref": "#/$defs/dataChecksFacts" },
+          "expected": { "properties": { "outcome": { "enum": ["checked", "invalid-input", "refused", "not-found", "conflict", "unavailable"] } } }
+        }
+      }
+    },
+    {
       "if": { "required": ["operation"], "properties": { "operation": { "const": "OP-09" } } },
       "then": { "properties": { "input": { "$ref": "#/$defs/validateInput" } } }
     },
@@ -453,6 +496,36 @@
           "expected": {
             "properties": {
               "outcome": { "enum": ["bootstrapped", "invalid", "refused", "invalid-input"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "proposal-right" } } },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "input": { "$ref": "#/$defs/proposalRightInput" },
+          "facts": { "$ref": "#/$defs/proposalRightFacts" },
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["allowed", "refused", "invalid-input", "unavailable"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "required": ["operation"], "properties": { "operation": { "const": "approval-answer" } } },
+      "then": {
+        "required": ["input", "facts"],
+        "properties": {
+          "input": { "$ref": "#/$defs/approvalAnswerInput" },
+          "facts": { "$ref": "#/$defs/approvalAnswerFacts" },
+          "expected": {
+            "properties": {
+              "outcome": { "enum": ["allowed", "refused", "invalid-input", "unavailable"] }
             }
           }
         }
@@ -576,7 +649,8 @@
         "severity": { "enum": ["info", "warning", "error"] },
         "entity": { "type": "string" },
         "ref": { "type": "string" },
-        "ruleId": { "type": "string", "pattern": "^(V[0-9]{2}|G-[0-9]{2})$" }
+        "ruleId": { "type": "string", "pattern": "^(V[0-9]{2}|G-[0-9]{2})$" },
+        "messageContains": { "type": "string", "minLength": 1, "description": "A part of the reason's sentence that must appear in it, for a case about the words a person reads." }
       },
       "additionalProperties": false
     },
@@ -639,7 +713,13 @@
         "changeTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
         "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
         "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
-        "portfolioPath": { "$ref": "#/$defs/portfolioPath" }
+        "portfolioPath": { "$ref": "#/$defs/portfolioPath" },
+        "subjectApplicationRegistered": { "type": "boolean", "description": "True when the decision is about a request linked to an application already in the register. The lowest-tier engine acceptance then does not apply (document 25, B25-15)." },
+        "subjectKind": { "$ref": "config-bundle.schema.json#/$defs/key", "description": "The data taxonomy (docs/architecture/data-taxonomy.md, Entities): the decision's subject kind. None means an application." },
+        "classificationKey": { "$ref": "config-bundle.schema.json#/$defs/key", "description": "The effective classification of the data the decision is about." },
+        "aiUse": { "type": "boolean", "description": "True when the data use reaches AI." },
+        "dataDomainLevelKey": { "$ref": "config-bundle.schema.json#/$defs/key", "description": "The level of the data domain an ownership decision is about." },
+        "dataTaxonomyChange": { "enum": ["touches", "loosens"], "description": "What a configuration draft does to the data taxonomy, computed from its diff." }
       },
       "additionalProperties": false
     },
@@ -661,6 +741,95 @@
       },
       "additionalProperties": false
     },
+    "proposalRightInput": {
+      "type": "object",
+      "description": "The proposal right check's scope (document 24, tool 17; B24-5): the decision type and the scope fields OP-02 reads, as the runtime derives them from the decision's subject.",
+      "$comment": "Outcome words, a proposal of this schema: allowed (the person holds a responsible, accountable or consulted Decision Right of the winning group), refused (decision.propose-not-allowed; the payload lists who holds the letters), invalid-input, unavailable (no Decision Right group matches, or two tie).",
+      "required": ["decisionTypeKey"],
+      "properties": {
+        "decisionTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "lifecycleStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "changeTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "portfolioPath": { "$ref": "#/$defs/portfolioPath" }
+      },
+      "additionalProperties": false
+    },
+    "proposalRightFacts": {
+      "type": "object",
+      "description": "What the runtime resolves about the person behind the call: the product roles held now (C29), and the owner roles held now on the subject's application (C28; a deputy too).",
+      "properties": {
+        "roleKeys": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/key" }, "uniqueItems": true },
+        "ownerRoleKeys": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/key" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "approvalAnswerInput": {
+      "type": "object",
+      "description": "What a person sends to answer their own Approval Record on the product's decision page (D-38): the record, approve or reject, and whether they typed a reason. The responder is the context's actor, never a field of the input.",
+      "$comment": "Outcome words, a proposal of this schema: allowed (the engine writes the answer and recomputes the decision), refused (approval.answer-person-only, approval.answer-not-asked, approval.answer-separation, approval.answer-already-given, approval.answer-expired or approval.answer-closed; nothing is written), invalid-input (approval.answer-reason-required, or a malformed input), unavailable.",
+      "required": ["approvalRecordId", "answer"],
+      "properties": {
+        "approvalRecordId": { "type": "string", "minLength": 1 },
+        "answer": { "enum": ["approve", "reject"] },
+        "hasReason": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "approvalAnswerFacts": {
+      "type": "object",
+      "description": "What the runtime fetches for the approval answer check: the Approval Record (O10), its decision's status and scope (the decision type, tier and target stage the separation rules match), the parties the separation rules compare, the accepted exception decision types, the owner roles the person holds now on the decision's application (C28; a deputy too), and the decision's answered records.",
+      "required": ["record", "decisionStatus", "scope"],
+      "properties": {
+        "record": {
+          "type": "object",
+          "required": ["outcome"],
+          "properties": {
+            "outcome": { "enum": ["pending", "approved", "rejected", "expired", "cancelled", "recommendation-only"] },
+            "approvalRuleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "decisionRightKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "requiredRoleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "requiredOwnerRoleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "askedPrincipalId": { "type": "string", "minLength": 1, "description": "O10 Asked Principal: the one person the record asks by name (document 25, B25-14)." },
+            "isConsultation": { "type": "boolean", "default": false },
+            "expiresOnUtc": { "$ref": "#/$defs/utc" }
+          },
+          "additionalProperties": false
+        },
+        "decisionStatus": { "enum": ["proposed", "accepted", "rejected", "superseded", "withdrawn"] },
+        "scope": {
+          "type": "object",
+          "required": ["decisionTypeKey"],
+          "properties": {
+            "decisionTypeKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+          },
+          "additionalProperties": false
+        },
+        "parties": { "type": "object", "description": "SeparationFacts, as for OP-03: proposerPrincipalId, instructingAdminPrincipalId, deployerPrincipalIds, ownerRoleHolders, roleHolders." },
+        "acceptedExceptionDecisionTypeKeys": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/key" }, "uniqueItems": true },
+        "ownerRoleKeys": { "type": "array", "items": { "$ref": "config-bundle.schema.json#/$defs/key" }, "uniqueItems": true },
+        "earlierAnswers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["approvalRecordId", "ruleKey", "outcome"],
+            "properties": {
+              "approvalRecordId": { "type": "string", "minLength": 1 },
+              "ruleKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+              "responderPrincipalId": { "type": "string", "minLength": 1 },
+              "outcome": { "enum": ["pending", "approved", "rejected", "expired", "cancelled", "recommendation-only"] },
+              "countsTowardRequirement": { "type": "boolean", "default": false }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "requiredApproval": {
       "type": "object",
       "description": "RequiredApproval (document 25, section 5.4), as OP-02 returns it. minimumCount has no lower bound here, so a fixture can prove that 0 is refused at run time.",
@@ -677,7 +846,9 @@
         "minimumCount": { "type": "integer" },
         "timeoutDays": { "type": "integer", "minimum": 0 },
         "requiresTypedReason": { "type": "boolean" },
-        "guidelineKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+        "guidelineKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "approverProposedOwners": { "type": "boolean" },
+        "fallbackOwnerRoleKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
       },
       "additionalProperties": false
     },
@@ -810,7 +981,8 @@
       "properties": {
         "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
         "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
-        "lifecycleStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+        "lifecycleStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "isRetired": { "type": "boolean", "description": "True when the application's registration is retired: no requirement applies, and its links stay as history (wave 4b)." }
       },
       "additionalProperties": false
     },
@@ -884,7 +1056,18 @@
         "documentation": { "$ref": "#/$defs/documentationResult" },
         "doneReviewTypeKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
         "assignedOwnerRoleKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
-        "triggeredGateRequirementKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" }
+        "triggeredGateRequirementKeys": { "$ref": "config-bundle.schema.json#/$defs/keys" },
+        "dataUses": {
+          "type": "object",
+          "description": "A proposal (docs/architecture/data-taxonomy.md, Gate requirements): the counts of the subject's data uses, as the runtime computes them with OP-16.",
+          "properties": {
+            "declaredCount": { "type": "integer", "minimum": 0 },
+            "holdsNoBusinessData": { "type": "boolean" },
+            "undecidedCount": { "type": "integer", "minimum": 0 },
+            "retentionOpenCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },
@@ -1130,7 +1313,7 @@
     },
     "guardFacts": {
       "type": "object",
-      "description": "OP-08 facts the adapter fetches: the pre-image (before), the set kind of a configuration row (G-02), the principal kind a Role Group Binding names (G-12), what an accept-decision write rests on (G-17), the OP-07 payload for a gate decision (G-14), the Request Hash stored with a reused idempotency key (G-15), and the Principal Reference of an approval outcome's Approver (G-06).",
+      "description": "OP-08 facts the adapter fetches: the pre-image (before), the set kind of a configuration row (G-02), the principal kind a Role Group Binding names (G-12), what an accept-decision write rests on (G-17), the OP-07 payload for a gate decision (G-14), the Request Hash stored with a reused idempotency key (G-15), the Principal Reference of an approval outcome's Approver (G-06), the approval answer check behind a person's own answer (G-06, D-38), and the subject of an accepted decision for the update-subject effect (document 25, B25-8), and the outcome decision of a review set done (document 25, B25-12).",
       "properties": {
         "before": { "type": "object", "description": "The current values of the columns the rules need." },
         "configurationSetKind": { "enum": ["preset", "working"] },
@@ -1158,9 +1341,166 @@
             "isErased": { "type": "boolean", "default": false }
           },
           "additionalProperties": false
+        },
+        "approvalAnswer": {
+          "type": "object",
+          "description": "A proposal (D-38): for a person's own approval answer, the approval answer check the runtime ran for the signed-in person (G-06, the person path), bound to the record and the answer it judged. A request never carries it; only these fixtures do.",
+          "required": ["checkOutcome", "responderPrincipalId", "approvalRecordId", "answer"],
+          "properties": {
+            "checkOutcome": { "type": "string", "minLength": 1, "description": "The check's outcome word. Only allowed lets the answer through." },
+            "responderPrincipalId": { "type": "string", "minLength": 1, "description": "The person the check judged." },
+            "approvalRecordId": { "type": "string", "minLength": 1, "description": "The Approval Record the check judged. The answer is written to this record only." },
+            "answer": { "enum": ["approved", "rejected"], "description": "The answer the check judged, as an outcome meaning. The write must store this answer." }
+          },
+          "additionalProperties": false
+        },
+        "subject": {
+          "type": "object",
+          "description": "A proposal (document 25, B25-8): for an accept-decision write, the decision's subject as the store holds it, for the update-subject effect. Each row is a JSON object of its columns with its id.",
+          "properties": {
+            "application": { "$ref": "#/$defs/guardRow", "description": "The application the decision changes: the subject application, or the one the subject intake or change request names." },
+            "intake": { "$ref": "#/$defs/guardRow", "description": "The subject intake request, for an intake decision." },
+            "changeRequest": { "$ref": "#/$defs/guardRow", "description": "The subject change request, for a change authorization decision." },
+            "tierAssessment": { "$ref": "#/$defs/guardRow", "description": "The latest tier assessment of the subject, for a tier decision." },
+            "owners": { "type": "array", "items": { "$ref": "#/$defs/guardRow" }, "description": "The current owner assignments of the application." },
+            "dueReviewIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "The reviews of the application still due, for a move to a retired stage." },
+            "newRowIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "The IDs the rows the effect creates take, used in order: the core makes no random values." },
+            "intakeOwnerConsented": { "type": "boolean", "description": "A proposal (document 25, B25-18): true when the business owner the subject intake names accepted the role on their own approval request. Absent reads as false, so the named person is not assigned." }
+          },
+          "additionalProperties": false
+        },
+        "reviewOutcome": {
+          "type": "object",
+          "description": "A proposal (document 25, B25-12): for a write that sets a review done, the decision the review names as its Outcome Decision, as the store holds it.",
+          "required": ["decisionId"],
+          "properties": {
+            "decisionId": { "type": "string", "minLength": 1, "description": "The O09 row the review names." },
+            "statusMeaning": { "type": "string", "minLength": 1, "description": "Its Status Meaning. Only accepted lets the review be done." },
+            "decisionTypeKey": { "type": "string", "minLength": 1, "description": "Its Decision Type, which must be the type the review type records." },
+            "subjectApplicationId": { "type": "string", "minLength": 1, "description": "Its Subject Application, which must be the review's application." },
+            "usedByReviewId": { "type": "string", "minLength": 1, "description": "Another done review that already names the decision. A decision closes one review only (document 25, B25-15)." },
+            "decidedOn": { "type": "string", "minLength": 10, "description": "The decision's Decided On." },
+            "cycleStartedOn": { "type": "string", "minLength": 10, "description": "The latest Done On of an earlier done review of the same type and application. A decision decided before it is from an earlier cycle (B25-15)." }
+          },
+          "additionalProperties": false
+        },
+        "dataFacts": {
+          "type": "object",
+          "description": "A proposal (docs/architecture/data-taxonomy.md, Guard rules): what G-18, G-20, G-23, G-24 and G-25 read beyond the row.",
+          "properties": {
+            "locationStageKey": { "$ref": "config-bundle.schema.json#/$defs/key", "description": "The effective stage of the location a use or mapping names." },
+            "parentLocation": {
+              "type": "object",
+              "properties": { "hasParent": { "type": "boolean" }, "targetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" } },
+              "additionalProperties": false
+            },
+            "deploymentTargetStageKey": { "$ref": "config-bundle.schema.json#/$defs/key", "description": "The stage of the deployment target a location links to." },
+            "decisionSubject": {
+              "type": "object",
+              "required": ["subjectKind", "domainKey"],
+              "properties": {
+                "subjectKind": { "$ref": "config-bundle.schema.json#/$defs/key" },
+                "domainKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+                "reachesAi": { "type": "boolean" },
+                "isDeidentified": { "type": "boolean" },
+                "origin": { "type": "string", "minLength": 1 },
+                "locationStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+              },
+              "additionalProperties": false
+            },
+            "duplicateUse": { "type": "string", "minLength": 1, "description": "G-18, the second key of O27: the record number (or ID) of another open use with the same application, domain, location and AI flag." },
+            "duplicateLocation": { "type": "string", "minLength": 1, "description": "G-18, the alternate key of O25: the label (or ID) of another data location in service with the same platform and URL, neither with an External Id." }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
+    },
+    "dataDomainInput": {
+      "type": "object",
+      "description": "OP-15 input (docs/architecture/data-taxonomy.md, Engine): the domain key.",
+      "required": ["domainKey"],
+      "properties": { "domainKey": { "$ref": "config-bundle.schema.json#/$defs/key" } },
+      "additionalProperties": false
+    },
+    "dataOwnerFacts": {
+      "type": "object",
+      "description": "A proposal: the O06 rows OP-15 reads (each names one subject: dataDomainKey, dataLocationId or applicationId) and the directory state of their principals.",
+      "properties": {
+        "ownerAssignments": { "type": "array", "items": { "type": "object" } },
+        "principals": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "dataUseInput": {
+      "type": "object",
+      "description": "OP-16 input (docs/architecture/data-taxonomy.md, The decision state): the data use or copy mapping, and its application's scope.",
+      "required": ["domainKey"],
+      "properties": {
+        "subjectKind": { "enum": ["data-use", "data-mapping"] },
+        "domainKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "reachesAi": { "type": "boolean" },
+        "isDeidentified": { "type": "boolean" },
+        "origin": { "type": "string", "minLength": 1 },
+        "locationId": { "type": "string", "minLength": 1 },
+        "locationStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "applicationId": { "type": "string", "minLength": 1 },
+        "tierKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "lifecycleStageKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "applicationKindKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+        "portfolioPath": { "$ref": "#/$defs/portfolioPath" }
+      },
+      "additionalProperties": false
+    },
+    "dataUseFacts": {
+      "type": "object",
+      "description": "A proposal: OP-16's facts. The owners and principals, the decisions about the subject, and for the warnings DC-09 and DC-11 the application's sensitivity answer and whether the domain is mapped at the location.",
+      "properties": {
+        "ownerAssignments": { "type": "array", "items": { "type": "object" } },
+        "principals": { "type": "array", "items": { "type": "object" } },
+        "decisions": { "type": "array", "items": { "type": "object" } },
+        "mappedAtLocation": { "type": "boolean" },
+        "sensitivityAnswerKey": { "$ref": "config-bundle.schema.json#/$defs/key" }
+      },
+      "additionalProperties": false
+    },
+    "dataChecksInput": {
+      "type": "object",
+      "description": "OP-17 input (docs/architecture/data-taxonomy.md, Data checks): the scope. None means everything.",
+      "properties": {
+        "scope": {
+          "type": "object",
+          "properties": {
+            "domainKey": { "$ref": "config-bundle.schema.json#/$defs/key" },
+            "includeSubtree": { "type": "boolean" },
+            "applicationId": { "type": "string", "minLength": 1 },
+            "locationId": { "type": "string", "minLength": 1 },
+            "principalId": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "dataChecksFacts": {
+      "type": "object",
+      "description": "A proposal: OP-17's facts, the rows in scope.",
+      "properties": {
+        "ownerAssignments": { "type": "array", "items": { "type": "object" } },
+        "principals": { "type": "array", "items": { "type": "object" } },
+        "locations": { "type": "array", "items": { "type": "object" } },
+        "mappings": { "type": "array", "items": { "type": "object" } },
+        "uses": { "type": "array", "items": { "type": "object" } },
+        "applications": { "type": "array", "items": { "type": "object" } },
+        "decisions": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "guardRow": {
+      "type": "object",
+      "required": ["id"],
+      "properties": { "id": { "type": "string", "minLength": 1 } },
+      "description": "A stored row: its columns (lowerCamelCase) and its id."
     },
     "activateInput": {
       "type": "object",

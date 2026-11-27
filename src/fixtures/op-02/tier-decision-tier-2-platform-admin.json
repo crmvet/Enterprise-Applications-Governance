@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "tier-decision-tier-2-platform-admin",
+  "description": "Balanced aligned with P02: a tier decision below tier 3 needs the platform admin alone, first to respond.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "tier",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "tier-platform-admin",
+          "approverRoleKey": "platform-admin",
+          "isConsultation": false,
+          "approvalMode": "first-to-respond",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": false
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "tier-platform-admin",
+        "role": "won"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "regulated-confidential-ai-security",
+  "description": "Regulated: AI use of confidential data also asks the security reviewer.",
+  "snapshot": {
+    "presetKey": "regulated"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "data-use",
+    "tierKey": "tier-2",
+    "subjectKind": "data-use",
+    "classificationKey": "confidential",
+    "aiUse": true,
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "data-use-confidential-ai-owner"
+        },
+        {
+          "ruleKey": "data-use-confidential-ai-security",
+          "approverRoleKey": "security-reviewer"
+        }
+      ]
+    }
+  }
+}

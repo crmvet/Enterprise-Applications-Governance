@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_audit_trail output",
+  "description": "The response envelope. On success, data lists audit entries, newest first, with paging.",
+  "x-tool": "get_audit_trail",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "One audit entry. Entries hold IDs, never names; the names here come from the store.",
+            "required": [
+              "auditEntryId",
+              "occurredOn",
+              "operation",
+              "what",
+              "tool",
+              "record",
+              "actor",
+              "actorKind",
+              "onBehalfOf",
+              "clientApp",
+              "correlationId",
+              "statusAfter",
+              "refusal",
+              "hasRequestKey"
+            ],
+            "properties": {
+              "auditEntryId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O24 Audit Entry"
+              },
+              "occurredOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "operation": {
+                "type": "string",
+                "description": "The operation as stored, such as composed-call or call-refused."
+              },
+              "what": {
+                "type": "string",
+                "description": "The operation in plain words."
+              },
+              "tool": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The tool a composed or refused call named."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "record": {
+                "description": "The record the entry is about. Null for an entry about no row.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "entity",
+                      "recordId",
+                      "label",
+                      "recordUrl"
+                    ],
+                    "properties": {
+                      "entity": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/entityKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "recordId": {
+                        "type": "string",
+                        "description": "The ID of the record the entry is about."
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The record as people know it, read from the store today.",
+                            "x-untrusted": true
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "recordUrl": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/recordUrl"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "actor": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "actorKind": {
+                "$ref": "../common.schema.json#/$defs/actorKindMeaning"
+              },
+              "onBehalfOf": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "clientApp": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The client the call came through, as stamped."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "correlationId": {
+                "type": "string",
+                "description": "Ties together the entries of one call."
+              },
+              "statusAfter": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The status meaning the call left on its record, when it set one."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "refusal": {
+                "description": "For a refused call: the code, the rule and the reason.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "description": "Why the call was refused.",
+                    "required": [
+                      "code",
+                      "ruleKey",
+                      "reasonCode",
+                      "ruleIds",
+                      "rule",
+                      "knownTool",
+                      "guideline",
+                      "guidelineTitle"
+                    ],
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "description": "The fixed error code of the refusal, such as ai_cannot_do_this."
+                      },
+                      "ruleKey": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The configuration row that refused, when the error named one."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "reasonCode": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The engine reason code, when the engine refused."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "ruleIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "The rules the reason stands for, such as G-08 (AI never approves)."
+                      },
+                      "rule": {
+                        "type": "string",
+                        "description": "The refusal in plain words, from the reason catalog."
+                      },
+                      "knownTool": {
+                        "type": "boolean",
+                        "description": "False when the AI client called a tool name the product does not have, such as an approve tool."
+                      },
+                      "guideline": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/guidelineNumber"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The guideline the refusing rule applies, such as G17, which the page shows as a chip that opens Guidelines. Null when no guideline speaks to the refusal."
+                      },
+                      "guidelineTitle": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The guideline's title in the configuration in force, such as \"Let AI draft and recommend; people approve\". Null with no guideline."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hasRequestKey": {
+                "type": "boolean",
+                "description": "True when the caller sent an idempotency key, so a retry returns the first answer."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many entries match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "2 audit entries for the record, newest first.",
+      "data": {
+        "items": [
+          {
+            "auditEntryId": "50000000-0000-4000-8000-0000000000a1",
+            "occurredOn": "2026-11-24T08:05:00Z",
+            "operation": "composed-call",
+            "what": "Called submit_record",
+            "tool": "submit_record",
+            "record": {
+              "entity": "decision",
+              "recordId": "50000000-0000-4000-8000-000000000001",
+              "label": "DEC-0146: Retire the travel planner",
+              "recordUrl": "https://product.example.org/app/records/decision/50000000-0000-4000-8000-000000000001"
+            },
+            "actor": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "actorKind": "person",
+            "onBehalfOf": null,
+            "clientApp": "Web app",
+            "correlationId": "corr-0068",
+            "statusAfter": "proposed",
+            "refusal": null,
+            "hasRequestKey": true
+          },
+          {
+            "auditEntryId": "50000000-0000-4000-8000-0000000000a2",
+            "occurredOn": "2026-11-24T08:01:00Z",
+            "operation": "call-refused",
+            "what": "Refused answer_approval",
+            "tool": "answer_approval",
+            "record": null,
+            "actor": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "actorKind": "ai-client-for-person",
+            "onBehalfOf": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "clientApp": "Claude Code",
+            "correlationId": "corr-0066",
+            "statusAfter": null,
+            "refusal": {
+              "code": "ai_cannot_do_this",
+              "ruleKey": null,
+              "reasonCode": null,
+              "ruleIds": [],
+              "rule": "AI never approves: only a person, or the approval runner for a person, sets this state.",
+              "knownTool": true,
+              "guideline": "G17",
+              "guidelineTitle": "Let AI draft and recommend; people approve"
+            },
+            "hasRequestKey": false
+          }
+        ],
+        "totalCount": 2
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

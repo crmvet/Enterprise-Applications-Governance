@@ -39,14 +39,19 @@ public sealed class ToolScope
     private readonly InProcessBackend _backend;
     private readonly List<KeyValuePair<string, int>> _couldNotRead = new();
 
-    internal ToolScope(InProcessBackend backend, ComposedCall call, BackendSession session, ToolInvocation invocation)
+    internal ToolScope(InProcessBackend backend, ComposedCall call, BackendSession session, ToolInvocation invocation, RuntimeOutcome? prepared = null)
     {
         _backend = backend;
         Call = call;
         Session = session;
         Invocation = invocation;
         Args = invocation.Arguments;
+        Prepared = prepared;
     }
+
+    // What a tool's own engine call returned before its read call, for a tool that runs one (ToolHandler.Before):
+    // run_due_state_refresh, whose items each commit in their own transaction. Null for every other tool.
+    public RuntimeOutcome? Prepared { get; }
 
     public ComposedCall Call { get; }
 
@@ -66,6 +71,27 @@ public sealed class ToolScope
 
     public string Today => Now.ToString("yyyy'-'MM'-'dd", CultureInfo.InvariantCulture);
 
+    // The person's own calendar day, for the date-only values a write stamps when the caller gives none: the day a review
+    // is done, a document checked, a use or a mapping starts or ends, a component or a place retires, a review falls due
+    // (wave 4, B24-21). The product's web app sends the person's local day with every request; it counts when it is the
+    // UTC day or the day before or after, the range every time zone falls in. Any other value, or none (an AI client, a
+    // script), gives the UTC day, as before. Reads keep the UTC day.
+    public string PersonToday
+    {
+        get
+        {
+            string? local = Invocation.CallerLocalDay;
+            if (local != null && local.Length == 10
+                && DateTime.TryParseExact(local, "yyyy'-'MM'-'dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime day)
+                && Math.Abs((day.Date - Now.Date).TotalDays) <= 1)
+            {
+                return local;
+            }
+
+            return Today;
+        }
+    }
+
     // The signed-in person (the AI client acts for them).
     public string PersonId => Session.Caller.ObjectId;
 
@@ -76,6 +102,29 @@ public sealed class ToolScope
     public PresetCatalog Catalog => _backend.Catalog;
 
     public InProcessBackendOptions Options => _backend.Options;
+
+    // When the configuration version in force came into force (wave 4b verify round): the session's Published On, then the oldest
+    // audit entry's moment, and only then now (InProcessBackend.VersionPublishedOn). Every page reads this one answer.
+    public DateTime InForcePublishedOn => Session.PublishedOnUtc ?? _backend.VersionPublishedOn(null) ?? Now;
+
+    // CanReadIntake's answer per intake request in this call (wave 4b review).
+    internal Dictionary<string, bool> IntakeReadable { get; } = new(StringComparer.Ordinal);
+
+    // A list this read works out whole and then pages, kept for the later pages of the same query (wave 4b review;
+    // InProcessBackend.CachedList): the first page computes it, a later page reads it when it is under a minute old and
+    // no write call started since.
+    public T PagedList<T>(Func<T> compute)
+        where T : class
+    {
+        string key = Tool.Name + "|" + Session.Caller.Entry + "|" + Session.Caller.ObjectId + "|" + string.Join(",", Session.RoleKeys) + "|" + Call.Snapshot.ContentHash + "|" + QueryHash();
+        return _backend.CachedList(key, Js.Text(Args, "skipToken") != null, Now, compute);
+    }
+
+    // The same for one Configuration Set Version row: Published On, Engine Checked On, the oldest audit entry, now.
+    public DateTime PublishedOnOf(StoredRow? version)
+    {
+        return _backend.VersionPublishedOn(version) ?? Now;
+    }
 
     public ContractSet Contracts => _backend.Contracts;
 
@@ -120,9 +169,9 @@ public sealed class ToolScope
         return Call.Fail(RuntimeOutcome.NotFound, ReasonCodes.RefNotFound, entityName + " " + id + " does not exist, or you cannot see it.", entityName, field);
     }
 
-    public Exception Refused(string code, string message, string? reference = null)
+    public Exception Refused(string code, string message, string? reference = null, string? recordUrl = null)
     {
-        return new ToolFailureException(new McpError(code, message, ruleKey: reference));
+        return new ToolFailureException(new McpError(code, message, ruleKey: reference, recordUrl: recordUrl));
     }
 
     public Exception Upstream(string what, string? problem)
@@ -371,6 +420,19 @@ public sealed class ToolScope
                 : JsonTreeNode.Null));
     }
 
+    // { actorKind, principal, onBehalfOf, clientApp } for the caller of this call, when no row records the write (a
+    // preview that writes nothing): the AI client is named, as the engine would stamp it on a row (wave 3 verification:
+    // a move preview named the person with no client).
+    public JsonTreeNode CallerPerformedBy()
+    {
+        string? appId = Session.Caller.ClientAppId;
+        return Js.Obj(
+            ("actorKind", JsonTreeNode.FromString(Session.ActorKind)),
+            ("principal", PrincipalRef(PersonId)),
+            ("onBehalfOf", IsAiCaller ? PrincipalRef(PersonId) : JsonTreeNode.Null),
+            ("clientApp", IsGuid(appId) ? Js.Obj(("appId", JsonTreeNode.FromString(appId!)), ("label", JsonTreeNode.FromString(Session.Caller.ClientAppLabel ?? appId!))) : JsonTreeNode.Null));
+    }
+
     public static JsonTreeNode Merge(List<(string, JsonTreeNode?)> members, params (string Name, JsonTreeNode? Value)[] more)
     {
         var all = new List<(string, JsonTreeNode?)>(members);
@@ -402,9 +464,11 @@ public sealed class ToolScope
         return new NextStep(tool, Js.Obj(inputs));
     }
 
+    // The request's own base, when the host set one (a local run with no public base URL links to the address it serves,
+    // document 24, B24-17), else the backend's configured base.
     public string RecordUrl(string entity, string? id)
     {
-        return Options.RecordUrlBase.TrimEnd('/') + "/" + entity + (id == null ? string.Empty : "/" + id);
+        return (Invocation.RecordUrlBase ?? Options.RecordUrlBase).TrimEnd('/') + "/" + entity + (id == null ? string.Empty : "/" + id);
     }
 
     // ---- Paging (document 24, section 3.3: skipToken encodes the query, not server state) ----

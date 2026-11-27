@@ -6,13 +6,13 @@ using Product.Mcp.Core.Json;
 
 namespace Product.Mcp.Core.Protocol;
 
-// The thin adapter between an MCP library and the server core. The MCP library sits behind it until one is chosen.
-// The core speaks JSON-RPC messages; a library brings the transport, session handling and its own types. Whatever
-// library is chosen plugs in here, and nothing else in the core changes.
+// The thin adapter between an MCP library and the server core. The core speaks JSON-RPC messages; a library brings the
+// transport, session handling and its own types, and plugs in at this seam, so nothing else in the core changes.
 //
-// No MCP library is referenced yet: PassThroughMcpAdapter is the stub. It reads one streamable HTTP POST to the endpoint
-// and hands the message straight to McpServerCore. A host (Azure Functions or Container Apps) maps its HTTP request to
-// McpHttpRequest and writes McpHttpResponse back.
+// The core references no MCP library. PassThroughMcpAdapter reads one streamable HTTP POST to the endpoint and hands the
+// message straight to McpServerCore; the core's own tests use it. A host maps its HTTP request to McpHttpRequest and
+// writes McpHttpResponse back. The Azure host runs the same handling by default, and can run the official MCP C# SDK
+// server transport (ModelContextProtocol.AspNetCore, stateless streamable HTTP) instead, with Product:Mcp:Transport = sdk.
 public interface IMcpLibraryAdapter
 {
     // The library behind the adapter, for logs and the setup guide.
@@ -55,7 +55,7 @@ public sealed class McpHttpResponse
     public IReadOnlyDictionary<string, string> Headers { get; }
 }
 
-// The stub until an MCP library is chosen: parses the body with the engine's JSON reader and calls the core. A body
+// The pass-through stub, with no MCP library: parses the body with the engine's JSON reader and calls the core. A body
 // that does not parse is the JSON-RPC parse error; a batch (a JSON array) is refused, because the protocol version the
 // core answers has no batches.
 public sealed class PassThroughMcpAdapter : IMcpLibraryAdapter
@@ -67,7 +67,7 @@ public sealed class PassThroughMcpAdapter : IMcpLibraryAdapter
         _core = core ?? throw new ArgumentNullException(nameof(core));
     }
 
-    public string LibraryName => "none (pass-through stub until an MCP library is chosen)";
+    public string LibraryName => "none (pass-through stub: the core's own JSON-RPC handling)";
 
     public McpHttpResponse Handle(McpHttpRequest request)
     {

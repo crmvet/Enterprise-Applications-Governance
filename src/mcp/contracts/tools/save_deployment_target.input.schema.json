@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_deployment_target input",
+  "description": "Registers a place deployments land, changes one, retires one or returns a retired one to service (O15). Served only to a person in the product's web app: the stage decides the gate level a deployment there meets, and the change path decides which routes are flagged. A new target needs its kind, stage, change path, link kind, external ID and label; Link Kind and External Id are its business key. record_deployment takes only a registered target in service. Retiring takes a reason and nothing else; a retired target keeps its deployment records and refuses new ones with the reason.",
+  "x-tool": "save_deployment_target",
+  "type": "object",
+  "properties": {
+    "deploymentTargetId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O15 Deployment Target",
+      "description": "The target to change. Leave it out to register a new one."
+    },
+    "targetKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "The kind, from the target-kind list: Power Platform environment, Microsoft 365 tenant, Azure resource group, GitHub environment, SaaS tenant or other."
+    },
+    "targetStageKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C34 Target Stage",
+      "description": "Development, test, production or a client stage."
+    },
+    "changePathKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C35 Change Path",
+      "description": "The routes this target expects."
+    },
+    "linkKindKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C37 Link Kind",
+      "description": "A Microsoft resource link kind."
+    },
+    "externalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "The tool's ID, such as the Power Platform environment ID."
+    },
+    "url": {
+      "$ref": "../common.schema.json#/$defs/url",
+      "description": "A link that opens the target."
+    },
+    "labelAsSeen": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The target's name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What the target is for."
+    },
+    "retire": {
+      "type": "boolean",
+      "description": "True retires the target today (with retiredReason); false returns a retired target to service. Nothing else changes in the same call."
+    },
+    "retiredReason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Why the target is retired, such as the environment that replaced it. Required with retire true."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "targetKindKey": "power-platform-environment",
+      "targetStageKey": "production",
+      "changePathKey": "pipeline-only",
+      "linkKindKey": "power-platform-resource",
+      "externalId": "00000000-0000-0000-0000-00000000e003",
+      "labelAsSeen": "Operations production",
+      "clientRequestId": "req-0071"
+    },
+    {
+      "deploymentTargetId": "00000000-0000-4000-8000-000000000521",
+      "retire": true,
+      "retiredReason": "Replaced by the new operations production environment.",
+      "clientRequestId": "req-0072"
+    }
+  ]
+}

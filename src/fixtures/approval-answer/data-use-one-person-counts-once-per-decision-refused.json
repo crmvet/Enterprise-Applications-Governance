@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "data-use-one-person-counts-once-per-decision-refused",
+  "description": "Security review: on a data-use decision one person counts once across all of its counting requirements. The data owner already approved the owner record of a restricted AI use, and also holds the security reviewer role. Their answer on the security reviewer record is refused, so the two approvals come from two people.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "security-reviewer"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "data-use-restricted-ai-security",
+      "requiredRoleKey": "security-reviewer"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "data-use",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": [],
+    "earlierAnswers": [
+      {
+        "approvalRecordId": "fixture-approval-0",
+        "ruleKey": "data-use-restricted-ai-owner",
+        "responderPrincipalId": "fixture-person-1",
+        "outcome": "approved",
+        "countsTowardRequirement": true
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-already-given",
+        "severity": "error",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

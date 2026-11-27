@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_portfolio input",
+  "description": "Creates or changes a portfolio (O01). Served only to a person in the product's web app: a portfolio's place in the tree scopes approval rules, decision rights and portfolio access. The platform admin creates, moves, names the accountable person and retires; the PMO edits the name, description and level. A portfolio never sits inside itself or its own children, and two siblings never share a name.",
+  "x-tool": "save_portfolio",
+  "type": "object",
+  "properties": {
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "The portfolio to change. Leave it out to create one."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The portfolio name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What the portfolio holds."
+    },
+    "levelKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "The level, from the portfolio-level list."
+    },
+    "parentPortfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "The portfolio it sits inside."
+    },
+    "clearParent": {
+      "type": "boolean",
+      "description": "True moves it to the top of the tree."
+    },
+    "accountablePrincipalObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "The person who answers for the portfolio, found with find_people."
+    },
+    "clearAccountable": {
+      "type": "boolean",
+      "description": "True clears the accountable person."
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "False retires the portfolio. Its applications keep their history."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "not": {
+        "required": [
+          "parentPortfolioId",
+          "clearParent"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "accountablePrincipalObjectId",
+          "clearAccountable"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "name": "Field operations",
+      "levelKey": "portfolio",
+      "clientRequestId": "req-0074"
+    }
+  ]
+}

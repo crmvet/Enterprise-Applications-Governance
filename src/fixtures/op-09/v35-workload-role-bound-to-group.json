@@ -51,6 +51,13 @@
         "severity": "warning",
         "ruleId": "V37",
         "entity": "Role",
+        "ref": "ai-lead"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
         "ref": "architect"
       },
       {
@@ -73,6 +80,27 @@
         "ruleId": "V37",
         "entity": "Role",
         "ref": "configuration-admin"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "data-governance-lead"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "platform-admin"
+      },
+      {
+        "code": "role.unbound",
+        "severity": "warning",
+        "ruleId": "V37",
+        "entity": "Role",
+        "ref": "pmo"
       },
       {
         "code": "role.unbound",

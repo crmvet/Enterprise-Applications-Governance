@@ -106,6 +106,28 @@ public sealed class ApprovalResponderTests
         Assert.True(valid.Status == 200, valid + "\n" + host.Logs);
     }
 
+    // Security review 2026-11-24 (D-38, B26-9): with step-up sign-in on, a card only links to the decision page, so the
+    // runner's relay of a person's answer is refused and nothing is written. The fresh sign-in cannot be skipped through
+    // Teams or Outlook.
+    [Fact]
+    public async Task WithStepUpOnTheRunnerCannotRelayAPersonsAnswer()
+    {
+        var settings = new HostSettings();
+        settings.Settings["Product:WebApp:StepUp:Mode"] = "FreshSignIn";
+        settings.Settings["Product:WebApp:StepUp:MaxAgeMinutes"] = "10";
+        await using ProductTestHost host = ProductTestHost.Start(settings);
+        (string approvalId, string decisionId) = await SubmitIntake(host);
+        string before = Dump(host);
+
+        HttpCall call = await host.Post(OutcomePath(approvalId), Personas.Runner, Answer(Personas.OwenId, "2026-11-23T09:30:00Z", holds: true));
+        Assert.True(call.Status >= 400 && call.Status < 500, call.ToString() + host.Logs);
+        Assert.Equal("rule_violation", call.Json!["error"]!["code"]!.GetValue<string>());
+        Assert.Contains("decision page", call.Json["error"]!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Equal(before, Dump(host));
+        Assert.Equal("pending", host.Get<IRecordStore>().Get("approval-record", approvalId)!.Text("outcomeMeaning"));
+        Assert.Equal("proposed", host.Get<IRecordStore>().Get("decision", decisionId)!.Text("statusMeaning"));
+    }
+
     // ---- Helpers ----
 
     private static void AssertWorkloadRefused(ProductTestHost host, HttpCall call, string approvalId, string decisionId, string before)
@@ -147,7 +169,8 @@ public sealed class ApprovalResponderTests
         Assert.True(draft["ok"]!.GetValue<bool>(), draft.ToJsonString() + "\n" + host.Logs);
         JsonNode submitted = await host.Call(Personas.Priya, "submit_record", "{\"subjectKind\":\"intake-request\",\"subjectId\":\"" + draft["data"]!["recordId"]!.GetValue<string>() + "\"}");
         Assert.True(submitted["ok"]!.GetValue<bool>(), submitted.ToJsonString());
-        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray())!;
+        // The triage card; Balanced also opens three consultation cards on an intake (document 21, B21-9).
+        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray(), c => !c!["isConsultation"]!.GetValue<bool>())!;
         return (card["approvalRecordId"]!.GetValue<string>(), submitted["data"]!["decisionId"]!.GetValue<string>());
     }
 

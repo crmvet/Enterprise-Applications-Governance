@@ -41,6 +41,10 @@ public sealed class McpServerOptions
     // Tests only: let an unexpected failure surface as an exception instead of a JSON-RPC internal error.
     public bool RethrowInternalErrors { get; set; }
 
+    // On the AI client entry, text added after the Known Client label the engine stamps, such as ", demo operator" when a
+    // demo operator's AI client acts as a demo persona (D-39; product review 2026-11-24). Null adds nothing.
+    public string? AiClientLabelSuffix { get; set; }
+
     // Called with an unexpected failure and its correlation ID before the core answers it as a JSON-RPC internal error, so
     // the host can log why a request failed (for example an envelope that does not match its output schema). Never called
     // for an expected refusal (every fixed error code is an answer, not a failure) or when RethrowInternalErrors is on. A
@@ -65,6 +69,17 @@ public sealed class McpServerOptions
 
     // The Client App label stamped on rows a person writes through the web app.
     public string PersonClientLabel { get; set; } = "Web app";
+
+    // Where links.recordUrl points for this request, such as http://127.0.0.1:5081/app/records on a local run with no
+    // public base URL configured (document 24, B24-17). Null uses the backend's own RecordUrlBase. The host sets it per
+    // request; it is never read from the request itself.
+    public string? RecordUrlBase { get; set; }
+
+    // The caller's own calendar day (YYYY-MM-DD), when the caller sent it: the product's web app sends the person's local
+    // day with every request (X-Product-Local-Day), so a date-only value a write stamps by default is the person's day,
+    // not the UTC day (wave 4, B24-21). The host sets it per request. The backend uses it only when it is the UTC day or
+    // the day before or after (ToolScope.PersonToday); anything else, or none, gives the UTC day.
+    public string? CallerLocalDay { get; set; }
 
     public Func<DateTime> UtcNow { get; set; } = () => DateTime.UtcNow;
 

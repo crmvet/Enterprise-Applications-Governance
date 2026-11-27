@@ -106,7 +106,7 @@ public sealed class DocumentFact
 // OP-06 input (document 25, section 5.8).
 public sealed class DocumentationRequest
 {
-    public DocumentationRequest(string applicationKindKey, string? tierKey, string lifecycleStageKey, IEnumerable<DocumentFact> links)
+    public DocumentationRequest(string applicationKindKey, string? tierKey, string lifecycleStageKey, IEnumerable<DocumentFact> links, bool isRetired = false)
     {
         if (!ConfigurationKey.IsValid(applicationKindKey))
         {
@@ -127,7 +127,13 @@ public sealed class DocumentationRequest
         TierKey = tierKey;
         LifecycleStageKey = lifecycleStageKey;
         Links = new ReadOnlyCollection<DocumentFact>((links ?? throw new ArgumentNullException(nameof(links))).ToList());
+        IsRetired = isRetired;
     }
+
+    // True when the application is retired (its stage means retired, or its registration is archived; wave 4b review): no
+    // requirement applies any more, and its links stay as history, so nothing is missing or stale to fix. A proposal of
+    // this build.
+    public bool IsRetired { get; }
 
     // The application's kind (C15).
     public string ApplicationKindKey { get; }
@@ -144,12 +150,12 @@ public sealed class DocumentationRequest
 
     public static DocumentationRequest FromJson(JsonTreeNode input)
     {
-        var wire = new WireObject(input, "input", "applicationKindKey", "tierKey", "lifecycleStageKey", "links");
+        var wire = new WireObject(input, "input", "applicationKindKey", "tierKey", "lifecycleStageKey", "links", "isRetired");
         IReadOnlyList<DocumentFact> links = wire
             .Objects("links", required: false, "documentLinkId", "documentTypeKey", "requirementKey", "status", "hasUrl", "lastCheckedOnUtc", "lastUpdatedOnUtc")
             .Select(DocumentFact.FromWire)
             .ToList();
-        return new DocumentationRequest(wire.RequiredKey("applicationKindKey"), wire.OptionalKey("tierKey"), wire.RequiredKey("lifecycleStageKey"), links);
+        return new DocumentationRequest(wire.RequiredKey("applicationKindKey"), wire.OptionalKey("tierKey"), wire.RequiredKey("lifecycleStageKey"), links, wire.Bool("isRetired", false));
     }
 }
 
@@ -279,7 +285,9 @@ public static class DocumentationOperation
         int stageRank = StageRank(stage);
         CheckLinks(snapshot, request.Links);
 
+        // A retired application owes no document (wave 4b review): no requirement applies, and its links are history.
         List<SnapshotRow> applicable = SnapshotRead.ActiveRows(snapshot, Requirement)
+            .Where(row => !request.IsRetired)
             .Where(row => Matches(row, "tierKey", request.TierKey) && Matches(row, "applicationKindKey", request.ApplicationKindKey))
             .Where(row => StageRank(FromStage(snapshot, row)) <= stageRank)
             .OrderBy(row => row.Key, StringComparer.Ordinal)
@@ -311,7 +319,7 @@ public static class DocumentationOperation
         }
 
         var staleOnByLink = new List<KeyValuePair<string, DateTime>>();
-        foreach (DocumentFact link in request.Links)
+        foreach (DocumentFact link in request.IsRetired ? Enumerable.Empty<DocumentFact>() : request.Links)
         {
             DateTime? staleOn = StaleOn(snapshot, link);
             if (staleOn.HasValue)

@@ -10,6 +10,9 @@ export const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 // Folders that hold build output, packages or local tool state. Never source.
 // dist is the page harness build (ui/harness/dist): bundled third-party code, rebuilt by "npm run build".
 export const SKIP_DIRS = new Set(['bin', 'obj', 'node_modules', 'dist', '.vs', '.vscode', '.idea', 'TestResults', '.git']);
+// The end-to-end suite's run output (tests/e2e/runs: screenshots, Playwright's HTML report, traces, videos). Never
+// source, git ignores it, and a report bundles third-party code. Skipped by its path under src/, wherever the walk starts.
+const SKIP_UNDER_SRC = new Set(['tests/e2e/runs', 'tests/e2e/test-results', 'tests/e2e/playwright-report', 'tests/e2e/blob-report']);
 
 // Extensions that are always binary, even if the first bytes look like text.
 const BINARY_EXT = /\.(dll|exe|pdb|nupkg|snupkg|snk|zip|png|jpe?g|gif|webp|ico|pdf|vsdx|xlsx|docx|pptx|woff2?|ttf|otf)$/i;
@@ -29,7 +32,8 @@ export function* walk(root, skipRel = []) {
       const full = path.join(dir, e.name);
       const rel = path.relative(root, full).split(path.sep).join('/');
       if (e.isDirectory()) {
-        if (!SKIP_DIRS.has(e.name) && !skip.has(rel)) subdirs.push(full);
+        const fromSrc = path.relative(SRC, full).split(path.sep).join('/');
+        if (!SKIP_DIRS.has(e.name) && !skip.has(rel) && !SKIP_UNDER_SRC.has(fromSrc)) subdirs.push(full);
       } else if (e.isFile()) {
         yield { full, rel };
       }

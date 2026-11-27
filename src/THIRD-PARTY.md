@@ -3,7 +3,9 @@
 Every package below comes from a public feed: nuget.org for .NET and npmjs.com for Node.
 Every version is exact and pinned. Licenses are MIT, Apache 2.0 or BSD (0BSD counts as BSD here), with these
 exceptions:
-- picocolors (ISC), a build-only package of the page harness, still open (see "Node: ui/harness only");
+- lucide-react (ISC), the icons in the web app's page bundle, and three build-only packages of the web app:
+  picocolors and graceful-fs (ISC) and lightningcss with its platform binaries (MPL-2.0). All four are still open for
+  the product owner (see "Node: ui/harness only");
 - two transitive Microsoft packages of the Azure adapter under the Microsoft Software License Terms,
   Microsoft.Data.SqlClient.SNI.runtime and Microsoft.Identity.Client.NativeInterop. They are restored from NuGet
   under Microsoft's terms and are not part of this repository's MIT-licensed source (see ".NET: adapters/azure").
@@ -151,6 +153,7 @@ source: the repository holds no copy of them, and its MIT license does not cover
 | Azure.Functions.Sdk | 1.0.1 | MIT | Product.Azure.Functions | The project SDK of the Functions wrapper (pinned in the project file's `Sdk` attribute) | Functions app: one file, the function metadata loader in `.azurefunctions/` |
 | Microsoft.Azure.Functions.Worker | 2.52.0 | MIT | Product.Azure.Functions | The isolated worker | Functions app |
 | Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore | 2.1.1 | MIT | Product.Azure.Functions | ASP.NET Core integration for the HTTP trigger | Functions app |
+| Microsoft.Azure.Functions.Worker.Extensions.Timer | 4.3.1 | MIT | Product.Azure.Functions | The timer trigger of the engine's daily due-state refresh | Functions app |
 | Microsoft.Azure.Functions.Worker.OpenTelemetry | 1.2.0 | MIT | Product.Azure.Functions | Worker telemetry through OpenTelemetry | Functions app |
 | Microsoft.Azure.Functions.Worker.Sdk.Analyzers | 1.2.2 | MIT | Product.Azure.Functions | Added by the Azure.Functions.Sdk project SDK | Build only |
 | Microsoft.Azure.Functions.Worker.Sdk.Generators | 1.4.0 | MIT | Product.Azure.Functions | Added by the Azure.Functions.Sdk project SDK | Build only |
@@ -358,7 +361,7 @@ server transport as an option behind that seam. Both are listed under ".NET: ada
 
 ## Node: ui/harness only
 
-The four pages: React 19 and shadcn/ui (Radix primitives, Tailwind CSS 4, lucide icons), built by Vite (D-32 moved them
+The web app: React 19 and shadcn/ui (Radix primitives, Tailwind CSS 4, lucide icons), built by Vite (D-32 moved it
 off Fluent UI on 2026-11-23). The shadcn/ui components are MIT source copied into `ui/harness/src/components/ui/`, not a
 package. One source gives two builds: the local harness on fixture JSON, served by Vite on 127.0.0.1, and the web app,
 which the product's host serves under `/app/`.
@@ -578,3 +581,20 @@ Licenses outside MIT, Apache-2.0 and BSD-2-Clause or BSD-3-Clause, still to be c
 | use-callback-ref | 1.3.3 | MIT | Transitive (react-remove-scroll) | Runtime dependency |
 | use-sidecar | 1.1.3 | MIT | Transitive (react-remove-scroll) | Runtime dependency |
 | vite | 7.3.7 | MIT | Direct | Build only. Local build, and the preview server on 127.0.0.1 for the screenshots |
+
+## Node: tests/e2e only
+
+The end-to-end suite (`tests/e2e/`): one Playwright Test spec per demo scenario, run against a running web app
+(docs/testing.md, "The end-to-end tests"). Test time only: nothing of it is in the web app, the server or any build the
+product ships. Playwright drives the Chrome already installed on the machine (channel `chrome`), so no browser is
+downloaded: install with `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --ignore-scripts` in `tests/e2e/`.
+Installed with `npm install --before=2026-11-11 --ignore-scripts` on 2026-11-25, so every package was at least two
+weeks old that day (1.65.0 was published on 2026-11-05); the lock file pins them with sha512 hashes.
+`node ui/harness/scripts/check-packages.mjs --package tests/e2e` checks this table against the lock file (the `e2e`
+check of `tools/ci.mjs`).
+
+| Package | Version | License | Direct or transitive | Use |
+|---|---|---|---|---|
+| @playwright/test | 1.65.0 | Apache-2.0 | Direct | Test only. The test runner: specs, projects, fixtures, traces, the HTML report |
+| playwright | 1.65.0 | Apache-2.0 | Transitive (@playwright/test) | Test only. The browser automation library behind the runner |
+| playwright-core | 1.65.0 | Apache-2.0 | Transitive (playwright) | Test only. The protocol client that drives the installed Chrome; no browser is downloaded |

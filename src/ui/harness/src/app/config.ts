@@ -8,9 +8,13 @@
 //     "auth": { "mode": "entra", "authority": "https://login.microsoftonline.com/<tenant id>",
 //               "clientId": "<the web app's client ID>", "apiScope": "api://<API app ID>/api.access" },
 //     "demo": false,                                      true on a demo install: the page shows a demo badge
-//     "development": { "personas": [ { "name": "nadia-web", "label": "Nadia Ferreira, business owner" } ] }
+//     "development": { "personas": [ { "name": "nadia-web", "label": "Nadia Ferreira, business owner" } ] },
+//     "demoPersonas": [ { "name": "nadia", "label": "Nadia Ferreira, application owner" } ]
 //   }
 // "demo" is optional (false when missing). A demo install holds the fictional demo estate (D-33), so every page says so.
+// "demoPersonas" is optional (empty when missing). The host lists them only in the Demo environment (D-39): the demo
+// operator may then act as any of them, and the page sends the chosen name in X-Product-Demo-Persona. Their IDs stay on
+// the server. Everywhere else the list is empty, the switch is hidden, and the server ignores the header.
 // "auth": { "mode": "development" } signs in as a fictional persona with the X-Product-Dev-Identity header. The page
 // takes it only on a loopback host name, and the server keeps its own guards (Development environment, a switch that is
 // off in every committed file, loopback requests only).
@@ -23,6 +27,15 @@ export const CONFIG_SCHEMA_VERSION = 1;
 export interface DevPersona {
   name: string;
   label: string;
+  // A test harness login, not a demo persona: listed only with ?all=1 (product review, fix round 1).
+  harness?: boolean;
+}
+
+// The development personas a person is offered: the demo personas, and the harness logins only with ?all=1 in the
+// address. The one signed in now stays listed, so the menu always names it.
+export function offeredPersonas<T extends DevPersona>(personas: readonly T[], search: string, current: string | null = null): T[] {
+  const all = new URLSearchParams(search).get('all') === '1';
+  return personas.filter(p => all || !p.harness || p.name === current);
 }
 
 export type AuthConfig =
@@ -37,6 +50,8 @@ export interface AppConfig {
   // A demo install: the store holds the fictional demo estate, and every page shows a badge that says so.
   demo: boolean;
   development: { personas: DevPersona[] };
+  // The demo persona switch (D-39): the personas of a demo install, by name and label. Empty outside a demo install.
+  demoPersonas: DevPersona[];
 }
 
 // The parts of window.location the checks need.
@@ -124,7 +139,7 @@ export function validateConfig(raw: unknown, page: PageLocation): ConfigResult {
     } else {
       for (const p of d.personas.slice(0, 50)) {
         if (isObject(p) && typeof p.name === 'string' && PERSONA_NAME.test(p.name) && text(p.label, 120)) {
-          personas.push({ name: p.name, label: p.label });
+          personas.push({ name: p.name, label: p.label, ...(p.harness === true ? { harness: true } : {}) });
         } else {
           problems.push('Each development persona needs a name (letters, digits, dot, dash or underscore) and a label.');
           break;
@@ -134,12 +149,32 @@ export function validateConfig(raw: unknown, page: PageLocation): ConfigResult {
   }
   if (auth?.mode === 'development' && !personas.length) problems.push('The development sign-in needs at least one persona.');
 
+  // ---- demo personas (D-39) ----
+  const demoPersonas: DevPersona[] = [];
+  const dp = raw.demoPersonas;
+  if (dp !== undefined && dp !== null) {
+    if (!Array.isArray(dp)) {
+      problems.push('demoPersonas must be a list.');
+    } else {
+      const seen = new Set<string>();
+      for (const p of dp.slice(0, 50)) {
+        if (isObject(p) && typeof p.name === 'string' && PERSONA_NAME.test(p.name) && text(p.label, 120) && !seen.has(p.name.toLowerCase())) {
+          seen.add(p.name.toLowerCase());
+          demoPersonas.push({ name: p.name, label: p.label });
+        } else {
+          problems.push('Each demo persona needs a unique name (letters, digits, dot, dash or underscore) and a label.');
+          break;
+        }
+      }
+    }
+  }
+
   // ---- demo install ----
   if (raw.demo !== undefined && typeof raw.demo !== 'boolean') problems.push('demo must be true or false.');
   const demo = raw.demo === true;
 
   if (problems.length || !auth) return { ok: false, problems };
-  return { ok: true, config: { schemaVersion: CONFIG_SCHEMA_VERSION, apiBase, auth, demo, development: { personas } } };
+  return { ok: true, config: { schemaVersion: CONFIG_SCHEMA_VERSION, apiBase, auth, demo, development: { personas }, demoPersonas } };
 }
 
 // Reads <base>config.json. Never cached: the host serves it with no-store, and a stale copy could point at an old API.

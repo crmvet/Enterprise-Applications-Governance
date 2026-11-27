@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-07",
   "case": "go-live-tier-3-all-met-ready",
-  "description": "At tier 3 the go-live gate needs the acceptance, a current runbook (from the OP-06 result) and a done security review. All three are met.",
+  "description": "At tier 3 the go-live gate needs the acceptance, a current runbook (from the OP-06 result) and a done security review. All three are met. A data owner is named, as Balanced asks at tiers 2 and 3.",
   "workingDefaults": [
     9
   ],
@@ -33,6 +33,9 @@
     },
     "doneReviewTypeKeys": [
       "security-review"
+    ],
+    "assignedOwnerRoleKeys": [
+      "data-owner"
     ]
   },
   "expected": {
@@ -47,6 +50,14 @@
           "requiredDecisionTypeKey": "acceptance",
           "met": true,
           "guidelineKey": "g9",
+          "triggered": false
+        },
+        {
+          "requirementKey": "go-live-data-owner-tier-3",
+          "requirementKind": "owner-assigned",
+          "requiredOwnerRoleKey": "data-owner",
+          "met": true,
+          "guidelineKey": "g2",
           "triggered": false
         },
         {

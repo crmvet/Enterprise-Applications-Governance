@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_intake_request input",
+  "description": "One intake request for its page: the request, the demand fields, the tier assessments (suggestions only), the triage and other decisions with their approval counts, and its delivery and evidence links. A request the caller may not read (intake-visibility) answers not_found. Writes nothing.",
+  "x-tool": "get_intake_request",
+  "type": "object",
+  "required": [
+    "intakeRequestId"
+  ],
+  "properties": {
+    "intakeRequestId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O07 Intake Request",
+      "description": "The intake request."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "intakeRequestId": "70000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

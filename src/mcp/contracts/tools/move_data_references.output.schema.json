@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "move_data_references output",
+  "description": "The response envelope. On success, data is the write result for the first row moved, the rows moved, the uses whose state changed, and what the move did to the decisions when the data owner changes.",
+  "x-tool": "move_data_references",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the first row moved.",
+      "properties": {
+        "fromDomain": {
+          "$ref": "../common.schema.json#/$defs/dataDomainRef"
+        },
+        "toDomain": {
+          "$ref": "../common.schema.json#/$defs/dataDomainRef"
+        },
+        "movedMappingIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O26 Data Mapping"
+          },
+          "description": "The mappings moved. A preview lists the rows that would move by their own IDs, a row that would be declared again included."
+        },
+        "movedUseIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O27 Data Use"
+          },
+          "description": "The data uses moved: the row in the new domain, or the row itself in a preview."
+        },
+        "changedUses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "dataUseId",
+              "stateBefore",
+              "stateAfter"
+            ],
+            "properties": {
+              "dataUseId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O27 Data Use"
+              },
+              "stateBefore": {
+                "$ref": "../common.schema.json#/$defs/dataUseState"
+              },
+              "stateAfter": {
+                "$ref": "../common.schema.json#/$defs/dataUseState"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The moved uses whose decision state differs after the move, such as an allowed use that must be decided again."
+        },
+        "ownerChange": {
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "The two domains answer to different data owners, so the decisions do not move with the rows. The counts say what the move did, or would do in a preview.",
+              "required": [
+                "newDataOwner",
+                "redeclaredCount",
+                "reaskedCount",
+                "openedCount",
+                "withdrawnAnsweredCount",
+                "withdrawnNoOwnerCount",
+                "waitingForOwnerCount"
+              ],
+              "properties": {
+                "newDataOwner": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/principalRef"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The acting data owner of the new domain, or null when it has none."
+                },
+                "redeclaredCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Rows with an accepted decision, ended and declared again in the new domain. The accepted decision stays with the ended row."
+                },
+                "reaskedCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Proposed decisions nobody had answered, asked again from the start of the new data owner. They keep their identity."
+                },
+                "openedCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "New data-use decisions the engine opened and sent to the new data owner, for the person who moved the rows: one for each row declared again, each row whose earlier decision was withdrawn, and each confirmed row that needs a decision and had none."
+                },
+                "withdrawnAnsweredCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Proposed decisions someone had answered for the old domain, withdrawn by the engine."
+                },
+                "withdrawnNoOwnerCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Proposed decisions withdrawn because the new domain has no data owner."
+                },
+                "waitingForOwnerCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Rows that need a decision nobody can answer now, because the new domain has no data owner (DC-06)."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null",
+              "description": "Both domains answer to the same data owner: each row moves in place and keeps its decisions."
+            }
+          ]
+        }
+      },
+      "required": [
+        "fromDomain",
+        "toDomain",
+        "movedMappingIds",
+        "movedUseIds",
+        "changedUses",
+        "ownerChange"
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -172,6 +172,84 @@ public enum LinkCategory
     Evidence,
     MicrosoftResource,
     ExternalChange,
+
+    // O25 Data Location (data taxonomy, D-37).
+    DataLocation,
+}
+
+// C04 Setting data-taxonomy-mode (D-37; docs/architecture/data-taxonomy.md, Levels and the mode): off keeps the behavior before data domains,
+// domains-optional (Balanced) lets data uses name domains, domains-required (Regulated) makes every data-use decision
+// about a declared use. The engine reads it from data taxonomy slice 2.
+public enum DataTaxonomyMode
+{
+    Off,
+    DomainsOptional,
+    DomainsRequired,
+}
+
+// The data taxonomy's contract (docs/architecture/data-taxonomy.md, The main fields). A handling rule's strictness rises in declaration order.
+public enum DataHandlingRule
+{
+    Allowed,
+    Decision,
+    MaskedOnly,
+    Never,
+}
+
+// O26 Data Origin.
+public enum DataOrigin
+{
+    SystemOfRecord,
+    Replica,
+    ProductionCopy,
+    MaskedCopy,
+    Synthetic,
+}
+
+// O27 Access.
+public enum DataAccess
+{
+    Read,
+    Write,
+    ReadWrite,
+}
+
+// C28 Subject Kinds and O06 Subject Kind: where an owner role is held.
+public enum OwnerSubjectKind
+{
+    BusinessApplication,
+    DataDomain,
+    DataLocation,
+}
+
+// C31 and C32 Owner Subject: where an owner role named on a rule is resolved.
+public enum OwnerSubject
+{
+    BusinessApplication,
+    DataDomain,
+    ParentDataDomain,
+    DataLocation,
+    TouchedDataDomains,
+}
+
+// C31 and C32 Data Taxonomy Change: what a configuration draft does to the data taxonomy, computed from its diff.
+public enum DataTaxonomyChange
+{
+    Touches,
+    Loosens,
+}
+
+// OP-16: the computed state of a data use or a copy mapping (docs/architecture/data-taxonomy.md, The decision state).
+public enum DataUseState
+{
+    NotNeeded,
+    Needed,
+    Proposed,
+    Allowed,
+    Denied,
+    ReDecide,
+    BreaksRule,
+    NoOneToAsk,
 }
 
 // C04 Setting change-management-mode. Linked mode stores the external reference (D-08).
@@ -196,6 +274,10 @@ public enum RequirementKind
     DocumentCurrent,
     ReviewDone,
     OwnerAssigned,
+
+    // The data taxonomy (docs/architecture/data-taxonomy.md, Gate requirements): at least one open data use, or Holds No Business Data; every open use decided.
+    DataUsesDeclared,
+    DataUsesDecided,
 }
 
 // C01 Configuration Set. Presets are read-only templates (D-07).

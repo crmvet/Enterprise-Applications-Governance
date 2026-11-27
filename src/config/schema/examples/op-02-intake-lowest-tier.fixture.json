@@ -3,11 +3,11 @@
   "schemaVersion": "1.0",
   "operation": "OP-02",
   "case": "intake-lowest-tier",
-  "description": "Intake at the lowest tier, with no counting approval rule group, is accepted by the engine with no card.",
+  "description": "Intake at the lowest tier, with no counting approval rule group, is accepted by the engine with no card. The consent of the business owner the request names stays a requirement beside it (document 25, B25-18), and the runtime drops it when the request names nobody.",
   "workingDefaults": [8],
   "snapshot": { "presetKey": "balanced" },
   "context": { "asOfUtc": "2026-11-22T09:00:00Z" },
   "facts": {},
   "input": { "decisionTypeKey": "intake", "tierKey": "tier-1", "portfolioPath": [] },
-  "expected": { "outcome": "engine-accept", "payload": { "requirements": [] } }
+  "expected": { "outcome": "engine-accept", "payload": { "requirements": [{ "ruleKey": "intake-business-owner-consent", "approverProposedOwners": true }] } }
 }

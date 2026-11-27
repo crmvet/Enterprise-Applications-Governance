@@ -1,10 +1,10 @@
 # P04 Architecture review
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-06](../../../src/docs/demo/scenarios/S-06-reviews-and-exceptions.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
-This process is designed to make a review request find the architect when a configured trigger fires. It is designed to keep every review and every architecture decision in the shared decision log, with the status words Microsoft uses for architecture decision records: Proposed, Accepted and Superseded.
+This process is designed to make a review request find the architect when a configured trigger fires. Today the tier answers report the trigger, and a person requests the review. It is designed to keep every review and every architecture decision in the shared decision log, with the status words Microsoft uses for architecture decision records: Proposed, Accepted and Superseded.
 
 The full text of an architecture decision record lives in the team's repository or wiki, written by the builder's own AI tool. The product records the link and the decision.
 
@@ -33,7 +33,7 @@ The architect role is the design authority by default, with one approval rule pe
 1. **Request.** The engine opens an architecture review, due now, and records which trigger caused it. A person, or their AI client, can also ask for a review directly.
 2. **Prepare.** The builder's AI client drafts the architecture decision record from the discussion: the context, the options considered, the outcome and the confidence. The builder's own AI tool writes the full text to the repository or wiki. The product records the link, and a design decision with the status Proposed and the options considered.
 3. **Review.** The architect reviews. Linked assessments, for example a Well-Architected assessment export, are recorded as evidence links with an evidence level.
-4. **Decide.** The design decision goes on a card to the architect, or to a board role where the organization added one. A data-use decision goes to the data owner when the data use changed ([P02](p02-tier-assessment.md)).
+4. **Decide.** The design decision goes to the architect, who answers on the decision page by default, or to a board role where the organization added one. A data-use decision goes to the data owner when the data use changed ([P02](p02-tier-assessment.md)).
 5. **Close the review.** The review moves to done and links the decision that settled it. The engine checks the Design gate again.
 6. **Exceptions.** An exception decision records the standard it departs from, the reason and the review date. It is a normal decision and can be superseded later.
 
@@ -47,9 +47,9 @@ The architect role is the design authority by default, with one approval rule pe
 | Document link | The link to the architecture decision record in the repository or wiki |
 | Evidence link | Assessments and impact lists |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
 | Design | Architect (one rule per tier) | First to respond |
 | Data use | Data owner | First to respond |
@@ -64,7 +64,7 @@ The architect role is the design authority by default, with one approval rule pe
 - What the Design gate requires.
 - Whether an architecture decision record is a required document, per tier.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 
@@ -89,7 +89,7 @@ Every tool runs as the signed-in person.
 |---|---|
 | Opening reviews from triggers | The rules engine in the one Azure Functions app, when a tier is accepted or a change is submitted |
 | A person's request for a review | An API endpoint with the same name as the tool |
-| Decision cards | The approval runner ([approval cards](README.md#approval-cards)) |
+| Decision notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
 | Decisions | A ledger table in Azure SQL Database. A changed decision gets a new record that supersedes the old one |
 
 ## Open design questions

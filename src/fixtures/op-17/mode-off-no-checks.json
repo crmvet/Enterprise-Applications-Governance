@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-17",
+  "case": "mode-off-no-checks",
+  "description": "With data-taxonomy-mode off the data checks are off (docs/architecture/data-taxonomy.md, Levels and the mode).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "people",
+        "values": {
+          "label": "People",
+          "levelKey": "domain",
+          "classificationKey": "confidential",
+          "retentionClassKey": "keep-7-years"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "payroll",
+        "values": {
+          "label": "Payroll",
+          "parentKey": "people",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted",
+          "aiUseRule": "never"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "bank-details",
+        "values": {
+          "label": "Bank details",
+          "parentKey": "payroll",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "timesheets",
+        "values": {
+          "label": "Timesheets",
+          "parentKey": "people",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "field-operations",
+        "values": {
+          "label": "Field operations",
+          "levelKey": "domain",
+          "classificationKey": "internal"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "safety-findings",
+        "values": {
+          "label": "Safety findings",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain",
+          "classificationKey": "restricted"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "parts-catalog",
+        "values": {
+          "label": "Parts catalog",
+          "parentKey": "field-operations",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "commercial",
+        "values": {
+          "label": "Commercial",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "contracts",
+        "values": {
+          "label": "Contracts",
+          "parentKey": "commercial",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "supplier-contracts",
+        "values": {
+          "label": "Supplier contracts",
+          "parentKey": "contracts",
+          "levelKey": "data-set"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "customers",
+        "values": {
+          "label": "Customers",
+          "levelKey": "domain",
+          "classificationKey": "confidential"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "client-accounts",
+        "values": {
+          "label": "Client accounts",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      },
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "data-taxonomy-mode",
+        "values": {
+          "value": "off"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {},
+  "facts": {
+    "ownerAssignments": [],
+    "principals": [
+      {
+        "principalId": "fixture-person-hana",
+        "directoryState": "enabled"
+      },
+      {
+        "principalId": "fixture-person-kai",
+        "directoryState": "enabled"
+      }
+    ],
+    "locations": [
+      {
+        "locationId": "fixture-loc-prod",
+        "targetStageKey": "production",
+        "statusMeaning": "registered",
+        "lastSeenOn": "2026-11-01T00:00:00Z",
+        "label": "fixture-loc-prod"
+      }
+    ],
+    "mappings": [
+      {
+        "mappingId": "fixture-map-1",
+        "domainKey": "parts-catalog",
+        "locationId": "fixture-loc-prod",
+        "origin": "system-of-record",
+        "statusMeaning": "registered"
+      }
+    ],
+    "uses": [
+      {
+        "useId": "fixture-use-1",
+        "applicationId": "fixture-app-1",
+        "domainKey": "parts-catalog",
+        "access": "read",
+        "reachesAi": false,
+        "isDeidentified": false,
+        "statusMeaning": "registered",
+        "locationId": "fixture-loc-prod"
+      }
+    ],
+    "applications": [
+      {
+        "applicationId": "fixture-app-1",
+        "label": "fixture-app-1",
+        "tierKey": "tier-2",
+        "applicationKindKey": "power-platform-app",
+        "lifecycleStageKey": "build",
+        "statusMeaning": "registered",
+        "sensitivityAnswerKey": "internal",
+        "hasDataDependency": true
+      }
+    ],
+    "decisions": []
+  },
+  "expected": {
+    "outcome": "checked",
+    "payload": {
+      "counts": {
+        "DC-01": 0,
+        "DC-02": 0,
+        "DC-03": 0,
+        "DC-04": 0,
+        "DC-05": 0,
+        "DC-06": 0,
+        "DC-07": 0,
+        "DC-08": 0,
+        "DC-09": 0,
+        "DC-10": 0,
+        "DC-11": 0,
+        "DC-12": 0,
+        "DC-13": 0,
+        "DC-14": 0
+      },
+      "findings": []
+    },
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Setting",
+        "key": "data-taxonomy-mode",
+        "role": "matched"
+      }
+    ]
+  }
+}

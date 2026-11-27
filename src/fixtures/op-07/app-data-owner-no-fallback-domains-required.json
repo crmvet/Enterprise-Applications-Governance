@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "app-data-owner-no-fallback-domains-required",
+  "description": "Regulated is domains-required, so an application-level data owner no longer meets data-uses-declared: only a declared use or Holds No Business Data does.",
+  "snapshot": {
+    "presetKey": "regulated"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "design",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "assignedOwnerRoleKeys": [
+      "data-owner"
+    ],
+    "dataUses": {
+      "declaredCount": 0,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "reasons": [
+      {
+        "code": "gate.requirement-data-uses-undeclared"
+      },
+      {
+        "code": "gate.not-ready"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

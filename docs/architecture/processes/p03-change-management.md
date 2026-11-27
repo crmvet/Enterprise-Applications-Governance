@@ -1,6 +1,6 @@
 # P03 Change management
 
-**Status: in design.** Nothing here is released or deployed. Roles, steps and approvals are the default configuration, and each organization can change them. Back to the [processes index](README.md).
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the design. Demo scenario [S-05](../../../src/docs/demo/scenarios/S-05-changes-and-deployments.md) plays it on fictional data, and the [processes index](README.md) says where the built product differs, such as approvals answered on the decision page instead of on cards. Roles, steps and approvals are the default configuration, and each organization can change them.
 
 ## In short
 
@@ -45,9 +45,9 @@ The change manager authorizes default tier 3 changes and every emergency. The ch
 2. **Classify.** The product checks whether the change qualifies as a standard change: the model is listed for this tier; the change adds no new data use, connector, permission or identity; a shared component has no dependants; and the same tested artifact is used. It answers "qualifies" or "does not qualify, because". The AI proposes. A person sets the type. Some changes always become normal: a new restricted data use, a role change for the app's own identity, a change to an agent's model or instructions, a change to a shared component with dependants, and anything that could raise the tier.
 3. **Submit.** The change owner submits. The AI client may submit for the person where the tool policy allows it. Which act counts as a person's here is an open design question ([P10](p10-ai-draft-and-human-accept.md)). The change type sets whether authorization is needed, whether it may come after the deployment, and whether a review must follow.
 4. **Authorize.**
-   - **Standard:** the engine accepts the authorization as pre-authorized, citing the standard change model and the decision of the person who approved that model. Standard changes are on the locked list of decisions the engine may accept with no card. Whether that list should exist is an open design question.
-   - **Normal:** a change authorization decision goes on cards under the most specific approval rule for this tier and change type. By default: the business owner for default tiers 1 and 2; the change manager for default tier 3, with the security reviewer and the architect consulted; the change board for exceptions and changes that cross many applications.
-   - **Emergency:** the change manager authorizes at once on a card, under the emergency rule. Because an emergency allows authorization after the fact, the deployment may happen first and the record is completed after. The gate policy sets how long the follow-up may take. A review after the change comes due.
+   - **Standard:** the engine accepts the authorization as pre-authorized, citing the standard change model and the decision of the person who approved that model. Standard changes are on the locked list of decisions the engine may accept with no person's answer. Whether that list should exist is an open design question.
+   - **Normal:** a change authorization decision goes to the approvers under the most specific approval rule for this tier and change type. By default: the business owner for default tiers 1 and 2; the change manager for default tier 3, with the security reviewer and the architect consulted; the change board for exceptions and changes that cross many applications.
+   - **Emergency:** the change manager authorizes at once, on the decision page by default, under the emergency rule. Because an emergency allows authorization after the fact, the deployment may happen first and the record is completed after. The gate policy sets how long the follow-up may take. A review after the change comes due.
 5. **Schedule.** The window shows on the change schedule and, read-only, on the timeline. There are no freeze tables and no booking. Enforcing a window stays in the deployment tool, for example the Azure Pipelines Business Hours check.
 6. **Deploy.** The organization's own tool deploys. Deployment records arrive through [P05](p05-deployment-record.md) and link to the change by its ID, or by match (same application and target, inside the window).
 7. **Go-live.** For a first production deployment, the engine proposes a go-live decision. The Go-live gate is checked when it is accepted: acceptance after testing is accepted, the change is authorized, a production deployment succeeded, and the required documents and reviews are done.
@@ -57,7 +57,7 @@ The change manager authorizes default tier 3 changes and every emergency. The ch
 ## Steps, linked mode
 
 1. The change request holds the external change number and link. A person, an AI client or a step the organization builds may enter them. The change tool's workflow is never copied.
-2. The product does not run its own authorization. The organization's change tool reports the authorization through a step the organization builds (the same kind of step as a pipeline record step), with a link to the evidence. Where no such step exists, the change manager confirms "authorized in the external tool" on a confirmation card. A recorded change number alone never counts as authorization.
+2. The product does not run its own authorization. The organization's change tool reports the authorization through a step the organization builds (the same kind of step as a pipeline record step), with a link to the evidence. Where no such step exists, the change manager confirms "authorized in the external tool" through a confirmation request. A recorded change number alone never counts as authorization.
 3. The missing-approval flag ([P05](p05-deployment-record.md)) treats a linked change as authorized only when that authorization is on record.
 4. Windows, deployment records, flags, the schedule and the timeline work as in built-in mode.
 
@@ -73,9 +73,9 @@ The change manager authorizes default tier 3 changes and every emergency. The ch
 | Evidence link | Test results, impact lists, the organization's own release record, an authorization from the change tool |
 | Review | Review after the change |
 
-## Approvals (people only, on cards)
+## Approvals (people only)
 
-| Decision | Approver in the default configuration | Card mode |
+| Decision | Approver in the default configuration | Approval mode |
 |---|---|---|
 | Change authorization, normal, default tiers 1 and 2 | Business owner | First to respond |
 | Change authorization, normal, default tier 3 | Change manager (security reviewer and architect consulted) | First to respond |
@@ -83,7 +83,7 @@ The change manager authorizes default tier 3 changes and every emergency. The ch
 | Change authorization, emergency | Change manager | First to respond |
 | Change authorization, standard | None per change: pre-authorized by a model a person approved once (open design question) | |
 | Go-live | Business owner | First to respond |
-| Authorization in linked mode, with no reporting step | Change manager, on a confirmation card | First to respond |
+| Authorization in linked mode, with no reporting step | Change manager, through a confirmation request | First to respond |
 
 Changing a gate policy row is itself a decision, made through [P11](p11-configuration-change.md).
 
@@ -109,7 +109,7 @@ Off, Record and Flag work with the product alone. Advise and Enforce need the ch
 - Which dependency types count when the impact walk runs.
 - What the Go-live gate requires.
 
-## Designed MCP tools
+## MCP tools
 
 Every tool runs as the signed-in person.
 
@@ -137,15 +137,15 @@ Every tool runs as the signed-in person.
 | Concern | Designed to run on |
 |---|---|
 | Change actions | API endpoints in the one Azure Functions app. The rules engine enforces the status rules |
-| Linked-mode authorization step | The organization's step calls the API as a workload identity that holds a recorded grant. Without a step, a confirmation card through the approval runner |
+| Linked-mode authorization step | The organization's step calls the API as a workload identity that holds a recorded grant. Without a step, a confirmation request to the change manager |
 | Dependency walk | A recursive query in Azure SQL Database, run by the API |
-| Authorization cards | The approval runner ([approval cards](README.md#approval-cards)) |
+| Authorization notices and cards | The approval runner ([approval cards](README.md#approval-cards)) |
 | Schedule | A view and the timeline page in the web app |
 | Records | Decisions and approval records are ledger tables, so an accepted authorization cannot be edited |
 
 ## Example (fictional people and apps)
 
-Priya Castell asks Claude Code to plan the go-live of a field inspections app to production on Thursday between 06:00 and 08:00 UTC, and send it for approval. In the design, Claude Code would draft a normal change with that window and submit it. The engine would open a change authorization decision as Proposed and AI-created. One card would wait for the business owner, Nadia Ferreira. If Priya then asked Claude Code to approve it for Nadia, it could not: no tool approves, and the engine refuses an answer from anyone but the approval runner.
+Priya Castell asks Claude Code to plan the go-live of a field inspections app to production on Thursday between 06:00 and 08:00 UTC, and send it for approval. In the design, Claude Code would draft a normal change with that window and submit it. The engine would open a change authorization decision as Proposed and AI-created. One approval request would wait for the business owner, Nadia Ferreira, on the decision page. If Priya then asked Claude Code to approve it for Nadia, it could not: no tool an AI client is served approves, and the engine records an answer only from the person the request asks, on the decision page or in a card whose answer the approval runner relays.
 
 ## Microsoft sources
 

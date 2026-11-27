@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_records input",
+  "description": "Finds a record by its record number, for the web app's global search: an application (APP), an intake request (IR), a decision (DEC), a change request (CHG), a review (REV) a configuration draft (CFG) or a data use (DU). The prefix names the kind of record; the digits match with or without leading zeros, so DEC-123 finds DEC-0123. Rows the caller may not read are never found. Writes nothing.",
+  "x-tool": "find_records",
+  "type": "object",
+  "required": [
+    "recordNumber"
+  ],
+  "properties": {
+    "recordNumber": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 20,
+      "pattern": "^[A-Za-z]{2,3}[ -]?[0-9]{1,9}$",
+      "description": "The record number as people write it, such as DEC-0123, dec 123 or IR0108. The prefix is one of APP, IR, DEC, CHG, REV, CFG and DU."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "recordNumber": "DEC-0123"
+    }
+  ]
+}

@@ -2,14 +2,14 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant. The runner's flows have not been imported anywhere; the outbox, its routes and the approval outcome endpoint are built and tested on the local server.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 23, S1, S2 and B23-6; document 26, section 7; document 21, section 4.7; `src/adapters/azure/flows/README.md`; `src/adapters/azure/README.md`, "The approval runner"; `src/adapters/azure/sql/0005-approval-outbox.sql`.
+- **See also:** [admin.md](../admin.md), [concepts.md](../concepts.md); `src/adapters/azure/flows/README.md`; `src/adapters/azure/README.md`, "The approval runner"; `src/adapters/azure/sql/0005-approval-outbox.sql`.
 - **Open design questions that touch this guide:** none.
 
 ## Purpose
 
-Once the approval runner is connected (guide [S5](../setup/S5-connect-the-approval-runner.md)), most requests need nobody: a card goes out within one poll, a person answers, and the engine counts the answer. This guide is for the rest: a card that never went out, a request the runner gave up on, an answer that came too late or does not count, and a card that outlived its flow.
+Once the approval runner is connected (guide [S5](../setup/S5-connect-the-approval-runner.md)), most requests need nobody: a notice goes out within one poll, a person answers (on the decision page, or in the card while step-up sign-in is off), and the engine counts the answer. This guide is for the rest: a card that never went out, a request the runner gave up on, an answer that came too late or does not count, and a card that outlived its flow.
 
-Two rules hold in every case below. No tool, page or person other than the approval runner writes an approval outcome, and the engine alone decides whether an answer counts. An admin fixes the cause and sends the request through again; an admin never answers for someone.
+Two rules hold in every case below. An approval outcome is written only for the person the request asks, when they answer on the product's decision page (`answer_approval`, served only in the web app, built since this draft; see the [admin guide](../admin.md)), or by the approval runner, for an answer given in a card while step-up sign-in is off. The engine alone decides whether an answer counts. An admin fixes the cause and sends the request through again; an admin never answers for someone.
 
 ## Who
 
@@ -38,7 +38,7 @@ The outbox states:
 | `sent` | A card went out; the runner waits for the answer | `answered`, `expired`, `cancelled`, or back to `pending` on a release |
 | `answered` | The record holds an answer (approved, rejected or recommendation only) | Never changes again |
 | `expired` | The engine wrote expired on the record, which passed its Expires On, and opened a restart with a row of its own | Never changes again |
-| `cancelled` | The engine cancelled the record: on a withdraw, or because the decision was accepted or rejected while the record was still pending | Never changes again |
+| `cancelled` | The engine canceled the record: on a withdraw, or because the decision was accepted or rejected while the record was still pending | Never changes again |
 | `failed` | Given back as many times as `Product:ApprovalRunner:MaxAttempts` allows (default 3); no new card goes out | Nothing moves it yet (open point 2) |
 
 ## Situations
@@ -63,7 +63,7 @@ The reason in the log says why. Each release returns the request to `pending` wi
 
 ### A request failed
 
-After `MaxAttempts` releases or lapsed leases the request is `failed` and no card goes out for it. Fix the cause first (the table above), then ask the requester to withdraw the record (`withdraw_record`) and submit it again (document 21, section 4.7). The withdraw cancels the decision's pending Approval Records, which settles their outbox rows as `cancelled`; the new submission opens new records and new outbox rows. When the record's rule has a timeout and nobody withdraws, the engine expires the failed request at its Expires On and opens a restart, which goes out as a new request. No product route returns a failed request to `pending` yet (open point 2), and an admin does not edit the outbox table by hand.
+After `MaxAttempts` releases or lapsed leases the request is `failed` and no card goes out for it. Fix the cause first (the table above), then ask the requester to withdraw the record (`withdraw_record`) and submit it again. The withdraw cancels the decision's pending Approval Records, which settles their outbox rows as `cancelled`; the new submission opens new records and new outbox rows. When the record's rule has a timeout and nobody withdraws, the engine expires the failed request at its Expires On and opens a restart, which goes out as a new request. No product route returns a failed request to `pending` yet (open point 2), and an admin does not edit the outbox table by hand.
 
 ### A request expired
 
@@ -85,14 +85,14 @@ When the decision is accepted or rejected, the engine cancels the records still 
 
 ### Old cards in the action center
 
-A flow that waited past its limit, or a card for a record that has since settled, leaves an approval in the Power Automate action center with no flow waiting on it. The Approvals connector has no action that cancels it, so the product cannot. Microsoft: the requestor or an environment admin deletes such approvals from the action center by hand. An answer on an old card reaches nothing, or is refused with 409 when its record has expired, been cancelled or been answered.
+A flow that waited past its limit, or a card for a record that has since settled, leaves an approval in the Power Automate action center with no flow waiting on it. The Approvals connector has no action that cancels it, so the product cannot. Microsoft: the requestor or an environment admin deletes such approvals from the action center by hand. An answer on an old card reaches nothing, or is refused with 409 when its record has expired, been canceled or been answered.
 
 ## Routine
 
 - **Weekly:** read the release log lines and the refresh warnings; look for `failed` requests (open point 1) and for decisions whose `get_approval_status` shows a record pending for longer than its rule's timeout, a sign that the runner did not poll.
 - **Monthly:** `check_role_bindings` for the runner's grant and assignment; the flow group's capacity page; the old approvals in the action center.
 - **Thirty days before the runner's grant expires:** renew it (guide A3, part C).
-- **Never:** grant an AI client app the Microsoft Graph permissions that answer approvals (`ApprovalSolution.ReadWrite`, `ApprovalSolutionResponse.ReadWrite`; document 23, S1), add reassignment to the cards, or give anyone but the runner the `Approval.Write` app role.
+- **Never:** grant an AI client app the Microsoft Graph permissions that answer approvals (`ApprovalSolution.ReadWrite`, `ApprovalSolutionResponse.ReadWrite`), add reassignment to the cards, or give anyone but the runner the `Approval.Write` app role.
 
 ## Checks
 
@@ -103,10 +103,10 @@ A flow that waited past its limit, or a card for a record that has since settled
 
 ## Open points
 
-1. **No product view of the outbox.** Only database principals can read `host.ApprovalOutbox`, and on a production server those are the app's identity and the break-glass SQL administrators (guide A2, part B). A request that fails because its lease ran out too often is marked `failed` during a claim without a log line of its own. Proposal: a read route or tool for platform admins that lists `failed` and long-`sent` requests, and a log line when a claim marks a request failed.
-2. **No way to send a failed request again** other than withdraw and submit. The engine opens a new request only when a record expires or an answer does not count, not when the runner gives up. Proposal: a runner route that returns a failed request to `pending`, or an engine-side restart of a failed request.
+1. **The outbox view.** Built since this draft: the Admin page lists the approval outbox by state, with its failed and long-sent rows (`get_admin_status`, for the platform admin, the configuration admin and the auditor). Still open: a request that fails because its lease ran out too often is marked `failed` during a claim without a log line of its own.
+2. **Sending a failed request again.** Built since this draft: on the Admin page a platform admin sends a failed card, or one sent more than two days ago, again (`retry_approval_card`, web app only). The row goes back to pending with its attempts reset; a card whose request settled meanwhile is closed instead.
 3. **Several answers for a product role.** The runner cannot leave out a group member whose answer already counts, so that person may get the next card too; their second answer does not count, and the engine asks again. Proposal: the claim item lists the responders who already count, and the child flow leaves them out.
-4. **Reminders, escalation, and expiry while the runner is off** (document 23, S2) need a timer the Azure binding does not have yet; expiry and restarts run in the runner's claims today.
+4. **Reminders, escalation, and expiry while the runner is off. Built since this draft: the daily due-state refresh expires and restarts requests, and records each reminder and escalation as an audit entry. It runs from the Functions timer `due-state-refresh` once `Product:DueStateRefresh:HourUtc` is set (the template does not set it yet), or when a platform admin runs it on the Admin page. Still open: no flow sends the reminders it records.
 5. **An answer given in time that arrives after the expiry.** A claim that runs at or after Expires On has the engine write expired at once, so an answer the person gave before Expires On, which the engine would count, is refused with 409 when its child flow posts it after that claim; the person answers the restart's card. Proposal: a grace period after Expires On before the engine writes expired, or an engine path that takes such an answer in place of the expired outcome (the Azure binding's `ENGINE-CHANGES-NEEDED.md`, item 19).
 
 ## Microsoft facts used

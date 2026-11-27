@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "tier-decision-tier-3-two-approvers",
+  "description": "Balanced aligned with P02: a tier decision at tier 3 needs the platform admin and the security reviewer, everyone must approve, and the security reviewer types a reason. The tier 3 group replaces the broader one.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "tier",
+    "tierKey": "tier-3",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "source": "approval-rule",
+          "ruleKey": "tier-tier-3-platform-admin",
+          "approverRoleKey": "platform-admin",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": false
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "tier-tier-3-security",
+          "approverRoleKey": "security-reviewer",
+          "isConsultation": false,
+          "approvalMode": "everyone-must-approve",
+          "minimumCount": 1,
+          "timeoutDays": 10,
+          "requiresTypedReason": true
+        }
+      ],
+      "consultations": []
+    },
+    "payloadMatch": "exact",
+    "trace": [
+      {
+        "entity": "Approval Rule",
+        "key": "tier-tier-3-platform-admin",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "tier-tier-3-security",
+        "role": "won"
+      },
+      {
+        "entity": "Approval Rule",
+        "key": "tier-platform-admin",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

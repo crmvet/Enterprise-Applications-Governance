@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "subject-change-scheduled-as-effect-allowed",
+  "description": "The update-subject effect of an accepted change authorization moves the change request to in progress. Allowed.",
+  "tags": [
+    "update-subject"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "onBehalfOfPrincipalId": "fixture-person-2",
+      "roleKeys": [
+        "approval-writer"
+      ],
+      "isEngineNested": true
+    }
+  },
+  "input": {
+    "entity": "change-request",
+    "operation": "update",
+    "rowId": "fixture-change-1",
+    "nestedEffect": "update-subject",
+    "after": {
+      "status": "change-in-progress"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "submitted",
+      "title": "Add an approval step"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "setColumns": {
+        "statusMeaning": "in-progress",
+        "performedByActorKind": "engine"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,7 +1,8 @@
 // The web app's two dialogs.
-// Hand-off: the pages never write. Where a page offers an action, such as "Propose" on an owner gap, it shows the
-// request for the person's AI client, which calls the tool; the engine checks the write and only a person decides on
-// an approval card.
+// Hand-off: where one of the four original pages offers an action it does not take itself, such as "Propose" on an
+// owner gap, it shows the request for the person's AI client, which calls the tool. The engine checks the write, the
+// person accepts the draft, and a person decides every approval on the decision page (D-28, D-38). The work pages act
+// in the web app itself (D-36), through the action sheet in components/actions.tsx.
 // Drill-down without a list: the web app lists applications; other lists are not in this release, and the dialog says
 // how to get them.
 // One modal dialog (Radix through components/ui/dialog): Escape, a click outside and Close all close it. It has no
@@ -47,9 +48,9 @@ export function AppDialog({ request, onClose }: { request: DialogRequest | null;
           <DialogTitle className="text-lg leading-6 text-navy">{title}</DialogTitle>
           {request.kind === 'hand-off' ? (
             <DialogDescription className={note}>
-              These pages are read-only. Give this request to your AI client. It calls{' '}
+              Your AI client can draft this for you. Give it this request. It calls{' '}
               <code className="rounded bg-muted px-1 py-px font-mono text-[0.92em] text-navy">{request.request.tool}</code>,
-              the engine checks the write, and only a person decides on the approval card.
+              the engine checks the write, and a person decides every approval on the decision page.
             </DialogDescription>
           ) : (
             <DialogDescription className={note}>

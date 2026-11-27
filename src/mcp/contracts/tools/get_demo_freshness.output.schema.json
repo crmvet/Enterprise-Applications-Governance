@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_demo_freshness output",
+  "description": "The response envelope. On success, data lists the story requests that expired or expire soon, with their decision and who they ask.",
+  "x-tool": "get_demo_freshness",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "withinHours",
+        "counts",
+        "needsRefresh",
+        "items",
+        "refreshWith",
+        "renewTool"
+      ],
+      "properties": {
+        "withinHours": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "expired",
+            "expiresSoon"
+          ],
+          "properties": {
+            "expired": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "expiresSoon": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "needsRefresh": {
+          "type": "boolean"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "approvalRecordId",
+              "state",
+              "hoursLeft",
+              "decision",
+              "application",
+              "request"
+            ],
+            "properties": {
+              "approvalRecordId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O10 Approval Record"
+              },
+              "state": {
+                "enum": [
+                  "expired",
+                  "expires-soon"
+                ]
+              },
+              "hoursLeft": {
+                "type": "integer",
+                "description": "Hours until it expires; negative once it has."
+              },
+              "decision": {
+                "type": "object",
+                "required": [
+                  "decisionId",
+                  "recordNumber",
+                  "statement",
+                  "decisionType",
+                  "recordUrl"
+                ],
+                "properties": {
+                  "decisionId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  "recordNumber": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "statement": {
+                    "type": "string",
+                    "x-untrusted": true
+                  },
+                  "decisionType": {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  "recordUrl": {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "application": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "businessApplicationId",
+                      "name"
+                    ],
+                    "properties": {
+                      "businessApplicationId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O02 Business Application"
+                      },
+                      "name": {
+                        "type": "string",
+                        "x-untrusted": true
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "request": {
+                "type": "object",
+                "required": [
+                  "approvalRecordId",
+                  "askedRole",
+                  "askedOwnerRole",
+                  "askedPerson",
+                  "isConsultation",
+                  "requestedOn",
+                  "expiresOn"
+                ],
+                "properties": {
+                  "approvalRecordId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O10 Approval Record"
+                  },
+                  "askedRole": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "askedOwnerRole": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "askedPerson": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "isConsultation": {
+                    "type": "boolean"
+                  },
+                  "requestedOn": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "expiresOn": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "description": "One approval request: who it asks and when it expires."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "refreshWith": {
+          "type": "string",
+          "description": "The demo kit command that renews them."
+        },
+        "renewTool": {
+          "$ref": "../common.schema.json#/$defs/toolName"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

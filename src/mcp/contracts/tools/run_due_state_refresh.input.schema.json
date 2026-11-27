@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_due_state_refresh input",
+  "description": "Runs the engine's daily due-state refresh now, as a platform admin, on the product's web app (document 23, S2). The engine opens each review whose Next Due On has come, moves a current document past its Stale On to stale, expires approval requests past their Expires On and asks again, sends today's reminders and escalations by the reminder rules (C26) and the flag notices of the gate policy, and writes an Audit Entry for every change and every notice. It is idempotent: a second run on the same day changes and sends nothing new. The engine runs the same refresh every day on its own; this runs it at once. Served only to a person in the web app.",
+  "x-tool": "run_due_state_refresh",
+  "type": "object",
+  "properties": {
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "validateOnly": true
+    }
+  ]
+}

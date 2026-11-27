@@ -2,6 +2,7 @@ using System;
 using System.Data.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Product.Azure.Host;
 
 namespace Product.Azure.Functions;
 
@@ -29,6 +30,11 @@ internal static class FunctionsHostGuard
         {
             throw new InvalidOperationException("Product:DevIdentity:Enabled is set, but the Azure Functions app has no development identity. Remove the setting; sign-in here is Microsoft Entra ID only.");
         }
+
+        // The demo persona switch (D-39) works only in a demo install, whose app runs in the environment named Demo
+        // (the template sets AZURE_FUNCTIONS_ENVIRONMENT when PRODUCT_DEMO_PERSONAS is true). Anywhere else, demo personas
+        // in the settings stop the app before it starts.
+        ProductDemo.Validate(environment, configuration);
 
         // The Functions app always uses Azure SQL. The SQLite store is for local runs and tests.
         string? provider = configuration["Product:Store:Provider"];

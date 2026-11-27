@@ -29,14 +29,25 @@ internal sealed class ApprovalRequestCards
     private readonly CompiledSnapshot _current;
     private readonly Func<int, CompiledSnapshot?> _version;
     private readonly string? _recordUrlBase;
+    private readonly bool _linkOnly;
 
-    public ApprovalRequestCards(IRecordReader records, CompiledSnapshot current, Func<int, CompiledSnapshot?> version, string recordUrlBase)
+    // linkOnly: step-up sign-in is on (D-38; document 26, B26-17), so a person answers only on the product's decision
+    // page. Every item then tells the runner to send a notification with the link (delivery link-only), never an
+    // answerable card, and the outcome route refuses a relayed answer.
+    public ApprovalRequestCards(IRecordReader records, CompiledSnapshot current, Func<int, CompiledSnapshot?> version, string recordUrlBase, bool linkOnly = false)
     {
         _records = records ?? throw new ArgumentNullException(nameof(records));
         _current = current ?? throw new ArgumentNullException(nameof(current));
         _version = version ?? throw new ArgumentNullException(nameof(version));
         _recordUrlBase = Uri.TryCreate(recordUrlBase, UriKind.Absolute, out Uri? uri) && uri.Scheme == Uri.UriSchemeHttps ? recordUrlBase.TrimEnd('/') : null;
+        _linkOnly = linkOnly;
     }
+
+    /// <summary>The delivery of an answerable approval card (the Approvals connector).</summary>
+    public const string CardDelivery = "card";
+
+    /// <summary>The delivery of a notification that only links to the decision page, with step-up sign-in on.</summary>
+    public const string LinkOnlyDelivery = "link-only";
 
     /// <summary>
     /// The outbox state for a claim candidate that should get no card, or null when it gets one: the record holds an
@@ -84,7 +95,8 @@ internal sealed class ApprovalRequestCards
             ("claimId", JsonTreeNode.FromString(claimed.ClaimId ?? string.Empty)),
             ("decisionId", JsonTreeNode.FromString(decision.Id)),
             ("title", JsonTreeNode.FromString(Title(consultation ? "Consultation" : "Approval requested", typeLabel, subject))),
-            ("detailsMarkdown", JsonTreeNode.FromString(Details(decision, typeLabel, subject, typedReason, consultation, requested, expires))),
+            ("delivery", JsonTreeNode.FromString(_linkOnly ? LinkOnlyDelivery : CardDelivery)),
+            ("detailsMarkdown", JsonTreeNode.FromString(Details(decision, typeLabel, subject, typedReason, consultation, requested, expires, _linkOnly))),
             ("recordUrl", _recordUrlBase == null ? JsonTreeNode.Null : JsonTreeNode.FromString(_recordUrlBase + "/decision/" + Uri.EscapeDataString(decision.Id))),
             ("requestedOn", requested.HasValue ? Js.Utc(requested.Value) : JsonTreeNode.Null),
             ("expiresOn", expires.HasValue ? Js.Utc(expires.Value) : JsonTreeNode.Null),
@@ -97,6 +109,8 @@ internal sealed class ApprovalRequestCards
 
     // ---- Who to ask (document 26, AN-04) ----
 
+    // A person asked by name (O10 Asked Principal: a proposed owner, or a portfolio's Accountable Principal; document 25,
+    // B25-14): that person only, when they are an askable user.
     // An owner role: the current holders in Owner Assignment for the decision's application, users only (a Principal
     // Reference that records another kind, or an erased one, is left out), and not those whose approval already counts
     // for the same requirement of this decision: the engine counts one person once per requirement, so a rule that needs
@@ -106,8 +120,23 @@ internal sealed class ApprovalRequestCards
     {
         string? ownerRole = record.Text("requiredOwnerRole");
         string? role = record.Text("requiredRole");
+        string? asked = record.Text("askedPrincipal");
         var principals = new List<string>();
         var groups = new List<string>();
+        if (asked != null)
+        {
+            if (IsAskableUser(asked))
+            {
+                principals.Add(asked);
+            }
+
+            return Js.Obj(
+                ("kind", JsonTreeNode.FromString("person")),
+                ("roleKey", Js.Str(ownerRole ?? role)),
+                ("principals", Js.Strs(principals)),
+                ("groups", Js.Strs(groups)));
+        }
+
         if (ownerRole != null)
         {
             string? application = ApplicationOf(_records, decision);
@@ -280,7 +309,7 @@ internal sealed class ApprovalRequestCards
         return text.Length <= MaxTitle ? text : text.Substring(0, MaxTitle - 3) + "...";
     }
 
-    private static string Details(StoredRow decision, string typeLabel, string subject, bool typedReason, bool consultation, DateTime? requested, DateTime? expires)
+    private static string Details(StoredRow decision, string typeLabel, string subject, bool typedReason, bool consultation, DateTime? requested, DateTime? expires, bool linkOnly = false)
     {
         var text = new StringBuilder();
         text.Append("**Decision type:** ").Append(Markdown(typeLabel, 200)).Append("  \n");
@@ -329,7 +358,9 @@ internal sealed class ApprovalRequestCards
             text.Append(requested.HasValue ? " " : string.Empty).Append("Expires on ").Append(When(expires.Value)).Append(" UTC.");
         }
 
-        text.Append("\n\nOpen the record in the product for the full context. Only your own answer counts, and only while you hold the role this card asks for.");
+        text.Append(linkOnly
+            ? "\n\nThis message takes no answer. Open the decision page in the product, sign in again when it asks, and answer there. Only your own answer counts, and only while you hold the role this request asks for."
+            : "\n\nOpen the record in the product for the full context. Only your own answer counts, and only while you hold the role this card asks for.");
         return text.ToString();
     }
 

@@ -20,7 +20,7 @@ public sealed class ApproverPrincipalReferenceTests
         Harness h = Harness.Create();
         h.Store.Seed("principal-reference", "{\"principalKind\":\"agent-user\",\"entraObjectId\":\"" + AgentUser + "\",\"displayLabel\":\"Fixture agent-user 4ab\",\"isErased\":false}");
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         // The runner says person and user; the directory says agent user.
         RuntimeOutcome answer = Harness.Ok(h.Answer(record, "approval-approved", AgentUser));
@@ -40,7 +40,7 @@ public sealed class ApproverPrincipalReferenceTests
         Harness h = Harness.Create();
         h.Store.Seed("principal-reference", "{\"principalKind\":\"agent-user\",\"entraObjectId\":\"" + AgentUser + "\",\"displayLabel\":\"Fixture agent-user 4ab\",\"isErased\":false}");
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         Harness.Ok(h.Answer(record, "approval-approved", AgentUser.ToUpperInvariant()));
         Assert.Equal("recommendation-only", Harness.Text(h.Row("approval-record", record), "outcomeMeaning"));
@@ -54,7 +54,7 @@ public sealed class ApproverPrincipalReferenceTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2, principalKind: "agent-user"));
         StoredRow answered = h.Row("approval-record", record);
@@ -69,7 +69,7 @@ public sealed class ApproverPrincipalReferenceTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         RuntimeOutcome answer = Harness.Ok(h.Answer(record, "approval-approved", Harness.Person2));
         Assert.False(answer.HasReason(ReasonCodes.ApprovalNonUserPrincipal));
@@ -86,7 +86,7 @@ public sealed class ApproverPrincipalReferenceTests
     {
         Harness h = Harness.Create();
         string decision = h.IntakeDecision(tierTwo: true);
-        string record = RuntimeJsonTestHelpers.Strings(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload, "approvalRecordIds").Single();
+        string record = h.CountingRecord(Harness.Ok(h.Runtime.RequestApprovals(Harness.AiClientOf1, decision)).Payload);
 
         Harness.Ok(h.Answer(record, "approval-approved", "00000000-0000-4000-8000-0000000002ff"));
         StoredRow answered = h.Row("approval-record", record);

@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-07",
   "case": "design-gate-reads-op06-result",
-  "description": "The whole OP-06 result can be passed as it came. The design gate of a tier 3 application reads the current architecture decision record from its items.",
+  "description": "The whole OP-06 result can be passed as it came. The design gate of a tier 3 application reads the current architecture decision record from its items, and the counts of its data uses (docs/architecture/data-taxonomy.md, Gate requirements): one use declared, none undecided.",
   "workingDefaults": [
     9
   ],
@@ -32,6 +32,12 @@
       "draftCount": 0,
       "staleCount": 0,
       "staleOnByLink": {}
+    },
+    "dataUses": {
+      "declaredCount": 1,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
     }
   },
   "expected": {
@@ -45,6 +51,21 @@
           "requirementKind": "document-current",
           "requiredDocumentTypeKey": "architecture-decision-record",
           "met": true,
+          "triggered": false
+        },
+        {
+          "requirementKey": "design-data-uses-decided-tier-3",
+          "requirementKind": "data-uses-decided",
+          "requiredDecisionTypeKey": "data-use",
+          "met": true,
+          "guidelineKey": "g2",
+          "triggered": false
+        },
+        {
+          "requirementKey": "design-data-uses-declared-tier-3",
+          "requirementKind": "data-uses-declared",
+          "met": true,
+          "guidelineKey": "g2",
           "triggered": false
         }
       ]

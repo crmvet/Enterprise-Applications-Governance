@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "proposed-owners-only-group-unavailable",
+  "description": "A draft retires the business owner rule, so the winning ownership group counts only the proposed owners. A decision that names nobody new would then have no one to count, so the engine refuses and reports it (V27; document 25, B25-14).",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "approval-rule",
+        "key": "ownership-business-owner"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "ownership",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "approval-rule.consultation-only",
+        "severity": "error",
+        "entity": "Approval Rule"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

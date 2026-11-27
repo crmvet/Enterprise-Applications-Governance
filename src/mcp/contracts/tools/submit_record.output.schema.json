@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "submit_record output",
-  "description": "The response envelope. On success, data is the write result for the submitted record. An intake request, a change request or a configuration draft becomes submitted. A decision stays Proposed: submitting it only starts its cards. Nothing is approved, accepted or activated by this call.",
-  "$comment": "WORKING DEFAULT (open design question 9). An AI client may submit only where the Tool Policy row says AI May Submit = yes for the subject kind. Shipped yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
+  "description": "The response envelope. On success, data is the write result for the submitted record. An intake request, a change request or a configuration draft becomes submitted. A decision stays Proposed: submitting it only opens its approval requests. Nothing is approved, accepted or activated by this call.",
+  "$comment": "WORKING DEFAULT (open design question 9). An AI client may submit only where the Tool Policy row says AI May Submit = yes for the subject kind. Shipped yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without an approval request only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
   "x-tool": "submit_record",
   "x-ai-write-states": [
     "submitted"
@@ -31,7 +31,9 @@
             "intake-request",
             "change-request",
             "decision",
-            "configuration-draft"
+            "configuration-draft",
+            "data-use",
+            "data-mapping"
           ]
         },
         "subjectId": {
@@ -39,19 +41,20 @@
         },
         "status": {
           "$ref": "../common.schema.json#/$defs/statusValue",
-          "description": "Submitted for an intake request, a change request or a configuration draft. Proposed for a decision. Never accepted, approved or activated.",
+          "description": "Submitted for an intake request, a change request or a configuration draft. Proposed for a decision. Never accepted, approved or activated. With validateOnly true, nothing is stored, so an intake request, a change request or a configuration draft stays Draft.",
           "properties": {
             "meaning": {
               "$ref": "../common.schema.json#/$defs/statusMeaning",
               "enum": [
                 "submitted",
-                "proposed"
+                "proposed",
+                "draft"
               ]
             }
           }
         },
         "decisionId": {
-          "description": "The decision the cards are for. For a configuration draft, the Proposed configuration change or gate policy change decision the engine recorded. Null for a change request with no authorization step, or when validateOnly was true.",
+          "description": "The decision the approval requests are for. For a configuration draft, the Proposed configuration change or gate policy change decision the engine recorded. Null for a change request with no authorization step, or when validateOnly was true.",
           "anyOf": [
             {
               "$ref": "../common.schema.json#/$defs/id",
@@ -75,8 +78,16 @@
             ],
             "properties": {
               "approvalRecordId": {
-                "$ref": "../common.schema.json#/$defs/id",
-                "x-entity": "O10 Approval Record"
+                "description": "The request opened. Null with validateOnly true: the request would open.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O10 Approval Record"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "requiredRoleKey": {
                 "$ref": "../common.schema.json#/$defs/key",
@@ -88,11 +99,22 @@
                 "x-entity": "C28 Owner Role",
                 "description": "The owner role whose holder must answer."
               },
+              "askedPrincipal": {
+                "description": "The one person asked by name (O10 Asked Principal): a proposed owner, or the nearest portfolio's accountable person when no holder of the owner role is left. Null when the holders of the role or owner role are asked.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "approvalMode": {
                 "$ref": "../common.schema.json#/$defs/approvalMode"
               },
               "expiresOn": {
-                "description": "When the card expires.",
+                "description": "When the request expires.",
                 "anyOf": [
                   {
                     "$ref": "../common.schema.json#/$defs/dateTime"
@@ -105,7 +127,7 @@
               "channelKey": {
                 "$ref": "../common.schema.json#/$defs/key",
                 "x-entity": "C07 List Value",
-                "description": "Where the card goes, from the channel value list."
+                "description": "Where the notice of the request goes, from the channel value list."
               },
               "isConsultation": {
                 "type": "boolean",
@@ -113,7 +135,7 @@
               }
             },
             "additionalProperties": false,
-            "description": "One approval card the engine created, with outcome pending. Only a person answers it.",
+            "description": "One approval request the engine created (or would create, with validateOnly true), with outcome pending. Only a person answers it, on the decision page.",
             "oneOf": [
               {
                 "required": [
@@ -127,7 +149,7 @@
               }
             ]
           },
-          "description": "The approval cards the engine created. Empty when validateOnly was true or when the engine accepted from the locked list."
+          "description": "The approval requests the engine created. Empty when the engine accepted from the locked list. With validateOnly true, the requests it would create, each with a null approvalRecordId (nothing is stored)."
         },
         "standardChangeApplied": {
           "description": "Set when a standard change model applied. The engine applied it; the AI client did not decide the change is standard.",
@@ -179,8 +201,8 @@
                 }
               },
               "additionalProperties": false,
-              "description": "The engine accepted the decision without a card, as an engine effect stamped with actor kind engine.",
-              "$comment": "WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once."
+              "description": "The engine accepted the decision without an approval request, as an engine effect stamped with actor kind engine.",
+              "$comment": "WORKING DEFAULT (open design question 8). The engine accepts without an approval request only for a locked list: lowest-tier intake and standard changes whose model a person approved once."
             },
             {
               "type": "null"
@@ -225,7 +247,10 @@
               "status": {
                 "properties": {
                   "meaning": {
-                    "const": "submitted"
+                    "enum": [
+                      "submitted",
+                      "draft"
+                    ]
                   }
                 }
               }
@@ -238,7 +263,7 @@
   "examples": [
     {
       "ok": true,
-      "summary": "The intake request is submitted. The triage card went to the PMO.",
+      "summary": "The intake request is submitted. The triage request went to the PMO.",
       "data": {
         "recordId": "70000000-0000-4000-8000-000000000001",
         "status": {

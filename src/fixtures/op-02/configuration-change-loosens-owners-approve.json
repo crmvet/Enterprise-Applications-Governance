@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "configuration-change-loosens-owners-approve",
+  "description": "A draft that loosens a data rule needs the touched domains' data owners to approve, not only to be consulted (docs/architecture/data-taxonomy.md, Changing the taxonomy).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "configuration-change",
+    "dataTaxonomyChange": "loosens",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "config-data-loosens-admin"
+        },
+        {
+          "ruleKey": "config-data-loosens-owners",
+          "approverOwnerRoleKey": "data-owner",
+          "ownerSubject": "touched-data-domains"
+        }
+      ],
+      "consultations": []
+    }
+  }
+}

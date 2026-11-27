@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Microsoft.Data.Sqlite;
 using Product.Engine.Runtime.Ports;
 
@@ -13,9 +14,11 @@ namespace Product.Azure.Stores.Sqlite;
 // context is ignored (SQLite has no row-level security).
 internal sealed class SqliteRowDatabase : IRowDatabase
 {
-    // The schema this build creates. 2 adds the approval outbox; 3 adds the store keys. A file at an earlier version
-    // gets the new tables on first use, and its store keys are built from the rows it holds.
-    public const int SchemaVersion = 3;
+    // The schema this build creates. 2 adds the approval outbox; 3 adds the store keys; 4 builds the store keys again,
+    // because the data location key now counts locations in service only (a withdrawn draft no longer holds its External
+    // Id; StoreKeyScope.InServiceRows). A file at an earlier version gets the new tables on first use, and its store keys
+    // are built from the rows it holds.
+    public const int SchemaVersion = 4;
 
     // SQLite result codes for a constraint failure (19) on a unique index (2067) or on the primary key (1555).
     private const int ConstraintError = 19;
@@ -45,6 +48,10 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         "CREATE TABLE IF NOT EXISTS \"RowKey\" (\"Entity\" TEXT NOT NULL, \"KeyName\" TEXT NOT NULL, \"ValueHash\" BLOB NOT NULL, \"Id\" TEXT NOT NULL, "
             + "PRIMARY KEY (\"Entity\", \"KeyName\", \"ValueHash\")) WITHOUT ROWID",
         "CREATE INDEX IF NOT EXISTS \"IX_RowKey_Row\" ON \"RowKey\" (\"Entity\", \"Id\")",
+
+        // The record number counters (sql/0007-record-numbers.sql on Azure SQL): the last number given per entity. A file
+        // of an earlier build gets the table empty on first use; the numbers its rows hold count all the same.
+        "CREATE TABLE IF NOT EXISTS \"RecordNumber\" (\"Entity\" TEXT NOT NULL PRIMARY KEY, \"LastNumber\" INTEGER NOT NULL) WITHOUT ROWID",
     };
 
     private const string RowColumns = "\"Id\", \"Key\", \"Columns\", \"Version\"";
@@ -108,6 +115,29 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         }
 
         command.CommandText = sql + " ORDER BY \"Id\"";
+        return Read(command, entity);
+    }
+
+    // One read for many IDs: the IDs travel as one JSON array parameter, which json_each opens.
+    public IReadOnlyList<StoredRowData> GetMany(EntityInfo entity, IReadOnlyList<string> ids)
+    {
+        using SqliteConnection connection = Open();
+        using SqliteCommand command = Command(connection, "SELECT " + RowColumns + " FROM \"Row\" WHERE \"Entity\" = $entity AND \"Id\" IN (SELECT \"value\" FROM json_each($ids)) ORDER BY \"Id\"");
+        command.Parameters.AddWithValue("$entity", entity.Key);
+        command.Parameters.AddWithValue("$ids", JsonArray(ids));
+        return Read(command, entity);
+    }
+
+    // One read for many values of one column, as Query narrows by one value.
+    public IReadOnlyList<StoredRowData> QueryIn(EntityInfo entity, string column, IReadOnlyList<string> values)
+    {
+        using SqliteConnection connection = Open();
+
+        // The name is a plain identifier (RowStore checks it); the values are one parameter.
+        using SqliteCommand command = Command(connection, "SELECT " + RowColumns + " FROM \"Row\" WHERE \"Entity\" = $entity "
+            + "AND json_extract(\"Columns\", '$.\"" + column + "\"') IN (SELECT \"value\" FROM json_each($values)) ORDER BY \"Id\"");
+        command.Parameters.AddWithValue("$entity", entity.Key);
+        command.Parameters.AddWithValue("$values", JsonArray(values));
         return Read(command, entity);
     }
 
@@ -217,6 +247,32 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         command.Parameters.AddWithValue("$key", counterKey);
         command.Parameters.AddWithValue("$start", windowStartUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
         return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    // One immediate transaction: the counter and the highest number the entity's rows hold, read under the write lock,
+    // and the counter moved to the next number before the lock is let go.
+    public long NextRecordNumber(EntityInfo entity, string prefix)
+    {
+        using SqliteConnection connection = Open();
+        using SqliteTransaction transaction = connection.BeginTransaction(deferred: false);
+        using SqliteCommand command = Command(connection,
+            "SELECT MAX(COALESCE((SELECT \"LastNumber\" FROM \"RecordNumber\" WHERE \"Entity\" = $entity), 0), "
+            + "COALESCE((SELECT MAX(CAST(substr(json_extract(\"Columns\", '$.recordNumber'), $start) AS INTEGER)) FROM \"Row\" "
+            + "WHERE \"Entity\" = $entity AND json_extract(\"Columns\", '$.recordNumber') GLOB $pattern), 0)) + 1");
+        command.Transaction = transaction;
+        command.Parameters.AddWithValue("$entity", entity.Key);
+        command.Parameters.AddWithValue("$start", prefix.Length + 2);
+        command.Parameters.AddWithValue("$pattern", prefix + "-[0-9]*");
+        long next = Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+
+        using SqliteCommand keep = Command(connection, "INSERT INTO \"RecordNumber\" (\"Entity\", \"LastNumber\") VALUES ($entity, $next) "
+            + "ON CONFLICT (\"Entity\") DO UPDATE SET \"LastNumber\" = excluded.\"LastNumber\"");
+        keep.Transaction = transaction;
+        keep.Parameters.AddWithValue("$entity", entity.Key);
+        keep.Parameters.AddWithValue("$next", next);
+        keep.ExecuteNonQuery();
+        transaction.Commit();
+        return next;
     }
 
     public ApprovalOutboxItem? OutboxGet(string approvalRecordId)
@@ -407,6 +463,12 @@ internal sealed class SqliteRowDatabase : IRowDatabase
         command.Parameters.AddWithValue("$columns", change.ColumnsText);
         command.Parameters.AddWithValue("$unique", (object?)change.UniqueKey ?? DBNull.Value);
         command.Parameters.AddWithValue("$now", now);
+    }
+
+    // A JSON array of strings, as one parameter.
+    private static string JsonArray(IEnumerable<string> values)
+    {
+        return RowJson.Write(Product.Engine.Core.Canonical.JsonTreeNode.CreateArray(values.Select(Product.Engine.Core.Canonical.JsonTreeNode.FromString)));
     }
 
     private static SqliteCommand Command(SqliteConnection connection, string sql)

@@ -342,10 +342,10 @@ The engine must understand a few meanings to enforce its rules (D-10). Each is a
 |---|---|---|---|---|---|---|
 | C01 | Configuration Set | A whole, named set of configuration rows: a preset or a client's working set | CONFIGURATION | Has many Configuration Set Versions and Configuration Drafts; every taxonomy and rule row belongs to one set; optional Based On Preset (to C03) | Yes: one working set copied from the default preset | D-07 |
 | C02 | Configuration Set Version | An immutable snapshot of a set, created by the engine only at activation and stamped on operational rows. Append-only (class A in document 22) | CONFIGURATION | To Configuration Set (many to one); to the configuration change Decision (many to one); to the Configuration Draft it activated (one to one); stamped by every operational row | Version 1 at install | D-07, D-10 (28 issue 3) |
-| C03 | Preset | A shipped, read-only configuration set a client applies, copies and adjusts. Stored as a Configuration Set whose kind is preset. A full preset or an overlay | CONFIGURATION | Is a Configuration Set; working sets point to it through Based On Preset | Full: Starter, Balanced, Regulated, Microsoft CoE baseline (sweep proposal; ships in the first release, extending Balanced, working default 28 Q6). Overlays: small team, strict separation, linked change management (working default, 28 Q3) | D-07, D-03 |
+| C03 | Preset | A shipped, read-only configuration set a client applies, copies and adjusts. Stored as a Configuration Set whose kind is preset. A full preset or an overlay | CONFIGURATION | Is a Configuration Set; working sets point to it through Based On Preset | Full: Starter, Balanced, Regulated, Microsoft CoE baseline (sweep proposal; ships in the first release, extending Balanced, working default 28 Q6). Overlays: small team, strict separation, linked change management (working default, 28 Q3), and data domains starter (D-37, B20-6) | D-07, D-03 |
 | C04 | Setting | One named switch with one value | CONFIGURATION | To Configuration Set; optional Portfolio (change management mode only) | Change management mode = built in; AI approval lock = on (locked); reminder channel; guideline hub base URL; `intake-visibility` = own; `claim-visibility` = admins and claimant; `record-access-mode` = open, with portfolio read available (working default, 28 issue 10 and Q13); a locked list of decision types the engine may accept without a card (working default, open design question 8, see 28-working-defaults.md). The full list, with defaults and owners, is document 21's settings table; `audit-retention-days` replaces `history-retention-days` (working default, 28 issue 15) | D-08, D-10 |
 | C05 | Status | A configurable status label for one entity, mapped to one engine meaning | CONFIGURATION | Used by O02, O07, O09, O10, O11, O14, O19, O21, O23 | One row per engine meaning per entity | D-06 |
-| C06 | Value List | A named list of labels with no engine behavior | CONFIGURATION | Has many List Values | horizon, size band, build path, autonomy level, target kind, artifact kind, change result, evidence level, portfolio level, estate, channel, confidence, impact role, criticality, application category, vocabulary, tool | D-06 |
+| C06 | Value List | A named list of labels with no engine behavior | CONFIGURATION | Has many List Values | horizon, size band, build path, autonomy level, target kind, artifact kind, change result, evidence level, portfolio level, estate, channel, confidence, impact role, criticality, application category, vocabulary, tool; location kind, data vendor, retention class and access approach (D-37, B20-6) | D-06 |
 | C07 | List Value | One label in a value list | CONFIGURATION | To Value List (many to one) | Yes, per list | D-06 |
 | C08 | Tier | A risk tier, ordered by rank | CONFIGURATION | Has many Vocabulary Mappings, Review Cadences, Gate Policies, Approval Rules | Three tiers | D-06 |
 | C09 | Tier Question | A plain question that suggests a tier | CONFIGURATION | Has many Tier Answer Options; optional filter by Application Kind | Five questions (data change, sensitivity, reach, agent autonomy, failure impact; document 21, section 6.3) | D-06 |
@@ -367,8 +367,8 @@ The engine must understand a few meanings to enforce its rules (D-10). Each is a
 | C25 | Review Cadence | How often a review type is due at a tier | CONFIGURATION | To Review Type; to Tier | Yearly, twice a year, quarterly for the default tiers (document 21, section 6.3) | D-06 |
 | C26 | Reminder Rule | When to remind and when to escalate to the deputy | CONFIGURATION | Applies to a subject kind (review, document, approval, claim) | Yes | D-06 |
 | C27 | Party | One of the seven parties | CONFIGURATION | Has many Roles and Owner Roles | The seven parties of D-01 | D-01 |
-| C28 | Owner Role | A responsibility for one business application | CONFIGURATION | To Party; used by O06, C31, C32 | business owner, sponsor, data owner, technical owner, builder, support owner, security owner, process owner (tier 3 agents [S2]) | D-01 |
-| C29 | Role | A product-wide responsibility. A human role is held only through an Entra group; a workload role only through a workload grant | CONFIGURATION | To Party; has Role Group Bindings (human roles) or Workload Grants (workload roles); used by C31, C32, C40 | 14 human roles: requester, maker, application owner, data owner, architect, change manager, change board, PMO, AI lead (D-20), platform admin, configuration admin (D-10), security reviewer, auditor (read only), reader (read only). 2 workload roles: deployment recorder, approval writer (working default, 28 issue 7) | D-11, D-20 |
+| C28 | Owner Role | A responsibility for one subject: a business application, a data domain or a data location (D-37) | CONFIGURATION | To Party; used by O06, C31, C32 | business owner, sponsor, data owner, technical owner, builder, support owner, security owner, process owner (tier 3 agents [S2]); data steward (data domains only, D-37) | D-01, D-37 |
+| C29 | Role | A product-wide responsibility. A human role is held only through an Entra group; a workload role only through a workload grant | CONFIGURATION | To Party; has Role Group Bindings (human roles) or Workload Grants (workload roles); used by C31, C32, C40 | 15 human roles: requester, maker, application owner, data owner, architect, change manager, change board, PMO, AI lead (D-20), platform admin, configuration admin (D-10), security reviewer, auditor (read only), reader (read only), data governance lead (D-41, question 4). 2 workload roles: deployment recorder, approval writer (working default, 28 issue 7) | D-11, D-20, D-41 |
 | C30 | Role Group Binding | Binds one human Role to one Entra group and says how the platform applies it | CONFIGURATION | To Role (many to one); to Principal Reference of kind group (many to one). Groups only (V35); workloads use C42 | None (the setup service creates groups, D-11) | D-11 |
 | C31 | Decision Right | Who is responsible, accountable, consulted or informed for a decision type in a scope | CONFIGURATION | To Decision Type; optional Tier, Lifecycle Stage, Change Type, Application Kind, Portfolio scope; to an Owner Role or a Role. The single most specific matching rule group applies | The default matrix (document 21, section 6.3), with the change manager accountable for tier 3 and emergency changes (working default, 28 issue 4) | D-07 |
 | C32 | Approval Rule | Which approvals a decision type needs in a scope | CONFIGURATION | To Decision Type; optional scope as C31 plus Target Stage; to an Owner Role or a Role. The single most specific matching rule group applies (working default, 28 issue 2) | Yes, per default tier. Combined cases, such as a tier 3 emergency, get their own group. Tier 3 and emergency change authorization go to the change manager; the change board gets exceptions and windows that cover several applications (working default, 28 issue 4) | D-07 |
@@ -376,12 +376,16 @@ The engine must understand a few meanings to enforce its rules (D-10). Each is a
 | C34 | Target Stage | The ALM stage of a deployment target | CONFIGURATION | Used by O15, C32, C33 | development, test, production | D-03 |
 | C35 | Change Path | The routes a target expects deployments to arrive by | CONFIGURATION | Allows many Deployment Routes; used by O15 | pipeline only; pipeline or AI tool; any route | D-03, D-19 |
 | C36 | Deployment Route | How a deployment record arrived | CONFIGURATION | Used by O14, C35 | pipeline step, AI tool, person in app, other | D-19 |
-| C37 | Link Kind | What a link points to, by tool and category | CONFIGURATION | Used by O03, O15, O16, O18, O19, O20 | Azure DevOps work item, repository, wiki page, Azure Pipelines pipeline; GitHub repository, issue, project, Actions workflow; Power Platform Pipelines pipeline; Planner unified plan, Planner premium plan (fit 27); SharePoint page; ITSM change; Copilot Studio CLI deployment, runtime GitHub Actions deploy, runtime platform deploy (sweep proposal) | D-12, D-19 |
+| C37 | Link Kind | What a link points to, by tool and category | CONFIGURATION | Used by O03, O15, O16, O18, O19, O20 | Azure DevOps work item, repository, wiki page, Azure Pipelines pipeline; GitHub repository, issue, project, Actions workflow; Power Platform Pipelines pipeline; Planner unified plan, Planner premium plan (fit 27); SharePoint page; ITSM change; Copilot Studio CLI deployment, runtime GitHub Actions deploy, runtime platform deploy (sweep proposal); Dataverse environment, Azure data resource, SharePoint location, Fabric item and external data system, of the new category data location (D-37) | D-12, D-19, D-37 |
 | C38 | Actor Kind | Who or what acted | CONFIGURATION | Used by every row's performed-by columns and by O10 | One row per engine meaning | D-10 |
 | C39 | Guideline | One version of one numbered guideline, with local override | CONFIGURATION | Optional Supersedes (to C39); cited by C14, C32, C23 | G1 to G19 | D-01, D-10 |
 | C40 | Separation Rule | Who must not be the same person for an approval, or which roles may not share an Entra group | CONFIGURATION | Optional Decision Type, Tier and Target Stage scope; optional Owner Role or Role to differ from; optional exception Decision Type. The engine reads it when it counts an approval | Per preset: Balanced refuses self-approval at tier 3 and flags a deployer who is the only approver. Regulated and the strict separation overlay refuse self-approval at every tier and need a second configuration admin. The strict separation overlay also keeps the AI lead and platform admin in different groups. Starter and the small team overlay allow self-approval only through a recorded exception decision (working default, 28 Q10) | D-20 (working default, 28 issue 5) |
 | C42 | Workload Grant | Gives one non-human principal one workload role, with a reason, the deciding decision and an expiry | CONFIGURATION | To Principal Reference of kind service principal or managed identity (many to one); to Role with Is Workload Role = Yes (many to one); to the granting Decision | None (the setup service adds one per pipeline identity and one for the approval runner) | D-11, D-19 (working default, 28 issue 8; open design question 12, see 28-working-defaults.md) |
 | C46 | Configuration Draft | A proposed change to the working set, held as a patch until people accept its configuration change decision and the engine activates it | CONFIGURATION | To Configuration Set (many to one); to the configuration change Decision (one to one, once submitted); to the resulting Configuration Set Version (one to one, once activated) | None (created by the draft tools and by product upgrades) | D-07, D-10 (working default, 28 issue 3) |
+| C47 | Data Classification | A ranked sensitivity level in the tenant's Purview label names, with the default handling rules for data of that level | CONFIGURATION | Used by C49 and, from data taxonomy slice 2, C31 and C32; maps to Purview labels through C11 | Public, General, Confidential, Highly Confidential (Purview's default names; Starter has three) | D-37 |
+| C48 | Data Domain Level | One level of the business data domain tree of an install, with its rules | CONFIGURATION | Used by C49 | Domain, subdomain, data set (Starter: two) | D-37 |
+| C49 | Data Domain | One node of the business data domain tree each install draws for itself | CONFIGURATION | Optional Parent Domain (self); to Level, Classification, Retention Class (List Value); used by O26, O27, O06 and O09 subjects | None in a full preset; the overlay data domains starter holds a generic tree to rename | D-37 |
+| C50 | Data Platform | A kind of data store from any vendor | CONFIGURATION | To Location Kind and Vendor (List Values), Default Link Kind; used by O25 | About twenty, from Dataverse and Azure SQL to Salesforce, Workday and IBM i | D-37 |
 
 
 #### 2.5.2 Extra columns: configuration core
@@ -617,10 +621,10 @@ Rules for C02 and C46 (working default, 28 issue 3):
 | O03 | Technical Component | One part of an application in a tool, as a link | OPERATIONAL | To Business Application, Component Kind, Link Kind (Microsoft resource), optional Deployment Target; optional Replaces Component (self, sweep proposal) | R1 | D-15 |
 | O04 | Dependency | A typed, directed link between applications or to a component | OPERATIONAL | From Business Application; to exactly one of Business Application or Technical Component; to Dependency Type | R1 | D-01 |
 | O05 | Principal Reference | A minimal reference to a directory object (user, group, agent identity, service principal) | OPERATIONAL | Referenced by owner, approver, decider, requester, deployer and performed-by columns; by Role Group Binding and Workload Grant | R1 | D-11, D-15 |
-| O06 | Owner Assignment | One principal holding one owner role for one application | OPERATIONAL | To Business Application, Owner Role, Principal Reference; optional Deputy For (self) | R1 | D-01 |
+| O06 | Owner Assignment | One principal holding one owner role for one subject: an application, a data domain or a data location (D-37) | OPERATIONAL | Exactly one of Business Application, Subject Data Domain, Subject Data Location; to Owner Role, Principal Reference; optional Deputy For (self) | R1 | D-01, D-37 |
 | O07 | Intake Request | One request through the front door | OPERATIONAL | To Principal Reference (requester); optional Business Application; to Status; has Tier Assessments and Decisions | R1 | D-01 |
 | O08 | Tier Assessment | One set of tier answers and the tier they imply | OPERATIONAL | To Intake Request or Business Application; to Tier (computed); to the tier Decision | R1 | D-06 |
-| O09 | Decision | One append-only entry in the decision log | OPERATIONAL | To Decision Type, Decision Outcome, Status, decider Principal Reference; one subject (application, intake, change request, deployment, component, claim, configuration draft); optional Supersedes and Amends (self); has Approval Records and Evidence Links. Configuration change and gate policy change decisions are about a Configuration Draft (working default, 28 issue 3) | R1 | D-01 |
+| O09 | Decision | One append-only entry in the decision log | OPERATIONAL | To Decision Type, Decision Outcome, Status, decider Principal Reference; one subject (application, intake, change request, deployment, component, claim, configuration draft, data use, data mapping, data domain, data location); optional Supersedes and Amends (self); has Approval Records and Evidence Links. Configuration change and gate policy change decisions are about a Configuration Draft (working default, 28 issue 3) | R1 | D-01 |
 | O10 | Approval Record | One required approval for one decision | OPERATIONAL | To Decision, Approval Rule, approver Principal Reference, Actor Kind, Status | R1 | D-02, D-10 |
 | O11 | Change Request | One planned change | OPERATIONAL | To Business Application (main), Change Type, optional Standard Change Model, Status, optional planned Deployment Target; to the authorization Decision; has Affected Applications, Deployment Records, Evidence Links | R1 | D-08, D-13 |
 | O12 | Affected Application | A further application a change touches | OPERATIONAL | To Change Request; to Business Application | R1 | D-08 |
@@ -636,6 +640,9 @@ Rules for C02 and C46 (working default, 28 issue 3):
 | O22 | Gap Check Run | One execution of the gap check | OPERATIONAL | To Principal Reference (the admin); has many Claims | R1 | D-15 |
 | O23 | Claim | One item on the claim list | OPERATIONAL | To Gap Check Run, Component Kind, Status; optional suggested claimant and claimed-by Principal References; optional resulting Technical Component | R1 | D-15 |
 | O24 | Audit Entry | One product event, append-only | OPERATIONAL | To the row it is about (entity name plus row ID); to actor Principal Reference, Actor Kind | R1 (scope differs per platform, section 2.9) | D-10, D-22 |
+| O25 | Data Location | One concrete data store from any vendor, held as a link | OPERATIONAL | To Data Platform, Link Kind (data location), Status; optional Parent Location (self, two levels at most), Target Stage, Deployment Target, Hosted By Application | R1 | D-37 |
+| O26 | Data Mapping | This domain's data sits at this location, in these containers, with this origin | OPERATIONAL | To Data Domain, Data Location, Status; optional Copied From (self) | R1 | D-37 |
+| O27 | Data Use | This application reads or writes this data domain, at this location, for this purpose, with or without AI | OPERATIONAL | To Business Application, Data Domain, Status; optional Data Location, AI Component, Access Approach (List Value) | R1 | D-37 |
 
 
 #### 2.6.2 Columns per operational entity
@@ -1011,9 +1018,10 @@ Rule: "missing" is computed, not stored. A document is missing when a C23 Docume
 
 ### 2.7 Later entities
 
+L01 Data Area was withdrawn by the data taxonomy (D-37, settled by D-41): C49 Data Domain and its owners, O26 and O27 replace it (B20-6). Its ID is never reused.
+
 | ID | Logical name | Purpose | Class | Key relationships | From |
 |---|---|---|---|---|---|
-| L01 | Data Area | A named body of data with an owner, classification and copy-to-test rule; data-use decisions point to it | OPERATIONAL | Data owner Principal Reference; Decisions of type data use | Product scope (data areas later); I-86 |
 | L02 | Checklist Template | A list of check items per stage, review type or retirement, each citing a guideline | CONFIGURATION | Has many checklist item rows; to Guideline | Product scope (checklists later); I-237 |
 | L03 | Checklist Result | One checklist run on one application, item by item, with evidence | OPERATIONAL | To Checklist Template, Business Application; Evidence Links | Retirement checklist (problem row 4, later) |
 | L04 | Standard | An architecture standard or pattern with owner and status, for intake and review to point to | CONFIGURATION | Owner Role or Role; Decisions of type exception | Problem row 20 (later) |
@@ -1069,6 +1077,8 @@ Documents 21 to 26 proposed new configuration entities, and the working defaults
 | C44 | Portfolio Access | Document 26, section 5.2 | Proposal. The portfolio read mode it serves is available under the read visibility default (28 issue 10) |
 | C45 | Known Client | Document 26, section 10.3 | Proposal; overlaps the `client-app` value list of document 24 |
 | C46 | Configuration Draft | `28-working-defaults.md`, issue 3 (document 21's draft model, on both bindings) | Adopted as a working default. Defined in section 2.5 |
+| C47 to C50 | Data Classification, Data Domain Level, Data Domain, Data Platform | The data taxonomy design ([data taxonomy](../../architecture/data-taxonomy.md), D-37, settled by D-41) | Adopted. Defined in section 2.5 and B20-6. Built 2026-11-24 |
+| O25 to O27 | Data Location, Data Mapping, Data Use | The data taxonomy design | Adopted. Defined in section 2.6 and B20-6. Built 2026-11-24 |
 
 ---
 
@@ -1347,3 +1357,57 @@ The build treats some row keys as engine knowledge, the way section 2.4 treats m
 | Nested effect | The name of the effect an engine-nested write belongs to, which the adapter passes next to the engine-nested marker (document 25, B25-3) |
 | No-op write | A write that repeats what the row already holds, such as the same approval outcome again. Allowed, and nothing changes |
 | Unknown column | A column name that is not in the entity's column list in the logical model, in its contract form (section 3.3). Invalid input (`input.unknown-column`) |
+
+### B20-6 The data taxonomy, slice 1 (built 2026-11-24, D-37 and D-41)
+
+The [data taxonomy](../../architecture/data-taxonomy.md#entities) (settled by D-41) adds seven entities and replaces L01 Data Area.
+Slice 1 builds the model; the engine rules, the tools and the screens follow. Types, keys and relationships are in
+document 22, B22-14; fields, presets and settings in document 21, B21-11.
+
+**New terms.**
+
+| Term | Definition |
+|---|---|
+| Data domain | One node of the business data tree an install draws for itself, such as People, then Payroll (C49). Business words, not platforms |
+| Data domain level | One level of that tree, such as domain, subdomain or data set, with whether it needs its own owner and whether data uses may point at it (C48) |
+| Data classification | A ranked sensitivity level in the tenant's Purview label names, with default handling rules (C47) |
+| Data handling rule | How data may be used: allowed, decision, masked only or never, in rising strictness. A classification gives the defaults; a domain may make them stricter, never looser |
+| Data platform | A kind of store from any vendor: Dataverse, Azure SQL, Salesforce, IBM i (C50) |
+| Data location | One concrete store, held as a link: an environment, server, database, account, org, tenant or host (O25). Two levels at most |
+| Data mapping | This domain's data sits at this location, in these containers, with this origin (O26) |
+| Data origin | System of record, replica, production copy, masked copy or synthetic |
+| Data use | This application reads or writes this domain, where, for what, and whether the data reaches AI (O27) |
+| Effective owner | The owner who answers for a domain: its own, or the owner of the nearest domain above it |
+| Inherited owner | An effective owner that comes from a domain above |
+| Data governance lead | The product role that appoints the owners of top-level domains and sees every data gap (C29, D-41, question 4) |
+| Data steward | The owner role that keeps a domain's mappings and examples current and is consulted on its data uses (C28) |
+
+**Columns of the new operational entities.**
+
+| Entity | Columns |
+|---|---|
+| O25 Data Location | Data Platform, Parent Location, Target Stage, Deployment Target, Hosted By Application, Link Kind, External Id, Url, Label As Seen, Last Seen On, Status, Status Meaning, Retired On |
+| O26 Data Mapping | Data Domain, Data Location, Containers, Data Origin, Copied From, Status, Status Meaning, Confirmed On, Start On, Ended On |
+| O27 Data Use | Record Number (DU-0042), Business Application, Data Domain, Data Location, Access, Purpose, Reaches AI, AI Service As Seen, AI Component, Is Deidentified, Access Approach, Status, Status Meaning, Start On, Ended On |
+
+**Changed entities.** O06 Owner Assignment gains Subject Kind, Subject Data Domain and Subject Data Location: exactly
+one subject is set, and an empty Subject Kind means the application, as every row before the data taxonomy has. O09
+Decision gains Subject Data Use, Subject Data Mapping, Subject Data Domain and Subject Data Location. O02 Business
+Application gains Holds No Business Data. C28 Owner Role gains Subject Kinds and Inherits Down; C34 Target Stage gains Is
+Production. The subject kind list (section 2.6 of document 22) gains Data Use, Data Mapping, Data Domain and Data
+Location; the link category list gains data location.
+
+### B20-7 The drafted by pair and the due-state refresh (built 2026-11-24, D-36 and D-41)
+
+- **Drafted By Client App and Drafted For Principal** (proposals, document 22, B22-15) join the operational column set:
+  the AI client that created a row and the person it acted for. The engine sets them once, on create, when an AI client
+  acting for a person writes, and never changes them. The other stamps still name the last write. So the AI mark reads
+  "Drafted by Claude Code for Priya Castell" after Priya edits the draft herself, and names a later editor when someone
+  else edits it.
+- **Due-state refresh** (glossary of document 23) is built: the engine's daily run that opens the next review on its Next
+  Due On, moves a current document past its Stale On to stale, expires approval requests past their Expires On and asks
+  again, and sends the reminders, escalations and flag notices of the day (document 25, B25-18). Its notices are
+  Audit Entries with the operation `reminder-sent` or `flag-notice-sent`.
+- **Consent** (new term): the approval record that asks by name a person whom a decision would make an owner, and whose
+  answer is their acceptance of the role. A rule with Approver Proposed Owners asks for it (document 21, B21-9); Balanced
+  now also asks it of the business owner an intake names (document 25, B25-18).

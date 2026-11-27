@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "tier-3-change-consulted-business-owner-allowed",
+  "description": "A tier 3 normal change: the tier 3 Decision Right group wins and the group without a scope drops out, as in OP-02. The change manager is accountable and the business owner consulted, so the business owner may propose.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "change-authorization",
+    "tierKey": "tier-3",
+    "changeTypeKey": "normal",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [],
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "grantedBy": {
+        "decisionRightKey": "change-auth-tier-3-c",
+        "letter": "consulted",
+        "ownerRoleKey": "business-owner"
+      },
+      "holders": [
+        {
+          "decisionRightKey": "change-auth-tier-3-a",
+          "letter": "accountable",
+          "roleKey": "change-manager"
+        },
+        {
+          "decisionRightKey": "change-auth-tier-3-c",
+          "letter": "consulted",
+          "ownerRoleKey": "business-owner"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Decision Right",
+        "key": "change-auth-tier-3-a",
+        "role": "won"
+      },
+      {
+        "entity": "Decision Right",
+        "key": "change-auth-tier-3-c",
+        "role": "won"
+      },
+      {
+        "entity": "Decision Right",
+        "key": "change-auth-tier-3-s",
+        "role": "won"
+      },
+      {
+        "entity": "Decision Right",
+        "key": "change-auth-a",
+        "role": "dropped"
+      },
+      {
+        "entity": "Decision Right",
+        "key": "change-auth-s",
+        "role": "dropped"
+      }
+    ],
+    "traceMatch": "exact"
+  }
+}

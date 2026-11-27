@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "business-owner-proposes-risk-acceptance-allowed",
+  "description": "The business owner of a tier 2 app holds the accountable letter for risk acceptance (Balanced risk-acceptance-a), so may propose one. Whether their own answer then counts is the separation rules' question (D-40).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "risk-acceptance",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "application-owner",
+      "requester"
+    ],
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "grantedBy": {
+        "decisionRightKey": "risk-acceptance-a",
+        "letter": "accountable",
+        "ownerRoleKey": "business-owner"
+      }
+    },
+    "reasons": [],
+    "reasonsMatch": "exact",
+    "trace": [
+      {
+        "entity": "Decision Right",
+        "key": "risk-acceptance-a",
+        "role": "won"
+      }
+    ]
+  }
+}

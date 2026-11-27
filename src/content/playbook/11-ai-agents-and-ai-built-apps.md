@@ -44,8 +44,8 @@
 3. **Agree the autonomy level.** For an agent, the security reviewer decides what it may do alone and what needs a person, with the AI lead consulted. Enforcing that level stays in Copilot Studio, Agent 365 and Entra.
 4. **Link, do not copy.** Link each agent to its entry in Microsoft's agent registry by its Microsoft ID.
 5. **Choose how it connects.** Prefer end-user credentials. A tool that runs with the maker's credentials needs a recorded decision.
-6. **Draft, then accept.** When an AI client writes, the record starts as a draft or a proposal. What counts as the person's acceptance depends on what is accepted. In the default configuration: a decision needs an approval card; registering an app the AI created needs a confirmation card to the business owner; marking a gate-relevant document current needs a confirmation card to its owner; submitting an intake, a change or a decision can be the same call, made for the person; links, deployment records and checks need no separate acceptance.
-7. **Configuration through AI, decided by the admin.** An admin tells an AI what to change. The AI prepares and proposes the change. In the default configuration the admin accepts the exact difference on one card, and may accept their own AI's draft; with strict separation a second admin accepts.
+6. **Draft, then accept.** When an AI client writes, the record starts as a draft or a proposal. What counts as the person's acceptance depends on what is accepted. In the default configuration: a decision needs a person's answer on the decision page; registering an app the AI created needs the business owner's confirmation; marking a gate-relevant document current needs its owner's confirmation; submitting an intake, a change or a decision can be the same call, made for the person; links, deployment records and checks need no separate acceptance.
+7. **Configuration through AI, decided by the admin.** An admin tells an AI what to change. The AI prepares and proposes the change. In the default configuration the admin accepts the exact difference on the decision page, and may accept their own AI's draft; with strict separation a second admin accepts.
 8. **Decide on flagged agents.** When Microsoft flags an agent without an owner, or an owner leaves, the AI lead records keep, reassign, consolidate or retire, with a link to Microsoft's evidence. Reassigning owners happens in Microsoft's tools.
 9. **Re-evaluate on change.** A model, instruction, tool or permission change to an agent is a normal change that triggers re-evaluation before production.
 
@@ -76,19 +76,19 @@
 ## How the product is designed to support it
 
 - It is designed so that no tool, endpoint or flow it ships can approve, reject or accept a decision for an AI.
-- It is designed so that rows created by AI start as draft or proposed, and that only the flow that sends approval cards writes an approval outcome.
-- It is designed to count only a person's answer on a card, and to keep an AI stage from your own approval flow as a recommendation that never counts.
+- It is designed so that rows created by AI start as draft or proposed. An approval outcome counts only for a person's answer. An AI answer that the approval runner (the optional flows that send approval notices) relays is stored as a recommendation and never counts.
+- It is designed to keep an AI stage from your own approval flow as a recommendation that never counts.
 - It is designed to stamp every record with who performed it, including "AI client X for person Y", and to show that on every page and tool answer.
 - It is designed to route autonomy decisions to an AI lead role that each organization can rename, remap or drop.
 
-## Why a card, not a chat
+## Why the decision page, not a chat
 
-The product's own MCP server is designed to act with the person's sign-in. So it cannot prove that a person, not the AI, pressed the button. Copilot Studio clients may even run with maker-provided credentials, which are on by default. An approval or confirmation card answered in Outlook or Teams is the one channel it can trust.
+The product's own MCP server is designed to act with the person's sign-in. So it cannot prove that a person, not the AI, pressed the button. Copilot Studio clients may even run with maker-provided credentials, which are on by default. So the one tool that records an answer is served only to a person signed in to the web app, never to an AI client, and the person's own sign-in proves who answered. The decision page is the channel it is designed to trust.
 
 ## What you can tailor
 
 - Whether you have an AI lead, and what that role decides.
-- Which subject kinds an AI client may submit for a person, and which need a confirmation card.
+- Which subject kinds an AI client may submit for a person, and which need a person's confirmation.
 - The tier questions about autonomy, and which answers add a responsible AI review.
 
 ## Microsoft guidance it applies
@@ -108,7 +108,7 @@ The product's own MCP server is designed to act with the person's sign-in. So it
 
 ## Old paradigm to avoid
 
-[8. Let the tool decide](17-old-paradigms-and-how-not-to-slide-back.md#8-let-the-tool-decide). Here it shows up as an AI stage in an approval flow that ends a request as approved, an agent that is the only reviewer of its own work, or people who accept AI drafts without reading them. An AI recommendation is an input; a named person decides on a card.
+[8. Let the tool decide](17-old-paradigms-and-how-not-to-slide-back.md#8-let-the-tool-decide). Here it shows up as an AI stage in an approval flow that ends a request as approved, an agent that is the only reviewer of its own work, or people who accept AI drafts without reading them. An AI recommendation is an input; a named person decides on the decision page.
 
 **Slide-back signal:** any approval with no named human approver, or an AI stage counted as the decision.
 
@@ -116,4 +116,4 @@ The product's own MCP server is designed to act with the person's sign-in. So it
 
 - Every known agent links to a registered application with an owner, a tier and an agreed autonomy level.
 - Every approval has a named human approver, and work done by AI is marked as such.
-- Every configuration change made through an AI was accepted by an admin on a card.
+- Every configuration change made through an AI was accepted by an admin on the decision page.

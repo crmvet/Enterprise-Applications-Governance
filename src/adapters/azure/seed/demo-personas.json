@@ -1,0 +1,244 @@
+{
+  "description": "The fictional demo personas of a demo install (D-39): one for each of the fifteen human product roles, a second configuration admin so that a configuration change one admin proposes is answered by another person, and Marcus Oyelaran, a second architect and change board member, so that a design or change board decision one of them proposes is answered by another person: seventeen in all, played by people of seed/demo-estate.json. In the Demo environment only, the person signed in to the web app may act as any of them by sending the X-Product-Demo-Persona header with the persona's name; every write is then stamped with the persona and the Client App label \"Web app, demo operator\". Each persona's groups are fictional role groups that seed/demo-binding.patch.json binds to the persona's role. Read through Product:WebApp:DemoPersonasFile. Every ID is a patterned placeholder and every name is fictional. A persona's teams are the fictional support teams of the demo estate it is in (Field Apps Support, Finance Apps Support, Service Desk, Platform Team), which bind no product role: the Teams page lists the persona among their members, and a request as the persona carries only its groups.",
+  "personas": [
+    {
+      "name": "lena",
+      "label": "Lena Okoro, requester",
+      "objectId": "00000000-0000-4000-8000-000000001101",
+      "groups": [
+        "00000000-0000-4000-8000-000000000101"
+      ]
+    },
+    {
+      "name": "priya",
+      "label": "Priya Castell, maker",
+      "objectId": "00000000-0000-4000-8000-000000000211",
+      "groups": [
+        "00000000-0000-4000-8000-000000000101",
+        "00000000-0000-4000-8000-000000000102"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001106"
+      ]
+    },
+    {
+      "name": "nadia",
+      "label": "Nadia Ferreira, application owner",
+      "objectId": "00000000-0000-4000-8000-000000000212",
+      "groups": [
+        "00000000-0000-4000-8000-000000000103"
+      ]
+    },
+    {
+      "name": "kai",
+      "label": "Kai Ostrowski, data owner",
+      "objectId": "00000000-0000-4000-8000-000000001119",
+      "groups": [
+        "00000000-0000-4000-8000-000000000110"
+      ]
+    },
+    {
+      "name": "elif",
+      "label": "Elif Dunmore, architect",
+      "objectId": "00000000-0000-4000-8000-000000001104",
+      "groups": [
+        "00000000-0000-4000-8000-000000000108"
+      ]
+    },
+    {
+      "name": "hugo",
+      "label": "Hugo Brandvold, change manager",
+      "objectId": "00000000-0000-4000-8000-000000001117",
+      "groups": [
+        "00000000-0000-4000-8000-000000000104"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001121"
+      ]
+    },
+    {
+      "name": "tomas",
+      "label": "Tomas Rendel, change board",
+      "objectId": "00000000-0000-4000-8000-000000001105",
+      "groups": [
+        "00000000-0000-4000-8000-000000000111"
+      ]
+    },
+    {
+      "name": "marcus",
+      "label": "Marcus Oyelaran, architect and change board",
+      "objectId": "00000000-0000-4000-8000-000000001115",
+      "groups": [
+        "00000000-0000-4000-8000-000000000108",
+        "00000000-0000-4000-8000-000000000111"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001106"
+      ]
+    },
+    {
+      "name": "mateo",
+      "label": "Mateo Brandt, PMO",
+      "objectId": "00000000-0000-4000-8000-000000000214",
+      "groups": [
+        "00000000-0000-4000-8000-000000000112"
+      ]
+    },
+    {
+      "name": "dmitri",
+      "label": "Dmitri Halloran, AI lead",
+      "objectId": "00000000-0000-4000-8000-000000001109",
+      "groups": [
+        "00000000-0000-4000-8000-000000000113"
+      ]
+    },
+    {
+      "name": "noor",
+      "label": "Noor Safadi, security reviewer",
+      "objectId": "00000000-0000-4000-8000-000000001118",
+      "groups": [
+        "00000000-0000-4000-8000-000000000114"
+      ]
+    },
+    {
+      "name": "owen",
+      "label": "Owen Achterberg, platform admin",
+      "objectId": "00000000-0000-4000-8000-000000000213",
+      "groups": [
+        "00000000-0000-4000-8000-000000000105"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001122"
+      ]
+    },
+    {
+      "name": "yusuf",
+      "label": "Yusuf Brennan, configuration admin",
+      "objectId": "00000000-0000-4000-8000-000000001111",
+      "groups": [
+        "00000000-0000-4000-8000-000000000106"
+      ]
+    },
+    {
+      "name": "bianca",
+      "label": "Bianca Ferro, auditor",
+      "objectId": "00000000-0000-4000-8000-000000001128",
+      "groups": [
+        "00000000-0000-4000-8000-000000000115"
+      ]
+    },
+    {
+      "name": "theo",
+      "label": "Theo Marsh, reader",
+      "objectId": "00000000-0000-4000-8000-000000001127",
+      "groups": [
+        "00000000-0000-4000-8000-000000000107"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001121"
+      ]
+    },
+    {
+      "name": "hana",
+      "label": "Hana Lindqvist, data governance lead",
+      "objectId": "00000000-0000-4000-8000-000000001114",
+      "groups": [
+        "00000000-0000-4000-8000-000000000116"
+      ]
+    },
+    {
+      "name": "jonah",
+      "label": "Jonah Pereira, configuration admin",
+      "objectId": "00000000-0000-4000-8000-000000001100",
+      "groups": [
+        "00000000-0000-4000-8000-000000000106"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001120"
+      ]
+    }
+  ],
+  "membersDescription": "The fictional people of the demo estate who are not personas (product review, fix round 1 of wave 4): the persona switch never offers them and nobody signs in as them. The demo directory (Product.Azure.Host DemoDirectoryReader, in the Demo environment and on a local run) lists them in their groups and teams, so a committee shows its members, such as the Change board's four (Tomas Rendel and Marcus Oyelaran, who are personas, and two members), and the owners of the estate show in the teams they work in. A member's groups make no request run with a role; they only fill the Teams page and Roles and access.",
+  "members": [
+    {
+      "label": "Ines Varga",
+      "objectId": "00000000-0000-4000-8000-000000000215",
+      "groups": [
+        "00000000-0000-4000-8000-000000000111"
+      ],
+      "teams": []
+    },
+    {
+      "label": "Felix Arendt",
+      "objectId": "00000000-0000-4000-8000-000000001113",
+      "groups": [
+        "00000000-0000-4000-8000-000000000111",
+        "00000000-0000-4000-8000-000000000114"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001120",
+        "00000000-0000-4000-8000-000000001122"
+      ]
+    },
+    {
+      "label": "Sana Kowalczyk",
+      "objectId": "00000000-0000-4000-8000-000000001102",
+      "groups": [
+        "00000000-0000-4000-8000-000000000108",
+        "00000000-0000-4000-8000-000000000113"
+      ],
+      "teams": [
+        "00000000-0000-4000-8000-000000001106"
+      ]
+    },
+    {
+      "label": "Greta Lund",
+      "objectId": "00000000-0000-4000-8000-000000001110",
+      "groups": [
+        "00000000-0000-4000-8000-000000000116",
+        "00000000-0000-4000-8000-000000000110"
+      ],
+      "teams": []
+    },
+    {
+      "label": "Ravi Holm",
+      "objectId": "00000000-0000-4000-8000-000000001103",
+      "groups": [
+        "00000000-0000-4000-8000-000000000116"
+      ],
+      "teams": []
+    },
+    {
+      "label": "Rosa Tamaki",
+      "objectId": "00000000-0000-4000-8000-000000001112",
+      "groups": [
+        "00000000-0000-4000-8000-000000000112"
+      ],
+      "teams": []
+    },
+    {
+      "label": "Wren Abernathy",
+      "objectId": "00000000-0000-4000-8000-000000001129",
+      "groups": [
+        "00000000-0000-4000-8000-000000000110"
+      ],
+      "teams": []
+    },
+    {
+      "label": "Clara Voss",
+      "objectId": "00000000-0000-4000-8000-000000001108",
+      "groups": [],
+      "teams": [
+        "00000000-0000-4000-8000-000000001121"
+      ]
+    },
+    {
+      "label": "Iris Calloway",
+      "objectId": "00000000-0000-4000-8000-000000001116",
+      "groups": [],
+      "teams": [
+        "00000000-0000-4000-8000-000000001120"
+      ]
+    }
+  ]
+}

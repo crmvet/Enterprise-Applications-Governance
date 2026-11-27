@@ -10,7 +10,7 @@
     "$comment": { "$ref": "config-bundle.schema.json#/$defs/comment" },
     "schemaVersion": { "const": "1.0" },
     "operation": {
-      "enum": ["OP-01", "OP-02", "OP-03", "OP-04", "OP-05", "OP-06", "OP-07", "OP-08", "OP-10", "OP-11", "OP-12", "OP-13", "OP-14"],
+      "enum": ["OP-01", "OP-02", "OP-03", "OP-04", "OP-05", "OP-06", "OP-07", "OP-08", "OP-10", "OP-11", "OP-12", "OP-13", "OP-14", "OP-15", "OP-16", "OP-17"],
       "description": "The engine operation of the recorded call. OP-09 is not replayed here: the validate command recomputes a validation report from the same configuration."
     },
     "case": {

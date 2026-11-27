@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Product.Mcp.Core.Tests;
 
-// The thin adapter seam for the MCP library. No library is referenced until one is chosen; the stub passes
+// The thin adapter seam for the MCP library. The core references no MCP library; the pass-through stub passes
 // one HTTP request straight to the core.
 public sealed class AdapterTests
 {

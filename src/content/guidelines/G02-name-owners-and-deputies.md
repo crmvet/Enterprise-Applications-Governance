@@ -1,13 +1,13 @@
 # G2. Name the owners of every app, each with a deputy
 
 - **Number:** G2
-- **Version:** 1.0, 2026-11-22
+- **Version:** 1.1, 2026-11-25 (the data owner sits on each business data domain)
 - **Status:** active
 - **Home chapter:** 2 (Parties, roles and decision rights)
 - **Cited in chapters:** 1, 2, 3, 5, 12, 18, 19
 - **Processes:** P01, P08
 
-**Rule.** Every application names a business owner, a technical owner and a data owner, each with a deputy. Each decision about the app has exactly one accountable role.
+**Rule.** Every application names a business owner and a technical owner, each with a deputy, and declares its data uses. Every data domain has a data owner and a deputy, who decides about the uses of its data. Each decision about the app has exactly one accountable role.
 
 **Why it matters.** Inventory owner fields are weak. Model-driven apps have no owner there, and a flow's owner shows its creator. An app with no named owner cannot be reviewed, changed safely or retired.
 
@@ -26,7 +26,7 @@ NIST CSF 2.0 ID.AM (Asset Management).
 ## Working shape
 
 - **When:** at registration, at every stage change, and when an owner changes role or leaves.
-- **Who:** the business owner is accountable; the technical and data owners hold their parts; the platform team checks completeness.
+- **Who:** the business owner is accountable; the technical owner holds its part, and the data owner of each domain decides about its data; the platform team checks completeness.
 - **Steps:**
   1. Name a person, not a team, as business, technical and data owner, and name a deputy for each.
   2. Agree who is accountable for each kind of decision about the app, one role per decision.

@@ -5,9 +5,13 @@ client's own Azure subscription: one Azure Functions app that hosts the API, the
 product's web app (under `/app`, on the same origin as the API), over Azure SQL Database, behind Microsoft Entra ID
 sign-in.
 
-Early work, not a release: the template compiles (`az bicep build`, no sign-in), but it has not been provisioned in any
-subscription, and none of the steps below has been run against a real tenant. `../STATUS.md` lists what is still to
-check.
+Early work, not a release: the template compiles (`az bicep build`, no sign-in) and has been provisioned as a demo
+install with fictional data and the persona switch on. A real install cannot reach its first configuration version
+yet, and the Claude Code client, the pipelines, the approval runner and the live directory reads have not been set up
+against a real tenant. `../STATUS.md` lists what is still to check.
+
+This README is the template's reference: every resource, parameter and app setting. The install path in order, with
+the checks after deploy and a demo install, is [`../../../docs/install.md`](../../../docs/install.md).
 
 The client's administrator deploys it with `azd up`, signed in as themselves (`azd auth login`). Nothing in the
 template signs in for them, and no step uses a password, a client secret or a storage key.
@@ -94,7 +98,7 @@ This is the app the service validates tokens for. Its client ID is the token aud
 5. **App roles > Create app role** for people. One per product role, allowed member types "Users/Groups", with the
    role key from the configuration as the value: `requester`, `maker`, `application-owner`, `data-owner`,
    `architect`, `change-manager`, `change-board`, `pmo`, `ai-lead`, `security-reviewer`, `platform-admin`,
-   `configuration-admin`, `auditor`, `reader`.
+   `data-governance-lead`, `configuration-admin`, `auditor`, `reader`.
 6. **App roles > Create app role** for workloads, allowed member types "Applications":
    - `Deployment.Record`: pipelines that record deployments (`POST /api/deployments`).
    - `Approval.Write`: the approval runner that writes approval outcomes.
@@ -182,7 +186,8 @@ assignment and its Workload Grant exist.
 
 ### 4. The web app
 
-The product's four pages sign people in as a single-page application. Its tokens are the person entry of the REST API:
+The product's web app (the four first page designs plus the work and record pages, D-36) signs people in as a
+single-page application. Its tokens are the person entry of the REST API:
 the service runs each read as the person, not as an AI client.
 
 1. **App registrations > New registration.** Any name, for example "Enterprise Applications Governance web app".
@@ -246,12 +251,13 @@ Set these with `azd env set <NAME> <value>` before `azd up`. azd passes them thr
 | `PRODUCT_WEB_APP_CLIENT_ID` | `webAppClientId` | None: the web app is off | Application (client) ID of the web app registration (step 4) |
 | `PRODUCT_WEB_APP_API_SCOPE` | `webAppApiScope` | `api://<API client ID>/api.access` | The scope the web app asks for, when the API's Application ID URI is another one |
 | `PRODUCT_DEMO` | `demo` | `false` | `true` only for a demo install: the web app shows a "Demo, fictional data" badge on every page, because the store holds the fictional demo estate (see "A demo install" below). Never on a real install |
+| `PRODUCT_DEMO_PERSONAS` | `demoPersonas` | `false` | `true` turns on the demo persona switch (D-39) of a demo install: the app runs in the environment named `Demo` and reads the fictional personas the package carries (`seed/demo-personas.json`), so the person signed in to the web app may act as any of them. Applies only with `PRODUCT_DEMO` `true` and `PRODUCT_WEB_APP_CLIENT_ID` set. Never on a real install |
 | `PRODUCT_APPROVAL_RUNNER_ENABLED` | `approvalRunnerEnabled` | `false` | `true` serves the approval runner's routes |
 | `PRODUCT_DIRECTORY_READS` | `directoryReads` | `Off` | `Live` turns the directory reads on and adds their managed identity (step 5) |
 | `SQL_CLIENT_IP_ADDRESS` | `sqlClientIpAddress` | None | Public IPv4 address of the machine that runs azd, let through the SQL firewall for the migration |
 | `SQL_ADMINISTRATOR_OBJECT_ID` | `sqlAdministratorObjectId` | The signed-in deployer | Object ID of the SQL server's Microsoft Entra administrator. A group is better for production |
 | `SQL_ADMINISTRATOR_PRINCIPAL_TYPE` | `sqlAdministratorPrincipalType` | From the deployer | `User`, `Group` or `Application`, when `SQL_ADMINISTRATOR_OBJECT_ID` is set |
-| `PRODUCT_TELEMETRY_SALT` | `telemetrySalt` | None | A random value of at least 16 characters. When set, a Key Vault holds it and telemetry carries a salted caller hash; when not, telemetry carries no caller field |
+| `PRODUCT_TELEMETRY_SALT` | `telemetrySalt` | None | A random value of at least 16 characters. When set, a Key Vault holds it and telemetry carries a caller hash salted with it; when not, the service makes a random salt for each process, so the hashes change on every restart |
 | `AZURE_PRINCIPAL_ID`, `AZURE_PRINCIPAL_TYPE` | `principalId`, `principalType` | Set by azd | The signed-in deployer |
 
 Edit these in `main.parameters.json` (or add them there) when the defaults do not fit:
@@ -353,7 +359,8 @@ Application ID URI only on a verified domain of the tenant. So a production inst
   calls yet (guide S1, step 7, and guide S4, part F, in `../../../docs/setup/`). The local server's `seed` command
   (`../README.md`) is not a way around this: it writes version 1 and its rows past the engine, so no person is
   recorded as the decider, and it runs only in the Development environment, for local runs and tests. Do not point it
-  at a deployed database, except a demo install (below). The fictional demo binding in `../seed` is for local runs only.
+  at a deployed database, except a demo install (below). The fictional demo binding in `../seed` is for local runs and
+  demo installs only.
 - **A demo install** (for showing the product, never for real data): set `PRODUCT_DEMO` to `true` before `azd up`, so
   the web app shows a "Demo, fictional data" badge on every page. Then seed the fictional walkthrough estate into the
   empty database with the `seed` command in the environment named `Demo`, as the person who ran azd:
@@ -362,6 +369,31 @@ Application ID URI only on a verified domain of the tenant. So a production inst
   The binding patch must bind the product roles to your own Entra group IDs (a copy of `../seed/demo-binding.patch.json`
   with your IDs, kept out of source control), or nobody who signs in holds a product role. The seed refuses every other
   environment name and any store that already has a version in force.
+- **The demo persona switch** (D-39, a demo install only): one person, the demo operator, shows every role by acting as
+  fictional personas in the web app. Set `PRODUCT_DEMO_PERSONAS` to `true` as well as `PRODUCT_DEMO`, with the web app
+  on. The template then sets three app settings, none of them a secret: `AZURE_FUNCTIONS_ENVIRONMENT` and
+  `DOTNET_ENVIRONMENT` to `Demo`, and `Product__WebApp__DemoPersonasFile` to `seed/demo-personas.json`, the fictional
+  persona file the package carries (one persona per human role; `../README.md`, "The demo persona switch"). To use other
+  personas, edit that file before `azd deploy`; each persona's object ID and groups must be patterned placeholders
+  (`00000000-0000-4000-8000-` and twelve digits), never real IDs. Seed the database with the fictional binding as it is,
+  so the personas' groups hold their roles, and with the demo estate as the rows, so each persona has a name:
+  `--binding ../seed/demo-binding.patch.json --rows ../seed/demo-estate.json` in the seed command above. Then make the
+  demo's open work live with the demo director, `node ../seed/demo-director.mjs --mode demo --base https://<the app's
+  host>` with the operator's web app token in `PRODUCT_DEMO_TOKEN` (`../README.md`, "Make the demo's open work live"),
+  so every persona has approvals and drafts waiting. The operator
+  signs in with their own Microsoft Entra account and needs no product role; the page sends the persona's name in the
+  `X-Product-Demo-Persona` header, and every write is stamped with the persona and the Client App label "Web app, demo
+  operator". To have Claude Code act for a real person in the same demo, add a binding of your own group to a copy of
+  the binding patch. Anyone who can sign in to the web app of a demo install can act as any persona, the configuration
+  admin among them, so let only the demo operators sign in: turn on "Assignment required" on the API app registration's
+  enterprise application and assign them. Check the switch with `GET <base URL>/app/config.json`, which lists the
+  personas in `demoPersonas`. An app that names demo personas outside the Demo environment refuses to start, so if
+  the app does not start and its log says the personas "work only in the Demo environment", the environment name did
+  not reach the worker. It also refuses to start when
+  `Product__WebApp__Demo` is not `true` (the template sets it from `PRODUCT_DEMO`), so a real install that names the
+  Demo environment by mistake never serves the switch. The store keeps only the persona; the app's log keeps the
+  operator's object ID with each request's correlation ID, so a write can be traced to the person who made it, and the
+  request limits count the operator, not the persona.
 - `azd deploy` publishes a new build. `azd provision` reapplies the infrastructure and the migrations.
 - `azd down` deletes the resource group. Add `--purge` to purge the Key Vault too (not possible with purge protection
   on).

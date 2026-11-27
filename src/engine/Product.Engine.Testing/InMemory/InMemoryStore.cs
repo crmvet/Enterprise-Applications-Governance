@@ -26,7 +26,7 @@ namespace Product.Engine.Testing.InMemory;
 //   Idempotency Key. A commit that would repeat one throws StoreConflictException.
 // - Seeding for tests: rows that exist before the engine runs (the estate and the directory), and a version as an
 //   earlier activation left it. Seeding is not an engine write and is never a product path.
-public sealed class InMemoryStore : IRecordStore, IConfigurationStore
+public sealed class InMemoryStore : IRecordStore, IConfigurationStore, IKeySetReader
 {
     private static readonly (string Entity, string Column)[] UniqueKeys =
     {
@@ -36,6 +36,9 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
 
     private readonly object _gate = new();
     private readonly Dictionary<string, SortedDictionary<string, StoredRow>> _rows = new(StringComparer.Ordinal);
+
+    // The last record number given per entity (RecordNumbers), kept across transactions as a database counter is.
+    private readonly Dictionary<string, long> _recordNumbers = new(StringComparer.Ordinal);
     private long _nextId;
 
     public InMemoryStore(string storeId = "in-memory")
@@ -56,6 +59,12 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
     public int VersionReadCount { get; private set; }
 
     public int CommitCount { get; private set; }
+
+    // How many reads the engine's transactions made (by ID, by key, by query, and by key set; document 25, B25-23): what
+    // a read would cost in round trips on a database. Seeding and the test's own reads of committed rows do not count.
+    public int TransactionReads => _transactionReads;
+
+    private int _transactionReads;
 
     // ---- IRecordReader over committed rows ----
 
@@ -83,6 +92,30 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
         }
     }
 
+    // ---- IKeySetReader over committed rows ----
+
+    public IReadOnlyList<StoredRow> GetMany(string entity, IReadOnlyCollection<string> ids)
+    {
+        lock (_gate)
+        {
+            if (!_rows.TryGetValue(entity, out SortedDictionary<string, StoredRow>? rows))
+            {
+                return Array.Empty<StoredRow>();
+            }
+
+            return KeySetReads.Distinct(ids).Select(id => rows.TryGetValue(id, out StoredRow? row) ? row : null).Where(r => r != null).Select(r => r!).OrderBy(r => r.Id, StringComparer.Ordinal).ToList();
+        }
+    }
+
+    public IReadOnlyList<StoredRow> QueryIn(string entity, string column, IReadOnlyCollection<string> values)
+    {
+        var set = new HashSet<string>(values ?? Array.Empty<string>(), StringComparer.Ordinal);
+        lock (_gate)
+        {
+            return Committed(entity).Where(r => KeySetReads.HoldsOneOf(r, column, set)).ToList();
+        }
+    }
+
     // Every committed row of an entity, by ID.
     public IReadOnlyList<StoredRow> Rows(string entity)
     {
@@ -95,10 +128,18 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
     // Every committed row, by entity then ID, as canonical text. Two runs of the same calls give the same text.
     public string Dump()
     {
+        return DumpWithout();
+    }
+
+    // The dump without the rows of the named entities, such as audit-entry: a refused call writes nothing but the product
+    // event that records it (document 25, B25-13), so a test that proves "nothing was written" leaves that event out and
+    // checks it on its own.
+    public string DumpWithout(params string[] entities)
+    {
         lock (_gate)
         {
             var lines = new List<string>();
-            foreach (KeyValuePair<string, SortedDictionary<string, StoredRow>> entity in _rows.OrderBy(e => e.Key, StringComparer.Ordinal))
+            foreach (KeyValuePair<string, SortedDictionary<string, StoredRow>> entity in _rows.Where(e => !entities.Contains(e.Key, StringComparer.Ordinal)).OrderBy(e => e.Key, StringComparer.Ordinal))
             {
                 foreach (StoredRow row in entity.Value.Values)
                 {
@@ -170,8 +211,9 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
 
     // A version as an earlier activation left it in force (document 25, section 6.1): the working set (C01) in force at
     // this version, the C02 row with Content Json and Content Hash, and the live rows equal to the snapshot. Replaces the
-    // live rows of an earlier seeded version.
-    public void SeedVersion(CompiledSnapshot snapshot)
+    // live rows of an earlier seeded version. publishedOnUtc, the seed moment, is the version row's Published On when
+    // given (wave 4b verify round), as RowStore writes it.
+    public void SeedVersion(CompiledSnapshot snapshot, DateTime? publishedOnUtc = null)
     {
         if (snapshot == null)
         {
@@ -195,7 +237,8 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
                 ("versionNumber", JsonTreeNode.FromInt64(snapshot.VersionNumber)),
                 ("contentJson", snapshot.ContentJson),
                 ("contentHash", JsonTreeNode.FromString(snapshot.ContentHash)),
-                ("snapshotSchemaVersion", JsonTreeNode.FromString(snapshot.Snapshot.SchemaVersion.Major + "." + snapshot.Snapshot.SchemaVersion.Minor))));
+                ("snapshotSchemaVersion", JsonTreeNode.FromString(snapshot.Snapshot.SchemaVersion.Major + "." + snapshot.Snapshot.SchemaVersion.Minor)),
+                ("publishedOn", publishedOnUtc.HasValue ? JsonTreeNode.FromString(CanonicalJson.FormatUtc(publishedOnUtc.Value.Kind == DateTimeKind.Utc ? publishedOnUtc.Value : publishedOnUtc.Value.ToUniversalTime())) : null)));
 
             foreach (SnapshotEntity entity in snapshot.Snapshot.Entities)
             {
@@ -282,7 +325,7 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
         return entity + "-" + _nextId.ToString("D6", CultureInfo.InvariantCulture);
     }
 
-    private sealed class Transaction : IStoreTransaction
+    private sealed class Transaction : IStoreTransaction, IKeySetReader
     {
         private readonly InMemoryStore _store;
 
@@ -297,6 +340,37 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
 
         public StoredRow? Get(string entity, string id)
         {
+            CountRead();
+            return Find(entity, id);
+        }
+
+        public StoredRow? GetByKey(string entity, string key)
+        {
+            CountRead();
+            return Merged(entity).FirstOrDefault(r => string.Equals(r.Key, key, StringComparison.Ordinal));
+        }
+
+        public IReadOnlyList<StoredRow> Query(RowQuery query)
+        {
+            CountRead();
+            return Merged(query.Entity).Where(query.Matches).ToList();
+        }
+
+        public IReadOnlyList<StoredRow> GetMany(string entity, IReadOnlyCollection<string> ids)
+        {
+            CountRead();
+            return KeySetReads.Distinct(ids).Select(id => Find(entity, id)).Where(r => r != null).Select(r => r!).OrderBy(r => r.Id, StringComparer.Ordinal).ToList();
+        }
+
+        public IReadOnlyList<StoredRow> QueryIn(string entity, string column, IReadOnlyCollection<string> values)
+        {
+            CountRead();
+            var set = new HashSet<string>(values ?? Array.Empty<string>(), StringComparer.Ordinal);
+            return Merged(entity).Where(r => KeySetReads.HoldsOneOf(r, column, set)).ToList();
+        }
+
+        private StoredRow? Find(string entity, string id)
+        {
             if (_pending.TryGetValue(entity, out SortedDictionary<string, StoredRow?>? rows) && rows.TryGetValue(id, out StoredRow? row))
             {
                 return row;
@@ -305,14 +379,9 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
             return _store.Get(entity, id);
         }
 
-        public StoredRow? GetByKey(string entity, string key)
+        private void CountRead()
         {
-            return Merged(entity).FirstOrDefault(r => string.Equals(r.Key, key, StringComparison.Ordinal));
-        }
-
-        public IReadOnlyList<StoredRow> Query(RowQuery query)
-        {
-            return Merged(query.Entity).Where(query.Matches).ToList();
+            System.Threading.Interlocked.Increment(ref _store._transactionReads);
         }
 
         public string NewId(string entity)
@@ -323,10 +392,30 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
             }
         }
 
+        // One above the highest number given or held (committed rows and this transaction's own), reserved at once.
+        public long NextRecordNumber(string entity, string prefix)
+        {
+            lock (_store._gate)
+            {
+                long highest = _store._recordNumbers.TryGetValue(entity, out long given) ? given : 0;
+                foreach (StoredRow row in Merged(entity))
+                {
+                    long? held = RecordNumbers.Parse(prefix, row.Text(RecordNumbers.Column));
+                    if (held.HasValue && held.Value > highest)
+                    {
+                        highest = held.Value;
+                    }
+                }
+
+                _store._recordNumbers[entity] = highest + 1;
+                return highest + 1;
+            }
+        }
+
         public void Create(string entity, string id, string? key, JsonTreeNode columns)
         {
             Open();
-            if (Get(entity, id) != null)
+            if (Find(entity, id) != null)
             {
                 throw new InvalidOperationException(entity + " " + id + " exists already.");
             }
@@ -337,7 +426,7 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
         public void Update(string entity, string id, JsonTreeNode columns)
         {
             Open();
-            StoredRow row = Get(entity, id) ?? throw new InvalidOperationException(entity + " " + id + " does not exist.");
+            StoredRow row = Find(entity, id) ?? throw new InvalidOperationException(entity + " " + id + " does not exist.");
             var merged = new SortedDictionary<string, JsonTreeNode>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, JsonTreeNode> member in row.Columns.Members)
             {
@@ -362,7 +451,7 @@ public sealed class InMemoryStore : IRecordStore, IConfigurationStore
         public void Delete(string entity, string id)
         {
             Open();
-            if (Get(entity, id) == null)
+            if (Find(entity, id) == null)
             {
                 throw new InvalidOperationException(entity + " " + id + " does not exist.");
             }

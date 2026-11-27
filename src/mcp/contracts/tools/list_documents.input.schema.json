@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_documents input",
+  "description": "The documentation list across the portfolio: every required document of the registered applications in scope with its state (missing is computed from configuration, never stored), and every other document link on them. Writes nothing.",
+  "x-tool": "list_documents",
+  "type": "object",
+  "properties": {
+    "state": {
+      "enum": [
+        "all",
+        "missing",
+        "stale",
+        "draft",
+        "current"
+      ],
+      "default": "all",
+      "description": "Which documents to list. The counts cover every state."
+    },
+    "documentTypeKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/key",
+        "x-entity": "C22 Document Type"
+      },
+      "description": "Only these document types."
+    },
+    "businessApplicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "Only this application."
+    },
+    "documentLinkId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O13 Document Link",
+      "description": "Only this document link (a document's record page), on its application, whatever the application's registration."
+    },
+    "portfolioId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O01 Portfolio",
+      "description": "Only the applications in this portfolio, child portfolios included."
+    },
+    "mineOnly": {
+      "type": "boolean",
+      "description": "True keeps the documents you own, and the missing documents of applications you own."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "state": "missing",
+      "portfolioId": "90000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

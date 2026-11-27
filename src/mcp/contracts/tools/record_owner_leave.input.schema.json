@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "record_owner_leave input",
-  "description": "Records a planned leave or role change, with a date, for a person who holds owner roles. Stored as reported. The engine opens an owner check review for each application where the person holds an owner role. From the leave date, reminders and cards go to the deputy. A successor still needs an accepted ownership decision (propose_owner_change).",
+  "description": "Records a planned leave or role change, with a date, for a person who holds owner roles. Stored as reported. The engine opens an owner check review for each application where the person holds an owner role. The deputy holds the owner role too, so they may answer its approval requests on the decision page. A successor still needs an accepted ownership decision (propose_owner_change).",
   "x-tool": "record_owner_leave",
   "type": "object",
   "required": [

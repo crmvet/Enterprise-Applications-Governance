@@ -5,7 +5,7 @@
 
 These guidelines describe how an organization can govern the business applications it runs on Microsoft Power Platform, Dataverse and the apps around them. They lean on Microsoft's own guidance and link to it.
 
-They come with the next version of an open-source product, designed to govern AI development of the apps: people build with AI at speed, and every app stays owned, tiered and decided by a person. Underneath sits application portfolio management for Microsoft Power Platform, Dataverse and the apps around them. Built on Microsoft, never instead of it. G21 to G24 are the guidelines written for AI development itself. The next version is in design, so each guideline says what the product **is designed to** do, not what it does today. The guidelines work on their own, with or without the product.
+They come with the next version of an open-source product, designed to govern AI development of the apps, so people can build with AI while each app stays owned, tiered and decided by a person. Underneath sits application portfolio management for Microsoft Power Platform, Dataverse and the apps around them. Built on Microsoft, never instead of it. G21 to G24 are the guidelines written for AI development itself. The next version is in design, so each guideline says what the product **is designed to** do, not what it does today. The guidelines work on their own, with or without the product.
 
 The [playbook](../playbook/README.md) says how the parties work together. Each of its chapters names the guidelines it applies, and each guideline names its home chapter.
 

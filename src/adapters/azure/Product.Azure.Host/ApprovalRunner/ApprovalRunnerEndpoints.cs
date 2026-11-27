@@ -82,11 +82,17 @@ public static class ApprovalRunnerEndpoints
         IConfigurationStore configuration = services.GetRequiredService<IConfigurationStore>();
         IRecordStore records = services.GetRequiredService<IRecordStore>();
         CompiledSnapshot snapshot = call.Snapshot;
+
+        // Step-up sign-in on (D-38; document 26, B26-17): a person answers only on the decision page, so each item tells the
+        // runner to send a link-only notification there, never an answerable card.
+        ProductStepUpOptions stepUp = services.GetService<IOptions<ProductWebAppOptions>>()?.Value.StepUp ?? new ProductStepUpOptions();
+        bool linkOnly = stepUp.Mode != ProductStepUpMode.Off;
         var cards = new ApprovalRequestCards(
             records,
             snapshot,
             version => runtime.Cache.LoadVersion(configuration, snapshot.ConfigurationSetKey, version).Snapshot,
-            services.GetRequiredService<InProcessBackend>().Options.RecordUrlBase);
+            services.GetRequiredService<InProcessBackend>().Options.RecordUrlBase,
+            linkOnly);
 
         // First the engine brings the due approvals up to date, as the approval runner: it expires what passed its
         // Expires On, cancels what a settled decision still holds open, and opens the restarts. Its own commits settle
@@ -129,7 +135,7 @@ public static class ApprovalRunnerEndpoints
         }
 
         call.Logger.LogInformation(
-            "Approval runner claimed {Claimed} item(s) for {LeaseSeconds} seconds; {Settled} item(s) needed no card. The refresh brought {Decisions} decision(s) up to date: {Expired} record(s) expired, {Cancelled} cancelled, {Opened} opened.",
+            "Approval runner claimed {Claimed} item(s) for {LeaseSeconds} seconds; {Settled} item(s) needed no card. The refresh brought {Decisions} decision(s) up to date: {Expired} record(s) expired, {Cancelled} canceled, {Opened} opened.",
             items.Count,
             lease,
             settled,
@@ -140,10 +146,14 @@ public static class ApprovalRunnerEndpoints
         JsonTreeNode data = Js.Obj(
             ("items", Js.Arr(items)),
             ("leaseSeconds", JsonTreeNode.FromInt64(lease)),
+            ("delivery", JsonTreeNode.FromString(linkOnly ? ApprovalRequestCards.LinkOnlyDelivery : ApprovalRequestCards.CardDelivery)),
             ("refresh", refresh.Summary()));
         string summary = items.Count == 0
             ? "No approval request is waiting for a card."
-            : items.Count.ToString(CultureInfo.InvariantCulture) + (items.Count == 1 ? " approval request is" : " approval requests are") + " claimed for " + lease.ToString(CultureInfo.InvariantCulture) + " seconds. Send one card for each, then report it as sent.";
+            : items.Count.ToString(CultureInfo.InvariantCulture) + (items.Count == 1 ? " approval request is" : " approval requests are") + " claimed for " + lease.ToString(CultureInfo.InvariantCulture) + " seconds. "
+                + (linkOnly
+                    ? "Step-up sign-in is on: send each person a notification that links to the decision page, never an answerable card, then report it as sent. The answer comes from the page."
+                    : "Send one card for each, then report it as sent.");
         await call.Succeed(data, summary).ConfigureAwait(false);
     }
 

@@ -34,8 +34,8 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
 
 ## Shared parts every process uses
 
-- **Approval cards.** A decision that needs a person's yes goes to that person as an approval card in Outlook or Teams. The product is designed to work out which approval rule applies (the single most specific rule wins), who holds the required role at that moment, and whether each answer counts. Only a person counts. An AI stage in an approval flow is kept as a recommendation and never counts.
-- **Reminders and escalation.** The product is designed to remind people about due reviews, stale documents, open cards and open claims, and to escalate to the deputy after a set number of days. Each reminder is recorded, so "who was told, and when" can be shown.
+- **Approval requests.** A decision that needs a person's yes goes to that person as an approval request, answered on the decision page in the web app; Teams and Outlook notices are designed to link to it. The product is designed to work out which approval rule applies (the single most specific rule wins), who holds the required role at that moment, and whether each answer counts. Only a person counts. An AI stage in an approval flow is kept as a recommendation and never counts.
+- **Reminders and escalation.** The product is designed to remind people about due reviews, stale documents, open approval requests and open claims, and to escalate to the deputy after a set number of days. Each reminder is recorded, so "who was told, and when" can be shown.
 - **One write path.** Every write, from a page, an MCP client, a pipeline step or a person, is designed to pass the same checks: who the caller is, which role allows the write, which configuration version is in force, and who performed it.
 
 ---
@@ -50,8 +50,8 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
   2. The requester answers the plain tier questions, and P02 works out the initial tier.
   3. The product is designed to search the register for duplicates and reuse, and to suggest a match, never decide it.
   4. The requester submits. A submission is a request, not a decision.
-  5. The platform admin decides on an approval card, with a typed reason. In the default configuration, lowest-tier intake is accepted with no card, under a rule a person approved once.
-  6. On accept, the application is registered and the named business owner is asked to accept ownership on a card. On park, the PMO sets a horizon. On redirect, the requester is pointed to the existing app. On decline, the reason stays visible.
+  5. The platform admin decides on the decision page, with a typed reason. In the default configuration, lowest-tier intake is accepted with no approval request, under a rule a person approved once.
+  6. On accept, the application is registered and the named business owner is asked to accept ownership on the decision page. On park, the PMO sets a horizon. On redirect, the requester is pointed to the existing app. On decline, the reason stays visible.
   7. If money or central capacity is needed, the PMO scores the request and the sponsor decides (the Commit gate).
   8. The work item, plan or repository is linked, never copied.
 - **Recorded:** the intake, the tier answers, the intake and priority decisions, the application, its owners, and delivery links.
@@ -67,7 +67,7 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
   1. The person, or their AI client, answers the tier questions. An AI may propose answers; it never sets the tier.
   2. The product is designed to take the most serious answer as the computed tier, and to explain which answer drove it.
   3. A tier decision is proposed. Anyone may raise the tier. Lowering it below the computed tier needs a typed reason and the full approval.
-  4. Approval cards go to the approvers the tier decision needs.
+  4. Approval requests go to the approvers the tier decision needs.
   5. On acceptance, the product is designed to store the tier on the application, as a stored value, never a formula.
   6. The product is designed to work out, from configuration, what the tier now needs: approvals per decision type, gate requirements, required documents, the review cadence and the gate level per change type.
   7. For an agent, an autonomy level decision is opened. Enforcing the agreed level stays in Microsoft's tools.
@@ -85,12 +85,12 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
   1. The change owner, or their AI client, drafts the change: application, proposed type, window and target. The product is designed to list affected applications by walking the dependency map, and to inform their owners.
   2. The product is designed to check whether the change fits a standard change model, and to say why when it does not. A person sets the type. A new restricted data use, a role change for the app's own identity, an agent model or instruction change, a change to a shared component, and anything that could raise the tier are always normal.
   3. The change owner submits.
-  4. Standard changes are accepted as pre-authorized. Normal changes go to approval cards per the most specific rule for the tier and type. Emergencies go to the change manager at once, and the record may be completed after the deployment.
+  4. Standard changes are accepted as pre-authorized. Normal changes go for approval per the most specific rule for the tier and type. Emergencies go to the change manager at once, and the record may be completed after the deployment.
   5. The window shows on the change schedule. Enforcing a window stays in the deployment tool.
   6. Your own tool deploys. Deployment records arrive through P05 and link to the change.
   7. For a first production deployment, a go-live decision is proposed and checked against the Go-live gate.
   8. The change owner confirms the result. A failed change or any emergency opens a review after the change.
-- **Linked mode:** the change is designed to hold your change tool's number and link, and never to copy its workflow. A recorded number alone never counts as authorization: your tool reports the authorization through a step you build, or the change manager attests it on a card.
+- **Linked mode:** the change is designed to hold your change tool's number and link, and never to copy its workflow. A recorded number alone never counts as authorization: your tool reports the authorization through a step you build, or the change manager attests it on the decision page.
 - **Recorded:** the change, affected applications, the authorization and go-live decisions, linked deployments, evidence links and the review.
 - **Guidelines:** G4, G6, G9, G12, G13
 - **Used in chapters:** 7, 9, 10, 14, 15, 17, 19
@@ -104,7 +104,7 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
   1. A review is opened with the trigger that caused it. A person, or their AI client, can also ask for one.
   2. The builder's AI client may draft the architecture decision record from the discussion. The full text lives in the team's repository or wiki; the product is designed to record the link and a proposed design decision with the options considered.
   3. The architect reviews. Linked assessments become evidence links.
-  4. The design decision goes to the architect on a card. A data use decision goes to the data owner when data use changed.
+  4. The design decision goes to the architect, who answers on the decision page. A data use decision goes to the data owner when data use changed.
   5. The review closes with its outcome decision, and the Design gate is checked again.
   6. An exception records the standard it departs from, the reason and a review date.
 - **Recorded:** the review, design, data use and exception decisions, the decision record link, evidence links.
@@ -155,7 +155,7 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
   2. The owner, or their AI client, asks what is missing or stale.
   3. The owner's own tool writes the page, in a wiki, a repository or SharePoint.
   4. The owner's AI tool records the link and the status.
-  5. For documents a gate depends on, "current" set by an AI client stays a claim until the document owner confirms it on a card.
+  5. For documents a gate depends on, "current" set by an AI client stays a claim until the document owner confirms it.
   6. When someone confirms a document is still true, the last check date moves.
   7. A document goes stale when its freshness time passes. The owner is reminded, then the deputy.
   8. A gate that needs a current document cannot be accepted while it is missing or stale.
@@ -165,13 +165,13 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
 
 ## P08 Owner leaves
 
-- **Purpose:** make sure no application is left without an answerable owner: a deputy acts at once, a successor is named, open approvals move, and agents flagged by Microsoft get a business decision.
+- **Purpose:** make sure no application is left without an answerable owner. The deputy holds the owner role and may answer its requests, and reminders escalate to the deputy. The product is designed to let the deputy act at once and to move open approvals. A successor is named, and agents flagged by Microsoft get a business decision.
 - **Starts when:** a leave or role change is announced; an admin runs the on-demand owner check, which reads owners' account state from Entra with the admin's own sign-in; an optional leaver workflow reports a leaver; Microsoft flags an agent without an owner; or an owner check review comes due.
-- **Who decides:** the business owner approves the successor, and the successor accepts on a card. When the business owner leaves, the sponsor decides. The AI lead decides on flagged agents.
+- **Who decides:** the business owner approves the successor, and the successor accepts on the decision page. When the business owner leaves, the sponsor decides. The AI lead decides on flagged agents.
 - **Steps:**
   1. The leave is recorded, and an owner check review opens for every app where that person holds an owner role.
-  2. Until a successor accepts, reminders, cards and escalations go to the deputy.
-  3. The product is designed to cancel the leaver's open approval cards and send new ones to the deputy or another holder of the role.
+  2. Until a successor accepts, reminders and escalations go to the deputy.
+  3. The product is designed to cancel the leaver's open approval requests and open new ones for the deputy or another holder of the role.
   4. An ownership decision names the successor, who must accept. A new deputy is then required.
   5. The leaver's assignments end. Their name stays on past decisions.
   6. Removing access happens in Entra and the deployment tools, not in the product. An urgent revoke disables the user, not only the group membership.
@@ -186,7 +186,7 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
 - **Starts when:** a portfolio decision says retire, an owner asks to retire something nobody uses, a vanished claim is resolved as retired (P06), or a replacing app went live.
 - **Who decides:** the business owner decides the future and declares retirement complete. The PMO prepares the facts. The data owner decides retention. The removal change follows P03.
 - **Steps:**
-  1. A portfolio decision to retire is accepted on a card.
+  1. A portfolio decision to retire is accepted on the decision page.
   2. The dependency map is walked in both directions. Owners of dependants are told; a dependant that needs a replacement gets its own change or intake.
   3. The data owner decides what is kept and where, with evidence links.
   4. A change schedules the removal (P03).
@@ -205,11 +205,11 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
 - **Steps:**
   1. The AI client writes through a tool. The product is designed to mark the row as AI-created and stamp the AI client and the person it acted for.
   2. AI-created records start as draft, decisions as proposed, and applications as draft registrations. The AI cannot move them further in the same call.
-  3. What counts as a person's acceptance depends on what is accepted. In the default configuration: a decision needs an approval card; registering an application the AI created needs a confirmation card to the business owner; a gate-relevant document set to current needs a confirmation card to its owner; a submission of an intake, change or decision can be the same MCP call, made for the person; links, deployment records and checks need no separate acceptance.
+  3. What counts as a person's acceptance depends on what is accepted. In the default configuration: a decision needs a person's answer on the decision page; registering an application the AI created needs the business owner's confirmation; a gate-relevant document set to current needs its owner's confirmation; a submission of an intake, change or decision can be the same MCP call, made for the person; links, deployment records and checks need no separate acceptance.
   4. An AI stage in your own approval flow is kept as a recommendation and never counts.
   5. Every page and tool answer shows "performed by AI client X for person Y".
-- **Why a card:** the product's MCP server is designed to act with the person's sign-in, so it cannot prove that a person, not the AI, pressed the button. An approval or confirmation card answered in Outlook or Teams is the one channel it can trust.
-- **Recorded:** the AI-created mark and performed-by columns on every row, confirmation cards, audit entries.
+- **Why the decision page:** the product's MCP server is designed to act with the person's sign-in, so it cannot prove that a person, not the AI, pressed the button. So the one tool that records an answer is served only to a person signed in to the web app, and the person's own sign-in proves who answered.
+- **Recorded:** the AI-created mark and performed-by columns on every row, the person's confirmations, audit entries.
 - **Guidelines:** G8, G15, G17, G22, G23
 - **Used in chapters:** 0, 1, 3, 8, 11, 15, 16, 17, 18, 21
 
@@ -224,7 +224,7 @@ Three rules shape the stream. The tier sets the weight: a low-tier app skips pri
   3. The AI client proposes it as the admin. The product is designed to check that the admin may change configuration.
   4. The product is designed to validate the whole result and refuse a change that breaks its rules, such as a decision with no accountable role, an approver who is not a person, or a change to a locked setting.
   5. The admin sees the difference and its effect on live applications, then the draft is submitted.
-  6. One card showing the difference goes to the configuration admin. In the default configuration the instructing admin may accept their own AI's draft; with strict separation a second admin must accept. Consulted roles get consultation cards, which never count. The AI cannot answer any card.
+  6. One approval request goes to the configuration admin, who sees the difference and answers on the decision page. In the default configuration the instructing admin may accept their own AI's draft; with strict separation a second admin must accept. Consulted roles get consultation requests, which never count. The AI cannot answer any of them.
   7. On acceptance, a new configuration version is activated. New records stamp the new version; old records keep theirs.
   8. An undo is a new change that restores an earlier version. Nothing is edited in place.
   9. An upgrade proposes a draft that adds missing default rows and never overwrites your own changes.

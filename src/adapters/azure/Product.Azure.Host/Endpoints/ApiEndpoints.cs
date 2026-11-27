@@ -27,8 +27,11 @@ namespace Product.Azure.Host;
 /// The REST API for the product's web app (delegated tokens with the <c>api.access</c> scope): the same tools and
 /// contracts as the MCP endpoint, plus the caller's session and the service's facts. A token the web app itself asked
 /// for (its <c>azp</c> is one of <c>Product:WebApp:ClientIds</c>) is the person entry: the engine runs as the person,
-/// with no On Behalf Of. Any other client is an AI client acting for the person, as on the MCP endpoint, and must pass
-/// the Known Client check.
+/// with no On Behalf Of, and the person reads and writes here (D-36), and answers the approval requests they were asked
+/// (D-38). Any other client is an AI client acting for the person, as on the MCP endpoint, and must pass the Known Client
+/// check; it reads here and writes through the MCP endpoint, and it never answers an approval. In a demo install the
+/// person may act as a fictional demo persona (D-39, <see cref="ProductDemo"/>): the caller middleware has then already
+/// put the persona in place of the person, and everything here runs as the persona.
 /// </summary>
 public static class ApiEndpoints
 {
@@ -36,9 +39,13 @@ public static class ApiEndpoints
     /// <c>POST /api/{tool}</c>: one tool call with the JSON body as its arguments, through the same MCP server core and
     /// in-process backend as the MCP endpoint (Tool Policy, roles, rate limit, input schema, envelope), with the
     /// <c>api.access</c> scope. The body of the answer is the tool's envelope; the status is 200 when it succeeded, else
-    /// the fixed error code's status. This release serves the read tools here: the product's four pages are read-only
-    /// (Overview, Application 360, the dependency map and the timeline), so a write tool answers not_found. A person's
-    /// approval answer goes through the approval card; an AI client writes through the MCP endpoint.
+    /// the fixed error code's status. On the person entry every tool the Tool Policy gives the person is served, write
+    /// tools included (D-36): the person does their work in the web app, and the Tool Policy roles and the engine's guards
+    /// check each write exactly as they check an AI client's on the MCP endpoint. The person answers an approval request
+    /// they were asked here too, through <c>answer_approval</c> (D-38), a tool served only on the person entry; the
+    /// engine checks that the signed-in person is the one the request asks. An AI client is served the read tools here
+    /// and writes through the MCP endpoint, so a write tool answers not_found for it, and <c>answer_approval</c> answers
+    /// ai_cannot_do_this: AI never approves.
     /// </summary>
     public static async Task HandleTool(HttpContext context)
     {
@@ -73,14 +80,31 @@ public static class ApiEndpoints
             arguments = parsed;
         }
 
-        // A write tool is refused only once the caller is known to be signed in, so a missing token still answers 401.
-        if (contracts.TryGetTool(tool, out ToolContract contract) && IsWrite(contract) && SignedIn(context, auth.ApiScope))
+        // An AI client writes through the MCP endpoint, so here it gets the read tools only. The person entry gets the write
+        // tools too, and the core and the engine check them as on the MCP endpoint (D-36). The refusal comes only once the
+        // caller is known to be signed in, so a missing token still answers 401. A tool served only to a person
+        // (answer_approval, D-38) goes on to the core, which refuses an AI client with ai_cannot_do_this: AI never approves.
+        bool known = contracts.TryGetTool(tool, out ToolContract contract);
+        if (!person && known && IsWrite(contract) && !contract.IsPersonOnly && SignedIn(context, auth.ApiScope))
         {
-            string refusal = person
-                ? "The product's pages are read-only in this release, so the REST API serves the read tools and not " + contract.Name + ". An approval answer goes through the approval card; an AI client writes through the MCP endpoint."
-                : "The tool " + contract.Name + " is served on the MCP endpoint. The REST API serves the read tools.";
+            string refusal = "The tool " + contract.Name + " is served on the MCP endpoint. On the REST API an AI client calls the read tools; a person writes through the product's web app.";
             await HttpJson.WriteFailure(context, new McpError(McpErrorCodes.NotFound, refusal, "tool"), contracts).ConfigureAwait(false);
             return;
+        }
+
+        // Step-up sign-in for a person's approval answer (D-38: a setting, off in the demo; document 26, B26-9). With
+        // the setting on, an answer from a sign-in older than the setting allows, or without the authentication context it
+        // names, records nothing and answers step_up_required, which the web app meets by signing the person in again. A
+        // check (validateOnly) writes nothing, so it needs no fresh sign-in.
+        if (person && known && contract.IsPersonOnly && string.Equals(contract.Name, "answer_approval", StringComparison.Ordinal) && Js.Flag(arguments, "validateOnly") != true)
+        {
+            ProductStepUpOptions stepUp = services.GetRequiredService<IOptions<ProductWebAppOptions>>().Value.StepUp ?? new ProductStepUpOptions();
+            StepUpResult check = StepUpCheck.Evaluate(context.User, stepUp, DateTime.UtcNow);
+            if (!check.Satisfied)
+            {
+                await HttpJson.WriteFailure(context, new McpError(McpErrorCodes.StepUpRequired, check.Message!, claimsChallenge: check.ClaimsChallenge), contracts).ConfigureAwait(false);
+                return;
+            }
         }
 
         JsonTreeNode message = Js.Obj(
@@ -88,7 +112,11 @@ public static class ApiEndpoints
             ("id", JsonTreeNode.FromInt64(1)),
             ("method", JsonTreeNode.FromString("tools/call")),
             ("params", Js.Obj(("name", JsonTreeNode.FromString(tool)), ("arguments", arguments))));
-        McpResponse response = McpInvoker.Invoke(core, McpInvoker.Request(message, context), context);
+        McpResponse response;
+        using (AnsweringApproval(context, person, known ? contract : null, arguments))
+        {
+            response = McpInvoker.Invoke(core, McpInvoker.Request(message, context), context);
+        }
         var headers = new Dictionary<string, string>(response.Headers, StringComparer.OrdinalIgnoreCase);
 
         JsonTreeNode? envelope = Js.Member(response.Result, "structuredContent");
@@ -116,7 +144,8 @@ public static class ApiEndpoints
     /// <c>GET /api/me</c>: the signed-in person's name, the actor kind of this entry (<c>person</c> through the web app,
     /// <c>ai-client-for-person</c> for any other client), the product roles, each with the group that grants it, and the
     /// configuration in force. Roles come only from the configuration's Role Group Bindings and the token's groups. The
-    /// name is the person's Principal Reference label, else the token's <c>name</c> claim.
+    /// name is the person's Principal Reference label, else the token's <c>name</c> claim. When a demo operator acts as a
+    /// demo persona (D-39), every field is the persona's, and <c>demoPersona</c> names it; otherwise it is null.
     /// </summary>
     public static Task HandleMe(HttpContext context)
     {
@@ -143,11 +172,17 @@ public static class ApiEndpoints
         }
 
         BackendSession session = opened.Session;
-        string? name = facts.DisplayLabel(caller.ObjectId) ?? context.User.FindFirst("name")?.Value;
+
+        // A demo persona (D-39) is named by its Principal Reference, else its label; never by the operator's own token.
+        DemoPersonaUse? demo = caller.DemoPersona;
+        string? name = facts.DisplayLabel(caller.ObjectId) ?? (demo != null ? demo.Label : context.User.FindFirst("name")?.Value);
         JsonTreeNode body = Js.Obj(
             ("objectId", JsonTreeNode.FromString(caller.ObjectId)),
             ("name", Js.Str(string.IsNullOrWhiteSpace(name) ? null : name)),
             ("actorKind", JsonTreeNode.FromString(session.ActorKind)),
+            ("demoPersona", demo == null ? JsonTreeNode.Null : Js.Obj(
+                ("name", JsonTreeNode.FromString(demo.Name)),
+                ("label", JsonTreeNode.FromString(demo.Label)))),
             ("roles", Js.Arr(session.Roles.Select(r => Js.Obj(
                 ("roleKey", JsonTreeNode.FromString(r.RoleKey)),
                 ("label", JsonTreeNode.FromString(r.Label)),
@@ -196,6 +231,29 @@ public static class ApiEndpoints
     {
         ProductWebAppOptions webApp = context.RequestServices.GetRequiredService<IOptions<ProductWebAppOptions>>().Value;
         return CallerFacts.IsPersonEntry(ProductRequest.Caller(context), context.Request.Path, webApp);
+    }
+
+    // A person's own answer to an approval request (answer_approval on the person entry, D-38) names the Approval Record
+    // it answers in the store call context, for this request only. The Azure SQL store writes it to SESSION_CONTEXT, and
+    // row-level security lets this request, and no other person's request, write the records of that record's decision
+    // stamped with this caller: the answer on the record named and the recompute the engine runs on that decision. The ID
+    // is the caller's argument, not yet checked here: the engine's guard decides; the predicate is the backstop. Null
+    // otherwise.
+    private static IDisposable? AnsweringApproval(HttpContext context, bool person, ToolContract? tool, JsonTreeNode arguments)
+    {
+        if (!person || tool == null || !tool.IsPersonOnly || !string.Equals(tool.Name, "answer_approval", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        string? id = Js.Text(arguments, "approvalRecordId");
+        StoreCallContext? current = StoreCallContext.Current;
+        if (current == null || string.IsNullOrEmpty(id) || id!.Length > 64)
+        {
+            return null;
+        }
+
+        return StoreCallContext.Enter(current.WithAnsweredApproval(id));
     }
 
     private static bool IsWrite(ToolContract tool)

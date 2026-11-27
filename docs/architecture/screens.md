@@ -1,16 +1,33 @@
 # Screens
 
-**Status: in design.** This page describes the four page designs of the next version's web app. The pages exist as early React and shadcn/ui code in [`src/ui`](../../src/ui/README.md), under the MIT License. It is early work, not a release, and nothing is deployed. The pictures below are screenshots of that code with fictional data, at desktop and phone width.
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the product's web app: the four first page designs in detail, and the work pages where a person acts. The code is React and shadcn/ui in [`src/ui`](../../src/ui/README.md), under the MIT License. The web app has its own unit tests, and browser end-to-end tests in [`src/tests/e2e`](../../src/tests/e2e/) play 23 demo scenarios at desktop width (1280 pixels) and phone width (390 pixels), performing every side sheet and every write the pages offer. The pictures below are screenshots of the four first pages with fictional data, at desktop and phone width.
 
-The web app is designed to use React and shadcn/ui (Radix primitives and Tailwind CSS), and to run in your own Azure subscription with the rest of the product. Each page reads the same operations the MCP tools use, so a page and an AI client always see the same answers.
+The web app uses React and shadcn/ui (Radix primitives and Tailwind CSS), served by the same service as the API. It is designed to run in an organization's own Azure subscription; today it runs as a demo install with fictional data. Each page reads and writes through the same operations the MCP tools use. Each way in reaches the engine's write guard (OP-08): a person's write meets the same rules under the person's own roles, and an AI client's write also meets the AI rules.
 
-## Rules for all four pages
+## The work pages
+
+Under [D-36](../decisions/D-36-the-web-app-acts-and-the-engine-checks-every-write.md), a signed-in person does their work in the web app. Beyond the four pages below, it has these pages, grouped as its menu groups them:
+
+| Group | Pages |
+|---|---|
+| Home | My work |
+| Work | Approvals, Intake, Changes, Reviews, Owners, Teams, Demand, Deployments, Documents, Gap check, Retirement |
+| Register | Applications, Portfolios, Agents, Data, Places |
+| Record | Decisions, Audit trail |
+| AI | AI activity |
+| Govern | Configuration, Roles and access, Guidelines, Measures, Admin |
+| Demo | Demo guide, on a demo install only |
+| Records | One page per record: an application, a decision (where a person answers an approval), an intake request, a change, a review, a data domain, location, mapping or use, a team, and more |
+
+Each action is a side sheet that previews the write with the engine where the tool allows it, then writes and shows the engine's answer. A person answers an approval only on the decision page ([D-38](../decisions/D-38-a-person-answers-an-approval-on-the-decision-page.md)). On a demo install, an "Acting as" menu switches between the fictional people ([D-39](../decisions/D-39-the-demo-switches-roles-with-a-demo-only-persona-switch.md)), and the Demo guide opens each scenario step. The Data page is described in [Data taxonomy](data-taxonomy.md#screens). Each person's view is in the [guide per role](../../src/docs/README.md#the-guide-per-role).
+
+## Rules for every page
 
 | Rule | How the pages follow it |
 |---|---|
 | Light theme only | One light theme: navy text, a brand blue, and gold for attention and for "today". No dark theme |
-| Read-only | No page writes. Changes go through an AI client on the product's MCP server or a pipeline's record step, and decisions are made on approval cards. The engine checks every write. Application 360 says so on the page |
-| Numbers come from the server | The pages count nothing themselves. Every figure is a field of a tool's answer |
+| The engine decides | A page writes only through the product's tools, as the signed-in person. Each write goes through the engine's write guard, and the page shows the engine's answer, a refusal included, in the engine's words. Of the four pages below, the overview, the dependency map and the timeline only read; Application 360 also offers actions, such as declaring a data use |
+| Numbers come from the server | Key figures come from the server, as fields of a tool's answer. A panel may count the rows it shows |
 | Every number leads to rows | Each count and bar opens the matching list |
 | Each panel fails on its own | Every panel holds the result of one call. A failure shows inside that panel, with the error and the correlation ID, and the rest of the page keeps working |
 | Hidden rows are said, not shown | When the caller may not read something, the panel that owns it says so, for example "1 decision is hidden by your access" |
@@ -49,7 +66,7 @@ At the bottom, three distribution bars show applications by stage (in the config
 
 ![Application 360 at phone width, with fictional data](../design/step2/img/ui-application-360-390.png)
 
-**What it shows.** One application on one read-only page.
+**What it shows.** One application on one page. The design below is its first, read-only form; the built page adds a Data panel with **Declare data use** and actions on its panels.
 
 The header has the name, the registration status, when the data was read, and links to the dependency map and the timeline. A summary follows: the purpose, a "Needs attention" strip that repeats facts from the panels below (owner gaps, missing or stale documents, a failed last deployment, a Microsoft-listed owner who differs), and six facts: kind, tier, stage and since when, build path, AI use or the agreed autonomy level, and the next review.
 

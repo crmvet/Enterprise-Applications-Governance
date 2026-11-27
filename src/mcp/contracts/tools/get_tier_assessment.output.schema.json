@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_tier_assessment output",
+  "description": "The response envelope. On success, data holds the assessment (null when none is recorded), its answers, the triggers, the tier applied now, the vocabulary, what the tier needs and the older assessments. The computed tier is a suggestion until a tier decision is accepted.",
+  "x-tool": "get_tier_assessment",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "assessment",
+        "answers",
+        "missingQuestionKeys",
+        "triggers",
+        "appliedTier",
+        "differsFromApplied",
+        "vocabulary",
+        "tierNeeds",
+        "history"
+      ],
+      "properties": {
+        "assessment": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "tierAssessmentId",
+                "intakeRequestId",
+                "businessApplicationId",
+                "computedTier",
+                "assessedBy",
+                "tierDecision",
+                "isFrozen",
+                "isAiCreated",
+                "performedBy",
+                "configurationSetVersion"
+              ],
+              "properties": {
+                "tierAssessmentId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O08 Tier Assessment"
+                },
+                "intakeRequestId": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O07 Intake Request"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "businessApplicationId": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O02 Business Application"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "computedTier": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "label",
+                    "rank"
+                  ],
+                  "properties": {
+                    "key": {
+                      "$ref": "../common.schema.json#/$defs/key"
+                    },
+                    "label": {
+                      "type": "string",
+                      "description": "The tier label."
+                    },
+                    "rank": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "The tier rank: higher is more serious."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "assessedBy": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/principalRef"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "tierDecision": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "decisionId",
+                        "outcome",
+                        "status",
+                        "recordUrl"
+                      ],
+                      "properties": {
+                        "decisionId": {
+                          "$ref": "../common.schema.json#/$defs/id",
+                          "x-entity": "O09 Decision"
+                        },
+                        "outcome": {
+                          "anyOf": [
+                            {
+                              "$ref": "../common.schema.json#/$defs/labelledKey"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "status": {
+                          "$ref": "../common.schema.json#/$defs/statusValue"
+                        },
+                        "recordUrl": {
+                          "$ref": "../common.schema.json#/$defs/recordUrl",
+                          "description": "The record page in the product."
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "isFrozen": {
+                  "type": "boolean",
+                  "description": "True once a tier decision used the assessment: it never changes again."
+                },
+                "isAiCreated": {
+                  "type": "boolean",
+                  "description": "True when an AI client gave the answers."
+                },
+                "performedBy": {
+                  "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/stampedBy"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "configurationSetVersion": {
+                  "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "questionKey",
+              "question",
+              "answerKey",
+              "answer",
+              "impliedTier",
+              "isDriving"
+            ],
+            "properties": {
+              "questionKey": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "question": {
+                "type": "string",
+                "description": "The question as configured."
+              },
+              "answerKey": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "answer": {
+                "type": "string",
+                "description": "The answer as configured."
+              },
+              "impliedTier": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isDriving": {
+                "type": "boolean",
+                "description": "True when this answer decides the computed tier."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "missingQuestionKeys": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          },
+          "description": "Questions that apply and have no answer."
+        },
+        "triggers": {
+          "type": "object",
+          "required": [
+            "reviewTypes",
+            "gateRequirementKeys"
+          ],
+          "properties": {
+            "reviewTypes": {
+              "type": "array",
+              "items": {
+                "$ref": "../common.schema.json#/$defs/labelledKey"
+              },
+              "description": "Reviews the answers trigger."
+            },
+            "gateRequirementKeys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Gate requirements the answers trigger."
+            }
+          },
+          "additionalProperties": false
+        },
+        "appliedTier": {
+          "description": "The tier the application holds now, set by an accepted tier decision.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "differsFromApplied": {
+          "type": "boolean",
+          "description": "True when the computed tier is not the tier applied now."
+        },
+        "vocabulary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "vocabulary",
+              "term",
+              "sourceUrl"
+            ],
+            "properties": {
+              "vocabulary": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "term": {
+                "type": "string",
+                "description": "The outside term, such as Critical."
+              },
+              "sourceUrl": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Microsoft's words for the computed tier."
+        },
+        "tierNeeds": {
+          "type": "object",
+          "required": [
+            "documents",
+            "reviews"
+          ],
+          "properties": {
+            "documents": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "documentType",
+                  "fromStage"
+                ],
+                "properties": {
+                  "documentType": {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  "fromStage": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Documents the tier requires, and from which stage."
+            },
+            "reviews": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "reviewType",
+                  "intervalDays"
+                ],
+                "properties": {
+                  "reviewType": {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  "intervalDays": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Days between reviews."
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Reviews and their cadence at this tier."
+            }
+          },
+          "additionalProperties": false
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "tierAssessmentId",
+              "computedTier",
+              "assessedBy",
+              "tierDecisionId",
+              "isAiCreated"
+            ],
+            "properties": {
+              "tierAssessmentId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O08 Tier Assessment"
+              },
+              "computedTier": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "assessedBy": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tierDecisionId": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client gave the answers."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Older assessments, newest first, up to 10."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The answers imply Tier 2. Driven by: Data change.",
+      "data": {
+        "assessment": {
+          "tierAssessmentId": "80000000-0000-4000-8000-000000000001",
+          "intakeRequestId": "70000000-0000-4000-8000-000000000001",
+          "businessApplicationId": null,
+          "computedTier": {
+            "key": "tier-2",
+            "label": "Tier 2",
+            "rank": 2
+          },
+          "assessedBy": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)",
+            "principalKind": "user"
+          },
+          "tierDecision": null,
+          "isFrozen": false,
+          "isAiCreated": false,
+          "performedBy": null,
+          "configurationSetVersion": 3
+        },
+        "answers": [
+          {
+            "questionKey": "data-change",
+            "question": "Does it change data?",
+            "answerKey": "as-user",
+            "answer": "Changes shared business data as the signed-in person",
+            "impliedTier": {
+              "key": "tier-2",
+              "label": "Tier 2"
+            },
+            "isDriving": true
+          }
+        ],
+        "missingQuestionKeys": [],
+        "triggers": {
+          "reviewTypes": [],
+          "gateRequirementKeys": []
+        },
+        "appliedTier": null,
+        "differsFromApplied": false,
+        "vocabulary": [
+          {
+            "vocabulary": {
+              "key": "support-tier",
+              "label": "Power Platform support tier"
+            },
+            "term": "Important",
+            "sourceUrl": "https://learn.microsoft.com/power-platform/guidance/adoption/support-strategy-solutions"
+          }
+        ],
+        "tierNeeds": {
+          "documents": [
+            {
+              "documentType": {
+                "key": "runbook",
+                "label": "Runbook"
+              },
+              "fromStage": {
+                "key": "change-and-release",
+                "label": "Change and release"
+              }
+            }
+          ],
+          "reviews": [
+            {
+              "reviewType": {
+                "key": "owner-check",
+                "label": "Owner check"
+              },
+              "intervalDays": 180
+            }
+          ]
+        },
+        "history": []
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

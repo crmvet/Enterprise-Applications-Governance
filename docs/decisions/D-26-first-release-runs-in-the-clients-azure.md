@@ -1,6 +1,6 @@
 # D-26 The first release runs in the organization's own Azure subscription
 
-- **Status:** Accepted. Answers D-22. Supersedes in part D-02, D-10, D-11 and D-18.
+- **Status:** Accepted. Answers D-22. Supersedes in part D-02, D-10, D-11 and D-18. Amended by D-32, D-36 and D-38.
 - **Date:** 2026-11-22
 - **Decided by:** the product owner
 
@@ -8,7 +8,7 @@
 
 D-22 left one question open. Should the product keep its data in Dataverse, or in a database in the organization's own Azure? A foundation study compared the options on running cost and admin effort, with security as a must.
 
-Most of the product's users are owners and reviewers, not builders. There may be few builders at all. So the license each user needs weighs more here than it would in a tool for makers. The product owner also did not want the product locked into a Dataverse solution.
+Most of the people the product is designed for are owners and reviewers, not builders. There may be few builders at all. So the license each user needs weighs more here than it would in a tool for makers. The product owner also did not want the product locked into a Dataverse solution.
 
 ## Options considered
 
@@ -35,7 +35,7 @@ Option 2. The first release runs on Azure, in the organization's own subscriptio
 
 ## Why
 
-- Most users are owners and reviewers, not builders. On Dataverse, every user who writes would need a Power Apps Premium license from February 2027. On Azure, nobody needs a Power Platform license for the product.
+- Most of the people it is designed for are owners and reviewers, not builders. On Dataverse, every user who writes would need a Power Apps Premium license from February 2027. On Azure, nobody needs a Power Platform license for the product.
 - There is no lock-in to a Dataverse solution.
 - The data stays in the organization's own subscription.
 - The scope fits agents, code apps and SaaS from other vendors, not only Power Platform.
@@ -51,9 +51,13 @@ Option 2. The first release runs on Azure, in the organization's own subscriptio
 - The next version is not a Dataverse solution. The 2021 release still is.
 - Some parts of the design still need a technical test, such as sign-in on behalf of the person on Azure and the route for approval cards.
 
-## Amendment, 2026-11-23
+## Amendments, 2026-11-23
 
 [D-32](D-32-the-web-app-uses-shadcn-ui.md) moves the web app from Fluent UI to shadcn/ui (Radix primitives, Tailwind CSS 4 and lucide icons) on the same Academy palette, light only. The pages and their designs stay as they are.
+
+[D-36](D-36-the-web-app-acts-and-the-engine-checks-every-write.md) makes the web app act: a signed-in person does their work in it, and the engine checks every write the same way it checks an AI client's.
+
+[D-38](D-38-a-person-answers-an-approval-on-the-decision-page.md) makes the product's decision page the default place a person answers an approval. Teams and Outlook messages become notices that link to it. Answering inside a card stays an option for each install, through the approval runner, while step-up sign-in is off.
 
 ## Related
 

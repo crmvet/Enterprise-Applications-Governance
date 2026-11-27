@@ -92,7 +92,8 @@ public sealed class ValidationOutcome
 }
 
 // OP-09 Validate a configuration set (document 25, section 5.11; document 21, section 9).
-// It runs every rule of document 21, section 9 (V01 to V44), then the engine checks beyond V44 that document 25,
+// It runs every rule of document 21, section 9 (V01 to V44) and the data taxonomy's V49 to V60 (docs/architecture/data-taxonomy.md,
+// Validation rules), then the engine checks beyond V44 that document 25,
 // section 5.11 lists. snapshot.schema-unsupported, the fifth engine check, is the snapshot compiler's: a bundle with
 // another schema major version fails V01 here, and the compiler refuses it when it loads a snapshot.
 public sealed class ConfigurationValidator
@@ -142,6 +143,18 @@ public sealed class ConfigurationValidator
         V41SnapshotSize.Instance,
         V42BaseMoved.Instance,
         V44PresetTenantData.Instance,
+        V49DomainParent.Instance,
+        V50DomainLevel.Instance,
+        V51LevelRank.Instance,
+        V52Classification.Instance,
+        V53ClassificationLower.Instance,
+        V54DomainInUse.Instance,
+        V55DecisionRouted.Instance,
+        V56OwnerSubject.Instance,
+        V57OwnershipAccountable.Instance,
+        V58Platform.Instance,
+        V59Loosens.Instance,
+        V60PresetTenant.Instance,
     };
 
     // The engine checks beyond V01 to V44 (document 25, section 5.11). They carry a reason code and no V-ID.
@@ -209,6 +222,18 @@ public sealed class ConfigurationValidator
         V42BaseMoved.Instance,
         V43PresetConflict.Instance,
         V44PresetTenantData.Instance,
+        V49DomainParent.Instance,
+        V50DomainLevel.Instance,
+        V51LevelRank.Instance,
+        V52Classification.Instance,
+        V53ClassificationLower.Instance,
+        V54DomainInUse.Instance,
+        V55DecisionRouted.Instance,
+        V56OwnerSubject.Instance,
+        V57OwnershipAccountable.Instance,
+        V58Platform.Instance,
+        V59Loosens.Instance,
+        V60PresetTenant.Instance,
     });
 
     // Every engine check this validator runs after the rules, in the order of document 25, section 5.11.

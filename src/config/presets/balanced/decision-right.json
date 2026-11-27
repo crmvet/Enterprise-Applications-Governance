@@ -1,6 +1,7 @@
 {
   "$comment": [
-    "One accountable per decision type and scope (V22). The change manager is accountable for tier 3 and emergency change authorization, with its own group for a tier 3 emergency. The change board is accountable for exceptions about a change (document 28, issues 2 and 4). The configuration admin is the one accountable for both configuration decision types (document 28, issue 6)."
+    "One accountable per decision type and scope (V22). The change manager is accountable for tier 3 and emergency change authorization, with its own group for a tier 3 emergency. The change board is accountable for exceptions about a change (document 28, issues 2 and 4). The configuration admin is the one accountable for both configuration decision types (document 28, issue 6).",
+    "Aligned with the process documents (document 21, B21-9): the builder does the work of a tier decision (P02), the platform admin does the work of an ownership hand-over (P08), and the sponsor's priority card falls back to the business owner, which for a request with no application is the person the intake names (P01 step 8). Flagged agents: the AI lead decides, the platform admin does the work, the business owner is consulted, and AI drafts the options (P06, P08)."
   ],
   "entity": "decision-right",
   "rows": [
@@ -17,7 +18,8 @@
       "label": "Priority: accountable",
       "decisionTypeKey": "priority",
       "letter": "accountable",
-      "ownerRoleKey": "sponsor"
+      "ownerRoleKey": "sponsor",
+      "fallbackOwnerRoleKey": "business-owner"
     },
     {
       "key": "priority-r",
@@ -49,6 +51,13 @@
       "roleKey": "platform-admin"
     },
     { "key": "tier-s", "label": "Tier: AI suggests", "decisionTypeKey": "tier", "letter": "supports" },
+    {
+      "key": "tier-r",
+      "label": "Tier: responsible",
+      "decisionTypeKey": "tier",
+      "letter": "responsible",
+      "ownerRoleKey": "builder"
+    },
     {
       "key": "risk-acceptance-a",
       "label": "Risk acceptance: accountable",
@@ -131,6 +140,13 @@
       "ownerRoleKey": "business-owner"
     },
     {
+      "key": "ownership-r",
+      "label": "Ownership: responsible",
+      "decisionTypeKey": "ownership",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
       "key": "portfolio-a",
       "label": "Portfolio: accountable",
       "decisionTypeKey": "portfolio",
@@ -204,6 +220,28 @@
       "roleKey": "ai-lead"
     },
     {
+      "key": "flagged-agent-a",
+      "label": "Flagged agent: accountable",
+      "decisionTypeKey": "flagged-agent",
+      "letter": "accountable",
+      "roleKey": "ai-lead"
+    },
+    {
+      "key": "flagged-agent-r",
+      "label": "Flagged agent: responsible",
+      "decisionTypeKey": "flagged-agent",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "flagged-agent-c",
+      "label": "Flagged agent: business owner consulted",
+      "decisionTypeKey": "flagged-agent",
+      "letter": "consulted",
+      "ownerRoleKey": "business-owner"
+    },
+    { "key": "flagged-agent-s", "label": "Flagged agent: AI drafts the options", "decisionTypeKey": "flagged-agent", "letter": "supports" },
+    {
       "key": "configuration-change-a",
       "label": "Configuration: accountable",
       "decisionTypeKey": "configuration-change",
@@ -250,6 +288,138 @@
       "label": "Gate policy: AI drafts",
       "decisionTypeKey": "gate-policy-change",
       "letter": "supports"
+    },
+    {
+      "key": "data-use-domain-a",
+      "label": "Data use: the domain's data owner decides",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "letter": "accountable",
+      "ownerRoleKey": "data-owner",
+      "ownerSubject": "data-domain"
+    },
+    { "key": "data-use-domain-s", "label": "Data use: AI drafts", "decisionTypeKey": "data-use", "subjectKind": "data-use", "letter": "supports" },
+    {
+      "key": "data-use-domain-r-business-owner",
+      "label": "Data use: the application's business owner proposes",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "letter": "responsible",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "data-use-domain-r-technical-owner",
+      "label": "Data use: the application's technical owner proposes",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "letter": "responsible",
+      "ownerRoleKey": "technical-owner"
+    },
+    {
+      "key": "data-use-domain-r-platform-admin",
+      "label": "Data use: the platform admin proposes",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-use",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "data-copy-a",
+      "label": "Copy outside production: the domain's data owner decides",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-mapping",
+      "letter": "accountable",
+      "ownerRoleKey": "data-owner",
+      "ownerSubject": "data-domain"
+    },
+    {
+      "key": "data-copy-r",
+      "label": "Copy outside production: the platform admin proposes",
+      "decisionTypeKey": "data-use",
+      "subjectKind": "data-mapping",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "data-retention-a",
+      "label": "Retention: the domain's data owner decides",
+      "decisionTypeKey": "data-retention",
+      "letter": "accountable",
+      "ownerRoleKey": "data-owner",
+      "ownerSubject": "data-domain"
+    },
+    {
+      "key": "data-retention-r",
+      "label": "Retention: the platform admin proposes",
+      "decisionTypeKey": "data-retention",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "data-retention-c",
+      "label": "Retention: the business owner is consulted",
+      "decisionTypeKey": "data-retention",
+      "letter": "consulted",
+      "ownerRoleKey": "business-owner"
+    },
+    {
+      "key": "ownership-top-domain-a",
+      "label": "Top-level domain owner: the data governance lead appoints",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "dataDomainLevelKey": "domain",
+      "letter": "accountable",
+      "roleKey": "data-governance-lead"
+    },
+    {
+      "key": "ownership-top-domain-r",
+      "label": "Top-level domain owner: the platform admin proposes",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "dataDomainLevelKey": "domain",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "ownership-domain-a",
+      "label": "Domain owner: the parent domain's data owner appoints",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "letter": "accountable",
+      "ownerRoleKey": "data-owner",
+      "ownerSubject": "parent-data-domain"
+    },
+    {
+      "key": "ownership-domain-r",
+      "label": "Domain owner: the data governance lead proposes",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "letter": "responsible",
+      "roleKey": "data-governance-lead"
+    },
+    {
+      "key": "ownership-domain-r-admin",
+      "label": "Domain owner: the platform admin proposes",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-domain",
+      "letter": "responsible",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "ownership-location-a",
+      "label": "Location owner: the platform admin appoints",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-location",
+      "letter": "accountable",
+      "roleKey": "platform-admin"
+    },
+    {
+      "key": "ownership-location-r",
+      "label": "Location owner: the data governance lead proposes",
+      "decisionTypeKey": "ownership",
+      "subjectKind": "data-location",
+      "letter": "responsible",
+      "roleKey": "data-governance-lead"
     }
   ]
 }

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_data_use input",
+  "description": "This application reads or writes this data, for this purpose, with or without AI; or it stopped. Saves a data use (O27). An AI client's use is a draft until a person confirms it; a person's use is confirmed when saved, unless confirm is false. A use whose governing rule is never is refused for everyone (G-25). Widening a confirmed use to write, or turning AI on, ends it and starts a new one, so the earlier decision stays with the earlier use. When the use needs a decision, proposeDecision opens a data-use decision; a person's confirmed use also sends it to the approvers.",
+  "x-tool": "save_data_use",
+  "type": "object",
+  "required": [
+    "applicationId",
+    "domainKey",
+    "access",
+    "purpose",
+    "reachesAi"
+  ],
+  "properties": {
+    "dataUseId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O27 Data Use",
+      "description": "The use to change, confirm or end. Leave it out to declare a new one; an open use of the same application, domain, location and AI flag is then changed."
+    },
+    "applicationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O02 Business Application",
+      "description": "The application that uses the data."
+    },
+    "domainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "The data, by its domain. A domain at a declarable level."
+    },
+    "locationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "Where the application reaches the data, when known."
+    },
+    "access": {
+      "$ref": "../common.schema.json#/$defs/dataAccess"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Why the application needs the data, in one plain sentence.",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "reachesAi": {
+      "type": "boolean",
+      "description": "True when the data is sent to an AI model or agent, for grounding, prompts or training."
+    },
+    "aiServiceAsSeen": {
+      "type": "string",
+      "description": "The model or service as named.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "aiComponentId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O03 Technical Component",
+      "description": "The AI service, when it is a registered component."
+    },
+    "isDeidentified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when only masked or de-identified data is used."
+    },
+    "accessApproachKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "How the application signs in to the data, from the access-approach list."
+    },
+    "startOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "When the use starts. Today when left out."
+    },
+    "endOn": {
+      "$ref": "../common.schema.json#/$defs/date",
+      "description": "Ends the use on this date. Ending is never refused."
+    },
+    "confirm": {
+      "type": "boolean",
+      "description": "True confirms the use (registered). A person's save confirms unless this is false. An AI client never confirms (G-21)."
+    },
+    "proposeDecision": {
+      "type": "boolean",
+      "default": true,
+      "description": "When the use needs a decision and has none, open a data-use decision about it."
+    },
+    "clientRequestId": {
+      "$ref": "../common.schema.json#/$defs/clientRequestId"
+    },
+    "validateOnly": {
+      "$ref": "../common.schema.json#/$defs/validateOnly"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "applicationId": "10000000-0000-4000-8000-000000000001",
+      "domainKey": "payroll",
+      "access": "write",
+      "purpose": "Writes approved mileage payments into payroll.",
+      "reachesAi": false
+    }
+  ]
+}

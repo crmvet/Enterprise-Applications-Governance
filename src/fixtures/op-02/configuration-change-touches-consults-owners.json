@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-02",
+  "case": "configuration-change-touches-consults-owners",
+  "description": "A configuration draft that touches the data taxonomy keeps the configuration admin, and consults the data owners of the touched domains (docs/architecture/data-taxonomy.md, Changing the taxonomy).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "configuration-change",
+    "dataTaxonomyChange": "touches",
+    "portfolioPath": []
+  },
+  "expected": {
+    "outcome": "required",
+    "payload": {
+      "requirements": [
+        {
+          "ruleKey": "config-data-touches-admin",
+          "approverRoleKey": "configuration-admin"
+        }
+      ],
+      "consultations": [
+        {
+          "ruleKey": "config-data-touches-owners",
+          "ownerSubject": "touched-data-domains"
+        }
+      ]
+    }
+  }
+}

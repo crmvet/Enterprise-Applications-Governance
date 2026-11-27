@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "go-live-domains-required-app-data-owner-not-counted-not-ready",
+  "description": "Under domains-required (Regulated sets it) the app-level data owner no longer answers \"a data owner is named\": a tier 2 app with an app-level data owner and no declared use is not ready.",
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "setting",
+        "key": "data-taxonomy-mode",
+        "values": {
+          "value": "domains-required"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "documentation": {
+      "items": [
+        {
+          "requirementKey": "runbook-tier-2",
+          "documentTypeKey": "runbook",
+          "status": "current"
+        }
+      ]
+    },
+    "assignedOwnerRoleKeys": [
+      "business-owner",
+      "technical-owner",
+      "data-owner"
+    ],
+    "dataUses": {
+      "declaredCount": 0,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "ready": false
+    },
+    "reasons": [
+      {
+        "code": "gate.requirement-owner-missing",
+        "severity": "warning",
+        "entity": "Gate Requirement",
+        "ref": "go-live-data-owner-tier-2"
+      },
+      {
+        "code": "gate.not-ready",
+        "severity": "error",
+        "entity": "Gate",
+        "ref": "go-live"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "dependency-to-itself-refused",
+  "description": "A dependency never points to its own application: To Application is the From Application (document 22, O04 rules; document 25, B25-13). Refused.",
+  "tags": [
+    "dependency-shape"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "input": {
+    "entity": "dependency",
+    "operation": "create",
+    "after": {
+      "fromApplication": "fixture-app-1",
+      "toApplication": "fixture-app-1",
+      "dependencyType": "reads-data-from"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "refusals": [
+        {
+          "code": "dependency.target-invalid"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "code": "dependency.target-invalid",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

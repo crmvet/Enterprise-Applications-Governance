@@ -194,12 +194,15 @@ export function EnvelopeNotes({ couldNotRead, warnings }: { couldNotRead: CouldN
 
 // ---------- page header ----------
 
-export function PageHeader(props: { eyebrow?: string; title: ReactNode; subtitle?: ReactNode; meta?: ReactNode; actions?: ReactNode }) {
+// status sits beside the heading, outside the h1, so the heading reads as the record's name alone ("Invoice Matching
+// 1.12.1", never "Invoice Matching 1.12.1Succeeded").
+export function PageHeader(props: { eyebrow?: string; title: ReactNode; status?: ReactNode; subtitle?: ReactNode; meta?: ReactNode; actions?: ReactNode }) {
+  const heading = <h1 className="m-0 text-[28px] leading-9 font-semibold tracking-tight text-navy narrow:text-2xl narrow:leading-[30px]">{props.title}</h1>;
   return (
     <header className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 narrow:mb-3.5">
       <div className="flex min-w-0 flex-col gap-1">
         {props.eyebrow && <span className="text-xs font-semibold tracking-[0.04em] text-brand-dark uppercase">{props.eyebrow}</span>}
-        <h1 className="m-0 text-[28px] leading-9 font-semibold tracking-tight text-navy narrow:text-2xl narrow:leading-[30px]">{props.title}</h1>
+        {props.status ? <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{heading}{props.status}</div> : heading}
         {props.subtitle && <div className="max-w-[760px] text-sm text-navy-2">{props.subtitle}</div>}
         {props.meta && <div className="text-xs text-navy-3">{props.meta}</div>}
       </div>
@@ -217,9 +220,11 @@ export function DataStamp({ envelope }: { envelope: Envelope<unknown> | undefine
 // ---------- KPI tile ----------
 
 // value is null while the figure is still being read: the tile shows a placeholder, never a number the server did not
-// send.
-export function KpiTile(props: { label: string; value: number | null; caption: string; attention?: boolean; onClick?: () => void; className?: string }) {
-  const loading = props.value === null;
+// send. failed is true when the read answered with an error: the tile says "Not read" and is no longer busy, so a screen
+// reader never hears "loading" for good (WCAG 4.1.3; a11y review). Opening the list reads it again.
+export function KpiTile(props: { label: string; value: number | null; caption: string; attention?: boolean; failed?: boolean; onClick?: () => void; className?: string }) {
+  const failed = props.value === null && !!props.failed;
+  const loading = props.value === null && !failed;
   return (
     <button
       type="button"
@@ -230,14 +235,16 @@ export function KpiTile(props: { label: string; value: number | null; caption: s
         props.className,
       )}
       onClick={props.onClick}
-      aria-label={`${props.label}: ${loading ? 'loading' : props.value}. ${props.caption}. Opens the list.`}
+      aria-label={`${props.label}: ${failed ? 'not read' : loading ? 'loading' : props.value}. ${props.caption}. Opens the list.`}
       aria-busy={loading || undefined}
     >
       <span className="flex items-center gap-1.5 text-sm font-semibold text-navy-2">
         {props.attention && <TriangleAlert className="size-4 shrink-0 text-gold-strong" aria-hidden />}
         {props.label}
       </span>
-      {props.value === null ? (
+      {failed ? (
+        <span className="flex h-10 items-center text-sm font-semibold text-navy-3 narrow:h-9">Not read</span>
+      ) : props.value === null ? (
         <span className="flex h-10 items-center narrow:h-9" aria-hidden>
           <Skeleton className="h-7 w-16" />
         </span>
@@ -259,7 +266,7 @@ export function MoreRowsNote({ skipToken, what }: { skipToken: string | undefine
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5 text-xs text-navy-3">
         <Info className="size-3.5 shrink-0" aria-hidden />
-        <span>The product holds more {what} than this list shows. Narrow the range, or ask an AI client for the rest.</span>
+        <span>The product holds more {what} than this list shows. Narrow the filters or the range to see the rest.</span>
       </div>
     </div>
   );

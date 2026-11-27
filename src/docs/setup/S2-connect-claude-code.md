@@ -2,12 +2,12 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant. The server side of path 1 is built and tested on the local server with test tokens; a test in a real tenant still has to confirm both paths and count the admin steps.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 24, sections 4.1 to 4.5, 12 and 13; document 26, section 8; document 28, Q14 (working default, settled).
+- **See also:** [mcp.md](../mcp.md), [install.md](../install.md#2-the-claude-code-client), [concepts.md](../concepts.md#ai-clients-and-their-stamps).
 - **Open design questions that touch this guide:** 4 and 9 (markers below).
 
 ## Purpose
 
-Let a person use Claude Code against the product's MCP server, signed in as themselves, so every call reaches the data store as that person (on behalf of, never a shared identity). The guide leads with a client registered in the adopter's tenant, which is generally available and what Microsoft prefers, and offers Client ID Metadata Documents (CIMD) for pilots. CIMD becomes the lead once it is generally available (working default, 28, Q14).
+Let a person use Claude Code against the product's MCP server, signed in as themselves, so every call reaches the data store as that person (on behalf of, never a shared identity). The guide leads with a client registered in the adopter's tenant, which is generally available and what Microsoft prefers, and offers Client ID Metadata Documents (CIMD) for pilots. CIMD becomes the lead once it is generally available (a working default).
 
 ## Who
 
@@ -23,7 +23,7 @@ Let a person use Claude Code against the product's MCP server, signed in as them
 - The server's app registration (the product's API app registration, guide S4, part B): Application ID URI `https://<host>/mcp` (the canonical endpoint URL, a non-empty path, no trailing slash) and one delegated scope, `mcp.access`. The fully qualified scope is `https://<host>/mcp/mcp.access`.
 - The person holds at least one product role through a bound Entra group (guide S1, step 8). Without one, the server returns an empty or narrowed tool list.
 - A Claude Code version that supports remote MCP servers over streamable HTTP with OAuth. The fixed localhost redirect form needs v2.1.231 or later (see path 1, step 2).
-- [branch: Dataverse] The person holds a license that covers Dataverse use. Every person who reaches Dataverse through any MCP route needs one, because pooling access through a server does not reduce the count (multiplexing; document 24, section 10.1). The exact license for MCP-only use is UNVERIFIED there. The server's app registration holds the delegated Dataverse permission `user_impersonation` with admin consent.
+- [branch: Dataverse] The person holds a license that covers Dataverse use. Every person who reaches Dataverse through any MCP route needs one, because pooling access through a server does not reduce the count (multiplexing). The exact license for MCP-only use is UNVERIFIED. The server's app registration holds the delegated Dataverse permission `user_impersonation` with admin consent.
 - [branch: Azure] No Power Platform license for MCP use. Group-based app role assignment needs Entra ID P1 or P2 (guide S4, open point 2). The person's role group is assigned to the API's enterprise application, which requires assignment, so a person outside every role group gets no token at all.
 
 ## Steps
@@ -60,7 +60,7 @@ Let a person use Claude Code against the product's MCP server, signed in as them
 
 CIMD is public preview and "isn't recommended for production workloads". Use it only for a pilot that accepts that.
 
-1. **Switch the server metadata.** The server's protected resource metadata must advertise `https://login.microsoftonline.com/<tenant-id>/oauth21/2026-08` as its authorization server: the versioned identifier that selects the CIMD endpoints. The server publishes the ordinary `/v2.0` identifier (document 24, section 4.2): it builds the value from `Product:Auth:Instance` and the tenant ID, and has no setting for the versioned identifier yet (open point 3).
+1. **Switch the server metadata.** The server's protected resource metadata must advertise `https://login.microsoftonline.com/<tenant-id>/oauth21/2026-08` as its authorization server: the versioned identifier that selects the CIMD endpoints. The server publishes the ordinary `/v2.0` identifier: it builds the value from `Product:Auth:Instance` and the tenant ID, and has no setting for the versioned identifier yet (open point 3).
 
 2. **Add the Claude Code client in advance.** Under the default consent policy, users can grant a CIMD client only a very limited set of scopes such as `openid` and `User.Read`, so `mcp.access` needs an admin. In the Microsoft Entra admin center: Entra ID, Agents, Agent identities, Add agent identity, and enter `https://claude.ai/oauth/claude-code-client-metadata`. Then grant only `mcp.access` for all users. For a strict posture, block user consent to unverified apps, so no other CIMD client can be added by a user.
 
@@ -82,10 +82,10 @@ Visual Studio Code and GitHub Copilot are Microsoft first-party clients and do n
 
 ### What the person may then do
 
-- The tool list depends on the person's product roles and the Tool Policy rows (document 24, section 2.2). The `X-Toolsets` header narrows it further.
+- The tool list depends on the person's product roles and the Tool Policy rows ([mcp.md](../mcp.md#what-the-client-sees)). The `X-Toolsets` header narrows it further.
 - Writes leave records in Draft, Proposed, Submitted, as reported, as a link, or as a candidate configuration draft. No tool approves, accepts or activates anything.
-- An AI client may submit intake requests, change requests, decisions and configuration drafts for the person; registering an application and marking a gate-relevant document current send the person a confirmation card; links and deployment records need nothing. WORKING DEFAULT (open design question 9)
-- A configuration admin's Claude Code session can propose configuration drafts. A person accepts the engine's diff on one card; the instructing admin may accept their own AI's draft, and strict separation needs a second admin. WORKING DEFAULT (open design question 4)
+- An AI client may submit intake requests, change requests, decisions and configuration drafts for the person; registering an application and marking a gate-relevant document current need the person's confirmation; links and deployment records need nothing. WORKING DEFAULT (open design question 9)
+- A configuration admin's Claude Code session can propose configuration drafts. A person accepts the engine's diff on the decision page; the instructing admin may accept their own AI's draft, and strict separation needs a second admin. WORKING DEFAULT (open design question 4)
 
 ### Branch differences
 
@@ -98,14 +98,14 @@ Visual Studio Code and GitHub Copilot are Microsoft first-party clients and do n
 - `whoami` returns the signed-in person and the expected product roles.
 - A token for another audience, or from another tenant, is refused.
 - The Entra sign-in logs show the client: the registered app (path 1) or an agent identity whose app ID is derived from the CIMD URL (path 2).
-- A draft the person creates through Claude Code shows Performed By Actor Kind "AI client for a person", On Behalf Of the person, and Client App "Claude Code", the label of its Known Client row (document 24, section 4.5).
+- A draft the person creates through Claude Code shows Performed By Actor Kind "AI client for a person", On Behalf Of the person, and Client App "Claude Code", the label of its Known Client row.
 - A person without a role sees no write tools, and an agent user signed in through the same client holds no role (`whoami` answers `not_authorized`).
 - A client that is not on the Known Client list is refused with `not_authorized` once the list holds any row.
 - [branch: Dataverse] Dataverse auditing shows the person, not the server, as the user of the write.
 
 ## Open points
 
-1. Document 26's SM18b says access tokens last one hour by default. Learn now says the default is variable, 60 to 90 minutes (75 on average). Guide [A2](../admin/A2-urgent-revoke-and-break-glass.md) uses the Learn figure.
+1. The product's security design assumed access tokens last one hour by default. Learn now says the default is variable, 60 to 90 minutes (75 on average). Guide [A2](../admin/A2-urgent-revoke-and-break-glass.md) uses the Learn figure.
 2. The least admin role for the CIMD pre-add is UNVERIFIED. Learn's "Manage CIMD clients" page lists Global Administrator, Agent ID Administrator or AI Administrator for creating the agent identity. Granting `mcp.access` to it still needs a role that can grant consent; a tenant test still has to find the least one.
 3. The server has no setting that switches its protected resource metadata from the `/v2.0` identifier to the versioned CIMD identifier, so path 2 needs a host change before a pilot. Proposal: a setting under `Product:Auth` with the `/v2.0` identifier as its default.
 4. The Known Client check matches the token's client app ID, or a CIMD URL, against the `clientIdentifier` of each row. For a CIMD client the token carries the agent identity's app ID; a tenant test should confirm which value to put in the row.

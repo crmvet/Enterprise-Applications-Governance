@@ -30,10 +30,16 @@ public sealed class LogicalModelConformanceTests
 
     private static JsonElement Model => LazyModel.Value.RootElement;
 
+    // The tables come from 0001 (the first release) and 0008 (the data taxonomy, D-37), each table from one of them.
+    private static string TableScripts()
+    {
+        return File.ReadAllText(Path.Combine(Paths.Sql, "0001-tables.sql")) + File.ReadAllText(Path.Combine(Paths.Sql, "0008-data-taxonomy.sql"));
+    }
+
     [Fact]
     public void EveryFirstReleaseEntityHasOneTableOfItsHistoryClass()
     {
-        string tables = File.ReadAllText(Path.Combine(Paths.Sql, "0001-tables.sql"));
+        string tables = TableScripts().Replace("\r\n", "\n");
         Dictionary<string, string> storageOfClassF = ClassFStorage();
         var expected = new List<string>();
         foreach (JsonElement entity in FirstReleaseEntities())
@@ -77,13 +83,13 @@ public sealed class LogicalModelConformanceTests
 
         string[] created = Regex.Matches(tables, @"^    CREATE TABLE (\[[a-z]+\]\.\[[A-Za-z]+\])\n", RegexOptions.Multiline).Select(m => m.Groups[1].Value).ToArray();
         Assert.Equal(expected.OrderBy(t => t, StringComparer.Ordinal), created.OrderBy(t => t, StringComparer.Ordinal));
-        Assert.Equal(69, created.Length);
+        Assert.Equal(76, created.Length);
     }
 
     [Fact]
     public void TheStoresHoldEveryStoreKeyOfTheModelButTheOnesHeldBack()
     {
-        string tables = File.ReadAllText(Path.Combine(Paths.Sql, "0001-tables.sql"));
+        string tables = TableScripts();
         var storeKeys = new List<(string Id, string[] Columns)>();
         foreach (JsonElement entity in FirstReleaseEntities())
         {
@@ -136,8 +142,8 @@ public sealed class LogicalModelConformanceTests
         Assert.All(StoreKeyCatalog.HeldBack.Values, reason => Assert.True(reason.Length > 40, reason));
         string[] left = all.Where(k => !indexed.Contains(k) && !tabled.Contains(k, StringComparer.Ordinal)).ToArray();
         Assert.Equal(StoreKeysHeldBack.OrderBy(k => k, StringComparer.Ordinal), left);
-        Assert.Equal(73, all.Length);
-        Assert.Equal(67, tabled.Count);
+        Assert.Equal(83, all.Length);
+        Assert.Equal(77, tabled.Count);
     }
 
     // The model keys the store holds on narrower terms than the model states them, each to match what the engine itself
@@ -169,7 +175,11 @@ public sealed class LogicalModelConformanceTests
                 "C33 Tier+Change Type+Target Stage+Portfolio+Configuration Set",
                 "C39 Number+Version+Configuration Set",
                 "C42 Principal+Workload Role+Configuration Set",
+                "C47 Rank+Configuration Set",
+                "C48 Rank+Configuration Set",
                 "O03 Link Kind+External Id",
+                "O25 Data Platform+External Id",
+                "O26 Data Domain+Data Location+Data Origin",
             },
             narrowed);
         Assert.All(
@@ -228,11 +238,48 @@ public sealed class LogicalModelConformanceTests
                 {
                     Assert.Contains("retiredOn", modelColumns);
                 }
+                else if (key.Scope == StoreKeyScope.OpenRows)
+                {
+                    Assert.Contains("endedOn", modelColumns);
+                }
+                else if (key.Scope == StoreKeyScope.InServiceRows)
+                {
+                    Assert.Contains("retiredOn", modelColumns);
+                    Assert.Contains("statusMeaning", modelColumns);
+                }
             }
         }
     }
 
+    // The subject checks the store makes are the model's: for each, the model's exactly-one constraint names the same
+    // columns, and its subjects block gives each column the kind the check names, in the model's order.
+    [Fact]
+    public void TheStoresSubjectChecksAreTheModelsExactlyOneSubjects()
+    {
+        foreach (EntityInfo entity in EntityCatalog.Embedded.Entities.Where(e => e.SubjectCheck != null))
+        {
+            JsonElement model = FirstReleaseEntities().Single(e => e.GetProperty("id").GetString() == entity.ModelId);
+            SubjectCheck check = entity.SubjectCheck!;
+            JsonElement constraint = model.GetProperty("constraints").EnumerateArray().Single(c => c.GetProperty("kind").GetString() == "exactly-one");
+            Assert.Equal(constraint.GetProperty("columns").EnumerateArray().Select(c => ContractName(c.GetString()!)), check.Subjects.Select(s => s.Value));
+            JsonElement subjects = model.GetProperty("subjects");
+            Assert.Equal(ContractName(subjects.GetProperty("kindColumn").GetString()!), check.KindColumn);
+            Assert.Equal(
+                subjects.GetProperty("options").EnumerateArray().Select(o => (EntityCatalog.EntityKey(o.GetProperty("value").GetString()!), ContractName(o.GetProperty("column").GetString()!))),
+                check.Subjects.Select(s => (s.Key, s.Value)));
+        }
+
+        Assert.Contains(EntityCatalog.Embedded.Entities, e => e.Key == "owner-assignment" && e.SubjectCheck != null);
+    }
+
     // ---- Helpers ----
+
+    // The engine's contract name: "Subject Data Domain" gives "subjectDataDomain", "Reaches AI" gives "reachesAi".
+    private static string ContractName(string logicalName)
+    {
+        string[] words = logicalName.Split(' ');
+        return words[0].ToLowerInvariant() + string.Concat(words.Skip(1).Select(w => char.ToUpperInvariant(w[0]) + w.Substring(1).ToLowerInvariant()));
+    }
 
     private static IEnumerable<JsonElement> FirstReleaseEntities()
     {

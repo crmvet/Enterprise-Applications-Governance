@@ -1,15 +1,15 @@
 # Data model
 
-**Status: in design.** This page describes the logical data model of the next version and how it is designed to bind to Azure SQL Database. Nothing here is released or deployed. Early code that follows it is in [`src/model`](../../src/model/) and [`src/adapters/azure/sql`](../../src/adapters/azure/sql/), under the MIT License. It is not a release, and its Azure SQL scripts have not run against a real database.
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** This page describes the logical data model and its binding to Azure SQL Database. The model is in [`src/model`](../../src/model/), and the Azure SQL scripts are in [`src/adapters/azure/sql`](../../src/adapters/azure/sql/), under the MIT License. The demo install runs on those scripts. The store tests run on SQLite and in memory in every build; their Azure SQL cases need a SQL Server and are opt-in, so the database-side controls below (ledger tables, row-level security) are built but stay "as designed" until those cases run in the build.
 
 ## In one screen
 
-1. **66 entities in the first release:** 42 for configuration and 24 for operational records, plus 5 kept for later.
+1. **77 entities in the first release:** 50 for configuration (4 of them still proposals) and 27 for operational records, plus 4 kept for later. Seven of them hold the [data taxonomy](data-taxonomy.md).
 2. **Configuration at the center.** Operational rows point to configuration rows inside the one working set in force. APIs and MCP tools carry configuration keys, never internal IDs. A live configuration row is never deleted, only retired, so no reference ever breaks.
 3. **Fixed meanings are copied onto rows.** Where an operational row has a configurable status, the engine also writes the fixed meaning next to it, such as "accepted" next to the label "Approved by board". The engine, row-level security and views read that one column.
 4. **Five history classes.** Every entity has one: append-only, freeze on final, effective-dated, mutable with history, or configuration versioned.
 5. **Decisions are append-only in effect.** A decision can change only while it is proposed. A change after that is a new decision that supersedes the old one.
-6. **Approval records are immutable once answered.** Only the approval runner writes the answer, once. Only an approved answer from a person who holds the required role counts.
+6. **Approval records are immutable once answered.** The answer is written once: the person's own answer on the decision page, or, where an organization keeps cards, the approval runner's for a card. Only an approved answer from a person who holds the required role counts.
 7. **Deployment records are written once.** A retry with the same key returns the existing record. A correction is a new record that names the one it corrects.
 8. **Every row says who performed it,** as what kind of actor, through which client, on behalf of whom, and under which configuration version.
 9. **Links, not copies.** For anything another tool owns, the model holds the tool's ID, a link, a label as last seen and a "last seen" date.
@@ -26,7 +26,7 @@
 | Technical component | One part of an application inside a tool, held as the tool's ID, a link and a "last seen" date | Business application, component kind, link kind, optional deployment target | Effective-dated |
 | Dependency | A typed, directed link: this application needs that application or component | From one application; to exactly one application or component; dependency type | Effective-dated |
 | Principal reference | A minimal reference to a directory object: a user, a group, an agent identity, a service principal or a managed identity | Referenced by every "who" column | Mutable with history |
-| Owner assignment | One person holding one owner role for one application, with a deputy and start and end dates | Business application, owner role, principal | Effective-dated |
+| Owner assignment | One person holding one owner role for one subject (an application, a data domain or a data location), with a deputy and start and end dates | One subject, owner role, principal | Effective-dated |
 | Intake request | One request through the front door: a new idea, or an app already built that needs registering | Requester, optional business application, status | Mutable with history |
 | Tier assessment | One set of tier answers and the tier they suggest | Intake request or business application; the tier decision | Freeze on final |
 | Decision | One entry in the append-only decision log: what was decided, about what, by whom, when and why | Decision type, outcome, status, decider, one subject, optional supersedes and amends | Freeze on final |
@@ -45,6 +45,11 @@
 | Gap check run | One run of the gap check: who ran it, with which admin role, over which estates, and what it found | The admin who ran it | Freeze on final |
 | Claim | One item on the claim list: an unregistered item the gap check found, or a registered component it no longer sees | Gap check run, component kind, optional resulting component | Mutable with history |
 | Audit entry | One product event, append-only | The row it is about, the actor | Append-only |
+| Data location | One store of any vendor, held as a link | Data platform, target stage, optional parent location, optional deployment target | Effective-dated |
+| Data mapping | This data domain's data sits at this location, with its origin | Data domain, data location | Effective-dated |
+| Data use | This application reads or writes this data domain, with or without AI | Business application, data domain, optional data location | Effective-dated |
+
+The three data entities, and the configuration entities behind them (data classification, data domain level, data domain and data platform), are described in [Data taxonomy](data-taxonomy.md).
 
 A document that is required but has no link yet is shown as "missing". "Missing" is worked out from the documentation rules when it is read, and is never stored as a row.
 
@@ -58,6 +63,7 @@ A document that is required but has no link yet is shown as "missing". "Missing"
 | Taxonomy | Tier, tier question, tier answer option, vocabulary mapping, lifecycle stage, gate, gate requirement, application kind, component kind, dependency type, decision type, decision outcome, change type, standard change model, document type, review type, party, owner role, target stage, change path, deployment route, link kind, actor kind, guideline |
 | Rules | Documentation requirement, review cadence, reminder rule, decision right, approval rule, gate policy, separation rule |
 | Roles and access | Role, role group binding, workload grant |
+| Data | Data classification, data domain level, data domain, data platform |
 
 Every configuration row belongs to one configuration set. A configuration draft becomes a new configuration set version only when it is activated. See [Configuration and presets](configuration-and-presets.md).
 
@@ -70,7 +76,7 @@ Cardinality is written from parent to child. "1 to many" means one parent has ze
 | Business application | Portfolio | 1 to many, optional on the child | |
 | Technical component | Business application | 1 to many | |
 | Dependency | Business application (from) | 1 to many | Points to exactly one application or component |
-| Owner assignment | Business application, owner role, principal | 1 to many each | |
+| Owner assignment | Business application, data domain or data location; owner role; principal | 1 to many each | Exactly one subject |
 | Tier assessment | Intake request or business application | 1 to many | Exactly one of the two |
 | Decision | Decision type | 1 to many | One subject of several possible kinds |
 | Decision | Decision (supersedes) | 1 to at most 1 | A decision supersedes at most one other |
@@ -144,7 +150,7 @@ An AI client can propose a decision. It can never accept one.
 | Columns | Engine | Approval runner | Anyone else |
 |---|---|---|---|
 | The request: decision, rule, required role, who was asked, requested on, expires on | Writes when the record is created | Never | Never |
-| The answer: approved, rejected or recommendation only, with the approver, the approver's kinds, the typed reason, the time and the run link | Never | Writes once, while pending | Never |
+| The answer: approved, rejected or recommendation only, with the approver, the approver's kinds, the typed reason, the time and the run link | Writes once, while pending, when the person the request asks answers on the decision page | Writes once, while pending, for an answer given on a card, where an organization keeps cards | Never |
 | Expired or canceled | Writes, while pending | Never | Never |
 | Counts toward requirement | Computes when the answer is written | Never | Never |
 | Anything, after the answer is final | Never | Never | Never |
@@ -187,11 +193,13 @@ When an owner claims an item, the engine creates a technical component on the ow
 
 ## The Azure SQL binding
 
+As built, the SQL scripts create one table per first-release entity in its schema, with its history class applied: temporal tables, updatable ledger tables and append-only ledger tables, and one row-level security policy over every product table. The host's own tables (rate limits, the approval outbox, store keys, record numbers and the schema version) sit in a `host` schema outside the policy, and they are neither ledger nor temporal tables. Both stores, Azure SQL and SQLite, keep each row's columns as JSON beside a few real columns, and the database enforces most of the model's keys through unique indexes and a store key table. The fully typed schema in the rules below is the target of a later migration. The separate database identity for approval answers and the storage of ledger digests are designed, not built. See the [SQL scripts' README](../../src/adapters/azure/sql/README.md).
+
 ### Rules for every table
 
 | Item | Design |
 |---|---|
-| Schemas | `config` for configuration, `ops` for operational records, `audit` for audit entries, `security` for row-level security functions |
+| Schemas | `config` for configuration, `ops` for operational records, `audit` for audit entries, `security` for row-level security functions, and `host` for the host's own tables, outside row-level security |
 | Keys | A generated unique identifier per row. Configuration keys are lowercase letters, digits and hyphens, with a check constraint |
 | Foreign keys | One per reference. Restrict on delete, except the one cascade |
 | Fixed meanings | Short text columns with a check constraint that lists the allowed meanings |

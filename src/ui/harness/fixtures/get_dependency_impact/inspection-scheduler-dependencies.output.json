@@ -5,6 +5,8 @@
     "root": {
       "businessApplicationId": "10000000-0000-4000-8000-000000000001",
       "technicalComponentId": null,
+      "dataLocationId": null,
+      "kind": "application",
       "name": "Inspection Scheduler"
     },
     "nodes": [
@@ -27,6 +29,7 @@
           "principalKind": "user"
         },
         "dependencyTypeKey": "reads-data-from",
+        "via": "dependency",
         "criticalityKey": "high",
         "depth": 1,
         "path": [
@@ -53,6 +56,7 @@
           "principalKind": "user"
         },
         "dependencyTypeKey": "calls-api-of",
+        "via": "dependency",
         "criticalityKey": "medium",
         "depth": 1,
         "path": [
@@ -79,6 +83,7 @@
           "principalKind": "user"
         },
         "dependencyTypeKey": "reads-data-from",
+        "via": "dependency",
         "criticalityKey": "medium",
         "depth": 1,
         "path": [
@@ -105,6 +110,7 @@
           "principalKind": "user"
         },
         "dependencyTypeKey": "reads-data-from",
+        "via": "dependency",
         "criticalityKey": "high",
         "depth": 2,
         "path": [
@@ -128,6 +134,7 @@
         },
         "technicalOwner": null,
         "dependencyTypeKey": "calls-api-of",
+        "via": "dependency",
         "criticalityKey": "high",
         "depth": 2,
         "path": [
@@ -137,6 +144,7 @@
         ]
       }
     ],
+    "dataLocation": null,
     "counts": {
       "byTier": [
         {

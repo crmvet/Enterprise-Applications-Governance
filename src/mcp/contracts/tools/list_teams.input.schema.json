@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_teams input",
+  "description": "Every team and committee the install knows: the Entra groups the product holds a reference to, and the groups a product role is bound to. Each has its kinds (committee, support team, role group, other; derived on every read, never stored), the roles it holds, how many people are in it, how many approval requests wait on it, and the applications it holds owner roles on. A read for any role. Members are read live from Entra as the signed-in person, or from the demo personas on a demo install, and never stored.",
+  "x-tool": "list_teams",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "enum": [
+        "committee",
+        "support-team",
+        "role-group",
+        "other"
+      ],
+      "description": "Only teams of this kind. committee: bound to a product role that answers decisions (an approval rule asks the role to approve or consults it, or a decision right gives it the responsible, accountable or consulted letter). support-team: holds a current support owner or technical owner assignment. role-group: bound to a role that answers no decision. other: none of these. Leave out for every kind; the counts are always given for every kind."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Words in the team's name or in the names of the roles it holds."
+    },
+    "roleKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "description": "Only the teams bound to this product role, such as the group a decision page says it waits on.",
+      "x-entity": "C29 Role"
+    },
+    "memberObjectId": {
+      "$ref": "../common.schema.json#/$defs/guid",
+      "description": "Only the teams this person is in (the person page's member of). Reads the members of every team; with no directory reads nothing is listed, and the answer says membership is managed in Entra.",
+      "x-entity": "O05 Principal Reference"
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "kind": "committee"
+    },
+    {
+      "text": "support"
+    }
+  ]
+}

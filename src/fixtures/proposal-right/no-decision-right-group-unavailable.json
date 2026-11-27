@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "no-decision-right-group-unavailable",
+  "description": "With every Decision Right of the design type retired, nobody may propose or decide a design. The engine refuses and reports the broken configuration, as OP-02 does for the accountable letter.",
+  "tags": [
+    "invariant"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "decision-right",
+        "key": "design-a"
+      },
+      {
+        "op": "retire",
+        "entity": "decision-right",
+        "key": "design-s"
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "design",
+    "tierKey": "tier-2",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "architect"
+    ],
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "unavailable",
+    "reasons": [
+      {
+        "code": "decision-right.accountable",
+        "severity": "error",
+        "entity": "Decision Right"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

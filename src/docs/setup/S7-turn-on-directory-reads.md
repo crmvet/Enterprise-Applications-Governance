@@ -2,7 +2,7 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant. The readers are tested over recorded, fictional Microsoft Graph and Power Platform responses and a fake token endpoint.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 23, P06 and P08; document 24, sections 5 and 10, spike 14; document 26, sections 4.5 and 8; document 28, Q18; D-15; `src/adapters/azure/README.md`, "Directory reads on behalf of the signed-in admin"; `src/adapters/azure/infra/README.md`, section 5.
+- **See also:** [install.md](../install.md#5-the-directory-reads-optional), [admin.md](../admin.md#roles-and-access); [`src/adapters/azure/README.md`](../../adapters/azure/README.md), "Directory reads on behalf of the signed-in admin"; [`src/adapters/azure/infra/README.md`](../../adapters/azure/infra/README.md), section 5.
 - **Open design questions that touch this guide:** none.
 
 ## Purpose
@@ -12,11 +12,11 @@ Four tools read live Microsoft services as the person who asks, never as the pro
 | Tool | Reads | Default product role (Tool Policy) |
 |---|---|---|
 | `get_role_holders` | Microsoft Graph: the members of the groups bound to a role | Any role |
-| `run_owner_check` | Microsoft Graph: the account state of owners, deputies and approvers (CHK-07; working default Q18) | `platform-admin` |
+| `run_owner_check` | Microsoft Graph: the account state of owners, deputies and approvers, to find a departed or disabled one (a working default) | `platform-admin` |
 | `check_role_bindings` | Microsoft Graph: the bound groups and the API's app role assignments, against the Role Group Binding and Workload Grant rows | `platform-admin` |
-| `run_gap_check` | The Power Platform inventory, compared with the register (P06) | `platform-admin`, plus an Entra role that can see the inventory |
+| `run_gap_check` | The Power Platform inventory, compared with the register: what runs that the register lacks | `platform-admin`, plus an Entra role that can see the inventory |
 
-They are off by default and answer `upstream_unavailable` until this guide turns them on. The product keeps no copy of Microsoft's data (D-15) and runs no unattended job: each read happens when a person asks.
+They are off by default and answer `upstream_unavailable` until this guide turns them on. The product keeps no copy of Microsoft's inventory, agent registry or Entra data, and runs no unattended job: each read happens when a person asks.
 
 ## How the token moves
 
@@ -54,7 +54,7 @@ The API app proves itself in that exchange with a federated identity credential 
    - Microsoft Graph: `GroupMember.Read.All`, `User.Read.All`, `User-LifeCycleInfo.Read.All`, `Application.Read.All`.
    - Power Platform API: `ResourceQuery.Resources.Read` ("Query resources").
 
-   Whether a smaller set is enough is not verified yet (document 24, spike 14).
+   Whether a smaller set is enough is not verified yet (open point 1).
 
 4. **Give the gap check's runners an inventory role.** `run_gap_check` also needs the person to hold one of the Microsoft Entra roles that can see the whole Power Platform inventory: Global Administrator, Power Platform Administrator, Dynamics 365 Administrator or Global Reader. The AI Administrator and AI Reader roles see only agents and a few related kinds, so the gap check would miss apps and flows. Microsoft documents that the inventory API supports only delegated user authentication and answers a service principal or managed identity with 403. Without such a role, the tool says so in plain words.
 
@@ -71,9 +71,9 @@ The API app proves itself in that exchange with a federated identity credential 
 
 ## Open points
 
-1. **The least permissions** for the four reads (document 24, spike 14).
-2. **Agent users in group members.** Whether the Graph read of group members returns the agent user subtype with the permissions above is not confirmed (document 26, section 4.5). `check_role_bindings` and the approval runner both rely on telling users from other principals.
-3. **Checks designed but not in `check_role_bindings` yet:** nested groups (CHK-03), roles that require just-in-time membership (CHK-08) and guests on roles that do not allow guests (CHK-11). The tool reads group existence, direct assignments and Workload Grants today.
+1. **The least permissions** for the four reads: a test in a real tenant still has to find them.
+2. **Agent users in group members.** Whether the Graph read of group members returns the agent user subtype with the permissions above is not confirmed. `check_role_bindings` and the approval runner both rely on telling users from other principals.
+3. **Checks designed but not in `check_role_bindings` yet:** nested groups, roles that require just-in-time membership whose group has permanent members, and guests on roles that do not allow guests. The tool reads group existence, direct assignments and Workload Grants today.
 4. **The token cache.** The service keeps each downstream token in an in-memory cache until it expires (Microsoft.Identity.Web). Each use still needs a valid incoming token from the person, so the cache does not outlast the person's own access, but a revoke is honored only when the person's incoming token expires (guide [A2](../admin/A2-urgent-revoke-and-break-glass.md), open point 1).
 
 ## Microsoft facts used

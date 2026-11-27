@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "pending-record-past-expiry-refused",
+  "description": "The request is still pending in the store, but its Expires On has passed (the approval refresh has not written expired yet). It takes no answer: the engine asks again with a new request.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "decisionRightKey": "intake-a",
+      "requiredRoleKey": "platform-admin",
+      "expiresOnUtc": "2026-11-23T08:59:59Z"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "intake",
+      "tierKey": "tier-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-expired",
+        "severity": "error",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

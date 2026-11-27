@@ -15,7 +15,7 @@ namespace Product.Mcp.Testing;
 // IDs, as Dataverse and Azure SQL give them: the MCP contract types every operational ID as a GUID (common.schema.json,
 // id). The IDs are repeatable: a counter in the wrapper, so two fresh stores given the same calls make the same IDs.
 // Everything else passes through. For tests and the local harness.
-public sealed class GuidIdRecordStore : IRecordStore
+public sealed class GuidIdRecordStore : IRecordStore, IKeySetReader
 {
     private readonly IRecordStore _inner;
     private readonly string _prefix;
@@ -51,6 +51,17 @@ public sealed class GuidIdRecordStore : IRecordStore
         return _inner.Query(query);
     }
 
+    // Key set reads pass through (one store call on a store that batches them).
+    public IReadOnlyList<StoredRow> GetMany(string entity, IReadOnlyCollection<string> ids)
+    {
+        return _inner.GetMany(entity, ids);
+    }
+
+    public IReadOnlyList<StoredRow> QueryIn(string entity, string column, IReadOnlyCollection<string> values)
+    {
+        return _inner.QueryIn(entity, column, values);
+    }
+
     public IStoreTransaction Begin()
     {
         return new Transaction(this, _inner.Begin());
@@ -61,7 +72,7 @@ public sealed class GuidIdRecordStore : IRecordStore
         return _prefix + Interlocked.Increment(ref _next).ToString("x12", CultureInfo.InvariantCulture);
     }
 
-    private sealed class Transaction : IStoreTransaction
+    private sealed class Transaction : IStoreTransaction, IKeySetReader
     {
         private readonly GuidIdRecordStore _owner;
         private readonly IStoreTransaction _inner;
@@ -87,9 +98,24 @@ public sealed class GuidIdRecordStore : IRecordStore
             return _inner.Query(query);
         }
 
+        public IReadOnlyList<StoredRow> GetMany(string entity, IReadOnlyCollection<string> ids)
+        {
+            return _inner.GetMany(entity, ids);
+        }
+
+        public IReadOnlyList<StoredRow> QueryIn(string entity, string column, IReadOnlyCollection<string> values)
+        {
+            return _inner.QueryIn(entity, column, values);
+        }
+
         public string NewId(string entity)
         {
             return _owner.NextId();
+        }
+
+        public long NextRecordNumber(string entity, string prefix)
+        {
+            return _inner.NextRecordNumber(entity, prefix);
         }
 
         public void Create(string entity, string id, string? key, JsonTreeNode columns)

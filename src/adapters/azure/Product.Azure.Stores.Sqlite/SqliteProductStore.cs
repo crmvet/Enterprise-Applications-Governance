@@ -29,6 +29,8 @@ public sealed class SqliteStoreOptions
 // The schema is created on first use, or by EnsureSchema.
 public sealed class SqliteProductStore : RowStore
 {
+    public override string StoreKind => "sqlite";
+
     public SqliteProductStore(SqliteStoreOptions options)
         : this(options ?? throw new ArgumentNullException(nameof(options)), Check(options))
     {

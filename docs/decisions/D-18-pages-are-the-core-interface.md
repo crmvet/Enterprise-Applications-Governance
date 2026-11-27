@@ -1,6 +1,6 @@
 # D-18 Modern pages are the core interface, and the first release is set
 
-- **Status:** Superseded in part by D-26. The four page designs and the first release scope stand, now as a React web app.
+- **Status:** Superseded in part by D-26. Amended by D-32 and D-36. The four page designs and the first release scope stand, now as a React web app.
 - **Date:** 2026-11-21
 - **Decided by:** the product owner
 
@@ -43,9 +43,11 @@ At the same time, D-15, D-16 and D-17 had dropped three packages. What the first
 - D-26 chose Azure for the first release. The four page designs became a React and Fluent UI web app with the same designs: Overview, Application 360, the dependency map and the timeline. The web app's pages are read-only. Writes go through the API, the MCP tools and approval cards.
 - Dataverse forms and views apply only to a possible later Dataverse edition. That is an option, not a plan.
 
-## Amendment, 2026-11-23
+## Amendments, 2026-11-23
 
 [D-32](D-32-the-web-app-uses-shadcn-ui.md) builds the four pages on shadcn/ui instead of Fluent UI. The designs, the Academy palette and the light-only rule stay.
+
+[D-36](D-36-the-web-app-acts-and-the-engine-checks-every-write.md) makes the web app act. The pages are no longer read-only: a signed-in person does their work in the web app, and the engine checks every write the same way it checks an AI client's.
 
 ## Related
 

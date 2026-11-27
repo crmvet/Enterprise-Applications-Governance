@@ -1,57 +1,62 @@
 {
   "$comment": "WORKING DEFAULT (open design question 12). The two workload roles never call MCP tools. Each non-human workload holds its role through a recorded, expiring Workload Grant (C42), not a group binding.",
-  "description": "Index of the product's MCP tools: name, toolset, read or write, default roles, AI write state, release, annotations and contract files. Source: document 24, sections 2.1, 2.3, 3.6, 6.0, 6.1, 6.13 and 7. The default roles and AI write states are the shipped defaults of the Tool Policy rows (proposed C41). Configuration can only tighten them. inputSchema and outputSchema are null where the contract is not written yet.",
-  "toolCount": 51,
+  "description": "Index of the product's MCP tools: name, toolset, read or write, the entries that serve it, default roles, AI write state, release, annotations and contract files. Source: document 24, sections 2.1, 2.3, 3.6, 6.0, 6.1, 6.13 and 7. The default roles and AI write states are the shipped defaults of the Tool Policy rows (proposed C41). Configuration can only tighten them. inputSchema and outputSchema are null where the contract is not written yet.",
+  "toolCount": 102,
   "toolsets": [
     {
       "key": "session",
       "label": "Session",
-      "covers": "Who am I, what needs me, who holds a role"
+      "covers": "Who am I, what needs me, who holds a role, find people by name, find a record by its number, and the teams and committees with who is in them and what waits on them"
     },
     {
       "key": "portfolio",
       "label": "Portfolio",
-      "covers": "Portfolio questions: owners, card, impact, summary, requirements"
+      "covers": "Portfolio questions: owners, card, impact, summary, requirements, the lists of reviews, portfolios and owner assignments across the portfolio, one review, the AI activity across the estate with its clients view, the measures and slide-back signals, the agents, and a person's portfolio write (the web app only)"
     },
     {
       "key": "intake",
       "label": "Intake",
-      "covers": "The front door: duplicates, tier questions, intake drafts, registering an app already built, components, owner changes and leaves"
+      "covers": "The front door: duplicates, tier questions and the tier assessment, intake drafts, registering an app already built, components and dependencies, owner changes and leaves, and the intake list and record, and the PMO's demand fields"
     },
     {
       "key": "decisions",
       "label": "Decisions",
-      "covers": "Decision proposals, submitting and withdrawing records, the decision log, approval status, architecture review requests"
+      "covers": "Decision proposals, submitting and withdrawing records, the decision log, approval status, architecture and security review requests, one decision with its approval state, the list of approval requests, a person's own answer to an approval request, completing a review (the web app only), the audit trail and the evidence pack"
     },
     {
       "key": "change",
       "label": "Change",
-      "covers": "Change request drafts, the standard change check, the schedule, change results"
+      "covers": "Change request drafts, the standard change check, the schedule, change results, and closing a change (the web app only)"
     },
     {
       "key": "deployment",
       "label": "Deployment",
-      "covers": "Deployment records and corrections, what runs where, the pipeline map, the later gate check"
+      "covers": "Deployment records and corrections, what runs where, the pipeline map, the deployment targets and a person's target registration and retirement (the web app only), the later gate check"
     },
     {
       "key": "documentation",
       "label": "Documentation",
-      "covers": "Required documents, document links and status"
+      "covers": "Required documents, document links and status, and the documentation list across the portfolio"
     },
     {
       "key": "gapcheck",
       "label": "Gap check",
-      "covers": "The live gap check, the owner check and the claim list"
+      "covers": "The live gap check, the owner check, the claim list and the run history, and the daily due-state refresh run now (the web app only)"
     },
     {
       "key": "configuration",
       "label": "Configuration",
-      "covers": "Reading configuration, rule traces, configuration health, proposing changes, presets, role binding checks"
+      "covers": "Reading configuration, rule traces, configuration health, the versions and drafts and one draft, proposing changes, presets, role binding checks and role access, the guidelines and playbook chapters, and the Admin page's status"
     },
     {
       "key": "links",
       "label": "Links",
       "covers": "Delivery and evidence links"
+    },
+    {
+      "key": "data",
+      "label": "Data",
+      "covers": "The business data domains, the data locations of any vendor, the mappings between them, the data uses of applications with their decision state, and the data gaps (data taxonomy, D-37)"
     }
   ],
   "aiWriteStates": [
@@ -69,7 +74,7 @@
     },
     {
       "state": "submitted",
-      "meaning": "Moves a draft or proposed record to submitted and starts the approval cards, or sends a request such as a review request. A request, never an approval. Allowed only where Tool Policy says so."
+      "meaning": "Moves a draft or proposed record to submitted and opens the approval requests that people answer on the decision page, or sends a request such as a review request. A request, never an approval. Allowed only where Tool Policy says so."
     },
     {
       "state": "as-reported",
@@ -86,22 +91,26 @@
     {
       "state": "withdrawn",
       "meaning": "The caller withdraws a record it created and that is not final."
+    },
+    {
+      "state": "person-only",
+      "meaning": "The tool is never listed for, nor served to, an AI client, on any entry. Only a person signed in through the product's web app calls it. answer_approval records the person's own answer to an approval request they were asked (D-38). AI never approves."
     }
   ],
   "aiRules": [
-    "AI never approves. No tool approves, rejects, accepts, authorizes, sets a tier, moves a stage, activates configuration, assigns a role or deletes.",
+    "AI never approves. No tool an AI client is served approves, rejects, accepts, authorizes, sets a tier, moves a stage, activates configuration, assigns a role or deletes. The one tool that records an approval answer, answer_approval, is served only to a person in the product's web app (D-38), and the engine records the answer only for the signed-in person the approval request asks.",
     "A governed record that an AI client creates starts as draft or proposed.",
-    "Submitted is a request act, never an approval. An AI client may submit only where the Tool Policy row says AI May Submit = yes for that subject kind. Submission only starts approval cards that people answer.",
+    "Submitted is a request act, never an approval. An AI client may submit only where the Tool Policy row says AI May Submit = yes for that subject kind. Submission only opens approval requests that people answer on the decision page in the web app.",
     "Facts an AI client reports are stored as reported, with the actor kind. Links store an ID, a URL, a label and a last seen date. Neither is a decision.",
-    "A configuration change from an AI client is a candidate draft only. A person accepts its decision on a card, then the engine activates it.",
+    "A configuration change from an AI client is a candidate draft only. People answer its decision on the decision page in the web app. Once the decision is accepted, the engine activates it.",
     "Max AI State on a Tool Policy row can only tighten these states, never widen them. The engine contract caps it.",
     "Whatever the tool or route, the engine refuses these writes from an AI client, an agent identity or a pipeline: a decision status of accepted or rejected, any approval outcome, registration status registered, the current tier, the current stage, a new configuration set version, a configuration table row and a role binding."
   ],
   "notTools": [
     {
       "act": "Approve, reject, accept, authorize",
-      "why": "AI never approves (D-02, D-10).",
-      "insteadWhere": "Approval cards in Outlook and Teams. The approval runner writes the outcome as the approval writer."
+      "why": "AI never approves (D-02, D-10). A person answers an approval request they were asked, on the product's decision page (D-38).",
+      "insteadWhere": "The product's decision page: the person answers through answer_approval, a tool served only to a person in the web app, and the token proves who answered (D-38). Teams and Outlook notices are designed to link to the page. Acceptance itself is never a tool: the engine accepts when the counted answers meet the rule."
     },
     {
       "act": "Set a tier, move a stage, mark a change standard",
@@ -111,7 +120,7 @@
     {
       "act": "Activate configuration",
       "why": "Nobody activates by hand. Activation follows the accepted decision.",
-      "insteadWhere": "Acceptance of the configuration change decision on an approval card."
+      "insteadWhere": "Acceptance of the configuration change decision, answered on the decision page in the web app."
     },
     {
       "act": "Assign or remove a role, add a group member",
@@ -182,8 +191,12 @@
       "meaning": "The requester or creator of the record."
     },
     {
-      "key": "decision-right-responsible-or-consulted",
-      "meaning": "A holder of the R or C letter for the decision type (C31)."
+      "key": "decision-right-holder",
+      "meaning": "A holder of the R, A or C letter for the decision type in the decision's scope (C31), through a product role or an owner role on the subject's application. The engine checks it."
+    },
+    {
+      "key": "asked-approver",
+      "meaning": "The person an Approval Record (O10) asks: a holder, now, of its role, or of its owner role on the decision's application (a deputy too), whom no separation rule (C40) keeps from answering, while the request is pending and not expired. The engine checks it."
     },
     {
       "key": "document-owner",
@@ -192,6 +205,18 @@
     {
       "key": "writer-of-evidence-subject",
       "meaning": "For evidence: a person who may write the record the evidence supports."
+    },
+    {
+      "key": "reviewer-of-review",
+      "meaning": "A person whose review (O21) it is: a holder, now, of the review type's lead owner role (C24 Default Owner Role) on its application, or of any owner role when nobody holds that; or a holder of a product role that may propose the decision the review records, or that an approval rule asks for that decision or for the gate decision of a gate the review feeds. The engine checks it."
+    },
+    {
+      "key": "owner-of-data-domain",
+      "meaning": "An effective data owner or data steward of the data domain the row names, own or inherited from a domain above (OP-15)."
+    },
+    {
+      "key": "technical-owner-of-location",
+      "meaning": "A holder of the technical owner role on the data location the row names, or on its parent location."
     }
   ],
   "humanRoleKeys": [
@@ -206,6 +231,7 @@
     "pmo",
     "ai-lead",
     "platform-admin",
+    "data-governance-lead",
     "configuration-admin",
     "auditor",
     "reader"
@@ -292,6 +318,141 @@
       },
       "inputSchema": "tools/get_role_holders.input.schema.json",
       "outputSchema": "tools/get_role_holders.output.schema.json"
+    },
+    {
+      "$comment": "Added for the pickers of the web app (D-36; document 24, B24-9). Reads O05 Principal References only: no leave date, no erased person.",
+      "number": 61,
+      "name": "find_people",
+      "toolset": "session",
+      "access": "read",
+      "question": "Who is this person? Find people by name",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/find_people.input.schema.json",
+      "outputSchema": "tools/find_people.output.schema.json"
+    },
+    {
+      "$comment": "Added for the global search of the web app (wave 2 scaffold; document 24, B24-12). Reads the six numbered entities (record numbers, document 25, B25-9) within the read rules of the other reads: intake-visibility for intake requests.",
+      "number": 75,
+      "name": "find_records",
+      "toolset": "session",
+      "access": "read",
+      "question": "Which record is DEC-0123? Find a record by its number",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/find_records.input.schema.json",
+      "outputSchema": "tools/find_records.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Teams page (document 24, B24-20). A team is a Principal Reference (O05) of kind group, or a group a Role Group Binding (C30) names; its kinds are derived from C30, C31, C32 and O06 on every read. Members come from the directory reader: the demo personas on a demo install, Microsoft Graph as the person when the directory reads are on, never stored. Any role.",
+      "number": 95,
+      "name": "list_teams",
+      "toolset": "session",
+      "access": "read",
+      "question": "Which teams and committees are there, which roles do they hold, and what waits on them?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_teams.input.schema.json",
+      "outputSchema": "tools/list_teams.output.schema.json"
+    },
+    {
+      "$comment": "Added for the team page (document 24, B24-20). Reads O05, C29 to C32, O06, O02, O09 and O10 for one group: members (read live, never stored), the roles it holds, the decision types it answers, its applications and owner assignments, the approval requests waiting on it, its members' recent answers and the owner gaps among its applications. Any role.",
+      "number": 96,
+      "name": "get_team",
+      "toolset": "session",
+      "access": "read",
+      "question": "Who is in this team, what does it decide, what does it support, and what waits on it now?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_team.input.schema.json",
+      "outputSchema": "tools/get_team.output.schema.json"
+    },
+    {
+      "$comment": "Wave 4 engine leftovers (document 24, B24-22). Reads O09 and O10. Served only on a demo install (the Demo environment, or a local Development run that holds the demo estate); any other host answers not_found.",
+      "number": 102,
+      "name": "get_demo_freshness",
+      "toolset": "session",
+      "access": "read",
+      "question": "Is the demo fresh, or has a story approval request expired?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role, on a demo install only"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_demo_freshness.input.schema.json",
+      "outputSchema": "tools/get_demo_freshness.output.schema.json"
     },
     {
       "number": 4,
@@ -448,6 +609,229 @@
       },
       "inputSchema": "tools/get_requirements.input.schema.json",
       "outputSchema": "tools/get_requirements.output.schema.json"
+    },
+    {
+      "$comment": "Added for the web app's screens (D-36). Reads O21, O02, O06. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 57,
+      "name": "list_reviews",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Which reviews are overdue, due or done?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_reviews.input.schema.json",
+      "outputSchema": "tools/list_reviews.output.schema.json"
+    },
+    {
+      "$comment": "Added for the review record page (D-36; document 24, B24-10). Reads O21, O20, O09 and the gates the review feeds (OP-07).",
+      "number": 63,
+      "name": "get_review",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Where is this review, and what does it need?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_review.input.schema.json",
+      "outputSchema": "tools/get_review.output.schema.json"
+    },
+    {
+      "$comment": "Added for the AI activity screen (D-36; document 24, B24-11; guidelines G16 and G17). Reads the AI marks on every row, the call history and refused calls in O24, AI approval answers on O10 and AI-only code approvals on O14. The AI lead, the security reviewer, the platform admin and the auditor see the estate; anyone else sees the AI work done for them (document 26, B26-11).",
+      "number": 67,
+      "name": "get_ai_activity",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "What did AI clients do, and who decided?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_ai_activity.input.schema.json",
+      "outputSchema": "tools/get_ai_activity.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Portfolios screen (D-36; document 24, B24-11). Writes O01. Served only on the person entry: a portfolio's place in the tree scopes approval rules, decision rights and portfolio access. The platform admin creates, moves, names the accountable person and retires; the PMO edits the name, description and level (document 26, section 5.3).",
+      "number": 74,
+      "name": "save_portfolio",
+      "toolset": "portfolio",
+      "access": "write",
+      "question": "Create or change a portfolio",
+      "writes": [
+        "O01"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a person in the web app. A person shapes the portfolio tree",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin",
+          "pmo"
+        ],
+        "relations": [],
+        "text": "platform-admin, pmo (name, description and level only)"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_portfolio.input.schema.json",
+      "outputSchema": "tools/save_portfolio.output.schema.json"
+    },
+    {
+      "$comment": "Added for the web app's screens (D-36). Reads O01, O02, O06, O09, O21. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 58,
+      "name": "list_portfolios",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Which portfolios exist, and how do they look?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_portfolios.input.schema.json",
+      "outputSchema": "tools/list_portfolios.output.schema.json"
+    },
+    {
+      "$comment": "Added for the web app's screens (D-36). Reads O06, O05, O02, O10. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 59,
+      "name": "list_owner_assignments",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Who owns what across the portfolio, and who is leaving?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_owner_assignments.input.schema.json",
+      "outputSchema": "tools/list_owner_assignments.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Measures and slide-back signals screen (document 24, B24-18; playbook chapters 17 and 19; G24). Reads O02, O06, O07, O09, O10, O11, O14, O15, O19, O22, O23, O24, C02 and C42. Targets and thresholds are the playbook defaults until an install sets its own.",
+      "number": 91,
+      "name": "get_measures",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Is AI app development working? The measures, the slide-back signals and the rows behind them",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_measures.input.schema.json",
+      "outputSchema": "tools/get_measures.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Agents screen (document 24, B24-18; playbook chapter 11; D-20). Reads O02 of the agent kinds, O06, O09, O21, O27 and O03, and runs OP-07 for the go-live gate. Replaces the choice of B24-11 to have no list_agents.",
+      "number": 93,
+      "name": "list_agents",
+      "toolset": "portfolio",
+      "access": "read",
+      "question": "Which agents exist, and is each one decided, reviewed, owned and ready to go live?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_agents.input.schema.json",
+      "outputSchema": "tools/list_agents.output.schema.json"
     },
     {
       "number": 10,
@@ -642,7 +1026,7 @@
       "name": "propose_owner_change",
       "toolset": "intake",
       "access": "write",
-      "question": "Hand over or add an owner",
+      "question": "Hand over or add an owner of an application, a data domain or a data location",
       "writes": [
         "O09",
         "O06"
@@ -654,12 +1038,16 @@
       "defaultRoles": {
         "roleKeys": [
           "ai-lead",
-          "platform-admin"
+          "platform-admin",
+          "data-governance-lead",
+          "data-owner"
         ],
         "relations": [
-          "owner-of-application"
+          "owner-of-application",
+          "owner-of-data-domain",
+          "technical-owner-of-location"
         ],
-        "text": "Owner of the app, ai-lead (agents), platform-admin"
+        "text": "Owner of the app, ai-lead (agents), platform-admin; for a data domain, the domain's effective data owner, data-governance-lead and platform-admin; for a data location, its technical owner, data-governance-lead and platform-admin"
       },
       "release": "R1",
       "annotations": {
@@ -704,6 +1092,151 @@
       "outputSchema": "tools/record_owner_leave.output.schema.json"
     },
     {
+      "$comment": "Added for the web app's screens (D-36). Reads O07, O08, O09. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 55,
+      "name": "list_intake_requests",
+      "toolset": "intake",
+      "access": "read",
+      "question": "Which intake requests wait for triage, and what is the demand?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_intake_requests.input.schema.json",
+      "outputSchema": "tools/list_intake_requests.output.schema.json"
+    },
+    {
+      "$comment": "Added for the web app's screens (D-36). Reads O07, O08, O09, O18, O20. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 56,
+      "name": "get_intake_request",
+      "toolset": "intake",
+      "access": "read",
+      "question": "Where is this intake request?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_intake_request.input.schema.json",
+      "outputSchema": "tools/get_intake_request.output.schema.json"
+    },
+    {
+      "$comment": "Added for the PMO demand list (D-36; document 24, B24-9). Writes O07 Score, Size Band, Horizon and Expected Benefit, as reported. Priority is a decision: save_decision_proposal with type priority.",
+      "number": 60,
+      "name": "score_intake_request",
+      "toolset": "intake",
+      "access": "write",
+      "question": "Score a request on the table: score, size band, horizon",
+      "writes": [
+        "O07"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported: stored as the caller reports it, stamped with the actor kind",
+      "defaultRoles": {
+        "roleKeys": [
+          "pmo",
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "pmo, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/score_intake_request.input.schema.json",
+      "outputSchema": "tools/score_intake_request.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Application 360 tier panel and the intake record (D-36; document 24, B24-11). Reads O08 and runs OP-01 read only over the stored answers.",
+      "number": 68,
+      "name": "get_tier_assessment",
+      "toolset": "intake",
+      "access": "read",
+      "question": "Why is this tier, and what does it need?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_tier_assessment.input.schema.json",
+      "outputSchema": "tools/get_tier_assessment.output.schema.json"
+    },
+    {
+      "$comment": "Added for the dependency map (D-36; document 24, B24-11). Writes O04 as reported; OP-08 checks the target (exactly one, never its own application) and freezes an ended dependency (document 25, B25-13).",
+      "number": 73,
+      "name": "save_dependency",
+      "toolset": "intake",
+      "access": "write",
+      "question": "This app depends on that one; that dependency ended",
+      "writes": [
+        "O04"
+      ],
+      "aiWriteStates": [
+        "as-reported"
+      ],
+      "aiWriteStateText": "As reported: stored as the caller reports it, stamped with the actor kind",
+      "defaultRoles": {
+        "roleKeys": [
+          "architect",
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, architect, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_dependency.input.schema.json",
+      "outputSchema": "tools/save_dependency.output.schema.json"
+    },
+    {
       "number": 17,
       "name": "save_decision_proposal",
       "toolset": "decisions",
@@ -720,9 +1253,9 @@
       "defaultRoles": {
         "roleKeys": [],
         "relations": [
-          "decision-right-responsible-or-consulted"
+          "decision-right-holder"
         ],
-        "text": "Holders of R or C for the decision type (C31)"
+        "text": "Holders of R, A or C for the decision type (C31)"
       },
       "release": "R1",
       "annotations": {
@@ -734,7 +1267,7 @@
       "outputSchema": "tools/save_decision_proposal.output.schema.json"
     },
     {
-      "$comment": "WORKING DEFAULT (open design question 9). AI May Submit is yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without a card only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
+      "$comment": "WORKING DEFAULT (open design question 9). AI May Submit is yes for intake requests, change requests, decisions and configuration drafts. WORKING DEFAULT (open design question 8). The engine accepts without an approval request only for a locked list: lowest-tier intake and standard changes whose model a person approved once.",
       "number": 18,
       "name": "submit_record",
       "toolset": "decisions",
@@ -755,7 +1288,9 @@
         "intake-request": true,
         "change-request": true,
         "decision": true,
-        "configuration-draft": true
+        "configuration-draft": true,
+        "data-use": true,
+        "data-mapping": false
       },
       "defaultRoles": {
         "roleKeys": [],
@@ -896,6 +1431,253 @@
       },
       "inputSchema": "tools/request_architecture_review.input.schema.json",
       "outputSchema": "tools/request_architecture_review.output.schema.json"
+    },
+    {
+      "$comment": "Added for the review lifecycle (D-36; document 24, B24-10). Served only on the person entry, as answer_approval is: the reviewer attests the review, and an AI actor never sets done (OP-08, G-08 as B25-12 widens it).",
+      "number": 62,
+      "name": "complete_review",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "This review is done",
+      "writes": [
+        "O21",
+        "O20"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a person in the web app. A person marks a review done",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "reviewer-of-review"
+        ],
+        "text": "The person whose review it is (the engine checks the lead owner role, the decision right or the approval rule, and the accepted outcome decision)"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/complete_review.input.schema.json",
+      "outputSchema": "tools/complete_review.output.schema.json"
+    },
+    {
+      "$comment": "D-38. Served only on the person entry, the product's web app. An AI client is never served it, on any entry, and the engine refuses an answer from anyone but the signed-in person the approval request asks: AI never approves (D-02, D-10).",
+      "number": 52,
+      "name": "answer_approval",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Approve or reject a request I was asked",
+      "writes": [
+        "O10",
+        "O09"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a person in the web app. AI never approves",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "asked-approver"
+        ],
+        "text": "The person the approval request asks, through any role (the engine checks the role or owner role, the separation rules and the request's state)"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/answer_approval.input.schema.json",
+      "outputSchema": "tools/answer_approval.output.schema.json"
+    },
+    {
+      "$comment": "Added for the web app's screens (D-36). Reads O09, O10, O20. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 53,
+      "name": "get_decision",
+      "toolset": "decisions",
+      "access": "read",
+      "question": "What is this decision, and who still has to answer?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_decision.input.schema.json",
+      "outputSchema": "tools/get_decision.output.schema.json"
+    },
+    {
+      "$comment": "Added for the web app's screens (D-36). Reads O09, O10. Rows follow the read visibility settings; hidden rows are counted in couldNotRead.",
+      "number": 54,
+      "name": "list_approvals",
+      "toolset": "decisions",
+      "access": "read",
+      "question": "Which approval requests wait for me, or for others?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_approvals.input.schema.json",
+      "outputSchema": "tools/list_approvals.output.schema.json"
+    },
+    {
+      "$comment": "Added for the audit screen (D-36; document 24, B24-11). Reads O24: the composed calls, the refused calls and the product events. Only the auditor and the platform admin read audit entries (document 26, sections 3.2 and 5.3).",
+      "number": 65,
+      "name": "get_audit_trail",
+      "toolset": "decisions",
+      "access": "read",
+      "question": "What happened to this record, or what did this person do?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin",
+          "auditor"
+        ],
+        "relations": [],
+        "text": "platform-admin, auditor"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_audit_trail.input.schema.json",
+      "outputSchema": "tools/get_audit_trail.output.schema.json"
+    },
+    {
+      "$comment": "Added for the evidence pack (D-36; document 24, B24-11; guideline G15). Reads O09, O10, O11, O14, O19, O20, O21 with the configuration version stamped on each row.",
+      "number": 66,
+      "name": "get_evidence",
+      "toolset": "decisions",
+      "access": "read",
+      "question": "What is the evidence for this application or this decision?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_evidence.input.schema.json",
+      "outputSchema": "tools/get_evidence.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Agents screen (document 24, B24-18). WORKING DEFAULT (open design question 9), as for request_architecture_review: AI May Submit is yes for review requests. A request, never a decision.",
+      "number": 94,
+      "name": "request_security_review",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Please review the security of this agent or app",
+      "writes": [
+        "O21",
+        "O20"
+      ],
+      "aiWriteStates": [
+        "submitted"
+      ],
+      "aiWriteStateText": "Submitted (a request, never a decision)",
+      "defaultRoles": {
+        "roleKeys": [
+          "ai-lead",
+          "security-reviewer",
+          "architect",
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, ai-lead, security-reviewer, architect, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/request_security_review.input.schema.json",
+      "outputSchema": "tools/request_security_review.output.schema.json"
+    },
+    {
+      "$comment": "Wave 4 engine leftovers (document 24, B24-22; document 25, B25-24). Served only on the person entry. The engine checks the caller is the proposer of the decision or a platform admin, the decision is proposed, and the request expired or is in the last 48 hours of its time; it closes the old request and opens the new one as its own nested writes.",
+      "number": 100,
+      "name": "renew_approval_request",
+      "toolset": "decisions",
+      "access": "write",
+      "question": "Ask an expired approval request again",
+      "writes": [
+        "O10",
+        "O24"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a person in the web app. A person decides to ask again",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "The proposer of the decision, or a platform admin (the engine checks it)"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/renew_approval_request.input.schema.json",
+      "outputSchema": "tools/renew_approval_request.output.schema.json"
     },
     {
       "number": 22,
@@ -1041,6 +1823,43 @@
       },
       "inputSchema": "tools/record_change_result.input.schema.json",
       "outputSchema": "tools/record_change_result.output.schema.json"
+    },
+    {
+      "$comment": "Added for change completion (D-36; document 24, B24-10). Served only on the person entry, as answer_approval is: closing a change is a person's act, and an AI actor never sets completed (OP-08, G-08).",
+      "number": 64,
+      "name": "complete_change",
+      "toolset": "change",
+      "access": "write",
+      "question": "This change is done",
+      "writes": [
+        "O11",
+        "O20",
+        "O21"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a person in the web app. A person closes a change",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [
+          "change-manager"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, change-manager"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/complete_change.input.schema.json",
+      "outputSchema": "tools/complete_change.output.schema.json"
     },
     {
       "$comment": "WORKING DEFAULT (open design question 7). AI-only code approvals reported with a deployment never count as authorization. The shipped gate default flags them. WORKING DEFAULT (open design question 12). Pipelines call the record endpoint with this contract, not MCP. Each pipeline identity holds the deployment recorder role through a Workload Grant (C42).",
@@ -1195,6 +2014,66 @@
       "outputSchema": "tools/get_pipeline_map.output.schema.json"
     },
     {
+      "$comment": "Added for the Places screen (D-36; document 24, B24-11). Reads O15, O14, O16 and O17. External IDs and URLs are restricted read for the reader role (document 26, section 6.2).",
+      "number": 70,
+      "name": "list_deployment_targets",
+      "toolset": "deployment",
+      "access": "read",
+      "question": "Where do deployments land, and what runs there?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_deployment_targets.input.schema.json",
+      "outputSchema": "tools/list_deployment_targets.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Places screen (D-36; document 24, B24-11): process P05 needs a registered target before record_deployment takes a deployment. Writes O15. Served only on the person entry: the stage decides the gate level and the change path decides which routes are flagged.",
+      "number": 71,
+      "name": "save_deployment_target",
+      "toolset": "deployment",
+      "access": "write",
+      "question": "Register this place deployments land, or change it",
+      "writes": [
+        "O15"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a person in the web app. A person states a target's stage and change path",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_deployment_target.input.schema.json",
+      "outputSchema": "tools/save_deployment_target.output.schema.json"
+    },
+    {
       "number": 31,
       "name": "check_change_approval",
       "toolset": "deployment",
@@ -1314,6 +2193,33 @@
       },
       "inputSchema": "tools/confirm_document_checked.input.schema.json",
       "outputSchema": "tools/confirm_document_checked.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Documents screen (D-36; document 24, B24-11). Reads O02 and O19 and runs OP-06 per application: missing is computed, never stored.",
+      "number": 69,
+      "name": "list_documents",
+      "toolset": "documentation",
+      "access": "read",
+      "question": "Which documents are missing, stale or waiting across the portfolio?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_documents.input.schema.json",
+      "outputSchema": "tools/list_documents.output.schema.json"
     },
     {
       "number": 35,
@@ -1442,6 +2348,38 @@
       "outputSchema": "tools/list_claims.output.schema.json"
     },
     {
+      "$comment": "Added for the Gap check screen (D-36; document 24, B24-11). Reads O22 and O23. claim-visibility keeps runs to the platform admin, the AI lead and the auditor by default; hidden runs are counted in couldNotRead.",
+      "number": 72,
+      "name": "list_gap_check_runs",
+      "toolset": "gapcheck",
+      "access": "read",
+      "question": "When was the gap check run, by whom, and what did it find?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "application-owner",
+          "ai-lead",
+          "pmo",
+          "platform-admin",
+          "auditor"
+        ],
+        "relations": [],
+        "text": "maker, application-owner, ai-lead, pmo, platform-admin, auditor"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_gap_check_runs.input.schema.json",
+      "outputSchema": "tools/list_gap_check_runs.output.schema.json"
+    },
+    {
       "number": 38,
       "name": "claim_resource",
       "toolset": "gapcheck",
@@ -1451,7 +2389,9 @@
         "O23",
         "O03",
         "O02",
-        "O09"
+        "O09",
+        "O07",
+        "O10"
       ],
       "aiWriteStates": [
         "link",
@@ -1476,7 +2416,8 @@
         "idempotentHint": false
       },
       "inputSchema": "tools/claim_resource.input.schema.json",
-      "outputSchema": "tools/claim_resource.output.schema.json"
+      "outputSchema": "tools/claim_resource.output.schema.json",
+      "$comment": "A claim for a new application starts a draft intake request (P01) with the component on a draft application; a claim on an existing application by someone who holds no owner role opens an ownership decision and, for a person, submits it (document 24, B24-10). An AI client's claim leaves that decision proposed for the person to submit."
     },
     {
       "number": 39,
@@ -1612,7 +2553,7 @@
       "outputSchema": "tools/list_presets.output.schema.json"
     },
     {
-      "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on one card. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
+      "$comment": "WORKING DEFAULT (open design question 4). A person accepts the exact diff on the decision page. The instructing admin may accept their own AI's draft. Strict separation needs a second admin.",
       "number": 42,
       "name": "propose_configuration_change",
       "toolset": "configuration",
@@ -1698,6 +2639,206 @@
       "outputSchema": "tools/check_role_bindings.output.schema.json"
     },
     {
+      "$comment": "Added for the Configuration screen (document 24, B24-18). Reads C02, C46, O09 and O10. Configuration rows, versions and drafts are read by all roles (document 26, section 5.3).",
+      "number": 87,
+      "name": "list_configuration_changes",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Which configuration versions exist, who accepted each and when, and which drafts wait?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_configuration_changes.input.schema.json",
+      "outputSchema": "tools/list_configuration_changes.output.schema.json"
+    },
+    {
+      "$comment": "Added for the configuration draft record page (document 24, B24-18). Reads C46 with its stored validation, computes the diff and the impact against the version in force, and reads its decision. Submit and withdraw go through submit_record and withdraw_record.",
+      "number": 88,
+      "name": "get_configuration_draft",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "What does this configuration draft change, is it valid, and what does it touch?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_configuration_draft.input.schema.json",
+      "outputSchema": "tools/get_configuration_draft.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Roles and access screen (document 24, B24-18). Reads C29, C30, C42, C41 (or the shipped seed), C31, C32 and C40, and the members of the bound groups live from Entra as the person. Any role, as get_role_holders.",
+      "number": 89,
+      "name": "get_role_access",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Who holds each role, through which group, and what may each role do?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_role_access.input.schema.json",
+      "outputSchema": "tools/get_role_access.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Guidelines and playbook screen (document 24, B24-18). Reads C39, C14, C32, C43, C45 and the build-path list, and the playbook chapter index (titles, tracks and links, never the text, D-17). Serves on the REST API what the guideline and playbook chapter resources serve on the MCP endpoint.",
+      "number": 90,
+      "name": "list_guidelines",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "Why does each rule exist? The guidelines, the playbook chapters, the builder paths and the sanctioned clients",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_guidelines.input.schema.json",
+      "outputSchema": "tools/list_guidelines.output.schema.json"
+    },
+    {
+      "$comment": "Added for the Admin screen (document 24, B24-18). Reads the host settings that are safe to show, C02, C41 (or the shipped seed), C45, O24 (composed and refused calls, the notices of the daily refresh) and the approval outbox. Only the platform admin and the auditor see the notices listed; the configuration admin reads no audit entry (document 26, B26-11).",
+      "number": 92,
+      "name": "get_admin_status",
+      "toolset": "configuration",
+      "access": "read",
+      "question": "How is the product running: host settings, Tool Policy, clients, notices and the outbox?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin",
+          "configuration-admin",
+          "auditor"
+        ],
+        "relations": [],
+        "text": "platform-admin, configuration-admin, auditor"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_admin_status.input.schema.json",
+      "outputSchema": "tools/get_admin_status.output.schema.json"
+    },
+    {
+      "$comment": "Wave 4 engine leftovers (docs/architecture/data-taxonomy.md; document 24, B24-22). Writes C46 through the engine draft operation, as propose_configuration_change does. Rows already in force add nothing; owners in the file become prepared owner changes; DC-15 differences are computed for the answer and never stored.",
+      "number": 99,
+      "name": "import_data_taxonomy",
+      "toolset": "configuration",
+      "access": "write",
+      "question": "Turn this CSV or catalog list into a configuration draft of data domains",
+      "writes": [
+        "C46"
+      ],
+      "aiWriteStates": [
+        "candidate"
+      ],
+      "aiWriteStateText": "Candidate",
+      "defaultRoles": {
+        "roleKeys": [
+          "configuration-admin"
+        ],
+        "relations": [],
+        "text": "configuration-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/import_data_taxonomy.input.schema.json",
+      "outputSchema": "tools/import_data_taxonomy.output.schema.json"
+    },
+    {
+      "$comment": "Wave 4 engine leftovers (document 24, B24-22). Served only on the person entry. Changes the host table host.ApprovalOutbox through the host port (IApprovalOutboxPort), never an engine row; the call's Audit Entry (O24) lists the change.",
+      "number": 101,
+      "name": "retry_approval_card",
+      "toolset": "configuration",
+      "access": "write",
+      "question": "Send a stuck approval card again",
+      "writes": [
+        "O24"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a platform admin in the web app",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/retry_approval_card.input.schema.json",
+      "outputSchema": "tools/retry_approval_card.output.schema.json"
+    },
+    {
       "number": 45,
       "name": "save_link",
       "toolset": "links",
@@ -1730,6 +2871,402 @@
       },
       "inputSchema": "tools/save_link.input.schema.json",
       "outputSchema": "tools/save_link.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3 (D-37, D-41; docs/architecture/data-taxonomy.md). Reads C47 to C49 from the snapshot and O06 through OP-15.",
+      "number": 76,
+      "name": "find_data_domains",
+      "toolset": "data",
+      "access": "read",
+      "question": "Which data domains match, and who owns them?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/find_data_domains.input.schema.json",
+      "outputSchema": "tools/find_data_domains.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. OP-15 for the domain, OP-16 for each use and mapping, OP-17 for its findings.",
+      "number": 77,
+      "name": "get_data_domain",
+      "toolset": "data",
+      "access": "read",
+      "question": "Everything about one data domain: owners up the chain, rules and their source, mappings, uses, decisions, outside matches, gaps",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_data_domain.input.schema.json",
+      "outputSchema": "tools/get_data_domain.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. Reads O25, O26 and O06. External IDs and URLs are restricted read, as for O15.",
+      "number": 78,
+      "name": "find_data_locations",
+      "toolset": "data",
+      "access": "read",
+      "question": "Which stores match a platform, stage, parent, text, unmapped or stale? With a locationId, the full detail of one",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role. External IDs and URLs are restricted read"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/find_data_locations.input.schema.json",
+      "outputSchema": "tools/find_data_locations.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. The build loop's first question (D-28): the location and container through O26, then OP-15.",
+      "number": 79,
+      "name": "resolve_data",
+      "toolset": "data",
+      "access": "read",
+      "question": "Which data is this table, object or file?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/resolve_data.input.schema.json",
+      "outputSchema": "tools/resolve_data.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. OP-16 for a use that is not saved yet.",
+      "number": 80,
+      "name": "check_data_use",
+      "toolset": "data",
+      "access": "read",
+      "question": "May this app use this data this way, and what is needed?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/check_data_use.input.schema.json",
+      "outputSchema": "tools/check_data_use.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. OP-17, DC-01 to DC-14.",
+      "number": 81,
+      "name": "get_data_gaps",
+      "toolset": "data",
+      "access": "read",
+      "question": "What is missing, broken or waiting in the data?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/get_data_gaps.input.schema.json",
+      "outputSchema": "tools/get_data_gaps.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. Writes O27 through OP-08 (G-18, G-21, G-25), and a proposed O09 data-use decision when the use needs one.",
+      "number": 82,
+      "name": "save_data_use",
+      "toolset": "data",
+      "access": "write",
+      "question": "This app reads or writes this data, or it stopped",
+      "writes": [
+        "O27",
+        "O09"
+      ],
+      "aiWriteStates": [
+        "draft",
+        "proposed"
+      ],
+      "aiWriteStateText": "Draft; Proposed: an AI client's use is a draft and its data-use decision is proposed, never sent; a person confirms the use and sends the decision",
+      "defaultRoles": {
+        "roleKeys": [
+          "maker",
+          "application-owner",
+          "platform-admin"
+        ],
+        "relations": [
+          "owner-of-application"
+        ],
+        "text": "Owner of the app, maker, application-owner, platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_data_use.input.schema.json",
+      "outputSchema": "tools/save_data_use.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. Writes O25 through OP-08 (G-21, G-22, G-24).",
+      "number": 83,
+      "name": "save_data_location",
+      "toolset": "data",
+      "access": "write",
+      "question": "This store exists, moved, or is gone (up to 100 items per call)",
+      "writes": [
+        "O25"
+      ],
+      "aiWriteStates": [
+        "draft"
+      ],
+      "aiWriteStateText": "Draft: an AI client's location is a draft until a person confirms it",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin",
+          "architect",
+          "application-owner",
+          "data-governance-lead"
+        ],
+        "relations": [
+          "technical-owner-of-location"
+        ],
+        "text": "platform-admin, architect, application-owner, the location's technical owner, data-governance-lead"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_data_location.input.schema.json",
+      "outputSchema": "tools/save_data_location.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. Writes O26 through OP-08 (G-18, G-21, G-22, G-23, G-25), and a proposed copy decision when a copy outside production needs one.",
+      "number": 84,
+      "name": "save_data_mapping",
+      "toolset": "data",
+      "access": "write",
+      "question": "This domain's data sits here, or it left",
+      "writes": [
+        "O26",
+        "O09"
+      ],
+      "aiWriteStates": [
+        "draft",
+        "proposed"
+      ],
+      "aiWriteStateText": "Draft; Proposed: an AI client's mapping is a draft and its copy decision is proposed, never sent",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin",
+          "data-governance-lead",
+          "data-owner",
+          "application-owner"
+        ],
+        "relations": [
+          "technical-owner-of-location",
+          "owner-of-data-domain"
+        ],
+        "text": "The location's technical owner, the domain's effective owner or steward, platform-admin, data-governance-lead"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/save_data_mapping.input.schema.json",
+      "outputSchema": "tools/save_data_mapping.output.schema.json"
+    },
+    {
+      "$comment": "Data taxonomy slice 3. Changes the Data Domain of O26 and O27 rows in place through OP-08, so decisions stay with their rows while the data owner stays the same. When it changes, a decided row is ended and declared again, a waiting O09 decision is asked again (O10) or withdrawn, and the engine opens and sends the decision each row then needs, for the person who moved the rows (docs/architecture/data-taxonomy.md).",
+      "number": 85,
+      "name": "move_data_references",
+      "toolset": "data",
+      "access": "write",
+      "question": "Move mappings and uses off a domain",
+      "writes": [
+        "O26",
+        "O27",
+        "O09",
+        "O10"
+      ],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "None: an AI client may preview with validateOnly; a person moves the rows",
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin",
+          "data-governance-lead"
+        ],
+        "relations": [],
+        "text": "platform-admin, data-governance-lead"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": "tools/move_data_references.input.schema.json",
+      "outputSchema": "tools/move_data_references.output.schema.json"
+    },
+    {
+      "$comment": "Leftovers slice (document 23, S2; document 24, B24-17). Served only on the person entry: a platform admin runs the daily due-state refresh now, as the demo of UC-08 shows it. The engine runs the same refresh every day on its own (the host timer, a host setting). The engine refuses anyone but itself and a person holding the platform admin role, and every row the refresh changes is an engine-nested write with an Audit Entry.",
+      "number": 86,
+      "name": "run_due_state_refresh",
+      "toolset": "gapcheck",
+      "access": "write",
+      "question": "Run the daily due-state refresh now",
+      "writes": [
+        "O21",
+        "O19",
+        "O10",
+        "O09",
+        "O24"
+      ],
+      "aiWriteStates": [
+        "person-only"
+      ],
+      "aiWriteStateText": "None: served only to a platform admin in the web app. The engine runs the refresh every day on its own",
+      "entries": [
+        "person"
+      ],
+      "defaultRoles": {
+        "roleKeys": [
+          "platform-admin"
+        ],
+        "relations": [],
+        "text": "platform-admin"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": "tools/run_due_state_refresh.input.schema.json",
+      "outputSchema": "tools/run_due_state_refresh.output.schema.json"
+    },
+    {
+      "$comment": "Added in wave 4 (document 24, B24-21): the Data page's Uses tab reads one list across domains instead of one get_data_domain per domain, and a use's record page reads its use by ID. OP-16 for each use; the facts are loaded ahead in a few store calls (document 25, B25-23). Any role.",
+      "number": 97,
+      "name": "list_data_uses",
+      "toolset": "data",
+      "access": "read",
+      "question": "Which data uses are there across every domain, and is each one decided?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_data_uses.input.schema.json",
+      "outputSchema": "tools/list_data_uses.output.schema.json"
+    },
+    {
+      "$comment": "Added in wave 4 (document 24, B24-21): the Data page's Mapping tab reads one list across domains, and a mapping's record page reads its mapping by ID. OP-16 for each copy outside production. Any role.",
+      "number": 98,
+      "name": "list_data_mappings",
+      "toolset": "data",
+      "access": "read",
+      "question": "Where is each domain's data kept, and is every copy outside production decided?",
+      "writes": [],
+      "aiWriteStates": [
+        "read-only"
+      ],
+      "aiWriteStateText": "Read only",
+      "defaultRoles": {
+        "roleKeys": [],
+        "relations": [
+          "any-role"
+        ],
+        "text": "Any role"
+      },
+      "release": "R1",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "inputSchema": "tools/list_data_mappings.input.schema.json",
+      "outputSchema": "tools/list_data_mappings.output.schema.json"
     }
   ]
 }

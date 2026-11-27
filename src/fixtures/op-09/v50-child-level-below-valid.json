@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v50-child-level-below-valid",
+  "description": "A child one level down passes.",
+  "ruleIds": [
+    "V50"
+  ],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "data-domains-starter"
+    ],
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "fixture-child",
+        "values": {
+          "label": "fixture-child",
+          "parentKey": "customers",
+          "levelKey": "subdomain"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    }
+  }
+}

@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "get_my_queue input",
-  "description": "What needs me? Approvals waiting for the person, reviews due on apps they own, documents missing or stale, claims suggested to them, their drafts not yet submitted, and owner roles with no holder or deputy on their apps. Writes nothing.",
+  "description": "What needs me? Approvals the person may answer now, reviews that are theirs to do (on apps they own, or whose outcome decision they may propose), documents missing, stale or waiting for their confirmation, claims suggested to them, their drafts and unsubmitted proposals, and owner roles with no holder or deputy on their apps. Writes nothing.",
   "x-tool": "get_my_queue",
   "type": "object",
   "properties": {
     "kinds": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 6,
+      "maxItems": 7,
       "uniqueItems": true,
       "items": {
         "enum": [
@@ -17,7 +17,8 @@
           "document",
           "claim",
           "draft",
-          "owner-gap"
+          "owner-gap",
+          "data-gap"
         ]
       },
       "description": "Only these kinds of items. Leave out for every kind."

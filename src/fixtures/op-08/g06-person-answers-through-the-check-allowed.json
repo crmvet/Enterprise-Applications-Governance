@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "case": "g06-person-answers-through-the-check-allowed",
+  "description": "A person answers their own approval request on the product's decision page (D-38). The runtime ran the approval answer check for that same person first and adds its basis. Allowed: the guard stamps the person, writes Responded On and Approver Holds Required Role itself, and plans the recompute and an Audit Entry, as for the approval runner's answer.",
+  "ruleIds": [
+    "G-06"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-2",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "entity": "approval-record",
+    "operation": "update",
+    "rowId": "fixture-approval-1",
+    "after": {
+      "outcome": "approval-approved",
+      "approver": "fixture-person-2",
+      "approverActorKind": "person",
+      "approverPrincipalKind": "user",
+      "respondedOn": "2026-11-23T08:00:00Z",
+      "channel": "in-app",
+      "typedReason": "Usage fell to zero after the move."
+    }
+  },
+  "facts": {
+    "before": {
+      "outcomeMeaning": "pending",
+      "outcome": "approval-pending",
+      "decision": "fixture-decision-1"
+    },
+    "approvalAnswer": {
+      "checkOutcome": "allowed",
+      "responderPrincipalId": "fixture-person-2",
+      "approvalRecordId": "fixture-approval-1",
+      "answer": "approved"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "isNoOp": false,
+      "setColumns": {
+        "outcomeMeaning": "approved",
+        "approverActorMeaning": "person",
+        "approverHoldsRequiredRole": true,
+        "respondedOn": "2026-11-23T09:00:00Z",
+        "performedByActorKind": "person",
+        "performedByPrincipal": "fixture-person-2"
+      },
+      "effects": [
+        {
+          "kind": "recompute-approvals",
+          "entity": "Decision",
+          "operation": "update",
+          "rowId": "fixture-decision-1",
+          "columns": {}
+        },
+        {
+          "kind": "write-audit-entry",
+          "entity": "Audit Entry",
+          "operation": "create",
+          "columns": {
+            "operation": "approval-outcome-written",
+            "entityName": "Approval Record",
+            "rowId": "fixture-approval-1",
+            "changedValuesJson": {
+              "outcomeMeaning": "approved"
+            }
+          }
+        }
+      ]
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_owner_assignments output",
+  "description": "The response envelope. On success, data lists owner assignments (O06) across the portfolio, with each holder's recorded leave and directory facts, plus coverage per owner role.",
+  "x-tool": "list_owner_assignments",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "coverage",
+        "applicationsInScope",
+        "ownerGaps",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ownerAssignmentId",
+              "ownerRoleKey",
+              "label",
+              "principal",
+              "isDeputy",
+              "deputyFor",
+              "startOn",
+              "endOn",
+              "ownershipDecisionId",
+              "businessApplicationId",
+              "applicationName",
+              "state",
+              "holder",
+              "pendingApprovalCount",
+              "recordUrl"
+            ],
+            "properties": {
+              "ownerAssignmentId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O06 Owner Assignment",
+                "description": "Pass it as endAssignmentId to propose_owner_change."
+              },
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "label": {
+                "type": "string",
+                "description": "The owner role label."
+              },
+              "principal": {
+                "$ref": "../common.schema.json#/$defs/principalRef"
+              },
+              "isDeputy": {
+                "type": "boolean"
+              },
+              "deputyFor": {
+                "description": "The main assignment this deputy covers.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O06 Owner Assignment"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "startOn": {
+                "description": "When the assignment starts. Null while it waits for its ownership decision.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "endOn": {
+                "description": "When it ends. Null while current.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/date"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ownershipDecisionId": {
+                "description": "The decision that made the assignment.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "applicationName": {
+                "type": "string",
+                "description": "The application's name."
+              },
+              "state": {
+                "enum": [
+                  "current",
+                  "ended",
+                  "upcoming"
+                ],
+                "description": "current: started and not ended today; ended: End On is today or before; upcoming: not started yet, or waiting for its ownership decision."
+              },
+              "holder": {
+                "type": "object",
+                "description": "Facts about the holder (O05) the product recorded.",
+                "required": [
+                  "directoryState",
+                  "directoryStateOn",
+                  "leavesOn"
+                ],
+                "properties": {
+                  "directoryState": {
+                    "description": "The holder's Entra state, as the last owner check read it.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/directoryState"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "directoryStateOn": {
+                    "description": "When the owner check read it. Null unless the caller is a platform admin or the holder.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "leavesOn": {
+                    "description": "The holder's recorded leave date: personal data, so null unless the caller is a platform admin (the owner check's audience) or the holder.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "pendingApprovalCount": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Pending approval requests on the application that ask this owner role: what moves if the holder leaves."
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl",
+                "description": "The application."
+              }
+            },
+            "additionalProperties": false,
+            "description": "One owner assignment (O06) with its application, state and holder facts."
+          }
+        },
+        "coverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ownerRoleKey",
+              "label",
+              "requiresDeputy",
+              "applicationsHeld",
+              "applicationsWithDeputy",
+              "gaps"
+            ],
+            "properties": {
+              "ownerRoleKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C28 Owner Role"
+              },
+              "label": {
+                "type": "string",
+                "description": "The owner role label."
+              },
+              "requiresDeputy": {
+                "type": "boolean",
+                "description": "C28 Requires Deputy."
+              },
+              "applicationsHeld": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Applications in scope where the role has a current holder."
+              },
+              "applicationsWithDeputy": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Applications in scope where the role has a current deputy."
+              },
+              "gaps": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Owner gaps of the role across the applications in scope: no holder where a gate requires one, or no deputy where the role requires one."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Coverage per owner role across the applications in scope."
+        },
+        "applicationsInScope": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Registered applications that match the application and portfolio filters."
+        },
+        "ownerGaps": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The one owner gap count for the scope (document 24, B24-17), as get_portfolio_summary and list_portfolios give it, narrowed to the owner roles asked for."
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many assignments match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 owner assignment(s) match across 6 registered application(s).",
+      "data": {
+        "items": [
+          {
+            "ownerAssignmentId": "30000000-0000-4000-8000-000000000001",
+            "ownerRoleKey": "business-owner",
+            "label": "Business owner",
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000002",
+              "displayLabel": "Owner (sample)"
+            },
+            "isDeputy": false,
+            "deputyFor": null,
+            "startOn": "2026-01-05",
+            "endOn": null,
+            "ownershipDecisionId": null,
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "applicationName": "Field visit planner",
+            "state": "current",
+            "holder": {
+              "directoryState": "enabled",
+              "directoryStateOn": "2026-11-20T06:00:00Z",
+              "leavesOn": "2026-12-31"
+            },
+            "pendingApprovalCount": 1,
+            "recordUrl": "https://product.example.org/records/business-application/10000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "coverage": [
+          {
+            "ownerRoleKey": "business-owner",
+            "label": "Business owner",
+            "requiresDeputy": true,
+            "applicationsHeld": 6,
+            "applicationsWithDeputy": 4,
+            "gaps": 2
+          }
+        ],
+        "applicationsInScope": 6,
+        "ownerGaps": 0,
+        "totalCount": 1
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [
+        {
+          "tool": "get_portfolio_summary",
+          "inputs": {
+            "includeOwnerGaps": true
+          }
+        }
+      ],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-09",
+  "case": "v50-top-level-below-top-warning",
+  "description": "A domain with no parent below the top level is a warning: no parent owner can appoint its owner.",
+  "ruleIds": [],
+  "snapshot": {
+    "presetKey": "balanced",
+    "overlays": [
+      "data-domains-starter"
+    ],
+    "operations": [
+      {
+        "op": "upsert",
+        "entity": "data-domain",
+        "key": "fixture-orphan",
+        "values": {
+          "label": "fixture-orphan",
+          "levelKey": "subdomain",
+          "classificationKey": "internal"
+        }
+      }
+    ]
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "mode": "draft",
+    "baseVersionNumber": 1
+  },
+  "expected": {
+    "outcome": "valid",
+    "payload": {
+      "isValid": true
+    },
+    "reasons": [
+      {
+        "code": "data.domain-level",
+        "severity": "warning",
+        "ruleId": "V50"
+      }
+    ],
+    "reasonsMatch": "includes"
+  }
+}

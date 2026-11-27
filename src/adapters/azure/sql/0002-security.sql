@@ -3,19 +3,27 @@
 -- Do not edit by hand: run the local server's schema-script command, or the store tests with PRODUCT_WRITE_SQL=1.
 --
 -- The store sets the caller in SESSION_CONTEXT, read-only, on every connection it opens: PrincipalId, Entry, ActorKind,
--- OnBehalfOfId, ClientApp, ClientAppVerified, Roles, CorrelationId and EngineOperation (read, write, activation or
--- seed). The filter predicate hides every product row from a connection without a caller, except for the deployment
--- identity. The block predicates are a backstop behind the engine's guard: they refuse what the engine never writes.
+-- OnBehalfOfId, ClientApp, ClientAppVerified, Roles, CorrelationId, EngineOperation (read, write, activation or
+-- seed) and, for a person's answer through answer_approval (D-38), AnsweredApprovalId. The filter predicate hides every
+-- product row from a connection without a caller, except for the deployment identity. The block predicates are a
+-- backstop behind the engine's guard: they refuse what the engine never writes.
 --   fn_ConfigWriter: live configuration rows change only inside an activation (or a seed by the deployment identity).
 --   fn_DraftOpen: a Configuration Draft changes only while draft or submitted.
 --   fn_DecisionOpen: a final Decision (accepted, rejected, superseded, withdrawn) changes once more only to set Superseded By.
---   fn_ApprovalPending: an Approval Record changes only while pending, or in the approval runner's request.
---   fn_ApprovalOutcomeWriter: only the approval runner writes approved, rejected, recommendation-only.
+--   fn_ApprovalPending: an Approval Record changes only while pending, or in the approval runner's request, or in a
+--     person's own answer request (D-38) on a record of the answered record's decision, where the engine's recompute
+--     rewrites what counts. Final records of every other decision stay locked in that request.
+--   fn_ApprovalOutcomeWriter: only the approval runner writes approved, rejected, recommendation-only, or, in a person's own
+--     answer request, a write stamped with that person on a record of the answered record's decision: the answer on
+--     the record the request names, and the engine's recompute on records already answered.
 --   fn_AssessmentOpen and fn_GapRunOpen: a Tier Assessment with a Tier Decision and a finished Gap Check Run are final.
 -- Read scoping by role (intake, claim, portfolio and audit readers) stays in the tool outputs in this release: the engine
 -- reads every fact it evaluates. Ledger history tables get no predicate; 0003 denies the app every history table and
--- ledger view instead. The policies are dropped first so the functions can change, then created again.
+-- ledger view instead. One security policy holds every filter and block predicate: Azure SQL lets only one enabled
+-- policy reference a table (error 33264). It is dropped first so the functions can change, then created again; the
+-- two policy names of earlier drafts of this script are dropped too.
 
+IF OBJECT_ID(N'[security].[ProductPolicy]', N'SP') IS NOT NULL DROP SECURITY POLICY [security].[ProductPolicy];
 IF OBJECT_ID(N'[security].[ProductWritePolicy]', N'SP') IS NOT NULL DROP SECURITY POLICY [security].[ProductWritePolicy];
 IF OBJECT_ID(N'[security].[ProductReadPolicy]', N'SP') IS NOT NULL DROP SECURITY POLICY [security].[ProductReadPolicy];
 GO
@@ -60,7 +68,7 @@ RETURN SELECT 1 AS [Allowed]
        OR (DATABASE_PRINCIPAL_ID() = 1 OR IS_ROLEMEMBER(N'product_migrator') = 1);
 GO
 
-CREATE OR ALTER FUNCTION [security].[fn_ApprovalPending] (@OutcomeMeaning nvarchar(32))
+CREATE OR ALTER FUNCTION [security].[fn_ApprovalPending] (@OutcomeMeaning nvarchar(32), @Columns nvarchar(max))
 RETURNS TABLE
 WITH SCHEMABINDING
 AS
@@ -68,10 +76,11 @@ RETURN SELECT 1 AS [Allowed]
     WHERE @OutcomeMeaning IS NULL
        OR @OutcomeMeaning = N'pending'
        OR CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'approval-runner'
+       OR ((CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'person' AND CAST(SESSION_CONTEXT(N'Entry') AS nvarchar(16)) = N'person' AND CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) IS NOT NULL) AND EXISTS (SELECT 1 FROM [ops].[ApprovalRecord] AS [answered] WHERE [answered].[Id] = CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) AND JSON_VALUE([answered].[Columns], N'$.decision') = JSON_VALUE(@Columns, N'$.decision')))
        OR (DATABASE_PRINCIPAL_ID() = 1 OR IS_ROLEMEMBER(N'product_migrator') = 1);
 GO
 
-CREATE OR ALTER FUNCTION [security].[fn_ApprovalOutcomeWriter] (@OutcomeMeaning nvarchar(32))
+CREATE OR ALTER FUNCTION [security].[fn_ApprovalOutcomeWriter] (@OutcomeMeaning nvarchar(32), @Id varchar(36), @PerformedByActorKind nvarchar(32), @PerformedByPrincipalId nvarchar(64), @Columns nvarchar(max))
 RETURNS TABLE
 WITH SCHEMABINDING
 AS
@@ -79,6 +88,7 @@ RETURN SELECT 1 AS [Allowed]
     WHERE @OutcomeMeaning IS NULL
        OR @OutcomeMeaning NOT IN (N'approved', N'rejected', N'recommendation-only')
        OR CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'approval-runner'
+       OR ((CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'person' AND CAST(SESSION_CONTEXT(N'Entry') AS nvarchar(16)) = N'person' AND CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) IS NOT NULL) AND (@Id = CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) OR @PerformedByActorKind = N'engine') AND LOWER(@PerformedByPrincipalId) = LOWER(CAST(SESSION_CONTEXT(N'PrincipalId') AS nvarchar(64))) AND EXISTS (SELECT 1 FROM [ops].[ApprovalRecord] AS [answered] WHERE [answered].[Id] = CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) AND JSON_VALUE([answered].[Columns], N'$.decision') = JSON_VALUE(@Columns, N'$.decision')))
        OR (DATABASE_PRINCIPAL_ID() = 1 OR IS_ROLEMEMBER(N'product_migrator') = 1);
 GO
 
@@ -100,7 +110,7 @@ RETURN SELECT 1 AS [Allowed]
        OR (DATABASE_PRINCIPAL_ID() = 1 OR IS_ROLEMEMBER(N'product_migrator') = 1);
 GO
 
-CREATE SECURITY POLICY [security].[ProductReadPolicy]
+CREATE SECURITY POLICY [security].[ProductPolicy]
     ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [config].[ConfigurationSet],
     ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [config].[ConfigurationSetHistory],
     ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [config].[ConfigurationSetVersion],
@@ -230,11 +240,7 @@ CREATE SECURITY POLICY [security].[ProductReadPolicy]
     ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [ops].[GapCheckRunHistory],
     ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [ops].[Claim],
     ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [ops].[ClaimHistory],
-    ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [audit].[AuditEntry]
-WITH (STATE = ON, SCHEMABINDING = ON);
-GO
-
-CREATE SECURITY POLICY [security].[ProductWritePolicy]
+    ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON [audit].[AuditEntry],
     ADD BLOCK PREDICATE [security].[fn_ConfigWriter]([Id]) ON [config].[ConfigurationSet] AFTER INSERT,
     ADD BLOCK PREDICATE [security].[fn_ConfigWriter]([Id]) ON [config].[ConfigurationSet] AFTER UPDATE,
     ADD BLOCK PREDICATE [security].[fn_ConfigWriter]([Id]) ON [config].[ConfigurationSet] BEFORE DELETE,
@@ -368,9 +374,9 @@ CREATE SECURITY POLICY [security].[ProductWritePolicy]
     ADD BLOCK PREDICATE [security].[fn_DraftOpen]([DraftStatus]) ON [config].[ConfigurationDraft] BEFORE UPDATE,
     ADD BLOCK PREDICATE [security].[fn_AssessmentOpen]([TierDecisionId]) ON [ops].[TierAssessment] BEFORE UPDATE,
     ADD BLOCK PREDICATE [security].[fn_DecisionOpen]([StatusMeaning], [SupersededById]) ON [ops].[Decision] BEFORE UPDATE,
-    ADD BLOCK PREDICATE [security].[fn_ApprovalPending]([OutcomeMeaning]) ON [ops].[ApprovalRecord] BEFORE UPDATE,
-    ADD BLOCK PREDICATE [security].[fn_ApprovalOutcomeWriter]([OutcomeMeaning]) ON [ops].[ApprovalRecord] AFTER INSERT,
-    ADD BLOCK PREDICATE [security].[fn_ApprovalOutcomeWriter]([OutcomeMeaning]) ON [ops].[ApprovalRecord] AFTER UPDATE,
+    ADD BLOCK PREDICATE [security].[fn_ApprovalPending]([OutcomeMeaning], [Columns]) ON [ops].[ApprovalRecord] BEFORE UPDATE,
+    ADD BLOCK PREDICATE [security].[fn_ApprovalOutcomeWriter]([OutcomeMeaning], [Id], [PerformedByActorKind], [PerformedByPrincipalId], [Columns]) ON [ops].[ApprovalRecord] AFTER INSERT,
+    ADD BLOCK PREDICATE [security].[fn_ApprovalOutcomeWriter]([OutcomeMeaning], [Id], [PerformedByActorKind], [PerformedByPrincipalId], [Columns]) ON [ops].[ApprovalRecord] AFTER UPDATE,
     ADD BLOCK PREDICATE [security].[fn_GapRunOpen]([FinishedOn]) ON [ops].[GapCheckRun] BEFORE UPDATE
 WITH (STATE = ON, SCHEMABINDING = ON);
 GO

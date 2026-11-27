@@ -122,5 +122,10 @@ public sealed class FailureCallbackTests
         {
             return _inner.ReadResource(session, uri, correlationId);
         }
+
+        public void RecordRefusal(BackendSession session, RefusedCall refused)
+        {
+            _inner.RecordRefusal(session, refused);
+        }
     }
 }

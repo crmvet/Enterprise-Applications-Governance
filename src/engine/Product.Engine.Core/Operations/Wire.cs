@@ -225,6 +225,24 @@ internal sealed class WireObject
         return value;
     }
 
+    // A list of JSON objects whose members the operation reads by name, such as stored rows passed as facts. Empty when
+    // absent.
+    public IReadOnlyList<JsonTreeNode> RawObjects(string name)
+    {
+        JsonTreeNode? value = Get(name);
+        if (value == null)
+        {
+            return Array.Empty<JsonTreeNode>();
+        }
+
+        if (value.Kind != JsonTreeKind.Array || value.Items.Any(item => item.Kind != JsonTreeKind.Object))
+        {
+            throw Malformed(name, "a list of objects");
+        }
+
+        return new ReadOnlyCollection<JsonTreeNode>(value.Items.ToList());
+    }
+
     // A list of objects. Empty when absent, unless required.
     public IReadOnlyList<WireObject> Objects(string name, bool required, params string[] allowed)
     {

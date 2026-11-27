@@ -177,7 +177,8 @@ public sealed class ApproverIdentityTests
         Assert.True(draft["ok"]!.GetValue<bool>(), draft.ToJsonString() + "\n" + host.Logs);
         JsonNode submitted = await host.Call(Personas.Priya, "submit_record", "{\"subjectKind\":\"intake-request\",\"subjectId\":\"" + draft["data"]!["recordId"]!.GetValue<string>() + "\"}");
         Assert.True(submitted["ok"]!.GetValue<bool>(), submitted.ToJsonString());
-        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray())!;
+        // The triage card; Balanced also opens three consultation cards on an intake (document 21, B21-9).
+        JsonNode card = Assert.Single(submitted["data"]!["approvalsRequested"]!.AsArray(), c => !c!["isConsultation"]!.GetValue<bool>())!;
         Assert.Equal("platform-admin", card["requiredRoleKey"]!.GetValue<string>());
         return (card["approvalRecordId"]!.GetValue<string>(), submitted["data"]!["decisionId"]!.GetValue<string>());
     }

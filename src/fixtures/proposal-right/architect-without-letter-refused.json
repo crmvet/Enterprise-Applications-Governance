@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "proposal-right",
+  "case": "architect-without-letter-refused",
+  "description": "The architect role may call save_decision_proposal (Tool Policy), but holds no letter for risk acceptance in Balanced. The engine refuses and names who holds the letters.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z"
+  },
+  "input": {
+    "decisionTypeKey": "risk-acceptance",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app",
+    "portfolioPath": []
+  },
+  "facts": {
+    "roleKeys": [
+      "architect"
+    ],
+    "ownerRoleKeys": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false,
+      "holders": [
+        {
+          "decisionRightKey": "risk-acceptance-a",
+          "letter": "accountable",
+          "ownerRoleKey": "business-owner"
+        }
+      ]
+    },
+    "payloadMatch": "exact",
+    "reasons": [
+      {
+        "code": "decision.propose-not-allowed",
+        "severity": "error",
+        "entity": "Decision Right",
+        "ref": "risk-acceptance"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

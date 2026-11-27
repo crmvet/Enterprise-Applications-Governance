@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "complete_review output",
+  "description": "The response envelope. On success, data is the write result for the Review (O21), now done, stamped as the person's own act, with the reviewer, the outcome decision, the next due date from the cadence, the evidence links written and the gates the review feeds with whether each is met now.",
+  "x-tool": "complete_review",
+  "x-ai-write-states": [
+    "person-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the Review (O21).",
+      "properties": {
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "properties": {
+            "meaning": {
+              "const": "done"
+            }
+          }
+        },
+        "reviewId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O21 Review"
+        },
+        "doneOn": {
+          "$ref": "../common.schema.json#/$defs/date"
+        },
+        "reviewer": {
+          "$ref": "../common.schema.json#/$defs/principalRef"
+        },
+        "outcomeDecisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "nextDueOn": {
+          "description": "Done On plus the cadence interval (C25) for the review type at the application's tier. Null for a review with no cadence, such as an architecture or post-change review.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "gateKey",
+              "gateLabel",
+              "feedsBy",
+              "requirementKey",
+              "met",
+              "guideline"
+            ],
+            "properties": {
+              "gateKey": {
+                "$ref": "../common.schema.json#/$defs/key",
+                "x-entity": "C13 Gate"
+              },
+              "gateLabel": {
+                "type": "string",
+                "minLength": 1
+              },
+              "feedsBy": {
+                "enum": [
+                  "gate-decision",
+                  "requirement"
+                ],
+                "description": "gate-decision: the review records the gate's gate decision, which passes the gate once accepted. requirement: a review-done gate requirement (C14) of the review's type."
+              },
+              "requirementKey": {
+                "description": "The gate requirement, for feedsBy requirement.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C14 Gate Requirement"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "met": {
+                "type": "boolean",
+                "description": "True when the gate decision is accepted, or the requirement is met now (OP-07)."
+              },
+              "guideline": {
+                "description": "The guideline number of the requirement, when it names one.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "guidelineRef": {
+                "description": "The guideline as a chip: key, number, title and link.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/guidelineRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The gates the review feeds on its application."
+        },
+        "evidenceLinkIds": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O20 Evidence Link"
+          },
+          "description": "The Evidence Link rows written."
+        }
+      },
+      "required": [
+        "reviewId",
+        "doneOn",
+        "reviewer",
+        "outcomeDecisionId",
+        "nextDueOn",
+        "gates",
+        "evidenceLinkIds"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The architecture review of Claims Triage Agent is done. It feeds 1 gate requirement(s), 1 met now.",
+      "data": {
+        "recordId": "60000000-0000-4000-8000-000000000001",
+        "status": {
+          "label": "Done",
+          "meaning": "done"
+        },
+        "performedBy": {
+          "actorKind": "person",
+          "principal": {
+            "objectId": "20000000-0000-4000-8000-000000000003",
+            "displayLabel": "Architect (sample)"
+          },
+          "onBehalfOf": null,
+          "clientApp": null
+        },
+        "isAiCreated": false,
+        "engineStamp": {
+          "engineVersion": "0.1.0",
+          "engineCheckedOn": "2026-11-24T09:00:00Z"
+        },
+        "created": false,
+        "reviewId": "60000000-0000-4000-8000-000000000001",
+        "doneOn": "2026-11-24",
+        "reviewer": {
+          "objectId": "20000000-0000-4000-8000-000000000003",
+          "displayLabel": "Architect (sample)"
+        },
+        "outcomeDecisionId": "50000000-0000-4000-8000-000000000001",
+        "nextDueOn": null,
+        "gates": [
+          {
+            "gateKey": "design",
+            "gateLabel": "Design",
+            "feedsBy": "gate-decision",
+            "requirementKey": null,
+            "met": true,
+            "guideline": null
+          }
+        ],
+        "evidenceLinkIds": []
+      },
+      "links": {
+        "recordUrl": "https://product.example.org/records/review/60000000-0000-4000-8000-000000000001"
+      },
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "correlationId": "corr-0001",
+      "nextSteps": []
+    }
+  ]
+}

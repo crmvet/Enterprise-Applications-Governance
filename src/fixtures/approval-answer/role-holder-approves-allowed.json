@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "role-holder-approves-allowed",
+  "description": "The platform admin answers the accountable card of an intake decision, which asks for the platform admin role. The person holds it now, the request is pending and not expired, and no separation rule names them: the engine may record the answer.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "platform-admin"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "decisionRightKey": "intake-a",
+      "requiredRoleKey": "platform-admin",
+      "expiresOnUtc": "2026-11-30T09:00:00Z"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "intake",
+      "tierKey": "tier-1"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    }
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "approvalRecordId": "fixture-approval-1",
+      "requirementKey": "intake-a",
+      "answer": "approve",
+      "heldRoleKey": "platform-admin",
+      "isConsultation": false,
+      "requiresTypedReason": false,
+      "flagged": false
+    },
+    "payloadMatch": "exact",
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

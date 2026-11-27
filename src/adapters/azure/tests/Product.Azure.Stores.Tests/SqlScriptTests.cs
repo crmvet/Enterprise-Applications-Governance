@@ -38,8 +38,8 @@ public sealed class SqlScriptTests
     {
         string[] files = Directory.GetFiles(Paths.Sql, "*.sql").Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal).ToArray()!;
         Assert.Equal(files, SqlServerMigrations.All.Select(m => m.Name));
-        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, SqlServerMigrations.All.Select(m => m.Version));
-        Assert.Equal(6, SqlServerMigrations.RequiredVersion);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }, SqlServerMigrations.All.Select(m => m.Version));
+        Assert.Equal(9, SqlServerMigrations.RequiredVersion);
         foreach (SqlMigration migration in SqlServerMigrations.All)
         {
             Assert.Equal(Normalize(File.ReadAllText(Path.Combine(Paths.Sql, migration.Name))), Normalize(migration.Text));
@@ -85,11 +85,22 @@ public sealed class SqlScriptTests
         Assert.Equal("[]", SqlServerMigrations.Substitute("[$(AppIdentityName)]", new Dictionary<string, string> { { "AppIdentityName", string.Empty } }));
     }
 
+    // 0001 creates the tables of the first release and 0008 those of the data taxonomy, so every entity has its table in
+    // exactly one of them.
     [Fact]
     public void EveryEntityHasItsTableHistoryTypeAndIndexes()
     {
-        string tables = SqlServerSchemaScript.GenerateTables(EntityCatalog.Embedded);
+        string first = SqlServerSchemaScript.GenerateTables(EntityCatalog.Embedded);
+        string taxonomy = SqlServerSchemaScript.GenerateDataTaxonomy(EntityCatalog.Embedded);
+        string tables = first + taxonomy;
         Assert.Equal(EntityCatalog.Embedded.Entities.Count, Count(tables, "    CREATE TABLE "));
+        Assert.Equal(69, Count(first, "    CREATE TABLE "));
+        Assert.Equal(new[] { "C47", "C48", "C49", "C50", "O25", "O26", "O27" }, SqlServerSchemaScript.TablesOf(EntityCatalog.Embedded, 8).Select(e => e.ModelId));
+        foreach (EntityInfo e in EntityCatalog.Embedded.Entities)
+        {
+            Assert.Equal(SqlServerSchemaScript.TableMigration(e) == 1, first.Contains("    CREATE TABLE " + e.QualifiedTable + "\n", StringComparison.Ordinal));
+            Assert.Equal(SqlServerSchemaScript.TableMigration(e) == 8, taxonomy.Contains("    CREATE TABLE " + e.QualifiedTable + "\n", StringComparison.Ordinal));
+        }
         foreach (EntityInfo e in EntityCatalog.Embedded.Entities)
         {
             int start = tables.IndexOf("    CREATE TABLE " + e.QualifiedTable + "\n", StringComparison.Ordinal);
@@ -125,10 +136,19 @@ public sealed class SqlScriptTests
         Assert.Contains("CREATE INDEX [IX_PrincipalReference_EntraObjectId] ON [ops].[PrincipalReference] ([EntraObjectId]);", tables);
     }
 
+    // 0002 holds the policy over the tables of 0001, and 0008 the same policy over every table, its own included. The last
+    // migration that writes the policy covers every table of the catalog.
     [Fact]
     public void RowLevelSecurityCoversEveryTableAndEveryTemporalHistoryTable()
     {
-        string security = SqlServerSchemaScript.GenerateSecurity(EntityCatalog.Embedded);
+        string first = SqlServerSchemaScript.GenerateSecurity(EntityCatalog.Embedded);
+        foreach (EntityInfo e in EntityCatalog.Embedded.Entities)
+        {
+            string filter = "ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON " + e.QualifiedTable;
+            Assert.Equal(SqlServerSchemaScript.TableMigration(e) == 1, first.Contains(filter + ",\n", StringComparison.Ordinal) || first.Contains(filter + "\n", StringComparison.Ordinal));
+        }
+
+        string security = SqlServerSchemaScript.GenerateDataTaxonomy(EntityCatalog.Embedded);
         foreach (EntityInfo e in EntityCatalog.Embedded.Entities)
         {
             string filter = "ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON " + e.QualifiedTable;
@@ -146,14 +166,35 @@ public sealed class SqlScriptTests
             Assert.Equal(configWriter, security.Contains("[fn_ConfigWriter]([Id]) ON " + e.QualifiedTable + " AFTER INSERT", StringComparison.Ordinal));
         }
 
-        Assert.Contains("[fn_ApprovalOutcomeWriter]([OutcomeMeaning]) ON [ops].[ApprovalRecord] AFTER UPDATE", security);
-        Assert.Contains("[fn_ApprovalOutcomeWriter]([OutcomeMeaning]) ON [ops].[ApprovalRecord] AFTER INSERT", security);
-        Assert.Contains("[fn_ApprovalPending]([OutcomeMeaning]) ON [ops].[ApprovalRecord] BEFORE UPDATE", security);
+        Assert.Contains("[fn_ApprovalOutcomeWriter]([OutcomeMeaning], [Id], [PerformedByActorKind], [PerformedByPrincipalId], [Columns]) ON [ops].[ApprovalRecord] AFTER UPDATE", security);
+        Assert.Contains("[fn_ApprovalOutcomeWriter]([OutcomeMeaning], [Id], [PerformedByActorKind], [PerformedByPrincipalId], [Columns]) ON [ops].[ApprovalRecord] AFTER INSERT", security);
+        Assert.Contains("[fn_ApprovalPending]([OutcomeMeaning], [Columns]) ON [ops].[ApprovalRecord] BEFORE UPDATE", security);
         Assert.Contains("[fn_DecisionOpen]([StatusMeaning], [SupersededById]) ON [ops].[Decision] BEFORE UPDATE", security);
         Assert.Contains("[fn_AssessmentOpen]([TierDecisionId]) ON [ops].[TierAssessment] BEFORE UPDATE", security);
         Assert.Contains("[fn_GapRunOpen]([FinishedOn]) ON [ops].[GapCheckRun] BEFORE UPDATE", security);
         Assert.Contains("[fn_DraftOpen]([DraftStatus]) ON [config].[ConfigurationDraft] BEFORE UPDATE", security);
         Assert.DoesNotContain("[ConfigurationSetVersion] AFTER UPDATE", security);
+    }
+
+    // Azure SQL refuses a second enabled security policy on a table that one already references (error 33264), which the
+    // first deployment to a real database hit. So 0002 creates exactly one policy, and it drops the two older names.
+    [Fact]
+    public void RowLevelSecurityIsOnePolicy()
+    {
+        string security = SqlServerSchemaScript.GenerateSecurity(EntityCatalog.Embedded);
+        Assert.Equal(1, Count(security, "CREATE SECURITY POLICY "));
+        Assert.Contains("CREATE SECURITY POLICY [security].[" + SqlServerSchemaScript.PolicyName + "]", security);
+        foreach (string old in new[] { "ProductReadPolicy", "ProductWritePolicy", SqlServerSchemaScript.PolicyName })
+        {
+            Assert.Contains("IF OBJECT_ID(N'[security].[" + old + "]', N'SP') IS NOT NULL DROP SECURITY POLICY [security].[" + old + "];", security);
+        }
+
+        // 0008 drops the one policy before it creates it again, and creates no second one.
+        string taxonomy = SqlServerSchemaScript.GenerateDataTaxonomy(EntityCatalog.Embedded);
+        Assert.Equal(1, Count(taxonomy, "CREATE SECURITY POLICY "));
+        int drop = taxonomy.IndexOf("IF OBJECT_ID(N'[security].[" + SqlServerSchemaScript.PolicyName + "]', N'SP') IS NOT NULL DROP SECURITY POLICY [security].[" + SqlServerSchemaScript.PolicyName + "];", StringComparison.Ordinal);
+        Assert.True(drop > 0 && drop < taxonomy.IndexOf("CREATE SECURITY POLICY ", StringComparison.Ordinal));
+        Assert.DoesNotContain("CREATE OR ALTER FUNCTION", taxonomy);
     }
 
     // The meanings the predicates name come from the engine's contract lists, so a renamed meaning changes the script.
@@ -164,9 +205,52 @@ public sealed class SqlScriptTests
         Assert.Contains("@StatusMeaning NOT IN (N'accepted', N'rejected', N'superseded', N'withdrawn')", security);
         Assert.Contains("@OutcomeMeaning NOT IN (N'approved', N'rejected', N'recommendation-only')", security);
         Assert.Contains("CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'approval-runner'", security);
+
+        // D-38: a person's own answer request may write the answer on the one record it names, and the engine's recompute
+        // may rewrite what counts on records already answered; nothing else in that request writes an answer.
+        string personAnswer = "(CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'person' AND CAST(SESSION_CONTEXT(N'Entry') AS nvarchar(16)) = N'person' AND CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) IS NOT NULL)";
+        string sameDecision = "EXISTS (SELECT 1 FROM [ops].[ApprovalRecord] AS [answered] WHERE [answered].[Id] = CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) AND JSON_VALUE([answered].[Columns], N'$.decision') = JSON_VALUE(@Columns, N'$.decision'))";
+        string byCaller = "LOWER(@PerformedByPrincipalId) = LOWER(CAST(SESSION_CONTEXT(N'PrincipalId') AS nvarchar(64)))";
+        Assert.Contains("OR (" + personAnswer + " AND " + sameDecision + ")\n", security);
+        Assert.Contains("OR (" + personAnswer + " AND (@Id = CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) OR @PerformedByActorKind = N'engine') AND " + byCaller + " AND " + sameDecision + ")", security);
         Assert.Contains("@DraftStatus IN (N'draft', N'submitted')", security);
         Assert.Contains("CAST(SESSION_CONTEXT(N'EngineOperation') AS nvarchar(32)) = N'activation'", security);
         Assert.Contains("DATABASE_PRINCIPAL_ID() = 1", security);
+    }
+
+    // Security review: AnsweredApprovalId is the caller's own argument, read before the engine checks it, and Performed By
+    // Actor Kind is copied from the row the writer sends. So in a person's answer request no predicate may open a record
+    // on the strength of those alone: every person branch is tied to the answered record's decision, and a final outcome
+    // must also carry the caller's own principal.
+    [Fact]
+    public void APersonsAnswerRequestReachesOnlyTheAnsweredRecordsDecision()
+    {
+        string security = SqlServerSchemaScript.GenerateSecurity(EntityCatalog.Embedded);
+        string personAnswer = "(CAST(SESSION_CONTEXT(N'ActorKind') AS nvarchar(64)) = N'person' AND CAST(SESSION_CONTEXT(N'Entry') AS nvarchar(16)) = N'person' AND CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36)) IS NOT NULL)";
+
+        // No branch is the person's answer request on its own, in either function.
+        Assert.DoesNotContain("OR " + personAnswer + "\n", security);
+        Assert.DoesNotContain("OR " + personAnswer + ";", security);
+
+        string pendingFn = Between(security, "CREATE OR ALTER FUNCTION [security].[fn_ApprovalPending]", "GO");
+        string writerFn = Between(security, "CREATE OR ALTER FUNCTION [security].[fn_ApprovalOutcomeWriter]", "GO");
+        foreach (string fn in new[] { pendingFn, writerFn })
+        {
+            Assert.Contains("FROM [ops].[ApprovalRecord] AS [answered] WHERE [answered].[Id] = CAST(SESSION_CONTEXT(N'AnsweredApprovalId') AS varchar(36))", fn);
+            Assert.Contains("JSON_VALUE([answered].[Columns], N'$.decision') = JSON_VALUE(@Columns, N'$.decision')", fn);
+        }
+
+        Assert.Contains("LOWER(@PerformedByPrincipalId) = LOWER(CAST(SESSION_CONTEXT(N'PrincipalId') AS nvarchar(64)))", writerFn);
+        Assert.Equal(1, Count(writerFn, "@PerformedByActorKind = N'engine'"));
+    }
+
+    private static string Between(string text, string start, string end)
+    {
+        int from = text.IndexOf(start, StringComparison.Ordinal);
+        Assert.True(from >= 0, start);
+        int to = text.IndexOf("\n" + end, from, StringComparison.Ordinal);
+        Assert.True(to > from, end);
+        return text.Substring(from, to - from);
     }
 
     [Fact]
@@ -210,6 +294,25 @@ public sealed class SqlScriptTests
         Assert.Equal(3, SqlServerMigrations.SplitBatches(script).Count);
     }
 
+    // 0007: the record number counters are a host table the app reads, inserts and updates but never deletes from, keyed
+    // by the entity key the store writes, and every statement checks before it acts.
+    [Fact]
+    public void TheRecordNumberScriptMatchesTheStoreAndGrantsNoDelete()
+    {
+        SqlMigration migration = SqlServerMigrations.All.Single(m => m.Version == 7);
+        string script = Normalize(migration.Text);
+        Assert.Equal("0007-record-numbers.sql", migration.Name);
+        IReadOnlyList<string> batches = SqlServerMigrations.SplitBatches(script);
+        Assert.Equal(2, batches.Count);
+        Assert.Contains("IF OBJECT_ID(N'[host].[RecordNumber]', N'U') IS NULL\n    CREATE TABLE [host].[RecordNumber]", batches[0]);
+        Assert.Contains("[Entity] varchar(" + SqlServerRowDatabase.MaxEntityKeyLength + ") COLLATE Latin1_General_BIN2 NOT NULL CONSTRAINT [PK_RecordNumber] PRIMARY KEY", batches[0]);
+        Assert.Contains("[LastNumber] bigint NOT NULL", batches[0]);
+        Assert.Contains("GRANT SELECT, INSERT, UPDATE ON [host].[RecordNumber] TO [product_app];", batches[1]);
+        Assert.Contains("DENY DELETE ON [host].[RecordNumber] TO [product_app];", batches[1]);
+        Assert.DoesNotContain("GRANT DELETE", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(SqlServerMigrations.VariablesOf(script));
+    }
+
     // 0006: the store keys are a host table the app reads, inserts and deletes from but never updates, keyed by entity, key
     // name and value hash as the store writes them, and the script stops before it changes a database that already holds
     // engine rows, whose keys it could not build.
@@ -245,6 +348,70 @@ public sealed class SqlScriptTests
             Assert.True(entity.Key.Length <= SqlServerRowDatabase.MaxEntityKeyLength, entity.Key);
             Assert.All(entity.StoreKeys, k => Assert.True(k.Name.Length <= StoreKey.MaxNameLength, k.ToString()));
         }
+    }
+
+    // 0009: the data location key counts the locations in service (wave 4b, fix round 2). The script removes only the key
+    // rows of archived locations, under the key's own entity and name, and changes no engine row.
+    [Fact]
+    public void TheLocationKeyScriptRemovesOnlyTheKeysOfArchivedLocations()
+    {
+        SqlMigration migration = SqlServerMigrations.All.Single(m => m.Version == 9);
+        string script = Normalize(migration.Text);
+        Assert.Equal("0009-location-key-in-service.sql", migration.Name);
+        IReadOnlyList<string> batches = SqlServerMigrations.SplitBatches(script);
+        Assert.Single(batches);
+        StoreKey key = EntityCatalog.Embedded.Get("data-location").StoreKeys.Single();
+        Assert.Equal(StoreKeyScope.InServiceRows, key.Scope);
+        Assert.Contains("DELETE [k]\nFROM [host].[StoreKey] AS [k]\nJOIN [ops].[DataLocation] AS [r] ON [r].[Id] = [k].[RowId]", batches[0]);
+        Assert.Contains("WHERE [k].[Entity] = '" + key.EntityKey + "'", batches[0]);
+        Assert.Contains("AND [k].[KeyName] = '" + key.Name + "'", batches[0]);
+        Assert.Contains("AND JSON_VALUE([r].[Columns], N'$.statusMeaning') = N'archived';", batches[0]);
+        Assert.DoesNotContain("UPDATE", script, StringComparison.Ordinal);
+        Assert.DoesNotContain("[ops].[DataLocation] SET", script, StringComparison.Ordinal);
+        Assert.Empty(SqlServerMigrations.VariablesOf(script));
+    }
+
+    // 0008: the data taxonomy's tables, temporal like the other class E and V tables; the subject check on Owner Assignment
+    // that every row written before the data taxonomy passes; and the app's history reads denied on the new tables.
+    [Fact]
+    public void TheDataTaxonomyScriptAddsItsTablesTheSubjectCheckAndThePolicyAgain()
+    {
+        SqlMigration migration = SqlServerMigrations.All.Single(m => m.Version == 8);
+        string script = Normalize(migration.Text);
+        Assert.Equal(SqlServerSchemaScript.DataTaxonomyFile, migration.Name);
+        Assert.Empty(SqlServerMigrations.VariablesOf(script));
+        foreach (string table in new[] { "[config].[DataClassification]", "[config].[DataDomainLevel]", "[config].[DataDomain]", "[config].[DataPlatform]", "[ops].[DataLocation]", "[ops].[DataMapping]", "[ops].[DataUse]" })
+        {
+            int start = script.IndexOf("    CREATE TABLE " + table + "\n", StringComparison.Ordinal);
+            Assert.True(start > 0, table);
+            string create = script.Substring(start, script.IndexOf("END;", start, StringComparison.Ordinal) - start);
+            string history = table.Substring(0, table.Length - 1) + "History]";
+            Assert.Contains("WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = " + history + "));", create);
+            Assert.Contains("PERIOD FOR SYSTEM_TIME", create);
+            Assert.DoesNotContain("LEDGER", create);
+            Assert.Contains("IF OBJECT_ID(N'" + table + "', N'U') IS NULL", script);
+            Assert.Contains("ADD FILTER PREDICATE [security].[fn_HasCaller]([Id]) ON " + history, script);
+        }
+
+        // The configuration tables change only inside an activation, as 0002 says for the others.
+        Assert.Contains("ADD BLOCK PREDICATE [security].[fn_ConfigWriter]([Id]) ON [config].[DataDomain] AFTER INSERT", script);
+        Assert.DoesNotContain("[fn_ConfigWriter]([Id]) ON [ops].[DataUse]", script);
+
+        // The subject check: exactly one subject column holds a value and Subject Kind names it; empty means the application.
+        Assert.Contains("IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE [name] = N'CK_OwnerAssignment_OneSubject' AND [parent_object_id] = OBJECT_ID(N'[ops].[OwnerAssignment]'))", script);
+        Assert.Contains("ALTER TABLE [ops].[OwnerAssignment] WITH CHECK ADD CONSTRAINT [CK_OwnerAssignment_OneSubject] CHECK", script);
+        foreach (string member in new[] { "businessApplication", "subjectDataDomain", "subjectDataLocation" })
+        {
+            Assert.Contains("CASE WHEN NULLIF(JSON_VALUE([Columns], N'$." + member + "'), N'') COLLATE Latin1_General_BIN2 IS NULL THEN 0 ELSE 1 END", script);
+        }
+
+        Assert.Contains("(NULLIF(JSON_VALUE([Columns], N'$.subjectKind'), N'') COLLATE Latin1_General_BIN2 IS NULL AND NULLIF(JSON_VALUE([Columns], N'$.businessApplication'), N'') COLLATE Latin1_General_BIN2 IS NOT NULL)", script);
+        Assert.Contains("OR (NULLIF(JSON_VALUE([Columns], N'$.subjectKind'), N'') COLLATE Latin1_General_BIN2 = N'data-domain' AND NULLIF(JSON_VALUE([Columns], N'$.subjectDataDomain'), N'') COLLATE Latin1_General_BIN2 IS NOT NULL)", script);
+        Assert.DoesNotContain("[ops].[Decision] WITH CHECK ADD CONSTRAINT", script);
+
+        // The new history tables are denied to the app, as 0003 denies the others.
+        Assert.Contains("history_table_id", script);
+        Assert.Contains("ledger_view_id", script);
     }
 
     [Fact]
@@ -293,6 +460,25 @@ public sealed class SqlScriptTests
         Assert.Equal("workload", values["Entry"]);
         Assert.False(values.ContainsKey("Roles"));
         Assert.False(values.ContainsKey("OnBehalfOfId"));
+    }
+
+    // D-38: a person's answer through answer_approval names the record it answers, for that request only; every other
+    // context carries no such key, and a seed never does.
+    [Fact]
+    public void APersonsAnswerRequestNamesTheRecordItAnswers()
+    {
+        var person = new StoreCallContext("00000000-0000-4000-8000-000000000212", CallerEntry.Person, ActorKindMeaning.Person, "req-10", new[] { "application-owner" }, clientApp: "Web app", clientAppVerified: true);
+        Assert.DoesNotContain(SqlServerRowDatabase.SessionValues(person, "write"), v => v.Key == "AnsweredApprovalId");
+
+        StoreCallContext answering = person.WithAnsweredApproval("00000000-0000-4000-8000-000000000701");
+        var values = SqlServerRowDatabase.SessionValues(answering, "write").ToDictionary(v => v.Key, v => v.Value);
+        Assert.Equal("00000000-0000-4000-8000-000000000701", values["AnsweredApprovalId"]);
+        Assert.Equal("person", values["Entry"]);
+        Assert.Equal("person", values["ActorKind"]);
+        Assert.Equal("application-owner", values["Roles"]);
+        Assert.Equal("Web app", values["ClientApp"]);
+        Assert.DoesNotContain(SqlServerRowDatabase.SessionValues(answering, "seed"), v => v.Key == "AnsweredApprovalId");
+        Assert.Null(person.AnsweredApprovalId);
     }
 
     [Fact]

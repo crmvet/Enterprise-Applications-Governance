@@ -27,7 +27,7 @@
 7. **The gate ladder is one Gate Policy row per tier, change type and target stage.** The level (off, record, flag, advise, enforce) is engine contract; which level applies where is configuration.
 8. **The engine reads a compiled snapshot**, cached per process and checked against the active version number on every request. A configuration change takes effect on the next request, with no rebuild or redeploy.
 9. **Bindings:** on Dataverse, configuration tables plus JSON in multiline text columns, a seed shipped as read-only web resources and applied by the engine's own API. On Azure, a `config` schema with native `json` columns, a seed loaded by a migration and applied by the same engine code.
-10. **Seeded defaults people meet first:** every decision goes on a person's card, except the locked engine acceptance list (working default, open design question 8); the single most specific rule group applies (28, issue 2); the change manager authorizes tier 3 changes and emergencies, and the change board decides exceptions about a change (28, issue 4); one list of fourteen human roles plus two workload roles (28, issue 7); one list of every setting (section 3.6).
+10. **Seeded defaults people meet first:** every decision goes on a person's card, except the locked engine acceptance list (working default, open design question 8); the single most specific rule group applies (28, issue 2); the change manager authorizes tier 3 changes and emergencies, and the change board decides exceptions about a change (28, issue 4); one list of fifteen human roles plus two workload roles (28, issue 7; the data governance lead added by D-41, B21-11); one list of every setting (section 3.6).
 
 ---
 
@@ -497,7 +497,8 @@ This is the one list of C04 Setting rows (28, issue 15). Every row exists in eve
 | `reminder-channel` | key:list-value:channel | Teams | No | 21 | Where reminders go when a reminder rule names no channel |
 | `guideline-hub-base-url` | text | null until setup | No | 21 | The base URL of the public guideline hub. Null gives a warning until setup fills it |
 | `draft-expiry-days` | number | 30 | No | 21 | Days before an unsubmitted draft is discarded |
-| `configuration-review-days` | number | 180 (Regulated: 90) | No | 21 | Days between reviews of the whole configuration |
+| `configuration-review-days` | number | 180 (Regulated: 90) | No | 21 | Days between reviews of the whole configuration, counted from the day the version came into force (its Published On; wave 4b) |
+| `review-request-due-days` | number | 14 | No | 24 (wave 4b) | Days after the request that an architecture or security review a person asks for falls due, when they give no date |
 | `default-flag-notify` | json | business owner, technical owner, change manager | No | 21 | Who hears about a flag when the gate policy row names nobody |
 | `default-ai-only-code-approval-handling` | contract:ai-only-code-approval-handling | flag | No | 21 | What happens when the only code approval came from an AI and the gate policy row says nothing. It never counts as authorization (working default, open design question 7) |
 | `confirmation-channel` | json | AI client may submit intakes, changes and decisions for the person; registering an application and marking a gate-relevant document current need a confirmation card; links and deployment records need nothing | No | 23 | Which channel counts as a person's act for each kind of AI draft (working default, open design question 9) |
@@ -687,7 +688,7 @@ What all three share (the full rows are in the example, section 12):
 | Stages and gates | Stages 0 to 10; gates Accept, Commit, Design, Go-live, Value (document 20, C12 and C13) |
 | Decision types | The sixteen of document 20, C18, each with outcomes. Six need no approval rule (intake, priority, design, tier, ownership, portfolio); each still goes on one card to its accountable holder, except what the locked list allows (28, issue 1) |
 | Change management | Built in (D-08). Standard (needs a standard change model), normal, emergency (authorization may follow, post-change review due in 5 working days) |
-| People | Seven parties, eight owner roles, fourteen human roles including the AI lead (D-20), a security reviewer and a reader, plus two workload roles (deployment recorder, approval writer) held only through workload grants (28, issue 7) |
+| People | Seven parties, nine owner roles (the data steward added by D-37), fifteen human roles including the AI lead (D-20), a security reviewer, a reader and the data governance lead (D-41), plus two workload roles (deployment recorder, approval writer) held only through workload grants (28, issue 7) |
 | Decision rights | One accountable per decision type and scope, shaped on Microsoft's adoption RACI (https://learn.microsoft.com/power-platform/guidance/adoption/roles) and agent CoE RACI [T1], with "supports" rows for AI drafting. The configuration admin is the one accountable for both configuration decision types; the change manager (gate policy), the AI lead (AI rules) and the platform admin (roles and bindings) are consulted (28, issue 6) |
 | Approval rules | Business owner by default; the change manager at tier 3 and for emergencies, with its own group for a tier 3 emergency; the change board for exceptions about a change; business owner then security reviewer for tier 3 go-live; a configuration admin for configuration changes and for gate policy changes, with the change manager consulted on gate policy changes through a consultation card that never counts (28, issues 2, 4 and 6; Q11) |
 | Separation | Balanced: nobody approves their own proposal at tier 3 (refuse); the deployer is not the only approver of a production change (flag). Starter and Regulated change the first rule (below) |
@@ -1752,7 +1753,7 @@ Proposed additions. The glossary owner adds them; this document uses them meanwh
 
 - **Child keys:** for C07 List Value, C10 Tier Answer Option and C19 Decision Outcome, the key is unique within the parent, not across the entity (document 20, section 2.3 says per entity). Without this, common values such as `other`, `accept` or `low` would need artificial prefixes. Alternate key: Key plus parent plus Configuration Set.
 - **Settings:** section 3.6 is the one list (28, issue 15). Added by this document: `engine-acceptable-decision-types`, `draft-expiry-days`, `configuration-review-days`, `default-flag-notify`, `default-ai-only-code-approval-handling`. Listed from other documents: `confirmation-channel`, `unlinked-deployment-change-type` (23); `intake-visibility`, `claim-visibility` (22); `record-access-mode`, `agent-read-access`, `principal-refresh-days`, `forbidden-url-patterns`, `audit-retention-days`, `link-undo-minutes`, `workload-grant-max-days` (26); `impact-max-depth`, `mcp-page-size-max` (24); `engine-read-cache-seconds`, `working-days` (25). `history-retention-days` (22) is merged into `audit-retention-days`.
-- **Roles:** one seed list, agreed with document 26 (28, issue 7): fourteen human roles (`requester`, `maker`, `application-owner`, `data-owner`, `architect`, `change-manager`, `change-board`, `pmo`, `ai-lead`, `security-reviewer`, `platform-admin`, `configuration-admin`, `auditor`, `reader`) and two workload roles (`deployment-recorder`, `approval-writer`).
+- **Roles:** one seed list, agreed with document 26 (28, issue 7): fifteen human roles (`requester`, `maker`, `application-owner`, `data-owner`, `architect`, `change-manager`, `change-board`, `pmo`, `ai-lead`, `security-reviewer`, `platform-admin`, `configuration-admin`, `auditor`, `reader`, and `data-governance-lead`, added by D-41, B21-11) and two workload roles (`deployment-recorder`, `approval-writer`).
 - **Seed rows beyond document 20's defaults:** roles `security-reviewer` and `reader`, workload role `approval-writer` (default preset; 28, issue 7); review type `security-review` (default preset); the board's exception rows on decision type `exception`, one per shipped change type (28, issue 4); consulted decision rights for the AI lead and the platform admin on configuration changes, and a supports row for gate policy changes (28, issue 6); for the Microsoft CoE baseline only: role `coe-lead`, owner roles `domain-validator` and `product-owner`, review types `release-review`, `quality-review`, `maturity-review`, `responsible-ai-assessment`, document types `monitoring-plan`, `release-checklist`, `quality-monitoring-plan`, `sla-monitoring-plan`, `incident-response-plan`, vocabulary list value `agent-coe-role`.
 
 ---
@@ -1967,3 +1968,102 @@ Live configuration rows carry the bundle's field names (for example `roleKey`, `
 
 - **Two more workload roles** in the role seed, `authorization-reporter` and `consistency-checker`, marked as proposals (document 26, B26-1). Section 6.3's "two workload roles" would become four. Both rest on open design question 12.
 - **The `estate` list** in the Balanced example (section 12) holds only `power-platform-inventory`, while documents 23 and 24 record the owner check under the estate `entra-owners`. Whether to add it is an open design question (open from the build, item 3, in [28-working-defaults.md](28-working-defaults.md), section 4).
+
+### B21-9 Balanced aligned with the process documents (built 2026-11-24, D-41)
+
+This build aligns the Balanced preset with the process documents (P01 to P11, [processes](../../architecture/processes/README.md)). The author's AI sessions decided each detail under D-41, kept self-approval as Balanced has it (D-40), and kept the wave 1 proposal right (a holder of R, A or C may propose). All 22 shipped selections pass OP-09 in preset build, draft and activation mode, with no new warning. The rows, by file:
+
+| File | Change | Source | Why this way |
+|---|---|---|---|
+| `decision-type.json` | `tier` and `ownership` now require approval | P02, P08 | V20 lets a type without Requires Approval hold consultations only, and both processes need counting rules. Four types keep one card to the accountable holder: intake, priority, design and portfolio |
+| `approval-rule.json` | `tier-platform-admin` (first to respond); at tier 3 the group `tier-tier-3-platform-admin` and `tier-tier-3-security` (everyone must approve, the security reviewer with a typed reason) | P02 approvals table | The tier 3 group replaces the broader one (section 10.3), so it repeats the platform admin. The engine scopes a tier decision by the tier at stake (document 25, B25-14), so raising an application to tier 3 takes the tier 3 rules |
+| `approval-rule.json` | Data use at tier 3: `data-use-tier-3-data-owner` and `data-use-tier-3-security`, everyone must approve, typed reasons | P02, "restricted data reaching an AI model" | Approval rules have no data scope. Restricted data is a tier 3 answer, so tier 3 is the closest scope configuration can name today; the security reviewer is also asked on a tier 3 data use that sends no data to AI. data-taxonomy.md (D-37, D-41) replaces this with a scope by classification and AI use |
+| `approval-rule.json` | Ownership: `ownership-proposed-owners` (each proposed owner by name) and `ownership-business-owner` with the sponsor as fallback, everyone must approve | P08 approvals table, P01 step 7 | Two new C32 fields, below. Nobody becomes an owner without their own yes, and the business owner, or the sponsor when the business owner role changes hands, carries the check |
+| `approval-rule.json` | Consultations: the architect, the PMO and the security reviewer on intake; the AI lead on autonomy level | P01 step 5, P02 | The gap map's check: the consulted letter is never read, so consultation cards come only from consultation rules. Intake keeps no counting rule, so the lowest-tier intake stays on the locked list (P01 step 6) and every other intake goes to the platform admin on the accountable card. Decision rights hold no typed reason field, so the typed reason P01 names for triage is not asked yet |
+| `approval-rule.json` | `retirement-approval` is first to respond | P09 approvals table | One business owner holds the role (Maximum Holders 1), so the mode changes the wording, not the count |
+| `decision-type.json`, `approval-rule.json`, `decision-right.json` | New type `flagged-agent` (keep, reassign, consolidate, retire): the AI lead decides, first to respond, with a typed reason (guideline G17); the platform admin does the work, the business owner is consulted, AI drafts the options | P06 step 9, P08 step 7 | Its retire outcome records the business decision only and moves no stage: the removal itself runs as P09 |
+| `decision-type.json` | Data use gains `retain`; retirement's outcomes are `complete` (to the retired stage) and `keep`. The old `retire` outcome of retirement is gone | P09 steps 3 and 7 | P09 starts with a portfolio decision whose outcome is retire, and ends with a retirement decision whose outcome is complete |
+| `decision-right.json` | `tier-r` (builder, responsible), `ownership-r` (platform admin, responsible); `priority-a` names the business owner as the fallback of the sponsor | P02, P08, P01 step 8 | The builder does the tier work and the platform admin the hand-over, so both may propose. A request for a new application has no sponsor yet, so its priority card asks the business owner the intake names, by name |
+| `gate-requirement.json` | `go-live-data-owner-tier-2` and `go-live-data-owner-tier-3`: a data owner is named (G2) | Gap map decision 5, option B; G2 | Go-live, not Design: the data owner must exist before the application goes live, and the Design gate stays as B23-10 left it. Owner gaps follow the row's tier, so a tier 1 application with no data owner has no gap (document 24, B24-12). data-taxonomy.md later replaces these rows with "data uses declared and decided" |
+| `tier-question.json` | Own identity, restricted data, organization or outside reach, and an agent that executes each trigger the `architecture` review | P04 triggers | The triggers are reported by `answer_tier_questions` and `get_tier_assessment`. Nothing opens the review from them yet: that belongs to the S2 refresh or a tool change |
+| `standard-change-model.json` | One model, `routine-maintenance`: one application, a window of four hours or less, tier 2 at most | P03, the gap map's check (six pre-authorized standard changes and no model) | Approved By Decision is a working set field (class W, V44), so the shipped model counts only once a person in the install approves it through a configuration change. Activation names the accepted configuration change decision as the Approved By Decision of every model the draft upserts without one (document 25, B25-14). Until then OP-12 names the model and says it has no approving decision. Tier 3 changes stay with the change manager |
+
+**Two new fields** (C32 Approval Rule and C31 Decision Right; logical model, config schema, and the V10 and V27 checks):
+
+- **C32 Approver Proposed Owners** (yes or no). Exactly one of Approver Owner Role, Approver Role and Approver Proposed Owners (V10). The rule asks each person the decision's Proposed Changes Json names as a new owner (the successor and any new deputy), one record each, by name; a decision that names nobody new skips it. A group of a type that requires approval needs another counting rule beside it (V27, and OP-02 at run time), because the rule can drop out.
+- **C32 and C31 Fallback Owner Role.** Only beside an owner role, and another owner role (V10). When the subject has no current holder of the owner role, or the decision hands that role over (ends its main holder or starts a new one), the request asks the fallback owner role's holders, then the nearest portfolio's Accountable Principal by name. When nobody is found that way, the owner role's own holders are asked after all. Balanced uses it twice: the business owner's ownership card falls back to the sponsor (P08, "the sponsor when the business owner is leaving"), and the sponsor's priority card falls back to the business owner.
+
+**Decided and why:**
+
+- **D-40 holds.** The separation rows are unchanged. Because tier and ownership now require approval, `no-self-approval-tier-3` now also covers them at tier 3, as it covers every type that requires approval (C40). The processes name who does the work (the builder for a tier, the deputy or the platform admin for a hand-over), so the person who decides is not the proposer on the designed path. A proposed owner's own yes is consent, not a check, so no separation rule applies to it (document 25, B25-14).
+- **The claim's ownership decision** (P06 step 6) keeps its card with the business owner: P06 names a confirmation card to the technical owner for an attachment, which is the P10 confirmation path, not an approval rule.
+- **A standard change now works end to end:** once a person approves the model (a configuration change, whose activation names its decision), a submitted change that fits it is accepted by the engine with no card (document 25, B25-14).
+- **Not built:** a sensitivity scope for approval rules (data-taxonomy.md); opening the triggered review.
+
+### B21-10 Gate decisions move the stage; US spelling (built 2026-11-24, D-41)
+
+- **Next Lifecycle Stage on the gate decisions before go-live.** Balanced's intake `accept` moves the application to Prioritize and fund, priority `fund` to Design and architecture review, and design `approve` to Build, as document 23 says (P01 steps 7 and 9, P02). Reason: Application 360 showed the Design and Commit gates as "Ready" after their decisions were accepted, because the stage never moved. A stage only moves forward (document 25, B25-15).
+- **"Canceled".** The status and value list labels use US spelling, as the web app does.
+- The replay records take the new Balanced hash.
+
+### B21-11 The data taxonomy, slice 1 (built 2026-11-24, D-37 and D-41)
+
+The [data taxonomy](../../architecture/data-taxonomy.md) (settled by D-41) is configuration where it is words: classifications,
+domain levels, the domain tree and the vendor platforms. People and the estate stay records (D-41, questions 1 and 2).
+Slice 1 adds the four entities, their seed rows and the setting. The choices follow D-41.
+
+**New entities (seed fields).**
+
+| Entity | Fields |
+|---|---|
+| C47 Data Classification | `rank` (R, unique among active rows), `impliedTierQuestionKey` (O), `impliedAnswerKey` (O, an answer option of that question), `defaultUseRule`, `defaultAiUseRule`, `defaultCopyToTestRule` (R, data handling rules) |
+| C48 Data Domain Level | `rank` (R, unique among active rows, 1 is the top), `ownerRequired` (O), `declarable` (O, default yes) |
+| C49 Data Domain | `parentKey` (O, no cycles), `levelKey` (R), `classificationKey` (R at the top, else inherit), `useRule`, `aiUseRule`, `copyToTestRule` (O, stricter only), `retentionClassKey` (O), `examples` (O, 500 characters, untrusted). Flat rows with a parent key: nested rows go one level deep (V03) |
+| C50 Data Platform | `locationKindKey`, `vendorKey` (R, list values), `instanceLabel`, `storeLabel` (O), `containerLabel` (R), `defaultLinkKindKey` (R, category data location), `idPattern`, `urlPattern` (O, V40), `estateKey` (O, later) |
+
+**New fields of existing entities.** C28 `subjectKinds` (business-application, data-domain, data-location; absent means
+business-application) and `inheritsDown`; C34 `isProduction`. The link category list gains `data-location`, so V17
+asks for one link kind of it. The bundle schema takes the C31 and C32 scope fields (subject kind, classification, AI use,
+domain level, data taxonomy change, owner subject) in slice 2, with the engine that reads them.
+
+**Lists.** New: `location-kind` (10 values), `data-vendor` (8), `retention-class` (keep 1, 3, 7 or 10 years),
+`access-approach` (as the signed-in person, as the application's identity, read-only for the person). `vocabulary` gains
+`purview-sensitivity-label`, `fabric-domain` and `purview-governance-domain`; `tool` gains `fabric`.
+
+**Settings** (V38 requires both). `data-taxonomy-mode` (`contract:data-taxonomy-mode`: off, domains-optional,
+domains-required; Balanced domains-optional, Regulated domains-required) and `data-location-stale-days` (180).
+
+**Measure settings** (wave 4, document 24, B24-22; V38 requires both). `measure-targets` (json: the target per measure
+key of playbook chapter 19; Balanced `{}`, since a target is agreed after the baseline) and `signal-thresholds` (json:
+the numbers of the slide-back signals of chapter 17 that take one; Balanced the playbook's 20% emergency share and 10
+points standard share drop, 30 days for the gap check, 20% of documents slipping). V38 refuses a key that is not a
+measure or a signal, and a number a signal does not take. The demo configuration patch sets the demo sponsor's targets.
+`forbidden-url-patterns` gains four connection string markers, written as regular expressions with optional spaces.
+
+**Balanced rows.** Four classifications (public, General, Confidential, Highly Confidential, with the rules that
+[Classifications](../../architecture/data-taxonomy.md#classifications) on the data taxonomy page gives), three levels (domain needs its own owner; subdomain and data set inherit), twenty platforms,
+five data location link kinds, four label mappings (C11, vocabulary purview-sensitivity-label), the owner role
+`data-steward` and the role `data-governance-lead`. The data owner is held on applications and domains and inherits down;
+the technical owner on applications and locations. Balanced holds no domains: the tree is the client's own.
+
+**The other presets.** Starter retires `confidential` and the data set level and allows AI use of internal data.
+Regulated sets `domains-required`, makes the top level not declarable and every subdomain need its own owner. The CoE
+baseline maps the domain level to the Purview governance domain type Functional unit and the subdomain level to Data
+domain. The new overlay `data-domains-starter` holds 6 domains and 15 subdomains to rename, with no owners, using only
+the keys every full preset has. It conflicts with nothing, so the build checks 44 selections (22 before): each full
+preset alone, 11 overlay sets for Balanced, Starter and the CoE baseline, and 7 for Regulated. All pass with no error.
+
+**Waiting for slice 2.** The C31 and C32 rows of the data
+[approval rules](../../architecture/data-taxonomy.md#approval-rules), the decision type `data-retention`, the data
+[gate requirements](../../architecture/data-taxonomy.md#gate-requirements), Starter's platform-admin appointing of top-level owners and Regulated's two approval
+rows. Each needs a scope field or requirement kind OP-02 or OP-07 does not read yet; shipped earlier, a row would tie
+with the group it narrows (V26) or route to the wrong person. V49 to V60 come with them.
+
+**Wave 4b (2026-11-25, D-41).** A new setting, `review-request-due-days` (number; Balanced 14, which Starter, Regulated
+and the CoE baseline inherit; V38 requires it): the due date `request_architecture_review` and `request_security_review`
+give a review the person asks for with no date. Reason: the tools defaulted to the person's own day, so a review asked
+today was due today, and no lead time was configured; 14 days is the cadence of a review board that meets every two
+weeks. Fixtures: `op-09/v38-review-request-due-days-valid` and `op-09/v38-review-request-due-days-not-a-number`.
+The seed now writes Published On (the seed moment) on version 1's Configuration Set Version row, so "in force since" and
+the date `configuration-review-days` gives stay the same across calls; a store seeded before reads the oldest audit
+entry's moment instead (document 24, B24-23, item 3). A row value: the schema stays at version 8.

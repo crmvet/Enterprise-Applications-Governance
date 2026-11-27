@@ -1,0 +1,28 @@
+{
+  "$comment": [
+    "Data domains starter overlay (data taxonomy, D-37, settled by D-41; docs/architecture/data-taxonomy.md). The operations are in patch.json.",
+    "A generic business data domain tree to rename: six domains and fifteen subdomains, with no owners and no tenant facts (V44, V60). Owners are records, never configuration (D-41, question 1): they are appointed through ownership decisions once the tree is in place.",
+    "It applies to any full preset. It uses only the level keys (domain, subdomain) and classification keys (internal, restricted) that every full preset has, so it validates on Starter's three classifications and two levels as well as on Balanced's."
+  ],
+  "schemaVersion": "1.0",
+  "presetKey": "data-domains-starter",
+  "label": "Data domains starter",
+  "description": "A generic tree of business data domains to rename and extend: Customers, Commercial, People, Operations, Finance and Workplace, each with a few subdomains.",
+  "presetKind": "overlay",
+  "extends": null,
+  "conflictsWith": [],
+  "areas": ["data"],
+  "productRelease": "0.1.0",
+  "contentVersion": "1.0.0",
+  "setupNotes": [
+    {
+      "text": "Rename the domains to the words your business uses, and add, move or retire them through a configuration change. Keys never change, so a rename keeps every mapping and data use."
+    },
+    {
+      "text": "Appoint a data owner and a deputy for each top-level domain through an ownership decision. A subdomain with no owner of its own takes the owner of the domain above it."
+    },
+    {
+      "text": "Check each classification against your Purview sensitivity labels. A subdomain may be classified higher than its domain, never lower without a warning."
+    }
+  ]
+}

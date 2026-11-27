@@ -4,7 +4,8 @@
     "Every gate value is a preset value, not a decision: the change gate (D-03) is still open.",
     "An upsert merges fields and cannot clear one. gp-prod-tier-3 carries a fail mode, which belongs only at enforce (V24), so it is retired and gp-prod-tier-3-flag replaces it.",
     "Emergency rows already match Starter: record in test (gp-emergency-test) and flag in production with the emergency rule (gp-emergency-prod-tier-1 to gp-emergency-prod-tier-3).",
-    "Self-approval at tier 3 needs an accepted exception decision (document 28, Q10). An exception about an application goes to the architect and an exception about a change to the change board, as in Balanced."
+    "Self-approval at tier 3 needs an accepted exception decision (document 28, Q10). An exception about an application goes to the architect and an exception about a change to the change board, as in Balanced.",
+    "Data taxonomy (D-37; docs/architecture/data-taxonomy.md): Starter has three classifications (public, internal and restricted) and two levels (domain and subdomain), so confidential and data-set are retired, with the label mapping of confidential. AI use of internal data is allowed without a decision. The platform admin appoints the owners of top-level domains in Starter (D-41, question 4), in place of the data governance lead (data taxonomy slice 2)."
   ],
   "schemaVersion": "1.0",
   "manifest": {
@@ -49,6 +50,44 @@
         "enforcement": "exception-decision",
         "exceptionDecisionTypeKey": "exception"
       }
+    },
+    {
+      "op": "retire",
+      "entity": "data-classification",
+      "key": "confidential"
+    },
+    {
+      "op": "retire",
+      "entity": "vocabulary-mapping",
+      "key": "confidential-sensitivity-label"
+    },
+    {
+      "op": "upsert",
+      "entity": "data-classification",
+      "key": "internal",
+      "values": { "defaultAiUseRule": "allowed" }
+    },
+    {
+      "op": "retire",
+      "entity": "data-domain-level",
+      "key": "data-set"
+    },
+    {
+      "op": "upsert",
+      "entity": "decision-right",
+      "key": "ownership-top-domain-a",
+      "values": { "label": "Top-level domain owner: the platform admin appoints", "roleKey": "platform-admin" }
+    },
+    {
+      "op": "retire",
+      "entity": "decision-right",
+      "key": "ownership-top-domain-r"
+    },
+    {
+      "op": "upsert",
+      "entity": "approval-rule",
+      "key": "ownership-top-domain-lead",
+      "values": { "label": "Top-level domain owner: the platform admin approves", "approverRoleKey": "platform-admin" }
     }
   ]
 }

@@ -64,6 +64,55 @@
               "type": "null"
             }
           ]
+        },
+        "dataOwners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "domain",
+              "principal",
+              "inheritedFrom",
+              "dataUseIds"
+            ],
+            "properties": {
+              "domain": {
+                "$ref": "../common.schema.json#/$defs/dataDomainRef"
+              },
+              "principal": {
+                "description": "The domain's effective data owner. Null when nobody owns the domain or a domain above it.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "inheritedFrom": {
+                "description": "The domain above whose owner answers.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dataUseIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O27 Data Use"
+                },
+                "description": "The application's open uses of the domain."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The application's data owners, derived from its open data uses: the effective data owner of each domain it uses (docs/architecture/data-taxonomy.md, Roles on data)."
         }
       },
       "additionalProperties": false

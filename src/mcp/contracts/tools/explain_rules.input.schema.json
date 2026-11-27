@@ -15,18 +15,28 @@
         "change-request",
         "intake-request",
         "deployment-record",
-        "business-application"
+        "business-application",
+        "data-use",
+        "data-mapping",
+        "data-domain"
       ],
       "description": "The kind of record."
     },
     "subjectId": {
-      "$ref": "../common.schema.json#/$defs/id",
-      "description": "The ID of the record."
+      "description": "The ID of the record, or the domain key for a data domain.",
+      "anyOf": [
+        {
+          "$ref": "../common.schema.json#/$defs/id"
+        },
+        {
+          "$ref": "../common.schema.json#/$defs/key"
+        }
+      ]
     },
     "aspects": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 5,
+      "maxItems": 6,
       "uniqueItems": true,
       "items": {
         "enum": [
@@ -34,7 +44,8 @@
           "gate",
           "flags",
           "requirements",
-          "separation"
+          "separation",
+          "data"
         ]
       },
       "description": "Only these aspects. Leave out for all."

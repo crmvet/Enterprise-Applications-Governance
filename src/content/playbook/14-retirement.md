@@ -21,7 +21,7 @@
 
 ## How it works
 
-1. **Decide.** The portfolio review, an owner's request, a replacement going live, or a part that vanished can start it. The PMO prepares the facts; the business owner decides on an approval card.
+1. **Decide.** The portfolio review, an owner's request, a replacement going live, or a part that vanished can start it. The PMO prepares the facts; the business owner decides on the decision page.
 2. **Check impact.** Walk the dependency map in both directions. Tell the owners of dependants. A dependant that needs a replacement gets its own change or intake.
 3. **Settle the data.** The data owner decides retention, and links where the data went.
 4. **Schedule the removal.** A change carries the window and the targets. Its authorization follows the tier (chapter 9).
@@ -74,7 +74,7 @@
 
 - AI makes apps cheap to start and easy to abandon. Retirement has to keep pace, or the register fills with apps nobody uses or owns.
 - The AI client lists what depends on the app and what is left of it: identities, connections, sharing and secrets. As people remove each part, it links the evidence.
-- The business owner still decides, on a card. The admin's gap check proves that nothing remains.
+- The business owner still decides, on the decision page. The admin's gap check proves that nothing remains.
 
 ## Old paradigm to avoid
 

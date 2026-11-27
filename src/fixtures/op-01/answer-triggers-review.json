@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "OP-01",
   "case": "answer-triggers-review",
-  "description": "An agent that executes on its own is tier 3, and the answer adds the security review through its Triggers Json.",
+  "description": "An agent that executes on its own is tier 3, and the answer adds the security review and the architecture review through its Triggers Json.",
   "snapshot": {
     "presetKey": "balanced"
   },
@@ -45,6 +45,7 @@
       ],
       "missingQuestionKeys": [],
       "triggeredReviewTypeKeys": [
+        "architecture",
         "security-review"
       ],
       "triggeredGateRequirementKeys": [],

@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_guidelines output",
+  "description": "The response envelope. On success, data lists the guidelines, the playbook chapters and tracks, the builder paths and the sanctioned clients.",
+  "x-tool": "list_guidelines",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "hubBaseUrl",
+        "guidelines",
+        "chapters",
+        "tracks",
+        "buildPaths",
+        "knownClients"
+      ],
+      "properties": {
+        "hubBaseUrl": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "guidelines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/guideline"
+          }
+        },
+        "chapters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "number",
+              "title",
+              "track",
+              "guidelineNumbers",
+              "url"
+            ],
+            "properties": {
+              "number": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "title": {
+                "type": "string"
+              },
+              "track": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "guidelineNumbers": {
+                "type": "array",
+                "items": {
+                  "$ref": "../common.schema.json#/$defs/guidelineNumber"
+                }
+              },
+              "url": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/url"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "track",
+              "chapters"
+            ],
+            "properties": {
+              "track": {
+                "type": "string"
+              },
+              "chapters": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "buildPaths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label",
+              "description"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "knownClients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label",
+              "isAiClient",
+              "isAllowed"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "label": {
+                "type": "string"
+              },
+              "isAiClient": {
+                "type": "boolean"
+              },
+              "isAllowed": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "guideline": {
+      "type": "object",
+      "required": [
+        "key",
+        "number",
+        "version",
+        "title",
+        "rule",
+        "homeChapter",
+        "chapters",
+        "isActive",
+        "isAdopted",
+        "notAdoptedReason",
+        "localText",
+        "localUrl",
+        "hubUrl",
+        "url",
+        "supersedes",
+        "usedBy"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "../common.schema.json#/$defs/key"
+        },
+        "number": {
+          "$ref": "../common.schema.json#/$defs/guidelineNumber"
+        },
+        "version": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "homeChapter": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "chapters": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "The playbook chapters that apply it."
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "isAdopted": {
+          "type": "boolean"
+        },
+        "notAdoptedReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "localText": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "localUrl": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hubUrl": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usedBy": {
+          "type": "object",
+          "required": [
+            "approvalRules",
+            "gateRequirements",
+            "columnProtections",
+            "refusalCodePrefixes"
+          ],
+          "properties": {
+            "approvalRules": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "gateRequirements": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "columnProtections": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "refusalCodePrefixes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The engine reason codes whose refusals carry this guideline."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

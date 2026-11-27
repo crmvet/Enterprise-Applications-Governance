@@ -524,7 +524,7 @@ The heart of D-10: every write, from any caller, passes through this rule set.
 | G-05 | A decision with a final status meaning (accepted, rejected, superseded, withdrawn) never changes. "Superseded" is derived from the later decision, not a stored status change; on Dataverse the engine may set only Superseded By on the frozen row (document 22, section 8.1) | `decision.final` |
 | G-06 | Approval Record Outcome, Responded On and Typed Reason are written only by the approval runner (actor kind approval runner), which holds the approval writer workload role, and only once. Column security on Dataverse, and the API's role check on Azure, also lets only the approval writer write these columns (working default, 28 issue 7 and Q15) | `approval.outcome-writer` |
 | G-07 | Audit Entry rows are never updated or deleted; a Configuration Set Version never changes once created | `audit.append-only`, `config.version-immutable` |
-| G-08 | An AI actor (AI client for a person, agent identity) cannot set a status mapped to accepted, registered, approved or completed. Rows it creates are forced to draft or proposed, and Is AI Created is set | `ai.status-not-allowed` |
+| G-08 | An AI actor (AI client for a person, agent identity) cannot set a status mapped to accepted, registered, approved or completed, nor a review's done (B25-12). Rows it creates are forced to draft or proposed, and Is AI Created is set | `ai.status-not-allowed` |
 | G-09 | Engine-owned columns (new term) take only engine values. Caller values are replaced and an info reason is returned | `engine.column-overwritten` |
 | G-10 | A status written must be a C05 row for that entity | `status.unknown` |
 | G-11 | A link written must use a C37 link kind of the entity's link category, and its URL must match the kind's Url Pattern when one is set | `link.wrong-category`, `link.url-pattern` |
@@ -1381,7 +1381,7 @@ Each stays open. They are listed, with their context and the recommended option,
 
 ### B25-1 Reason codes the catalog marks proposed
 
-The build's catalog holds 57 codes that this document does not name yet. Each is used with the severity and category shown. They join the published catalog (section 7) if accepted.
+The build's catalog holds 58 codes that this document does not name yet. Each is used with the severity and category shown. They join the published catalog (section 7) if accepted.
 
 | Code | Operation | Severity | Category | Plain sentence |
 |---|---|---|---|---|
@@ -1410,6 +1410,9 @@ The build's catalog holds 57 codes that this document does not name yet. Each is
 | `record.delete-not-allowed` | OP-08 | error | refused (rule) | This row is never deleted, so withdraw, cancel, archive or end it instead. |
 | `record.append-only` | OP-08 | error | refused (rule) | This row is written once and never changes, so add a new row instead. |
 | `record.final` | OP-08 | error | refused (rule) | This row reached its final state, so it never changes again, and a new or correcting row is added instead. |
+| `subject.change-skipped` | OP-08 | warning | outcome | A change the decision proposed no longer applies to its subject, so the engine skipped it (B25-8). |
+| `review.done-incomplete` | OP-08 | error | refused (rule) | A review is done only with its Done On, Reviewer and Outcome Decision (B25-12). |
+| `review.outcome-not-accepted` | OP-08 | error | refused (rule) | A review is done only once its outcome decision, of the type its review type records and about its application, is accepted (B25-12). |
 | `actor.agent-write-refused` | OP-08 | error | refused (role) | An agent identity or agent user may not write, so a person must make this change. |
 | `link.forbidden-url` | OP-08 | error | refused (rule) | The URL carries a part that may hold a secret, such as a signature or a token. |
 | `principal.erasure-not-allowed` | OP-08 | error | refused (role) | Only a person holding the platform admin role can erase a principal. (working default, open design question 1; see 28-working-defaults.md) |
@@ -1469,7 +1472,7 @@ Each point refuses more, or writes less, than a literal reading of section 5.10.
 - **G-15, G-16, G-17.** The Request Hash covers entity, operation, row, after and nested effect, not the pre-image or the context, so a retry from another moment is the same request. On a C46 draft the caller writes only Change Json and Proposal Rationale; the engine's draft operations are engine-nested writes with no effect that still need the person's configuration role. The bootstrap basis passes only for a nested create of the activate-configuration effect, while no version exists, for the decision type `configuration-change` (a fixed key, open design question 1; see 28-working-defaults.md).
 - **Links.** `forbidden-url-patterns` is matched ignoring case, so it refuses more, never less; a link kind's Url Pattern is matched as written. Patterns run with a one-second timeout; a timeout or a pattern that does not compile is a broken configuration (unavailable).
 - **Smaller rules.** A new application starts at the first active lifecycle stage by Stage Rank, with Stage Since, set by the engine. C43 Column Protection Rule rows add protection and never remove it. Erasure is performed by a person, never an AI client (open design question 9; see 28-working-defaults.md), holding the active `platform-admin` role (a fixed key, open design question 1; see 28-working-defaults.md); the object ID is replaced only when the adapter passes a tombstone, because the core makes no random values.
-- **Open points.** No design says which subject columns an accepted decision sets beyond the tier example, so the update-subject effect is guarded (G-13) but not planned. Erasure has no decision type, tool, custom API or endpoint. Seed staging (document 21, section 4.1) needs an effect kind of its own, because G-02 refuses every preset row write.
+- **Open points.** The update-subject effect is now planned and built (B25-8, 2026-11-24). Erasure has no decision type, tool, custom API or endpoint. Seed staging (document 21, section 4.1) needs an effect kind of its own, because G-02 refuses every preset row write.
 
 ### B25-4 Operation inputs and outputs
 
@@ -1511,3 +1514,471 @@ Sections 9 and 10 keep their text.
 - **The replay record** (section 9) is a new schema, not a fixture. It holds the snapshot version (a preset selection with inline operations, or a bundle), the context (with no version or hash, because those come from the loaded snapshot), the request as one wire input (input and fetched facts, as an adapter would store it) and the recorded result in the form of section 5.1 (for OP-08, the write plan). Proposal: section 9 names this format.
 - **Difference kinds.** The replay reports `snapshot-hash`, `configuration-version`, `engine-version`, `outcome`, `payload` (by JSON pointer), `reasons` (as a set) and `trace` (row by row). A different hash, version or engine version is reported and the answer is still compared, so an auditor sees both what was loaded and what changed. By default a reworded message is a difference; an option ignores messages, because labels may be translated later. OP-09 is not replayed: validation recomputes its report from the same configuration.
 - **The engine command line** may reference the testing assembly, because it is a tool that runs fixtures and replays, not a host. A dependency test names it as the only exception besides test projects, and the in-memory store now lives in the testing assembly.
+
+### B25-8 The update-subject effect (built 2026-11-24, D-41)
+
+Section 5.10 names the update-subject effect and gives one example: an accepted tier decision writes Tier and Tier Decision. B25-3 left the rest open. Under D-41 the build decided the rest, wrote it here, and built it. Nothing below lets an AI client, a pipeline or the approval runner change a subject by itself. Every write is an engine-nested write of the update-subject effect, planned by OP-08 when it accepts a decision (G-17) and guarded again by OP-08 like any other write (G-13, the effect-only columns, RA-04).
+
+- **When.** In the same transaction as the acceptance, after the decision's own effects (its Audit Entry, an activation, a supersede), on every path that accepts: the approval runner's answer, a person's answer on the decision page (`answer_approval`, D-38), and the engine's acceptance for the locked list. Each write restamps the row as performed by the engine, with the caller as On Behalf Of (B25-6), and names the decision as its basis in the subject's own decision column: Tier Decision, Stage Decision, Autonomy Decision, Ownership Decision, Triage Decision or Authorization Decision. One Audit Entry, operation `subject-updated`, names the decision and lists every row written.
+- **A rejected or withdrawn decision changes nothing but itself.** The same holds for an accepted decision with no outcome, and for the decision types and outcomes that change nothing on the subject (data use, risk acceptance, design, exception, acceptance, priority, portfolio).
+- **Any outcome's C19 Next Lifecycle Stage** moves the application there (document 21, C19: "the stage an accepted decision with this outcome moves the application to"). Balanced: go-live `go` to operate, retirement `complete` to retire (`retire` until document 21, B21-9). A stage whose meaning is retired also cancels the application's reviews that are still due (document 23, P09 step 7). Archiving the registration on retirement "when configured" waits for a setting; none exists.
+- **Intake** (document 23, P01 step 7). `accept` registers the application. A linked draft becomes registered, or a new application is created, registered, from the request (Title as Name, Need as Purpose, Proposed Kind as Application Kind, Uses AI), and the request names it. Its stage is the outcome's Next Lifecycle Stage, or else the first active stage after the Accept gate's After Stage (Balanced: prioritize and fund), because accepting the intake passes that gate. A linked application only moves forward. The request is then completed. `redirect` completes the request (the reuse answers it). `decline` rejects it. `park` keeps it open. Each names the decision as the request's Triage Decision. A request that is no longer open (withdrawn, cancelled, completed or rejected) does not change.
+- **Change authorization** (document 23, P03 step 4). `authorize` moves the change request to the meaning in progress, which Balanced labels Scheduled. `reject` moves it to rejected. **Choice:** no authorized status is added. The record status meanings are a fixed contract list (document 22, O07 and O11), and in progress already reads as authorized and scheduled. The authorization itself stays readable as the decision's state: `get_change_request` returns `authorization.status`, and `get_change_schedule` returns `authorized` and, new, `authorizationStatus`. A change whose authorization the approvers rejected therefore reads rejected in both, while its own status stays submitted, by the rule above.
+- **Tier** (document 23, P02 step 6). The tier the decision names in Proposed Changes Json (`tierKey`), or, for `confirm`, the tier the subject's latest assessment computed. The assessment takes the decision as its Tier Decision and is then final (document 22, O08). A raise or lower with no tier named changes nothing and says so.
+- **Autonomy level** (document 23, P02 step 8). `agree` stores the level named in Proposed Changes Json (`autonomyLevelKey`, a value of the `autonomy-level` list) as Agreed Autonomy Level.
+- **Ownership** (document 23, P08 steps 4 and 5). Each change in Proposed Changes Json (`owners`, the items of `propose_owner_change`) ends the assignment it names and starts the new holder, on the change's Start On when that is later than today, else today. A deputy covers the new main holder of its role in the same decision, or the current one. The deputies of an ended holder move to the successor. A role with Maximum Holders keeps that many main holders: when a new holder starts and nobody is ended, the earliest current holders end on the same day. A person who already holds the role is not added twice.
+- **Proposed Changes Json** (document 22, O09, a proposed column, B22-8) carries what the decision changes, so the approver reads exactly what acceptance applies. OP-08 checks it when a caller writes it: only the member of its decision type (`owners`, `tierKey` or `autonomyLevelKey`), with keys active in the configuration in force. Anything else is invalid input. The engine reads it again at acceptance.
+- **Facts.** OP-08 takes a new fact, `facts.subject`: the subject rows as the store holds them (the application, the intake request, the change request, the latest tier assessment, the current owner assignments, the due reviews) and `newRowIds`, the IDs the adapter gives the rows the effect creates, because the core makes no random values (as with the erasure tombstone). Accepting a decision whose acceptance changes its subject without these facts is invalid input. The runtime fetches them only when the gate lets the decision through.
+- **What can no longer apply** is skipped and named with the proposed warning `subject.change-skipped` (B25-1): an owner assignment that already ended, a retired owner role or tier, a request no longer open. The decision is still accepted: what people decided stays decided, and the warning tells the caller what the engine did not write.
+- **Fixed keys** (working default, open design question 1): the decision types `intake`, `change-authorization`, `tier`, `ownership` and `autonomy-level`, and the outcomes `accept`, `park`, `redirect`, `decline`, `authorize`, `reject`, `confirm` and `agree`. A type or outcome a client adds changes only the stage, through its Next Lifecycle Stage.
+- **The decisions the engine opens itself** (the intake decision and the change authorization at `submit_record`) now name the outcome their statement already says: `accept` and `authorize`.
+- **Not built.** Next Review On from the cadence after a tier decision; the archived registration on retirement; the ownership card of an application with no owner yet (who answers it is not designed); a business owner named on an intake (built since, B25-10); and the confirmation card that registers an application an AI client saved as a draft (P10). G-14 also holds a declined or parked intake while the Accept gate is not ready, because it reads the decision type, not the outcome. That is a separate design point.
+- **Tests.** 29 OP-08 fixtures (tag `update-subject`): each effect, the skips, the missing facts, the proposal shape, and the nested writes themselves next to the same write from a person. Runtime tests in `SubjectEffectTests.cs` cover the card path, the engine's acceptance and a rejection. MCP tests in `SubjectEffectToolTests.cs` cover an owner change, an intake and a change answered on the decision page, and a raised tier answered through the runner.
+
+### B25-9 Record numbers (built 2026-11-24, D-41)
+
+Document 22 gives O02, O07, O09, O11 and C46 a Record Number "assigned by the engine", and nothing assigned one: every row the engine created had none, and pages named records by ID. Under D-41 the build decided the rest:
+
+- **Which rows.** Every new row of a numbered entity, the engine's own nested creates included (the application an accepted intake registers): business application `APP`, intake request `IR`, decision `DEC`, change request `CHG`, review `REV` and configuration draft `CFG` (`Product.Engine.Core`, `RecordNumbers`). **Choice:** the intake prefix is `IR`, not the model's earlier `INT`, because the demo estate already numbers its requests IR-0101 to IR-0107 and people read them that way; the model's prefix pattern now takes two to four letters. Reviews gain a Record Number (document 22, B22-9).
+- **The format.** The prefix, a hyphen and at least four digits (IR-0108), as the estate writes them. A number never changes and is never reused.
+- **Who gives it.** The store, as it gives row IDs (section 3.2: the core makes no random or sequential values). The runtime asks the transaction for `NextRecordNumber(entity, prefix)` after OP-08 allowed a create, and writes the number into the row. OP-08 drops a number a caller sends, on a create or an update, with the info reason `engine.column-overwritten` (G-09): `recordNumber` is an engine-computed column of the five operational entities, and already an engine-only column of C46.
+- **Unique under concurrency.** The store reserves the number at once, outside the call's transaction, the way a database sequence does: on Azure SQL one transaction locks the entity's row of `host.RecordNumber` (`sql/0007-record-numbers.sql`), reads the highest number with the prefix that the entity's table holds, and moves the counter one above the larger of the two before it lets the lock go; SQLite does the same under its write lock; the in-memory store under its gate. So two calls at the same moment never share a number, the numbers go on after a seeded estate or rows an earlier build wrote, and the store key on Record Number still refuses a second row with a number taken (the engine's one retry then sees the first result). **Choice:** a counter that reserves at once, not the next number read inside the call: a number read inside the call is only checked at commit, and two concurrent calls would then need more than the engine's one retry.
+- **Gaps.** A call that does not commit (refused, or failed) leaves a gap, as a sequence does. A dry run (validateOnly) takes no number, so checking a form never uses one up; its answer shows no number.
+- **The Audit Entry** of the create lists the caller's columns as OP-08 planned them; the number, like the row ID, is the store's.
+- **Migration.** `0007-record-numbers.sql` adds the counter table; it builds nothing from existing rows, because the first number an entity takes counts the rows its table holds. The app reads, inserts and updates the counters and never deletes them.
+
+### B25-10 The business owner an intake names (built 2026-11-24, D-41)
+
+Balanced's Accept gate asks for a business owner (gate requirement `accept-business-owner`, owner-assigned). A request for a new application has no application, so no owner assignment could meet it, and no new-application intake could pass triage. Under D-41:
+
+- **The column.** O07 Intake Request gains Business Owner (a Principal Reference; document 22, B22-9), which `save_intake_draft` writes from a person the store knows (document 24, B24-9).
+- **The gate.** OP-07's facts count the owner role `business-owner` as assigned when the subject's intake request is open (draft, submitted or in progress) and names a business owner, beside the application's own current assignments. The runtime adds it (`AssignedOwnerRoles`); OP-07 itself is unchanged. **Fixed key** (working default, open design question 1): the owner role `business-owner` (`EngineKeys.BusinessOwnerRole`).
+- **The effect.** When the intake is accepted, the update-subject effect (B25-8) starts an Owner Assignment for the named person, owner role `business-owner`, main holder, from today, with the intake decision as its Ownership Decision (the accepted decision that started it), after it registers or creates the application. The runtime gives the assignment an ID in `newRowIds`, after the new application's. A linked application that already has a current main business owner keeps that owner: the named person is skipped with `subject.change-skipped`, because changing an owner is an ownership decision. A named person who already holds the role adds nothing. A retired `business-owner` role skips it too.
+- **Fixtures.** `subject-intake-accept-assigns-named-business-owner-allowed` and `subject-intake-business-owner-already-held-skipped` (tag `intake-business-owner`). Runtime tests in `IntakeAndRecordNumberTests.cs`; MCP tests in `IntakeAndDecisionToolTests.cs` (a new-application intake answered on the decision page registers the application and assigns the owner; the same request with no named owner stays proposed, held by the gate).
+- **Still open.** G-14 reads the gate by decision type, not by outcome, so a declined or parked intake is still held while the Accept gate is not ready (B25-8). With a named owner this now rarely bites; the outcome rule stays a separate design point.
+
+### B25-11 OP-08 checks the exception fields (built 2026-11-24, D-41)
+
+O09 Exception Standard and Exception Review On (document 22, B22-9) belong to an exception decision only. OP-08 refuses either on another decision type, and a review date that is not a date, as invalid input (`input.malformed`), as it checks Proposed Changes Json (B25-8). Fixtures `exception-fields-on-exception-decision-allowed`, `exception-fields-on-tier-decision-invalid-input` and `exception-review-date-malformed-invalid-input` (tag `exception-fields`).
+
+### B25-12 OP-08 guards the end of a review; the AI-only code approval flag is stored (built 2026-11-24, D-41)
+
+Document 23, B23-4 left open whether an AI client may mark a review done, and whether done needs Done On, Reviewer and an accepted Outcome Decision. The author's AI sessions decided under D-41, as follows.
+
+- **A review is done only with what the model requires.** Document 22 marks Done On, Reviewer and Outcome Decision as required when done. A write that sets the meaning done and leaves any of them empty is refused with the proposed code `review.done-incomplete`.
+- **Only once its outcome is accepted.** The decision the review names must be accepted, of the decision type its review type records (C24 Produces Decision Type), about the review's own application; otherwise the proposed code `review.outcome-not-accepted`. A proposed outcome is not an outcome yet, and a review cannot end with another type's decision or another application's.
+- **A new fact.** OP-08 reads the decision from `facts.reviewOutcome` (`decisionId`, `statusMeaning`, `decisionTypeKey`, `subjectApplicationId`), which the runtime fetches when a review write names a status (WriteRequest gains `ReviewOutcomeFact`, a proposal; the fixture schema's `guardFacts` gains the member). Without it a write to done is invalid input (`input.required`): the engine never guesses.
+- **G-08 widened.** Done joins accepted, registered, approved and completed as a positive end no AI actor sets: the reviewer is a person, who attests the review. A create is still downgraded, never refused.
+- **Done stays done.** A done or cancelled review never changes its status again, nor a done review its Done On, Reviewer, Outcome Decision or Next Due On (`record.final`). The next review is a new row.
+- **The AI-only code approval flag** (O14 Is AI Only Code Approval, document 22, B22-10) is engine-computed like the other three flags: OP-04 computes it, the runtime stores it with the record, and a caller's value is dropped with `engine.column-overwritten` (G-09). Before, OP-04 computed it and the runtime dropped it, so only the call that recorded the deployment could see it.
+- **Fixtures** (op-08, 229 now): `review-done-with-accepted-outcome-allowed`, `review-done-outcome-still-proposed-refused`, `review-done-outcome-of-other-type-refused`, `review-done-without-reviewer-refused`, `review-done-without-outcome-fact-invalid-input`, `g08-ai-marks-review-done-refused`, `review-done-stays-done-refused` (tag `review-done`) and `g09-ai-only-code-approval-flag-dropped` (tag `ai-only-code-approval`). Runtime test `ReviewDoneTests` proves the runtime fetches the fact.
+- **Not in the engine:** that the reviewer is the person who writes, and who may complete a review. The tool checks both (document 24, B24-10); a platform admin may record a review someone else did, through a later tool. Who closes a change, and that a change closes only once authorized, is also the tool's check: the engine refuses only an AI actor's completed (G-08).
+
+### B25-13 The call history, refused calls and the O04 rules (built 2026-11-24, D-41)
+
+The author's AI sessions decided these under D-41.
+
+- **Every composed call that writes leaves one Audit Entry.** Before, only a call with an idempotency key did (to replay it). Document 26, section 9.4 says O24 is the full change log on Azure; one entry per call, naming the tool (Entity Name), the record (Row Id) and the caller's stamps, is the smallest step that makes the audit trail and the AI activity see an AI client's own calls. A keyed call keeps its replay payload in Changed Values Json; an unkeyed call stores the rows it wrote (entity, operation, row ID, status meaning) and no values or labels. A dry run (validateOnly) writes none. The entry is the runtime's own nested write, as `request-recorded` is.
+- **A refused call is recorded in a transaction of its own** (`EngineRuntime.RecordRefusedCall`; document 26, sections 9.2 and 9.4). The refused call rolled back, so the entry is the only row written. The MCP server core decides which refusals to record (document 24, B24-11) and passes the engine's reason code and its rule IDs from the reason catalog. A caller the configuration does not resolve, or a store that cannot take the entry, loses the record and still gets the refusal.
+- **OP-08 checks O04** (document 22, O04 rules): a dependency points to exactly one of To Application and To Component, and never to its own application (proposed code `dependency.target-invalid`); the shape is judged on a create and on any write that names an end. An ended dependency never changes again (`record.final`): class E keeps the history of who depended on what. The existing class E fixture (setting Ended On) still passes.
+- **Fixtures** (op-08, 233 now): `dependency-create-allowed`, `dependency-to-itself-refused`, `dependency-two-targets-refused`, `dependency-ended-never-changes-refused` (tag `dependency-shape`). Runtime tests: `CallAuditTests`.
+- **Not in the engine:** the O04 business key among open rows and O01's no-cycle rule need facts the runtime does not fetch yet; `save_dependency` and `save_portfolio` check them.
+
+### B25-14 Who an approval asks: proposed owners, fallbacks and the tier at stake (built 2026-11-24, D-41)
+
+Balanced's alignment with the process documents (document 21, B21-9) needs three things configuration could not say: "the successor accepts" (P08), "the sponsor when the business owner is leaving" (P08) and "tier 3 needs the platform admin and the security reviewer" for a tier decision that raises an application to tier 3 (P02). The author's AI sessions decided them under D-41 and built them.
+
+- **OP-02.** A RequiredApproval carries two more members, written only when set: `approverProposedOwners` (C32 Approver Proposed Owners) and `fallbackOwnerRoleKey` (C32 and C31 Fallback Owner Role). Rule 9 grows: a winning group of a type that requires approval whose counting rules all ask the proposed owners is broken (`approval-rule.consultation-only`, as V27), because a decision that names nobody new skips such a rule. OP-02 stays a function of configuration and scope.
+- **The runtime resolves who is asked** when it opens a record (`DecisionScope.Ask`), from the decision's own facts:
+  - a role: as before;
+  - the proposed owners: one record per person the decision's Proposed Changes Json adds (`owners[].addObjectId`), with Required Owner Role the role they would take and Asked Principal the person. The requirement's Minimum Count becomes the number of people named, so everyone named must say yes (one person counts once, OP-03); with nobody named the requirement drops out;
+  - an owner role: its current holders on the application (a deputy too). With a fallback configured, the role is passed over when the decision hands it over (it ends a main holder's assignment or starts a new main holder): the fallback owner role's holders are asked, then the Accountable Principal of the nearest portfolio on the path, by name, and when nobody is found that way the owner role's own holders after all. With no holder at all the record names the owner role and waits;
+  - for a request with no application, the business owner the intake names holds the business owner role (as the Accept gate counts it, B25-10), so a card for that role asks that person by name. Balanced uses this for the priority card, whose sponsor falls back to the business owner.
+  **Choice:** the route is fixed when the record opens and written on the record (Required Role, Required Owner Role, Asked Principal; document 22, O10), so the decision page, the runner and the answer check read one answer. A restart resolves again.
+- **The answer check** (D-38) reads O10 Asked Principal: a record that asks one person by name is that person's only, whatever roles they hold (`approval.answer-not-asked` for anyone else), and its result says `askedByName`. The approval runner sends such a card to that person only, and its reported Approver Holds Required Role stands only for that person.
+- **Consent is not a check.** A proposed owner's own yes is consent to take the role. No separation rule applies to it, in OP-03 and in the answer check, so a successor who proposed their own appointment at tier 3 still counts. The business owner's card, or its fallback, carries the check, and `no-self-approval-tier-3` applies there as always (D-40).
+- **The tier at stake.** A tier decision about an application takes, as its scope tier, the highest ranked of the application's tier, the tier the decision names (Proposed Changes Json `tierKey`) and the tier its latest answers computed. OP-02, OP-03, the separation rules and the answer check all read it. So raising a tier 2 application to tier 3, confirming a computed tier 3, and lowering a tier 3 application all take the tier 3 approvals (P02 step 4: lowering needs the full set).
+- **Fixtures.** OP-02: `tier-decision-tier-3-two-approvers` (replaces `tier-decision-accountable-card`), `tier-decision-tier-2-platform-admin`, `ownership-proposed-owners-and-business-owner`, `priority-sponsor-with-business-owner-fallback`, `data-use-tier-3-data-owner-and-security`, `flagged-agent-ai-lead`, and the broken `proposed-owners-only-group-unavailable`. OP-03: `proposed-owner-consent-counts-at-tier-3` and `proposer-approves-business-owner-card-refused-at-tier-3`. Approval answer: `asked-by-name-the-named-person-allowed`, `asked-by-name-another-person-refused` and `proposed-owner-who-proposed-it-allowed-at-tier-3`. OP-09: `v10-proposed-owners-and-owner-role`, `v10-fallback-without-owner-role`, `v10-fallback-same-as-owner-role`, `v27-proposed-owners-only` and `v27-proposed-owners-with-owner-role-valid`. OP-07 and OP-12 fixtures follow the new Balanced rows.
+- **Tests.** `ApproverRoutingTests` (runtime): the sponsor answers a hand-over, the portfolio's accountable person is asked by name, only the named person may answer, a proposed owner's consent at tier 3, the priority card of a request with no application, and the tier at stake. MCP: an owner change needs the successor's own answer on the decision page.
+- **Activation names the approval of a model.** A standard change model counts only once a person approved it (C21 Approved By Decision, a working set field). When an accepted configuration change activates, the runtime names its decision as the Approved By Decision of every model the draft upserts without naming one, so approving Balanced's shipped model is an ordinary configuration change (P11). A changed model is approved again by the decision that changed it. The draft keeps its Change Json as written. Test: `ConfigurationFlowTests.ActivationNamesTheAcceptedDecisionAsTheApprovalOfAModelItLists`.
+- **OP-12 at submit.** For a change authorization whose change type requires a standard change model, the runtime now runs OP-12 over the store's facts (the application's tier rank, the planned target's stage, the main application plus its affected applications, the component kinds it holds, the window) and each active model of the type with the status of its approving decision, and gives the result to OP-02 as `standardChange`. A change that fits an approved model is accepted by the engine with no card, citing the model and its approving decision (rule 8), and the update-subject effect schedules it; one that fits none is refused as not standard (`standard-model.does-not-qualify`). Before, OP-02 answered invalid input there. Test: `ApproverRoutingTests.AStandardChangeIsAcceptedOnlyThroughAnApprovedModelItFits`.
+- **Not built:** stated conditions on a change request (OP-12 `stated` conditions have no column to read, so a model that names one never fits); a data scope for approval rules (data-taxonomy.md).
+
+### B25-15 Scope, effects and review outcomes after the security review (built 2026-11-24, D-41)
+
+The choices the author's AI sessions made under D-41 after the security review of wave 2, each with its reason.
+
+- **OP-02 input `subjectApplicationRegistered`.** True for a decision about a request linked to an application already in the register (not a draft); the runtime sets it. The lowest-tier engine acceptance (rule 8) then does not apply, and the request goes to the accountable holder. Reason: the locked list covers a request that starts a new application; a request about an existing one changes it, so a person decides. Fixture `op-02/intake-linked-registered-app-not-engine-accepted`.
+- **The scope tier of a request linked to an application** is the higher of the application's tier and the request's computed tier; a tier decision about a request with an application takes the tier at stake as about the application (B25-14). Reason: the effect of such a decision lands on the application, so its approvals and separation rules are never those of a lower tier than the application has.
+- **The named business owner is assigned only on an application the effect creates, or a draft it registers.** On an application already in the register the effect skips it with `subject.change-skipped`: owners there change through an ownership decision. Fixture `subject-intake-linked-registered-app-owner-skipped`.
+- **The facts' application is the decision's.** The update-subject effect refuses `facts.subject.application` unless it is the decision's Subject Application, or the application its subject request or change names (`input.malformed`). Reason: an adapter that built facts wrongly could otherwise change another application. Fixture `subject-application-not-the-decisions-invalid-input`.
+- **A stage moves forward only.** A Next Lifecycle Stage that ranks below the application's stage is skipped with `subject.change-skipped`. Reason: Balanced now moves the stage on intake, priority and design acceptance (document 21, B21-10), and a late gate decision must never move an application back. Fixture `subject-stage-never-moves-back-skipped`.
+- **The request's portfolio** becomes the new application's, and a registered draft's when it has none. Fixture `subject-intake-accept-new-app-takes-portfolio-allowed`.
+- **Review outcomes are used once, in their own cycle.** `facts.reviewOutcome` gains `usedByReviewId` (another done review that names the decision), `decidedOn` and `cycleStartedOn` (the latest Done On of an earlier done review of the same type and application); the runtime fetches them. OP-08 refuses a reused decision, and one decided before the cycle started, with `review.outcome-not-accepted`. Fixtures `review-done-outcome-used-by-another-review-refused`, `review-done-outcome-from-earlier-cycle-refused` and `review-done-outcome-of-this-cycle-allowed`.
+- **Configuration change decisions** take the outcome `accept` and a statement from the draft's change summary when the draft is submitted (document 24, B24-14).
+
+### B25-16 The data taxonomy's engine: OP-15 to OP-17, G-18 to G-25, V49 to V60 (built 2026-11-24, D-37 and D-41)
+
+Data taxonomy slice 2 adds three read operations and the data rules to the engine. The design is
+summarized in [data taxonomy](../../architecture/data-taxonomy.md#engine).
+
+- **OP-15 Resolve data domain, OP-16 Evaluate data use, OP-17 Run data checks.** Pure reads over the snapshot's domain
+  tree and the owner, location, mapping, use and decision facts the adapter passes. Their outcome words are proposals:
+  `resolved`, the data use state ([the decision state](../../architecture/data-taxonomy.md#the-decision-state)), and
+  `checked`.
+- **OP-02** matches five more scope fields (subject kind, classification, AI use, data domain level, data taxonomy
+  change) and passes each requirement's Owner Subject. It names where an owner role is resolved; OP-16 and the runtime
+  resolve the person through OP-15. A request with no subject kind is about an application.
+- **OP-07** judges the requirement kinds `data-uses-declared` and `data-uses-decided` from `facts.dataUses`, by
+  `data-taxonomy-mode`.
+- **OP-08** adds G-18 to G-24 and **G-25**: a data use or a copy whose governing rule is never is refused when it is
+  saved, for a person and an AI client alike, with `data.rule-never` (D-41, question 7, as the product owner changed it). The
+  update-subject effect of an ownership decision about a data domain or location writes the owner assignment with that
+  subject.
+- **OP-09** adds V49 to V60.
+
+### B25-17 The data reads inside a tool's call (built 2026-11-24, D-37 and D-41)
+
+Data taxonomy slice 3 ([data taxonomy](../../architecture/data-taxonomy.md#mcp-tools-and-rest)). The data tools run OP-15, OP-16 and OP-17 inside
+their own composed call, so a read sees the call's own writes, and a save or its validateOnly preview answers the state
+of the row it just wrote.
+
+- **`ComposedCall.DataDomains(keys)`** runs OP-15 for each domain, with the owner rows of every chain fetched once.
+- **`ComposedCall.DataUse(id)`** runs OP-16 for one stored use or mapping, the call's writes included.
+- **`ComposedCall.DataUseQuestion(question)`** runs OP-16 for a use that is not saved yet (`check_data_use`): the
+  application, or an intake request's linked application, proposed kind, latest computed tier and sensitivity answer.
+- **`ComposedCall.DataChecks(scope)`** runs OP-17 over the store and the call's writes. `RunDataChecks` shares its input.
+- **`ComposedCall.Report(reasons)`** adds a read's warnings to the call's answer.
+
+Nothing in the operations changed: these are the facts the runtime already gathered for slice 2, offered inside a call.
+
+### B25-18 The due-state refresh, the named owner's consent and the drafted by pair (built 2026-11-24, D-36 and D-41)
+
+**The engine's own caller.** The daily refresh runs with no person behind it, so the runtime gains a caller entry
+`Engine` (`CallerIdentity.Engine()`), with the fixed principal ID `EngineKeys.EnginePrincipalId`
+(`00000000-0000-0000-0000-00000000e000`, version digit 0, so never an Entra object ID) and the Client App label
+"Due-state refresh". Only the host builds it, in process; no token and no request maps to it. It resolves to the actor
+kind engine with no role. Every write it makes is engine-nested, so OP-08 judges each one under its own rules.
+
+**`EngineRuntime.RefreshDueStates`** (document 23, S2 and S1 step 9). One read call plans what is due
+today; then each item runs in a call of its own, so one item that fails is reported (`due-state.item-failed`, a warning)
+and the others commit; last, one Audit Entry for the run (operation `due-state-refresh-run`) when it changed something
+or a person ran it. Only the engine's own caller, or a person holding the platform admin role, runs it
+(`due-state.refresh-not-allowed`). A dry run runs every item and commits nothing. At most 500 items a run by default
+(`more` says the rest wait; a rerun picks them up).
+
+- **Approvals.** A decision with a pending Approval Record past its Expires On, or one no longer proposed that still holds
+  one, gets the approval refresh (as `RefreshApprovals`: expired, cancelled, the restarts), and each record it expires
+  sends its escalation (notice `expired`, S1 step 9). One Audit Entry (operation `due-state-refreshed`) lists the rows.
+- **Reviews.** A done review whose Next Due On has come opens the next review of its application and type: status due,
+  trigger cadence, due on that date, its REV- number from the store, unless a due review of them exists or one is due on
+  that date already, and never for an archived or retired application. A due review gets the C26 steps of the day (the
+  cadence's lead and escalate days replace the rule's, as OP-11 does), and on its first overdue day a notice `overdue` to
+  its lead owner. Overdue stays computed: the status meanings are still due, done and cancelled.
+- **Documents.** A current Document Link whose Stale On (Last Checked On, else Last Updated On, plus the C22 Freshness Days,
+  else the stored Stale On) has passed becomes stale; a stale one gets the document steps counted from its Stale On.
+- **Claims.** An open claim gets the claim steps counted from the day it was found, to its suggested claimant, escalated to
+  the platform admin role.
+- **Flags** (S2 step 4). A deployment flagged at gate level flag, advise or enforce, finished within the last seven days,
+  sends one notice to the default-flag-notify setting's owner roles (their holders on the application) and roles.
+- **Notices.** Each is one Audit Entry (operation `reminder-sent`, or `flag-notice-sent`) whose Request Key is
+  `due-state|<kind>|<entity>|<row ID>|<rule>|<step>`, so a rerun never sends twice, and whose Changed Values hold the
+  notice, the subject, the rule and step, the channel, the due date and who is told: people by object ID, product roles by
+  key, the owner role and whether it went to deputies. IDs and keys only, never a label (document 22, section 2.7).
+
+**Choices (D-41), each with its reason.**
+
+1. **Items commit one by one,** not in one transaction: a broken stamped version under one decision must not stop the
+   reviews and reminders of the whole estate. Each item checks its own precondition again, so a rerun is safe.
+2. **The next review opens on its Next Due On,** as `complete_review` promised, not lead days earlier: a review opened early
+   crowds My work. The cadence's lead days still give reminders, from the day it opens.
+3. **An approval request's clock starts at Requested On,** and a step on that day is not sent: the card is the first message.
+   With Balanced (repeat every 2 days, escalate after 5) a request is reminded on days 2 and 4, before it expires, and
+   escalated on day 5 when it waits ten days. A consultation gets no reminder: its answer never counts and the decision
+   does not wait for it.
+4. **Escalation goes to the deputy of the role asked;** with no deputy, to the accountable letter of the decision type (C31:
+   its role, or its owner role's holders, else its fallback owner role's). A document escalates to the technical owner's
+   deputy, else the business owner, because it records no decision type. A claim escalates to the platform admin role.
+5. **Expiry escalates at once** (S1 step 9: "asks S2 to remind or escalate to the deputy"), because with Balanced's
+   five-day timeouts the C26 escalation day falls on the expiry day.
+6. **A document with no date is left alone,** although OP-06 reads a current link with neither date as stale: the refresh
+   writes only a date it can name.
+7. **Flags read the default-flag-notify setting.** A deployment record does not keep which gate policy row applied, so a
+   row's own Flag Notify list is not read yet. A first run on an old estate tells only the last week's flags.
+8. **The engine records, flows send** (D-10). The notices name who is told and through which channel; the notification flow
+   that sends them is not built yet.
+9. **Azure SQL, not verified live.** The timer's session context carries the actor kind engine. The row security that
+   guards a final Approval Record (`fn_ApprovalPending`) lets only the approval runner or an answering person change one,
+   so a Counts Toward Requirement change on a final record during a refresh would be refused by the database. A refresh
+   with no new answer changes no count on a final record; if one ever does, that item fails and the runner's next claim
+   refresh does it. No migration was added: the schema version stays 8.
+
+**The named business owner's consent.** The business owner an intake names was counted by the Accept gate and assigned by
+the accepted intake without their own answer. Now:
+
+- **OP-02.** A rule that asks only the proposed owners (C32 Approver Proposed Owners) is their consent, never the group's
+  counting rule. For a type that does not require approval (rule 9 still refuses such a group for one that does), a
+  winning group whose counting rules all ask the proposed owners goes on as if no counting group matched: to the engine's
+  acceptance (rule 8) or the accountable card (rule 7), with the consents kept as requirements beside it. For
+  engine-accept the requirements hold only consents, often none. V20 lets such a rule stand on a type without Requires
+  Approval.
+- **Balanced** gains `intake-business-owner-consent` (decision type intake, Approver Proposed Owners, everyone must approve,
+  ten days, guideline G2). Starter, Regulated and the CoE baseline inherit it. 648 rows.
+- **The runtime.** For an intake decision, the proposed owners include the business owner the request names when the
+  accepted intake would assign them: the request is open and starts a new application, or registers a draft with no main
+  business owner. One record asks them by name (Required Owner Role business-owner). A request that names nobody drops
+  the consent.
+- **The engine's acceptance waits.** A lowest-tier intake that needs a consent opens only that record (no consultation,
+  as the fast path opens none) and reports `waitingForConsent` with `decision.consent-waiting`; when the consent counts,
+  the recompute accepts the decision on the engine-accept basis. A refused consent rejects the decision, as for a proposed
+  owner of an ownership decision.
+- **The Accept gate** counts the named business owner only once their consent record is approved and counts, and the
+  update-subject effect assigns them only with the new fact `facts.subject.intakeOwnerConsented` (absent reads as false;
+  without it the effect skips them with `subject.change-skipped`).
+- **Choice.** A client configuration that removes the consent rule leaves the named person uncounted, so its Accept gate
+  waits for an ownership decision: nobody becomes an owner without their own answer.
+
+**The drafted by pair** (document 22, B22-15). OP-08's stamps add Drafted By Client App and Drafted For Principal on the
+create of an operational row by an AI client acting for a person; both are stamp columns, so a caller's value is dropped
+and no update changes them.
+
+**Fixtures and tests.** OP-02: the five intake fixtures carry the consent (the lowest-tier fixture keeps engine-accept with
+the consent as its one requirement); OP-08: `subject-intake-accept-assigns-named-business-owner-allowed` gives the consent
+fact and the new `subject-intake-business-owner-without-consent-skipped` skips the owner; OP-09:
+`v20-consent-without-approval-allowed`; the schema example; the replay records take the new Balanced hash and the drafted
+by stamps. Runtime tests: `DueStateRefreshTests` (4), the consent paths in `IntakeAndRecordNumberTests` and
+`FullWriteTests`. Reason codes `due-state.refresh-not-allowed`, `due-state.item-failed` and `decision.consent-waiting`
+(proposed).
+
+### B25-19 A retired deployment target takes no new record (built 2026-11-24, D-41)
+
+The record step (`RecordDeploymentIn`, used by the record endpoint and the MCP tool `record_deployment`) refuses a
+deployment to a target whose Retired On is set (document 22, B22-16) when the deployment finished on or after that day.
+The refusal is `deployment.target-retired` (proposed, a rule refusal, so `rule_violation` on every entry), its message
+names the target, the day and the reason a person gave, and nothing is written.
+
+Choices: the check sits in the runtime's record step beside the check that the target is registered, not in an OP-08
+guard, because it reads one fact the step already loads (the target row) and has no configuration to judge. A replay of
+an idempotency key recorded before the retirement returns the first record, as before. A deployment that finished
+before the retirement day is still taken, so a pipeline's late report of history is never lost. Test:
+`FullWriteTests.ARetiredTargetRefusesANewDeploymentAndKeepsItsHistory` (the refusing and the passing cases).
+
+### B25-20 The engine after the wave 3 reviews (built 2026-11-25, D-41)
+
+The security, product, data design and end-to-end reviews of wave 3 found these engine problems. Each fix is the AI
+sessions' choice under D-41.
+
+- **A successor never leaves a role empty.** When one ownership decision starts a new main holder of a role later than
+  today, each assignment of that role it ends with no date of its own ends on the new holder's start date
+  (`SubjectEffect.OwnershipChanges`). An end that names its own date keeps it. The demo director now puts the start
+  date on every end item too. Fixtures `subject-ownership-successor-ends-on-start-allowed` and
+  `subject-ownership-end-with-own-date-kept-allowed`. Reason: the accepted successor change on Claims Triage Agent ended
+  Wren Abernathy's role three weeks before Nadia Ferreira's started.
+- **The proposer is set once.** `DecisionScope.ProposerPrincipalId`, and every read that names a proposer, take the admin
+  who instructed a configuration draft, else the person an AI client drafted for (Drafted For Principal), else the
+  creator. Never On Behalf Of, which every later write restamps, so neither the decision page nor a separation rule
+  names the person whose answer accepted the decision.
+- **A data owner subject never asks nobody.** At the first request, a counting requirement whose owner sits on a data
+  domain, its parent, a location or the touched domains and resolves to no person refuses the call with
+  `data.no-one-to-ask` (DC-06). The approval answer takes a record of such a rule only from the person it names.
+- **One person counts once on a data-use decision**, across all of its counting requirements (approval answer, step 5).
+- **G-25 judges every create; a future End On is still open** (`DataTree.IsOpenOn`), in the guard, OP-16, OP-17 and the
+  reads. **G-21 on update:** an AI actor cannot change or end a data row a person confirmed; Last Seen On is the only
+  refresh it may write. **G-18** refuses a second open use with the same application, domain, location and AI flag
+  (`data.use-duplicate`, the second key of O27; fact `duplicateUse`).
+- **A domain move loosens.** The data taxonomy diff counts a new parent as loosens for the domain and its subtree, and
+  the runtime passes the domains in use, so a retired domain in use loosens too.
+- **The gate words its requirements with labels**, never keys ("The requirement "Data uses are decided" needs ..."), and
+  a declared use (or Holds No Business Data) answers "a data owner is named" when data domains are on; under
+  domains-required the app-level data owner does not count (a choice under D-41).
+- **The configuration change decision is worded with labels** (`ChangeWords`): "the AI use rule of Workplace / Visitor log
+  changes from decision to never". The engine's change summary stays the stored record of the draft.
+- **The due-state refresh plans again once it opens a review**, for its reminders and its overdue notice, in the same
+  run, so a second run the same day changes and sends nothing. The audit entry that opens the next review carries the
+  request key `due-state|open-review|<done review>|<due on>`, so the unique index refuses a second run that opens the same
+  review at the same time. The run's own audit entry lists the reviews it opened and the documents it turned stale,
+  which the Admin page shows as the recent runs.
+- **A review's cycle starts no earlier than the review was opened**, so a decision accepted before a first review was
+  requested cannot close it.
+- **The data-use effect of a configuration change** (`DataUseImpact`): OP-16 for each open use and copy on the touched
+  domains, under the version in force and under the change's compiled preview.
+
+### B25-21 Held gate decisions settle, and a moved row is asked again (built 2026-11-25, D-41)
+
+The wave 3 verification found two engine gaps. Each fix is the AI sessions' choice under D-41, with the reason.
+
+- **A gate decision that waited for its gate settles once the gate is ready.** G-14 keeps a decision proposed while
+  OP-07 says its gate is not ready, even with every approval in, and before this build nothing looked at it again: a
+  design decision Elif approved before the data-use card was decided stayed proposed after Nadia approved the card.
+  Now the engine looks again at an application's proposed gate decisions (`SettleHeldGateDecisions`) at three points:
+  when another decision of the application is accepted (inside the accept step, so in the same call as the answer that
+  accepted it), at the end of each composed write call that touched the application's rows (a decision, a review, a
+  document link, an owner assignment, a tier assessment, a data use, the application), and in the daily due-state
+  refresh, which plans an approvals item for each held decision that would settle now (an owner who starts on a later
+  day). A decision settles only when it was requested (it holds an Approval Record), OP-03 finds its approvals satisfied
+  and OP-07 finds its gate ready; the recompute then accepts it exactly as the last answer would have. A decision nobody
+  requested yet is left for its proposer to submit. The checks are reads: their reasons are dropped, so a call that
+  settles nothing says nothing about it. Reason: settling at the moment the gate turns ready is what the demo story
+  promises ("the decision page would list that use with a link to its card"), and doing it in the engine keeps every
+  path (the decision page, a card the runner brings, a review closed, the daily run) the same.
+- **`ReaskApprovals` asks a requested decision again from the start.** It cancels the pending Approval Records and opens
+  the requests OP-02 needs now, consultations included, of the people the decision's scope names now. It refuses a
+  decision with an answer on record (`approval.outcome-final`) and one with nobody to ask (`data.no-one-to-ask`).
+  Reason: `RequestApprovals` answers "already requested" for a decision that holds any record, cancelled ones included,
+  so a move that cancelled the old owner's request and asked again made nothing, and nobody was asked.
+- **`WithdrawDataDecision` withdraws a proposed data-use decision as the engine's own write.** Only a proposed decision of
+  the data-use type; it cancels the pending records and writes the withdrawn status with a reason. Reason: when the rows
+  move to another data owner after someone answered, or to a domain with no data owner, the question no longer stands as
+  it was asked, and the person who moves the rows is usually not its proposer (G-16 lets only the proposer or the
+  decider withdraw).
+- **Tests:** `DataToolTests.MovingUsesToADomainWithAnotherDataOwnerAsksTheNewOwner` and
+  `DataToolTests.AHeldDesignDecisionSettlesOnceTheDataUseItsGateWaitsForIsDecided` (MCP core). The runtime suite runs
+  the settle step on every composed write, and no earlier test changed.
+
+### B25-22 The engine opens a moved row's decision, and a plain write settles held decisions (built 2026-11-25, D-41)
+
+Wave 4 starts with the wave 3 findings still open. Each choice is the AI sessions' under D-41, with the reason.
+
+- **`OpenDataDecision`: the engine opens and sends the data-use decision a moved row needs.** When
+  `move_data_references` moves rows to a domain with another data owner, a decided row is declared again, an answered
+  decision is withdrawn, and a confirmed row can be left needing a decision. Before this build the tool opened that
+  decision as the mover's own write, so it needed the mover's proposal right (C31): the data governance lead, one of the
+  two roles that may move rows, holds none, and the new row stayed "needed" with nobody asked. Now the engine opens the
+  decision as its own nested write, proposed with the allow outcome, and requests its approvals at once. It is stamped
+  as the engine's write for the mover (Performed By Principal, Created By Principal and On Behalf Of name the mover;
+  Performed By Actor Kind is engine), so the mover is its proposer for the separation rules and may withdraw it. Only a
+  confirmed, open data use or data mapping with no proposed data-use decision; anything else is invalid input. Reason:
+  the move itself was allowed (its Tool Policy and OP-08 on every moved row), and the decision is what the move makes
+  necessary, so no second right is asked, just as none is for the requests a re-ask opens. One path for every mover keeps
+  the stamps the same whoever moves the rows (a choice under D-41).
+- **A plain write settles held gate decisions.** `Runtime.Write` (a caller's single write outside a composed call, such
+  as an adapter's or the approval runner's) now ends with the same `SettleHeldGateDecisions` step a composed call ends
+  with, over the applications its writes touched, unless the write was a replay or changed nothing. Reason: the fix pass
+  left such a held decision for the next accepted decision of the application or the daily refresh; the engine should
+  settle it in the call that made the gate ready, whatever the entry point.
+- **The gate words do not sound final.** G-14's message reads "so its gate decision stays proposed until the gate is
+  ready" (it read "cannot be accepted", which the wave 3 verification found sounded permanent), and an unmet requirement
+  is named in straight double quotes like every other label.
+- **Tests:** `DataTaxonomyRuntimeTests.APlainWriteSettlesAHeldGateDecision` (runtime; it fails without the step), and
+  `DataToolTests.MovingUsesToADomainWithAnotherDataOwnerAsksTheNewOwner` for the platform admin and the data governance
+  lead, covering the unanswered, answered and decided paths and a needed row with no decision (MCP core).
+
+### B25-23 A read call reads each row once, and loads many rows in one store call (built 2026-11-25, D-41)
+
+Measured through a local server: the portfolio summary, My work and the applications list were slow, because each made
+hundreds of store round trips (the summary 767 on the demo estate). Each choice is the AI sessions' under D-41, with the
+reason.
+
+- **Key set reads are a store port.** `IKeySetReader` (Ports/KeySetReads.cs) has two reads: `GetMany(entity, ids)` and
+  `QueryIn(entity, column, values)`, each one store call, answering exactly what one `Get` or one `Query` per key
+  answers: the same rows, each once, by ID; a value compares as a JSON string, ordinal. Every store implements it:
+  InMemoryStore and its transaction, the row store over SQLite (`json_each`) and Azure SQL (`OPENJSON` with a typed
+  `WITH` column, so the clustered key is sought), and each transaction overlay with its own writes on top. A value longer
+  than the 4,000 characters a database narrows by is read one query each, as before. `KeySetReads` falls back to one
+  read per key on any other reader, so an adapter that does not batch still answers the same. Reason: a port, not a
+  cache trick, is what lets every store answer a page in one round trip; no schema change is needed (no migration, the
+  schema stays at version 8).
+- **A read call has a read cache of its own.** `CallReadCache` wraps the transaction of every read-purpose call
+  (`SnapshotPurpose.Read`: every read tool, OP-15 to OP-17 reads, the approval and decision reads). It asks the store
+  about each row, key and query once; a query with no condition loads the whole entity, after which every read of that
+  entity is answered from it (by a column index built once); a key set read loads the rows of many values of a column;
+  a query with one text condition counts as a key set read of its value. An answer from the cache is the one the store
+  would give: the same rows, filtered by `RowQuery.Matches`, by ID. Reason: a read call never commits, so nothing it
+  reads can change under it except through a concurrent write, which a single answer should not mix in anyway; a write
+  through the cache empties it first. A write call keeps reading from the store as before.
+- **Composed reads load ahead.** `ComposedCall.Prefetch(entity, column, values)`, `PrefetchIds` and `PrefetchAll` load
+  in one store call the rows a read will look at many times; they do nothing in a write call. `get_portfolio_summary`,
+  `get_my_queue` and `find_applications` load the portfolios, the people, and the owners, document links, decisions and
+  applications of every application in scope up front. OP-16 and OP-17 load their per-row facts in about fifteen store
+  calls (`EngineRuntime.PrefetchDataFacts`): the decisions about every use and mapping and the approval records of the
+  open ones, the owners of every domain and location, each application's decisions, tier assessments and intake
+  requests. The items are then built exactly as before. Reason: the tools keep their logic; only where the rows come
+  from changes, which is what makes "identical results" provable.
+- **The session reads less.** The backend reads the labels of a caller's role groups in one key set read, and keeps the
+  publish date of a configuration version for the process (a version row is append-only, class A), so the session no
+  longer reads every version's content on every call.
+- **The answers are the same; the cost no longer grows with the estate.** On the SQLite store: the summary makes 22
+  database reads (767 before), My work 29 or 30 (616 and 633), the applications list 6 (76), on the demo estate and on
+  the same estate grown to 480 or 2,000 applications alike. `EngineRuntime.BatchReads` (default true) turns the cache
+  off; the tests use it to show that every heavy read and list read answers the same either way. Timings:
+  src/adapters/azure/STATUS.md.
+- **Tests:** `StoreConformanceTests.KeySetReadsAnswerWhatOneReadPerKeyAnswers` (in-memory, SQLite, and Azure SQL when a
+  database is configured); `ReadSpeedTests.TheHeavyReadsMakeAFewDatabaseReadsWhateverTheSizeOfTheEstate` (a ceiling
+  per read, on the demo estate and on 480 applications), `ReadSpeedTests.TheBatchedReadsGiveTheSameAnswersAsReadingRowByRow`
+  (17 reads with the cache on and off, on the demo estate and on 240 applications) and the opt-in timing test
+  (PRODUCT_TIME_READS=1); `ListReadTests.AReadCallReadsEachRowOnceAndItsCostDoesNotGrowWithTheEstate` (MCP core). Every
+  existing engine, MCP and host test now runs with the cache on.
+
+### B25-24 "Ask again", host changes on the record, the O25 key and the measure settings (built 2026-11-25, D-41)
+
+The engine side of document 24, B24-22. Each choice is the AI sessions' under D-41, with the reason.
+
+- **`ComposedCall.RenewApprovalRequest`.** One composed write: the request and its decision (refused unless proposed,
+  `decision.final`); the caller (a person who proposed the decision or holds platform-admin, `approval.renew-not-allowed`);
+  the request's state (expired, or pending past or within 48 hours of its Expires On, `approval.not-renewable`). A request
+  that expired and whose requirement already has a fresh pending request (same rule or decision right, consultation
+  flag, role and owner role) answers renewed false and writes nothing. Otherwise the engine writes expired (past its
+  time) or cancelled (asked early) on the old request, then runs the recompute (`RecomputeApprovals`), which opens what
+  the requirement still needs, with the decision's stamped version and its Timeout Days, exactly as the daily refresh's
+  restart does; a consultation, which the recompute never restarts, is opened again from OP-02's consultation for its
+  rule. Nothing opened is refused (the requirement is met, or nobody holds the role), and a new record that names nobody
+  for a data owner subject is refused with DC-06, as a first request is. Every write is an engine-nested write OP-08
+  judges (G-06). Reason: one path with the refresh keeps who is asked and when the request expires the same however the
+  request comes back.
+- **Host changes are on the record.** A tool that changes a host table (the approval outbox) calls
+  `ComposedCall.RecordHostChange(entity, rowId, state)`. The composed call then writes its one Audit Entry as it does for a
+  call that wrote engine rows, keyed or not, and lists the host row beside the writes (`byHost` true, `byEngine` false);
+  a dry run records nothing. Reason: the person's act must be in the audit trail even when no engine row changes; the
+  engine still writes no host table itself.
+- **The alternate key of O25 is part of G-18.** A data location with a URL and no External Id is known by its platform and
+  URL, so a second one in service with the same pair is refused (`data.location-duplicate`); the runtime passes the
+  other one as the fact `duplicateLocation`. A location with an External Id is known by it, and retiring one is never
+  refused for its key. Fixtures `g18-duplicate-location-refused`, `g18-duplicate-location-with-external-id-allowed` and
+  `g18-retiring-a-duplicate-location-allowed`. Reason: section 22 choice 8 left the key recorded as a gap; `save_data_location`
+  already matches an existing location by the pair, so only an update that points one location at another's URL, or a
+  write past the tool, meets the rule.
+- **V38 knows the measure settings.** `measure-targets` and `signal-thresholds` are required json settings, and V38
+  checks their keys and numbers against `MeasureSettings` (a measure key, a signal that takes a number, a number of zero
+  or more). The bundle schema checks the shape too. Balanced grows from 648 to 650 rows, and the replay records carry the
+  new Balanced hash.
+- **O09 Slide Back Signal** joins the logical model as a proposal column (a key of the ten signals of chapter 17), with
+  the generated drafts. The C31 and C32 data scope columns and their two contracts (owner subject, data taxonomy change)
+  are marked adopted, as data taxonomy slice 2 made them.
+
+### B25-25 The engine follow-ups of wave 4b (built 2026-11-25, D-41)
+
+Each choice is the AI sessions' under D-41, with the reason. The tools' side is document 24, B24-23.
+
+- **Only the newest record of an ask is asked again** (`ComposedRenewApprovalRequest`). The engine finds the newest
+  record of the same request (same rule, right, role, owner role and consultation flag) asked after this one, in any
+  outcome: requested later, or at the same moment while this one is closed and that one pending (the close and the
+  restart of one call). If there is one, a pending one not yet due answers renewed false and names it; anything else is
+  refused (`approval.not-renewable`): "Approval request <id> was asked again as <newest>; ask that one again." Two records
+  asked together, both pending or both closed, are two answers of one rule, not one asked again as the other. Reason: the
+  "asked again already" test looked only for a pending request not yet due, so an older record of an ask whose newer
+  request had also lapsed opened a second new request.
+- **The separation refusal names the rule by its label** (`ApprovalAnswer`): "The separation rule No self-approval at
+  tier 3 keeps you from answering this approval request..."; the key stays in the reason's Ref. Reason: the message
+  reaches AI clients and the decision page as it is, and a key in backticks is not a sentence a person reads. The fixture
+  runner learned `messageContains` on an expected reason, so `self-approval-at-tier-3-refused` holds the words.
+- **The answer check for the person an AI client acts for** (`ComposedCall.ApprovalAnswerCheck(id, forThePerson: true)`):
+  the same check with the person as the actor, read only. Reason: an AI client's own check stops at "AI never approves",
+  which hid whether a separation rule keeps the person from answering, so the queue and the approvals count could not
+  leave such a request out for an AI client.
+- **OP-06 takes `isRetired`.** A retired application (its stage means retired, or its registration is archived) owes no
+  document: no requirement applies, and its links stay as history, so nothing is missing or stale. Fixtures
+  `retired-application-owes-no-document` and `live-application-stale-link-incomplete`. Reason: the retired Legacy Timesheet
+  App still listed a stale wiki page among the documents to fix; the due-state refresh already skipped a retired
+  application's documents.
+- **The due-state run writes each notice kind's count** on its audit entry (`noticeKinds`), so the Admin page sums the six
+  kinds (remind, repeat, escalate, overdue, expired, flag) for a run and for the tile alike. Reason: the run's
+  `escalations` counted the escalated flag, which an expired-approval notice also carries, while the tile counted kinds.
+- **One application's OP-17 facts** (`ChecksInput`, scope `{ applicationId }` alone): that application and its uses, with
+  the decisions about those uses; every owner, location, mapping and dependency stays. A finding names an application
+  only when it is about one of its uses (DC-05 to DC-07, DC-11, DC-13, DC-14) or about the application (DC-09, DC-10), so
+  the answer is the same as the estate's findings about it (`WaveFourBTests.OneApplicationsDataFindingsAreTheEstateFindingsAboutIt`).
+  Reason: the Application 360 data panel built the facts of all 2,000 applications for one; 1.2 s became 0.4 s.
+- **The seed writes Published On** on the version it seeds (`InMemoryStore.SeedVersion` and `RowStore.SeedVersion` take
+  the seed moment). A column, so no seeded ID or order changes.
+- **V38 requires `review-request-due-days`** (number; Balanced 14; document 21, section 3.6). Balanced grows from 650 to
+  651 rows, and the replay records carry the new Balanced hashes (Balanced, and Balanced with linked change management).

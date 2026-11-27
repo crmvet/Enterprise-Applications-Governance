@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "rule-asks-typed-reason-invalid-input",
+  "description": "The data use rule asks for a typed reason with every answer (Requires Typed Reason). An approval without one is invalid input.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "data-use-approval",
+      "requiredOwnerRoleKey": "data-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "data-use",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": [
+      "data-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "payload": {
+      "allowed": false,
+      "requiresTypedReason": true
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-reason-required",
+        "severity": "error",
+        "ref": "reason"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

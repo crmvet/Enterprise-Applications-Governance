@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "go-live-tier-2-data-owner-met-by-declared-uses-ready",
+  "description": "D-41, question 3, as built after the data design review: with data domains on, an application that declares its data uses meets \"a data owner is named\" through the derived owners of its domains. The same tier 2 app with no app-level data owner but two declared uses is ready.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "go-live",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "acceptedDecisionTypeKeys": [
+      "acceptance"
+    ],
+    "documentation": {
+      "items": [
+        {
+          "requirementKey": "runbook-tier-2",
+          "documentTypeKey": "runbook",
+          "status": "current"
+        }
+      ]
+    },
+    "assignedOwnerRoleKeys": [
+      "business-owner",
+      "technical-owner"
+    ],
+    "dataUses": {
+      "declaredCount": 2,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "ready",
+    "payload": {
+      "ready": true
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

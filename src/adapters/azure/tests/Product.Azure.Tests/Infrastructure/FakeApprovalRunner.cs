@@ -14,9 +14,21 @@ namespace Product.Azure.Tests;
 // itself (AddProduct and MapProduct), so the tests run through the same wiring as a deployed host.
 internal static class RunnerHost
 {
+    // The runner tests follow one triage card through the outbox. Balanced also opens three consultation cards on an
+    // intake (the architect, the PMO and the security reviewer; document 21, B21-9), which the engine and MCP tests
+    // cover, so the runner's host retires them for its own runs.
+    public const string WithoutIntakeConsultations =
+        "{\"op\":\"retire\",\"entity\":\"approval-rule\",\"key\":\"intake-consult-architect\"},"
+        + "{\"op\":\"retire\",\"entity\":\"approval-rule\",\"key\":\"intake-consult-pmo\"},"
+        + "{\"op\":\"retire\",\"entity\":\"approval-rule\",\"key\":\"intake-consult-security\"}";
+
     public static ProductTestHost Start(HostSettings? settings = null, bool enabled = true, int maxAttempts = 3, int maxClaim = 10, int leaseSeconds = 900)
     {
         settings ??= new HostSettings();
+        string? more = settings.BindingOperations?.Trim();
+        settings.BindingOperations = more == null || more.Length < 3
+            ? "[" + WithoutIntakeConsultations + "]"
+            : "[" + WithoutIntakeConsultations + "," + more.Substring(1);
         settings.Settings[ApprovalRunnerOptions.SectionName + ":Enabled"] = enabled ? "true" : "false";
         settings.Settings[ApprovalRunnerOptions.SectionName + ":MaxAttempts"] = maxAttempts.ToString(CultureInfo.InvariantCulture);
         settings.Settings[ApprovalRunnerOptions.SectionName + ":MaxClaim"] = maxClaim.ToString(CultureInfo.InvariantCulture);

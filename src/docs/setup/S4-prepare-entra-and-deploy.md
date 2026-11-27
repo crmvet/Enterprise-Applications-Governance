@@ -2,12 +2,12 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant or a subscription. The azd template in `src/adapters/azure/infra/` compiles with `az bicep build` and has never been provisioned.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 21, sections 4.8 and 11.2; document 22, section 11; document 24, sections 4 and 9.2; document 25, section 12; document 26, sections 3.4, 4, 5.6, 8 and 11; document 28, issue 13, Q20 and Q21; `src/adapters/azure/README.md` and `src/adapters/azure/infra/README.md`.
+- **See also:** [install.md](../install.md), [admin.md](../admin.md#roles-and-access); [`src/adapters/azure/README.md`](../../adapters/azure/README.md) and [`src/adapters/azure/infra/README.md`](../../adapters/azure/infra/README.md).
 - **Open design questions that touch this guide:** 12 (marker below).
 
 ## Purpose
 
-The first release is designed to run in the client's own Azure subscription (D-26): one Azure Functions app on the Flex Consumption plan hosts the API, the product's MCP server, the engine and the product's web app, over Azure SQL Database, behind Microsoft Entra ID sign-in. This guide puts the work in order: the role groups, the app registrations, the deployment and the first checks. The click-by-click steps live in `src/adapters/azure/infra/README.md`; this guide points to its sections instead of copying them, and adds what the product needs from each step.
+The first release is designed to run in the client's own Azure subscription: one Azure Functions app on the Flex Consumption plan hosts the API, the product's MCP server, the engine and the product's web app, over Azure SQL Database, behind Microsoft Entra ID sign-in. This guide puts the work in order: the role groups, the app registrations, the deployment and the first checks. The click-by-click steps live in `src/adapters/azure/infra/README.md`; this guide points to its sections instead of copying them, and adds what the product needs from each step.
 
 At the end of this guide the service answers, but no configuration version is in force yet. Version 1 comes from guide [S1](S1-pick-presets-and-overlays.md), step 7, and that step is not built yet (part F).
 
@@ -22,7 +22,7 @@ At the end of this guide the service answers, but no configuration version is in
 
 ## Prerequisites
 
-- **Microsoft Entra ID P1 or P2** in the client's tenant. People get product roles only through Entra groups (D-11), and Microsoft says: "Group-based assignment requires Microsoft Entra ID P1 or P2 edition." Without it, see open point 2.
+- **Microsoft Entra ID P1 or P2** in the client's tenant. People get product roles only through Entra groups, never by a direct assignment, and Microsoft says: "Group-based assignment requires Microsoft Entra ID P1 or P2 edition." Without it, see open point 2.
 - **A verified domain** for the MCP endpoint's host name. MCP clients ask for a token for the MCP URL itself, so the API's Application ID URI is `https://<host>/mcp`, and Microsoft Entra accepts an `https` Application ID URI only on a verified custom domain or the tenant's initial domain. Until the domain is bound, the default `api://<api-client-id>` works for health, metadata, the REST API and the pipeline routes, but not for Claude Code.
 - **Tools on the machine that runs the deployment:** the Azure Developer CLI, the .NET 10 SDK, Node.js 22 or later with npm (the pre-package hook builds the web app), and on Windows PowerShell 7 for the post-provision hook.
 - **Decisions made before you start:** the region (one that offers the Flex Consumption plan), the environment name, a random telemetry salt of at least 16 characters (32 or more is better), and the preset with its overlays (guide S1, steps 1 to 6).
@@ -31,10 +31,10 @@ At the end of this guide the service answers, but no configuration version is in
 
 ### Part A. One Entra group per product role
 
-1. **Create the groups.** One security group per human product role the chosen preset uses, with assigned membership. The 14 role keys of the shipped presets are `requester`, `maker`, `application-owner`, `data-owner`, `architect`, `change-manager`, `change-board`, `pmo`, `ai-lead`, `security-reviewer`, `platform-admin`, `configuration-admin`, `auditor` and `reader`. Document 26 proposes the name `<product>-role-<role-key>` (section 3.2). Starter and the small team overlay may let one group carry several roles (guide S1).
+1. **Create the groups.** One security group per human product role the chosen preset uses, with assigned membership. The 14 role keys of the shipped presets are `requester`, `maker`, `application-owner`, `data-owner`, `architect`, `change-manager`, `change-board`, `pmo`, `ai-lead`, `security-reviewer`, `platform-admin`, `configuration-admin`, `auditor` and `reader`. A good name is `<product>-role-<role-key>`. Starter and the small team overlay may let one group carry several roles (guide S1).
 2. **Keep the groups flat.** Members are users, added directly. Microsoft: a group assignment "doesn't cascade to nested groups", and the groups claim option "Groups assigned to the application" includes a group only when the user is a direct member. A nested member gets no role.
 3. **Keep workloads out.** No service principal, managed identity, agent identity or device in a role group. Microsoft: "if you add a service principal to a group, and then assign an app role to that group, Microsoft Entra ID doesn't add the `roles` claim to tokens it issues." Pipelines and the approval runner get their workload role directly, recorded as a Workload Grant (guides [S5](S5-connect-the-approval-runner.md) and [S6](S6-connect-pipeline-record-steps.md), and [A3](../admin/A3-workload-grants.md)). WORKING DEFAULT (open design question 12)
-4. **Name the holders.** At least two people in every group of a role that approves, so a deputy exists (document 26, RR-07). Give each group an owner from the role's accountable side.
+4. **Name the holders.** At least two people in every group of a role that approves, so a deputy exists (the design flags a role with fewer, and blocks nothing). Give each group an owner from the role's accountable side.
 5. **Write down each group's object ID** against its role key. These IDs are client facts: they go into the client binding patch, which lives in the client's own private repository and never in a public preset (V44).
 
 ### Part B. The API app registration
@@ -48,13 +48,13 @@ Follow `infra/README.md`, section "1. The API app registration". What the produc
 | Delegated scopes | `mcp.access` (MCP clients) and `api.access` (the web app), both "Admins only" | The MCP endpoint takes `mcp.access`; the REST API takes `api.access` |
 | App roles for people | One per role key above, allowed member types "Users/Groups", the role key as the value | The assignment admits people and keeps each group's role visible in Entra |
 | App roles for workloads | `Deployment.Record` and `Approval.Write`, allowed member type "Applications" | The record endpoint and the approval runner's routes take only app-only tokens with these roles |
-| Groups claim | "Groups assigned to the application", group IDs in the access token (`groupMembershipClaims` = `ApplicationGroup`) | The engine matches these group object IDs against the Role Group Binding rows on every call (document 26, RA-01) |
+| Groups claim | "Groups assigned to the application", group IDs in the access token (`groupMembershipClaims` = `ApplicationGroup`) | The engine matches these group object IDs against the Role Group Binding rows on every call, and never trusts a role named in the request |
 | Optional claim | `idtyp` in the access token | Tells user tokens and app-only tokens apart |
 | Enterprise application | Assignment required = Yes; each role group assigned to its app role | Only assigned people get a token at all |
 
 Two things to know:
 
-- **The engine reads groups, not the `roles` claim, for people.** A person whose group is assigned to an app role but not bound in the configuration in force gets no product role. A person in a bound group gets the role whatever the token's `roles` claim says. Matching by app role value is a proposal (`ENGINE-CHANGES-NEEDED.md`, item 6).
+- **The engine reads groups, not the `roles` claim, for people.** A person whose group is assigned to an app role but not bound in the configuration in force gets no product role. A person in a bound group gets the role whatever the token's `roles` claim says. Matching by app role value is a proposal (the Azure binding's [`ENGINE-CHANGES-NEEDED.md`](../../adapters/azure/ENGINE-CHANGES-NEEDED.md), item 6).
 - **Overage.** Microsoft leaves the groups claim out of a JWT when the person is in more groups than the limit of 200. With "Groups assigned to the application", only the product's role groups count, so overage is unlikely; a token whose groups overflowed is refused with a plain message.
 
 ### Part C. The client registrations
@@ -69,7 +69,7 @@ Each is a separate app registration, created only when its part goes on:
 | Each pipeline's identity | [S6](S6-connect-pipeline-record-steps.md) | App role `Deployment.Record`, plus a Workload Grant |
 | The directory reads' federated credential (on the API app registration itself) | [S7](S7-turn-on-directory-reads.md) | Optional |
 
-The web app's tokens act as the person: the REST API admits the person entry only when the token's verified `azp` is one of the web app client IDs the host declares. Any other client with a token for the same API is treated as an AI client acting for the person, and must pass the Known Client check. The four pages are read-only, so the REST API serves the read tools only.
+The web app's tokens act as the person: the REST API admits the person entry only when the token's verified `azp` is one of the web app client IDs the host declares. Any other client with a token for the same API is treated as an AI client acting for the person, and must pass the Known Client check. On the person entry the REST API serves the write tools too, checked by the Tool Policy and the engine exactly as for an AI client on the MCP endpoint. An AI client on the REST API gets the read tools only and writes through the MCP endpoint.
 
 ### Part D. Deploy with azd
 
@@ -104,7 +104,7 @@ Use the base URL azd prints (`azd env get-values` lists `PRODUCT_PUBLIC_BASE_URL
 
 ### Part F. Version 1 and the client binding patch (not built yet)
 
-The engine has the bootstrap operation of document 21, section 4.8 (version 1 accepted directly by the installing person, recorded as a configuration change decision), but no route and no MCP tool calls it yet, so a deployed install cannot reach version 1 today. The local server's `seed` command is not a way around this: it refuses every environment but Development, and it writes version 1 and its rows past the engine for local runs and tests only. Guide S1, steps 7 and 8, describes the designed steps and their open points.
+The engine has the bootstrap operation (version 1 accepted directly by the installing person, recorded as a configuration change decision), but no route and no MCP tool calls it yet, so a deployed install cannot reach version 1 today. The local server's `seed` command is not a way around this: it refuses every environment but Development, and it writes version 1 and its rows past the engine for local runs and tests only. Guide S1, steps 7 and 8, describes the designed steps and their open points.
 
 ## Checks
 
@@ -117,9 +117,9 @@ The engine has the bootstrap operation of document 21, section 4.8 (version 1 ac
 ## Open points
 
 1. **The bootstrap of version 1 has no entry point** (guide S1, open points 1 and 2). Until one exists, this guide ends at part E.
-2. **Without Entra ID P1.** `infra/README.md` offers "Security groups" in the groups claim and people assigned one by one. The engine still reads roles from group IDs, so D-11 holds, but `check_role_bindings` then reports every person as holding a role directly (it lists every user app role assignment with no Workload Grant), which is CHK-01's finding. Either the product states that P1 is required, or the check learns to tell a "Default Access" assignment from a role assignment. Proposal: state P1 as a requirement of the Azure binding.
-3. **Who runs later migrations** once the SQL administrator is a break-glass group (guide A2, part B, step 3). The post-provision hook runs the migrations as the person who runs azd, and creating the app's database user needs the SQL administrator. Proposal: a deployment group, PIM-eligible, that is the SQL administrator only while a migration runs, separate from the break-glass accounts; document 26 would need to say so.
-4. **The private data tier option** (private endpoints for Azure SQL, storage and Key Vault) is not in the template. Until it is, the SQL server allows Azure services and every hop uses Microsoft Entra authentication over public endpoints (document 26, section 11, recommends the hybrid option).
+2. **Without Entra ID P1.** `infra/README.md` offers "Security groups" in the groups claim and people assigned one by one. The engine still reads roles from group IDs, so people still get roles only through groups, but `check_role_bindings` then reports every person as holding a role directly (it lists every user app role assignment with no Workload Grant), the finding for a role assigned to a person directly. Either the product states that P1 is required, or the check learns to tell a "Default Access" assignment from a role assignment. Proposal: state P1 as a requirement of the Azure binding.
+3. **Who runs later migrations** once the SQL administrator is a break-glass group (guide A2, part B, step 3). The post-provision hook runs the migrations as the person who runs azd, and creating the app's database user needs the SQL administrator. Proposal: a deployment group, PIM-eligible, that is the SQL administrator only while a migration runs, separate from the break-glass accounts; the security design would need to say so.
+4. **The private data tier option** (private endpoints for Azure SQL, storage and Key Vault) is not in the template. Until it is, the SQL server allows Azure services and every hop uses Microsoft Entra authentication over public endpoints (the security design recommends the hybrid option).
 
 ## Microsoft facts used
 

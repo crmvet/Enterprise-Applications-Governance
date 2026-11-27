@@ -1,6 +1,19 @@
 # Processes
 
-**Status: in design.** Nothing on these pages is released or deployed. Enterprise Applications Governance (interim name) is designed to run in your own Azure subscription. This folder describes the design only.
+**Status: built and tested; runs as a demo install with fictional data; no release yet.** These pages describe the design of each process. The engine rules, the MCP tools and the web app pages behind all eleven are built and tested, and the [demo scenarios](../../../src/docs/demo/scenarios.md) play each one on fictional data. These parts of the design are not built yet, or work another way today:
+
+- By default a person answers an approval on the decision page in the web app ([D-38](../../decisions/D-38-a-person-answers-an-approval-on-the-decision-page.md)). The approval runner, the Power Automate flows that send notices and, with step-up sign-in off, answerable cards in Outlook and Teams, ships as a template. The product's side is tested through a stand-in for the runner, and the flows have not run in a real tenant yet.
+- The daily refresh records each reminder and escalation in the audit trail, with who is told. No flow sends those messages yet.
+- Approval requests wait in an outbox table for the approval runner. The Azure Service Bus queue and the Durable Functions waits in the table at the end of this page are designed, not built.
+- The gap check and the owner check have read Microsoft's inventory and Entra only through recorded or demo responses with fictional data, not in a real tenant.
+- No reader of Microsoft's agent registry is built, so the agent signal of [P08](p08-owner-leaves.md) and the agent evidence of [P06](p06-gap-check-and-claim.md), step 9, are designed only. The agent register itself is built.
+- A configured trigger does not open an architecture review on its own ([P04](p04-architecture-review.md)). The tier answers report the trigger, and a person requests the review.
+- When an owner leaves ([P08](p08-owner-leaves.md)), the deputy is designed to act in the owner's place. What is built: a deputy holds the owner role they deputize for all along, so they may answer its requests, and the daily refresh escalates an unanswered reminder to the deputy. No test checks that a deputy takes over when the owner's account is disabled, and open approvals do not move to another person yet.
+- Of the intake outcomes ([P01](p01-intake-and-triage.md)), accept is played end to end. Park, redirect to reuse and decline are designed outcomes in the default configuration that no test performs yet.
+- A rejected decision is settled as rejected, and a new proposal starts again. Sending the work itself back to its draft is designed, not built.
+- Linked change management ([P03](p03-change-management.md)) is built in the engine's rules and the change request tool, which take the change tool's number and link. The whole linked flow with an organization's own change tool has not run end to end.
+
+[What works today](../../../src/adapters/azure/STATUS.md) lists what is built and what is not.
 
 This folder holds the eleven processes that carry an application from idea to retirement, one file per process. Each process has a number, P01 to P11, so the pages can point to each other.
 
@@ -26,14 +39,14 @@ Every page has the same parts:
 - **Who does what:** the roles in the default configuration. Every role, and every row of the table, is configuration that each organization can change.
 - **Steps:** what happens, in order.
 - **What is recorded:** the records the process creates or changes.
-- **Approvals:** the decisions that need a person's yes. People answer on approval cards in Outlook or Teams. AI never approves.
+- **Approvals:** the decisions that need a person's yes. A person answers on the decision page in the web app by default; where an install keeps the approval runner's cards, with step-up sign-in off, a person may answer in a card instead. AI never approves.
 - **What an organization can configure.**
-- **Designed MCP tools:** the tools an AI client such as Claude Code would call. Names may still change.
+- **MCP tools:** the tools an AI client such as Claude Code calls. Each one named is on the product's MCP server; see [MCP tools](../mcp-tools.md).
 - **Microsoft tools linked, never rebuilt.**
 - **Where it runs on Azure (in design).**
 - **Microsoft sources:** every Microsoft fact on the page, with its Microsoft Learn link and the date it was checked.
 
-Steps and tables are written in the present tense so they are easy to read. They describe the design, not software that exists. Examples use fictional people and apps.
+Steps and tables are written in the present tense so they are easy to read. They describe the design. The software follows it, except where the status above says otherwise. Examples use fictional people and apps.
 
 In the "Who does what" tables, "Decides" is the one person or role who answers for the outcome. There is always exactly one. "Asked first" gives input before the decision. "Told after" is informed. "AI client" shows what an AI may do for a person: draft, propose or check. It never decides.
 
@@ -61,7 +74,7 @@ Microsoft's agent lifecycle (Intake, Triage, Build, Deploy, Monitor, Improve, Re
 
 ### The five gates
 
-A gate is a recorded decision, not a meeting. A gate decision can be accepted only when every requirement of that gate holds: a decision accepted, a document current, or a review done. The rules engine checks this when the acceptance is written, whoever writes it.
+A gate is a recorded decision, not a meeting. A gate decision can be accepted only when every requirement of that gate holds: a decision accepted, a document current, or a review done. The rules engine checks this when the acceptance is written.
 
 | Gate | After | What it settles in the default configuration |
 |---|---|---|
@@ -82,12 +95,12 @@ A gate is a recorded decision, not a meeting. A gate decision can be accepted on
 ## Seven rules every process obeys
 
 1. **Configuration, never fixed values.** Who decides, who approves, which tier needs what, which documents and which reviews are all configuration rows. The engine does keep a short list of fixed meanings, such as "this status is final" or "this approver is a person", while every label stays configurable. Whether that short list is acceptable is an open design question.
-2. **AI never approves.** AI clients draft, check and propose. Only a person answering an approval card can approve. The data enforces it.
+2. **AI never approves.** AI clients draft, check and propose. Only a person can approve: by default on the decision page in the web app, or, where an install keeps the runner's answerable cards, in that card. The engine enforces it.
 3. **Roles come only from Microsoft Entra groups.** A process asks for a role. The engine resolves it to an Entra group, or to a named owner of the application. Pipelines and the approval flows are not people. Each holds one narrow workload role through a recorded grant that expires. People never get one, and AI agents never get one.
 4. **Links, not copies.** For anything another tool owns, a process stores an ID, a link, a label and a "last seen" date.
 5. **The product writes only its own records.** It never writes wiki pages, work items, pipelines, Entra settings or Microsoft admin settings. People's own AI tools do that work outside the product, and the product records the link.
 6. **Decisions are append-only.** A process never edits an accepted decision. It records a new decision that supersedes the old one.
-7. **Every write says who did it.** Each record shows the kind of actor, the person or workload, on whose behalf, through which client app, and under which configuration version.
+7. **Each write the engine checks says who did it.** Each record shows the kind of actor, the person or workload, on whose behalf, through which client app, and under which configuration version.
 
 ## Three shared parts
 
@@ -95,34 +108,34 @@ Every process uses three shared parts. They are described once here. The value s
 
 ### Approval cards
 
-Every process that needs a person's yes is designed to use this one path.
+Every process that needs a person's yes is designed to use this one path. The value stream diagram names it after cards. Since [D-38](../../decisions/D-38-a-person-answers-an-approval-on-the-decision-page.md), a person answers on the decision page by default, and a card is an option for each install.
 
-1. **Find the rule.** The engine finds the approval rules for the decision type. The single most specific rule wins (for example, a rule for tier 3 emergencies beats a general emergency rule). When no rule matches, the card goes to the role that answers for that decision type.
+1. **Find the rule.** The engine finds the approval rules for the decision type. The single most specific rule wins (for example, a rule for tier 3 emergencies beats a general emergency rule). When no rule matches, the request goes to the role that answers for that decision type.
 2. **Find the approvers.** For an owner role, the current named owners of the application. For a product role, the members of the bound Entra group, read live from Entra.
 3. **Create pending approval records.** One per required answer, never fewer than one, each with an expiry date.
-4. **Send the card.** A small group of Power Automate approval flows, called the approval runner, sends one approval per rule. The mode comes from the rule: everyone must approve, first to respond, or sequential.
-5. **Wait.** People answer in Outlook, Teams or the Power Automate action center. Microsoft's known issues page says an approval flow can wait for 28 days, then that flow fails. Longer waits use a timer that restarts or escalates the card.
-6. **Write the answer.** Only the approval runner may write an answer. Its identity holds the one workload role that can do it. It writes the outcome, the approver, the time, the typed reason and the channel.
+4. **Tell the approvers.** The people asked see the request in My work and in Approvals in the web app. A small group of Power Automate approval flows, called the approval runner, is designed to send a notice in Outlook or Teams that links to the page. With step-up sign-in off, an install can have it send an answerable card instead, one approval per rule. The mode comes from the rule: everyone must approve, first to respond, or sequential.
+5. **Wait.** By default people answer on the decision page. Where an install keeps cards, they answer in Outlook, Teams or the Power Automate action center. Microsoft's known issues page says an approval flow can wait for 28 days, then that flow fails. Longer waits use a timer that restarts or escalates the card.
+6. **Write the answer.** On the decision page, the engine checks the signed-in person before anything is written, then writes the person's own answer. For an answer given in a card, only the approval runner may write it. Its identity holds the one workload role that can do it. It writes the outcome, the approver, the time, the typed reason and the channel.
 7. **Count it.** An answer counts only when all of these hold: it is an approval; the approver is a person signed in as a user; the approver holds the required role when they answer; and the separation rules allow it (for example, whether people may approve their own change).
 8. **Settle the decision.** When every required answer is in, the engine moves the decision to Accepted and checks the gate requirements again. A rejection moves it to Rejected.
-9. **Time out.** At the expiry date the engine marks the approval expired, cancels the card, and reminds or escalates to the deputy.
+9. **Time out.** At the expiry date the engine marks the approval expired, cancels the request, and reminds or escalates to the deputy.
 
 **What protects "AI never approves".**
 
 | Rule | How it is designed to hold |
 |---|---|
-| No approve tool | No MCP tool or API endpoint approves, rejects or accepts a decision |
-| Only the runner writes answers | The API lets only the approval runner's workload role write an answer, and refuses any other writer, including the approver's own AI client |
+| No approve tool for AI | No tool an AI client is served approves or rejects, and nothing accepts a decision by hand. The one answer tool is served only to a person in the web app |
+| Who writes answers | The person the request asks, on the decision page, after the engine's answer check. For an answer given on a card, only the approval runner's workload role. The API refuses any other writer, including the approver's own AI client |
 | Only a person counts | An AI step in an organization's own approval flow is recorded as a recommendation only and never counts |
-| No decision without a person | A decision type with no rule still goes on a card to the role that answers for it. The one exception is a short locked list (see below) |
+| No decision without a person | A decision type with no rule still goes, as an approval request, to the role that answers for it. The one exception is a short locked list (see below) |
 | Reassignment | An approver can reassign a request in Power Automate. The engine counts the new responder only if they hold the required role |
-| Sequential steps | The engine checks that a sequential card never repeats an approver. Microsoft does not allow the same approver on two steps either |
+| Sequential steps | The engine checks that a sequential approval never repeats an approver. Microsoft does not allow the same approver on two steps either |
 
-**The locked list.** The design lets the engine accept a decision with no card only for a short list of decision types that a client cannot extend by configuration. The list in the current design: intake at the lowest tier, and standard changes whose model a person approved once. Whether this list should exist at all is an open design question.
+**The locked list.** The design lets the engine accept a decision with no person's answer only for a short list of decision types that a client cannot extend by configuration. The list in the current design: intake at the lowest tier, and standard changes whose model a person approved once. Whether this list should exist at all is an open design question.
 
-**Card hygiene.** Microsoft's known issues page says that when an approver answers by email or in the action center, the Teams card does not update. So the default configuration sends each rule's card on one channel, not both.
+**Card hygiene.** Microsoft's known issues page says that when an approver answers by email or in the action center, the Teams card does not update. So where an install sends cards, the default configuration sends each rule's card on one channel, not both.
 
-**What approvers need.** Microsoft's licensing FAQ says: "Users who respond to approval requests don't need a Premium license." Approvers still need the Power Automate rights that Microsoft lists for answering approvals.
+**What approvers need.** An approver who answers on the decision page needs no Power Platform license. For a card, Microsoft's licensing FAQ says: "Users who respond to approval requests don't need a Premium license." An approver who answers a card still needs the Power Automate rights that Microsoft lists for answering approvals.
 
 ### Reminders, escalation and notifications
 
@@ -136,7 +149,7 @@ Each reminder carries the item and the reminder number, so a rerun never sends t
 
 ### The engine write path
 
-Every process writes through the same path, whoever calls: the web app, an MCP client, a pipeline step or an import.
+Each way in reaches the same write path: the web app, an MCP client, a pipeline step and an import.
 
 | # | Step | What the engine is designed to do |
 |---|---|---|
@@ -144,11 +157,11 @@ Every process writes through the same path, whoever calls: the web app, an MCP c
 | 2 | Name the kind of actor | Person, AI client for a person, pipeline, approval runner, or engine. Rows written by an AI client are marked AI-created |
 | 3 | Check the role | The caller must hold a product role that allows this write: through a bound Entra group, as a named owner of the application, or through a workload grant |
 | 4 | Check the configuration | Keys exist, status changes are allowed, required fields are there, and gate requirements hold. A missing rule is a broken configuration: the engine refuses and says which rule is missing. It never guesses |
-| 5 | Guard protected fields | Only the approval runner writes answers. Live configuration changes only when a new version is activated ([P11](p11-configuration-change.md)). Accepted decisions, approval records and audit entries are never edited |
+| 5 | Guard protected fields | Approval answers are written only by the person asked, on the decision page, or by the approval runner for an answer given in a card. Live configuration changes only when a new version is activated ([P11](p11-configuration-change.md)). Accepted decisions, approval records and audit entries are never edited |
 | 6 | Apply AI defaults | A record an AI client creates starts as Draft, and a decision starts as Proposed ([P10](p10-ai-draft-and-human-accept.md)) |
 | 7 | Stamp | The configuration version, who performed it, the time, and a stamp that the engine checked it |
 | 8 | Derive | Flags, due dates and stale dates. A missing document is worked out when read, never stored |
-| 9 | Audit and continue | Write an audit entry, and pass on any event a process needs next, such as a card to send |
+| 9 | Audit and continue | Write an audit entry, and pass on any event a process needs next, such as an approval request to send |
 
 ## Where it runs on Azure (in design)
 
@@ -159,7 +172,7 @@ Every process writes through the same path, whoever calls: the web app, an MCP c
 | Database access | The API connects with its managed identity and passes the signed-in person's ID in the session context, so row-level security applies to that person |
 | Sign-in and roles | Microsoft Entra ID. Each product role is an app role assigned to an Entra group |
 | Screens | A web app built with React and shadcn/ui, in the organization's own subscription |
-| Approval cards | Power Automate approval flows (the approval runner) in one Power Platform environment kept for approvals. The API starts them over HTTP, and only the API's identity may start them. The runner writes answers back through the API with its own workload role |
+| Approval notices and cards | Power Automate approval flows (the approval runner) in one Power Platform environment kept for approvals. The API starts them over HTTP, and only the API's identity may start them. The runner writes answers back through the API with its own workload role |
 | Timers | Timer-triggered functions for the daily refresh. Durable Functions for long waits, racing a timer against the person's answer |
 | Events between steps | An outbox row plus an Azure Service Bus queue message, picked up by a function |
 | Live reads as an admin | The gap check ([P06](p06-gap-check-and-claim.md)) and the owner check ([P08](p08-owner-leaves.md)) run in the MCP server with the admin's own delegated sign-in |
@@ -168,7 +181,7 @@ Every process writes through the same path, whoever calls: the web app, an MCP c
 
 **Approvals still need one Power Platform environment.** Microsoft says: "When you create approval flows, they're saved in Dataverse." So the design keeps one Power Platform environment just for the approval flows. It holds the approvals' titles and details, not the product's records.
 
-**The runner's license.** The working design puts the approval flows in one solution and one flow group under one Power Automate Process license. Microsoft says a Process license "lets it use premium and custom connectors, no matter what license the owning or triggering user has", and that a flow group lets up to 25 solution-aware cloud flows share one Process license. Where a security review asks for token-level evidence of who approved, the design offers the product's own approval page instead.
+**The runner's license.** The working design puts the approval flows in one solution and one flow group under one Power Automate Process license. Microsoft says a Process license "lets it use premium and custom connectors, no matter what license the owning or triggering user has", and that a flow group lets up to 25 solution-aware cloud flows share one Process license. The product's own decision page is the default place to answer ([D-38](../../decisions/D-38-a-person-answers-an-approval-on-the-decision-page.md)): the person's sign-in gives token-level evidence of who approved, and answering there needs no Power Platform license.
 
 ## Diagrams
 
@@ -184,9 +197,9 @@ Every process writes through the same path, whoever calls: the web app, an MCP c
 These are still open. Each page marks the places they touch.
 
 - **A short list of fixed engine meanings.** Is a short list of fixed meanings (such as "this status is final") acceptable, with every label still configurable?
-- **The locked list.** May the engine ever accept a decision without a person's card? The current design allows it only for intake at the lowest tier and for standard changes.
+- **The locked list.** May the engine ever accept a decision without a person's answer? The current design allows it only for intake at the lowest tier and for standard changes.
 - **Which act counts as a person's for AI drafts that are not decisions.** For example, registering an app or marking a document current. See [P10](p10-ai-draft-and-human-accept.md).
-- **Accepting a configuration change.** Does the admin who asked for a change accept the exact change on a card? See [P11](p11-configuration-change.md).
+- **Accepting a configuration change.** May the admin who asked for a change accept their own AI's draft, as Balanced allows today, or must another configuration admin? See [P11](p11-configuration-change.md).
 - **AI-only code approvals.** Does a pull request approved only by an AI ever count? See [P05](p05-deployment-record.md).
 - **Workload grants.** May each pipeline's identity, and the approval runner, hold its workload role directly, as a recorded grant that expires? See [P05](p05-deployment-record.md).
 - **The change gate.** How strongly the product acts before a deployment: record only, flag, advise or enforce. See [P03](p03-change-management.md).

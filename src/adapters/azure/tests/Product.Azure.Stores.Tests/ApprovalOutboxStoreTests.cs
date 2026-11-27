@@ -161,6 +161,54 @@ public abstract class ApprovalOutboxStoreTests
         Assert.Equal(ApprovalOutboxStates.Failed, store.Store.GetOutboxItem(record)!.State);
     }
 
+    // A platform admin sends a stuck card again (retry_approval_card; document 24, B24-22): a failed row, or a row sent long
+    // ago, goes back to pending with no attempts, and the runner claims it again; any other row is left as it is.
+    [Fact]
+    public void ARetryPutsAFailedOrLongSentRowBackToPendingAndLeavesOtherRowsAlone()
+    {
+        using RowStoreUnderTest store = Create();
+        using IDisposable caller = TestCaller.Enter();
+        string record = Id();
+        Commit(store, tx => tx.Create("approval-record", record, null, Pending(Id(), Now)));
+        var outbox = new ApprovalOutbox(store.Store);
+
+        // Pending: the runner's still, so a retry changes nothing.
+        Assert.Equal(ApprovalOutboxResultKind.StaleClaim, outbox.Retry(record, Now, Now.AddDays(-2)).Kind);
+        Assert.Equal(ApprovalOutboxResultKind.NotFound, outbox.Retry(Id(), Now, Now.AddDays(-2)).Kind);
+
+        // Sent recently: not yet. Sent before the cut-off: back to pending, with the card's reference kept for history.
+        ApprovalOutboxItem claimed = outbox.TryClaim(outbox.Get(record)!, "claim-a", Now, TimeSpan.FromMinutes(5), 3)!;
+        outbox.MarkSent(record, claimed.ClaimId!, "card-1", "https://flows.example/run/1", Now);
+        Assert.Equal(ApprovalOutboxResultKind.StaleClaim, outbox.Retry(record, Now.AddDays(1), Now.AddDays(-1)).Kind);
+        ApprovalOutboxResult retried = outbox.Retry(record, Now.AddDays(3), Now.AddDays(1));
+        Assert.Equal(ApprovalOutboxResultKind.Done, retried.Kind);
+        Assert.Equal(ApprovalOutboxStates.Pending, retried.Item!.State);
+        Assert.Equal(0, retried.Item.Attempts);
+        Assert.Equal("card-1", retried.Item.CardRef);
+        Assert.Contains(store.Store.ClaimableOutboxItems(Now.AddDays(3), 1000), i => i.ApprovalRecordId == record);
+
+        // Failed after its attempts: back to pending with none used.
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            ApprovalOutboxItem next = outbox.TryClaim(outbox.Get(record)!, "claim-" + attempt, Now.AddDays(3), TimeSpan.FromMinutes(5), 3)!;
+            outbox.Release(record, next.ClaimId!, Now.AddDays(3), 3);
+        }
+
+        Assert.Equal(ApprovalOutboxStates.Failed, outbox.Get(record)!.State);
+        ApprovalOutboxResult revived = outbox.Retry(record, Now.AddDays(4), Now.AddDays(2));
+        Assert.Equal(ApprovalOutboxStates.Pending, revived.Item!.State);
+        Assert.Equal(0, revived.Item.Attempts);
+
+        // A settled row never changes, whatever asks.
+        using (TestCaller.Enter(ActorKindMeaning.ApprovalRunner))
+        {
+            Commit(store, tx => tx.Update("approval-record", record, CanonicalJson.Parse("{\"outcome\":\"approval-approved\",\"outcomeMeaning\":\"approved\"}")));
+        }
+
+        Assert.Equal(ApprovalOutboxResultKind.StaleClaim, outbox.Retry(record, Now.AddDays(9), Now.AddDays(8)).Kind);
+        Assert.Equal(ApprovalOutboxStates.Answered, outbox.Get(record)!.State);
+    }
+
     [Fact]
     public void SeedingNeverTouchesTheOutbox()
     {

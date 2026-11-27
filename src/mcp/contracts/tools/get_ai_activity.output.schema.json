@@ -1,0 +1,918 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_ai_activity output",
+  "description": "The response envelope. On success, data holds the scope (mine or estate), the counts, the groups by client, person and application, the known clients, and the items of the view, newest first, with paging.",
+  "x-tool": "get_ai_activity",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "scope",
+        "counts",
+        "byClient",
+        "byPerson",
+        "byApplication",
+        "knownClients",
+        "items",
+        "totalCount",
+        "clients"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "mine",
+            "estate"
+          ],
+          "description": "mine: the AI work done for the caller; estate: every person's."
+        },
+        "countsScope": {
+          "enum": [
+            "mine",
+            "estate"
+          ],
+          "description": "Whose work the counts cover. Usually the same as scope. The PMO reads the estate's counts and only the rows done for them, so for the PMO this is estate while scope is mine; a page says so beside the figures."
+        },
+        "counts": {
+          "type": "object",
+          "description": "The counts of the scope. For the PMO, who reads the scope mine, the counts are the estate's (D-41): the Overview tile reads as estate-wide, and the rows stay the AI work done for the PMO.",
+          "required": [
+            "drafts",
+            "waiting",
+            "takenForwardByPerson",
+            "submittedByAi",
+            "editedByPersonFirst",
+            "withdrawn",
+            "refused",
+            "answers",
+            "codeApprovals"
+          ],
+          "properties": {
+            "everything": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Every activity of the scope, each counted once. A deployment an AI client drafted and started is one code-approval activity that is also a draft, so drafts + refused + answers + codeApprovals can be more than this. The same number as totalCount of view all."
+            },
+            "drafts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Rows an AI client created, a deployment it recorded included."
+            },
+            "waiting": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "AI drafts no person has taken forward."
+            },
+            "takenForwardByPerson": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "AI drafts a person submitted that are still submitted or decided."
+            },
+            "submittedByAi": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "AI drafts the AI client submitted itself, where the Tool Policy lets it."
+            },
+            "editedByPersonFirst": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "AI drafts a person changed before they went forward."
+            },
+            "withdrawn": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "AI drafts withdrawn, also after a person took them forward."
+            },
+            "recorded": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Rows an AI client reported as a fact (a link, a deployment, a claim, a run), with nothing for a person to take forward. waiting + withdrawn + takenForwardByPerson + submittedByAi + recorded is drafts."
+            },
+            "refused": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Calls refused to an AI client."
+            },
+            "answers": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Approval answers by an AI actor, never counted."
+            },
+            "codeApprovals": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Deployments whose only code approval came from an AI."
+            }
+          },
+          "additionalProperties": false
+        },
+        "byClient": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "clientApp",
+              "count"
+            ],
+            "properties": {
+              "clientApp": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The client label."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Items."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Items by AI client, the most first."
+        },
+        "byPerson": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "onBehalfOf",
+              "count"
+            ],
+            "properties": {
+              "onBehalfOf": {
+                "$ref": "../common.schema.json#/$defs/principalRef"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Items."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Items by the person the AI acted for, the most first."
+        },
+        "byApplication": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "businessApplicationId",
+              "name",
+              "count"
+            ],
+            "properties": {
+              "businessApplicationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O02 Business Application"
+              },
+              "name": {
+                "type": "string",
+                "description": "The application name.",
+                "x-untrusted": true
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Items."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Items by application, the most first."
+        },
+        "knownClients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label",
+              "isAiClient",
+              "isAllowed"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "../common.schema.json#/$defs/key"
+              },
+              "label": {
+                "type": "string",
+                "description": "The client as configured."
+              },
+              "isAiClient": {
+                "type": "boolean",
+                "description": "True for an AI client."
+              },
+              "isAllowed": {
+                "type": "boolean",
+                "description": "True when the client may call the product."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "The Known Client list (C45): the sanctioned clients."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "One thing an AI client did.",
+            "required": [
+              "kind",
+              "occurredOn",
+              "clientApp",
+              "onBehalfOf",
+              "application",
+              "record",
+              "state",
+              "takenForward",
+              "editedByPersonFirst",
+              "withdrawn",
+              "decided",
+              "refusal",
+              "answer",
+              "deployment",
+              "hasCallHistory"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "draft",
+                  "refusal",
+                  "answer",
+                  "code-approval"
+                ],
+                "description": "draft: a row an AI client created; refusal: a call the product refused; answer: an approval answer by an AI actor; code-approval: a deployment whose only code approval came from an AI. A deployment an AI client recorded that relies on an AI-only code approval is one code-approval row, never a draft row too."
+              },
+              "occurredOn": {
+                "description": "When the AI acted: drafted, refused, answered or deployed. Null when no history records it.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "clientApp": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The AI client, as stamped."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "onBehalfOf": {
+                "description": "The person the AI client acted for.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "application": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "businessApplicationId",
+                      "name"
+                    ],
+                    "properties": {
+                      "businessApplicationId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O02 Business Application"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The application name.",
+                        "x-untrusted": true
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "record": {
+                "description": "The record the item is about.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "entity",
+                      "recordId",
+                      "recordNumber",
+                      "label",
+                      "status",
+                      "recordUrl"
+                    ],
+                    "properties": {
+                      "entity": {
+                        "$ref": "../common.schema.json#/$defs/entityKey"
+                      },
+                      "recordId": {
+                        "type": "string",
+                        "description": "The record's ID."
+                      },
+                      "recordNumber": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The record number, when the entity has one."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "The record as people know it.",
+                        "x-untrusted": true
+                      },
+                      "status": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/statusValue"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "recordUrl": {
+                        "$ref": "../common.schema.json#/$defs/recordUrl",
+                        "description": "The record page in the product."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "state": {
+                "description": "For a draft: waiting for a person, submitted, decided, withdrawn, or recorded (a fact or link with no status). For a code approval of a deployment an AI client recorded itself: recorded, so one row carries both facts (document 24, B24-17). Null otherwise.",
+                "anyOf": [
+                  {
+                    "enum": [
+                      "waiting",
+                      "submitted",
+                      "decided",
+                      "withdrawn",
+                      "recorded"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "takenForward": {
+                "description": "Who took the draft forward (submitted it) and when.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "actorKind",
+                      "principal",
+                      "on",
+                      "fromHistory"
+                    ],
+                    "properties": {
+                      "actorKind": {
+                        "$ref": "../common.schema.json#/$defs/actorKindMeaning"
+                      },
+                      "principal": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "on": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/dateTime"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "fromHistory": {
+                        "type": "boolean",
+                        "description": "True when the call history records it; false when the last stamp stands in for it."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "editedByPersonFirst": {
+                "anyOf": [
+                  {
+                    "type": "boolean",
+                    "description": "True when a person changed the draft before it went forward. Null when no call history is recorded for it."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "withdrawn": {
+                "description": "Who withdrew it and when.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "principal",
+                      "on"
+                    ],
+                    "properties": {
+                      "principal": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "on": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/dateTime"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decided": {
+                "description": "For a decision: who decided, when, and the outcome.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "principal",
+                      "on",
+                      "outcome"
+                    ],
+                    "properties": {
+                      "principal": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "on": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/dateTime"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "outcome": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "refusal": {
+                "description": "For a refusal: the tool, the code and the rule.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "description": "Why the call was refused.",
+                    "required": [
+                      "code",
+                      "ruleKey",
+                      "reasonCode",
+                      "ruleIds",
+                      "rule",
+                      "knownTool",
+                      "tool",
+                      "auditEntryId",
+                      "guideline",
+                      "guidelineTitle"
+                    ],
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "description": "The fixed error code of the refusal, such as ai_cannot_do_this."
+                      },
+                      "ruleKey": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The configuration row that refused, when the error named one."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "reasonCode": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The engine reason code, when the engine refused."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "ruleIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "The rules the reason stands for, such as G-08 (AI never approves)."
+                      },
+                      "rule": {
+                        "type": "string",
+                        "description": "The refusal in plain words, from the reason catalog."
+                      },
+                      "knownTool": {
+                        "type": "boolean",
+                        "description": "False when the AI client called a tool name the product does not have, such as an approve tool."
+                      },
+                      "tool": {
+                        "type": "string",
+                        "description": "The tool the AI client called."
+                      },
+                      "auditEntryId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O24 Audit Entry"
+                      },
+                      "guideline": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/guidelineNumber"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The guideline the refusing rule applies, such as G17, which the page shows as a chip that opens Guidelines. Null when no guideline speaks to the refusal."
+                      },
+                      "guidelineTitle": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The guideline's title in the configuration in force, such as \"Let AI draft and recommend; people approve\". Null with no guideline."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "answer": {
+                "description": "For an AI answer: the approval request and what was answered.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "approvalRecordId",
+                      "approver",
+                      "approverActorKind",
+                      "outcome",
+                      "countsTowardRequirement"
+                    ],
+                    "properties": {
+                      "approvalRecordId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O10 Approval Record"
+                      },
+                      "approver": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "approverActorKind": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "The actor kind that answered."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "outcome": {
+                        "$ref": "../common.schema.json#/$defs/statusValue"
+                      },
+                      "countsTowardRequirement": {
+                        "type": "boolean",
+                        "description": "Always false for an AI actor's answer: a recommendation only."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deployment": {
+                "description": "For an AI-only code approval: the deployment and its flags.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "deploymentRecordId",
+                      "route",
+                      "flags",
+                      "gateLevelApplied"
+                    ],
+                    "properties": {
+                      "deploymentRecordId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O14 Deployment Record"
+                      },
+                      "route": {
+                        "$ref": "../common.schema.json#/$defs/deploymentRoute"
+                      },
+                      "flags": {
+                        "$ref": "../common.schema.json#/$defs/deploymentFlags"
+                      },
+                      "gateLevelApplied": {
+                        "$ref": "../common.schema.json#/$defs/gateLevel"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hasCallHistory": {
+                "type": "boolean",
+                "description": "True when the audit entries record the calls on this row."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many items the view holds in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        },
+        "clients": {
+          "type": "array",
+          "description": "Per AI client, in the same scope as the counts: the calls it made that wrote or were refused (reads leave no record), the rows it drafted, how many a person took forward, how many wait, and its refused calls.",
+          "items": {
+            "type": "object",
+            "required": [
+              "clientApp",
+              "knownClientKey",
+              "isAllowed",
+              "calls",
+              "drafts",
+              "acceptedByPerson",
+              "waiting",
+              "refused",
+              "lastActivityOn"
+            ],
+            "properties": {
+              "clientApp": {
+                "type": "string",
+                "description": "The client label the engine stamped."
+              },
+              "knownClientKey": {
+                "description": "The Known Client row (C45), when the list holds it.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/key"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isAllowed": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "calls": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "drafts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "acceptedByPerson": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "waiting": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "refused": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "lastActivityOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "AI work done for you: 1 row an AI client created, 1 waiting for a person, 0 taken forward by a person; 0 refused calls; 0 AI answers, a recommendation only; 0 AI-only code approvals. AI never approves.",
+      "data": {
+        "scope": "mine",
+        "counts": {
+          "everything": 1,
+          "drafts": 1,
+          "waiting": 1,
+          "takenForwardByPerson": 0,
+          "submittedByAi": 0,
+          "editedByPersonFirst": 0,
+          "withdrawn": 0,
+          "refused": 0,
+          "answers": 0,
+          "codeApprovals": 0
+        },
+        "byClient": [
+          {
+            "clientApp": "Claude Code",
+            "count": 1
+          }
+        ],
+        "byPerson": [
+          {
+            "onBehalfOf": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "count": 1
+          }
+        ],
+        "byApplication": [],
+        "knownClients": [
+          {
+            "key": "claude-code",
+            "label": "Claude Code",
+            "isAiClient": true,
+            "isAllowed": true
+          }
+        ],
+        "items": [
+          {
+            "kind": "draft",
+            "occurredOn": "2026-11-24T08:00:00Z",
+            "clientApp": "Claude Code",
+            "onBehalfOf": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "application": null,
+            "record": {
+              "entity": "intake-request",
+              "recordId": "70000000-0000-4000-8000-000000000001",
+              "recordNumber": "IR-0108",
+              "label": "IR-0108: Crew overtime tracker",
+              "status": {
+                "label": "Draft",
+                "meaning": "draft"
+              },
+              "recordUrl": "https://product.example.org/app/records/intake-request/70000000-0000-4000-8000-000000000001"
+            },
+            "state": "waiting",
+            "takenForward": null,
+            "editedByPersonFirst": false,
+            "withdrawn": null,
+            "decided": null,
+            "refusal": null,
+            "answer": null,
+            "deployment": null,
+            "hasCallHistory": true
+          }
+        ],
+        "totalCount": 1,
+        "clients": []
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

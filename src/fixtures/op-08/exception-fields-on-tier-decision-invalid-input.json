@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-08",
+  "tags": [
+    "exception-fields"
+  ],
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-22T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "architect"
+      ]
+    }
+  },
+  "case": "exception-fields-on-tier-decision-invalid-input",
+  "description": "A tier decision does not depart from a standard: Exception Standard on it is invalid input.",
+  "input": {
+    "entity": "decision",
+    "operation": "update",
+    "rowId": "fixture-decision-52",
+    "after": {
+      "exceptionStandard": "Any standard"
+    }
+  },
+  "facts": {
+    "before": {
+      "statusMeaning": "proposed",
+      "decisionType": "tier",
+      "subjectKind": "business-application",
+      "subjectApplication": "fixture-app-1",
+      "createdByPrincipal": "fixture-person-1"
+    }
+  },
+  "expected": {
+    "outcome": "invalid-input",
+    "reasons": [
+      {
+        "code": "input.malformed",
+        "severity": "error"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

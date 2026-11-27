@@ -29,6 +29,8 @@ public sealed class V26RuleGroupAmbiguous : ValidationRule, IContentRule
         { "changeTypeKey", "change-type" },
         { "applicationKindKey", "application-kind" },
         { "targetStageKey", "target-stage" },
+        { "classificationKey", "data-classification" },
+        { "dataDomainLevelKey", "data-domain-level" },
     };
 
     private V26RuleGroupAmbiguous()

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "rule-asks-typed-reason-given-allowed",
+  "description": "The same data use approval with a typed reason passes.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": true
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "data-use-approval",
+      "requiredOwnerRoleKey": "data-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "data-use",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": [
+      "data-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "allowed",
+    "payload": {
+      "allowed": true,
+      "requiresTypedReason": true,
+      "heldOwnerRoleKey": "data-owner"
+    },
+    "reasons": [],
+    "reasonsMatch": "exact"
+  }
+}

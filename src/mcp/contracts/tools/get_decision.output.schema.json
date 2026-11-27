@@ -1,0 +1,1457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_decision output",
+  "description": "The response envelope. On success, data holds one decision: what it says, who proposed it (with the AI marks), what it is about, its approval state with every request and answer, and its evidence. statement, context, optionsConsidered, reason, typed reasons and labels are text people typed.",
+  "x-tool": "get_decision",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "decision",
+        "subject",
+        "approvals",
+        "evidence",
+        "gate"
+      ],
+      "properties": {
+        "decision": {
+          "$ref": "#/$defs/decision"
+        },
+        "subject": {
+          "type": "object",
+          "description": "What the decision is about.",
+          "required": [
+            "subjectKind",
+            "subjectId",
+            "label",
+            "businessApplicationId",
+            "applicationName",
+            "recordUrl"
+          ],
+          "properties": {
+            "subjectKind": {
+              "$ref": "../common.schema.json#/$defs/decisionSubjectKind"
+            },
+            "subjectId": {
+              "description": "The subject row. For a decision about a review, the review that names this decision as its Outcome Decision (O21); for a decision about a data domain, the domain key.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id"
+                },
+                {
+                  "$ref": "../common.schema.json#/$defs/key"
+                }
+              ]
+            },
+            "label": {
+              "type": "string",
+              "description": "The subject's name or title.",
+              "x-untrusted": true
+            },
+            "businessApplicationId": {
+              "description": "The subject's application, if any.",
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O02 Business Application"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "applicationName": {
+              "description": "The application's name.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recordUrl": {
+              "$ref": "../common.schema.json#/$defs/recordUrl"
+            }
+          },
+          "additionalProperties": false
+        },
+        "approvals": {
+          "type": "object",
+          "description": "The approval state: the rule group, every request and answer, and what is still missing.",
+          "required": [
+            "decisionId",
+            "evaluated",
+            "required",
+            "records",
+            "missing",
+            "ready",
+            "settledBy"
+          ],
+          "properties": {
+            "decisionId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            "evaluated": {
+              "type": "boolean",
+              "description": "True when the engine evaluated the rules now (a proposed decision: OP-02 under the decision's stamped version, OP-03 over its records). False for a settled decision: its records show what the engine stored when it settled, and required and missing are empty."
+            },
+            "required": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "One requirement of the winning rule group (OP-02).",
+                "required": [
+                  "approvalRuleKey",
+                  "approvalMode",
+                  "minimumCount",
+                  "received",
+                  "isConsultation"
+                ],
+                "properties": {
+                  "approvalRuleKey": {
+                    "type": "string"
+                  },
+                  "requiredRoleKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C29 Role"
+                  },
+                  "requiredOwnerRoleKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C28 Owner Role"
+                  },
+                  "asksProposedOwners": {
+                    "type": "boolean",
+                    "description": "True when the requirement asks each person the decision proposes to make an owner, by name: the successor and any new deputy (C32 Approver Proposed Owners). requiredRoleKey and requiredOwnerRoleKey are then absent."
+                  },
+                  "approvalMode": {
+                    "$ref": "../common.schema.json#/$defs/approvalMode"
+                  },
+                  "minimumCount": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "received": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Counted answers received."
+                  },
+                  "isConsultation": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "records": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "One Approval Record (O10) of the decision.",
+                "required": [
+                  "approvalRecordId",
+                  "approvalRuleKey",
+                  "approver",
+                  "approverActorKind",
+                  "approverPrincipalKind",
+                  "outcome",
+                  "typedReason",
+                  "respondedOn",
+                  "countsTowardRequirement",
+                  "refusedBySeparationRuleKey",
+                  "askedRole",
+                  "askedOwnerRole",
+                  "askedPrincipal",
+                  "isConsultation",
+                  "requestedOn",
+                  "expiresOn",
+                  "canAnswer",
+                  "cannotAnswer"
+                ],
+                "properties": {
+                  "approvalRecordId": {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O10 Approval Record"
+                  },
+                  "approvalRuleKey": {
+                    "type": "string",
+                    "description": "The approval rule (C32) that asked, or the decision right (C31) of an accountable card."
+                  },
+                  "approver": {
+                    "description": "Who answered. Null while pending.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "approverActorKind": {
+                    "description": "The actor kind of the answer, as stored.",
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "approverPrincipalKind": {
+                    "description": "The principal kind of the approver, as stored.",
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "outcome": {
+                    "$ref": "../common.schema.json#/$defs/statusValue",
+                    "description": "The approval outcome by meaning."
+                  },
+                  "typedReason": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "description": "The reason the approver typed.",
+                        "x-untrusted": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "respondedOn": {
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "countsTowardRequirement": {
+                    "type": "boolean",
+                    "description": "True when the answer counts toward the rule. The engine decides (separation rules, role held at the time)."
+                  },
+                  "refusedBySeparationRuleKey": {
+                    "description": "Reserved: the separation rule that kept the answer from counting. Null in this build; the warnings of the answer say why.",
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "askedRole": {
+                    "description": "The product role (C29) the request asks, if it asks a role.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "askedOwnerRole": {
+                    "description": "The owner role (C28) on the decision's application the request asks, if it asks an owner role.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/labelledKey"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "askedPrincipal": {
+                    "description": "The person the request asks by name, if any.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/principalRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "isConsultation": {
+                    "type": "boolean",
+                    "description": "True for a consultation: shown as a recommendation, never counted."
+                  },
+                  "requestedOn": {
+                    "description": "When the request opened.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "expiresOn": {
+                    "description": "When the request expires.",
+                    "anyOf": [
+                      {
+                        "$ref": "../common.schema.json#/$defs/dateTime"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "canAnswer": {
+                    "type": "boolean",
+                    "description": "True when the request is pending, asks the caller, and the engine would take their answer now (answer_approval). The page shows Approve and Reject only then."
+                  },
+                  "cannotAnswer": {
+                    "description": "Set when the request asks the caller and the check refuses; null otherwise.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "description": "Why the engine would not take the caller's answer on a request that asks them (the approval answer check of answer_approval, run as a pre-check). The page hides Approve and Reject and shows this.",
+                        "required": [
+                          "code",
+                          "message",
+                          "separationRule"
+                        ],
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100,
+                            "description": "The engine reason code, such as approval.answer-separation."
+                          },
+                          "message": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000,
+                            "description": "One plain sentence."
+                          },
+                          "separationRule": {
+                            "description": "The separation rule (C40) that refuses, when one does.",
+                            "anyOf": [
+                              {
+                                "$ref": "../common.schema.json#/$defs/labelledKey"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "missing": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "A requirement still short of counted answers.",
+                "required": [
+                  "approvalRuleKey",
+                  "stillNeeded"
+                ],
+                "properties": {
+                  "approvalRuleKey": {
+                    "type": "string"
+                  },
+                  "requiredRoleKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C29 Role"
+                  },
+                  "requiredOwnerRoleKey": {
+                    "$ref": "../common.schema.json#/$defs/key",
+                    "x-entity": "C28 Owner Role"
+                  },
+                  "asksProposedOwners": {
+                    "type": "boolean",
+                    "description": "True when the requirement asks each person the decision proposes to make an owner, by name: the successor and any new deputy (C32 Approver Proposed Owners). requiredRoleKey and requiredOwnerRoleKey are then absent."
+                  },
+                  "stillNeeded": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "ready": {
+              "type": "boolean",
+              "description": "True when the counted answers meet the rules (or the decision was accepted)."
+            },
+            "settledBy": {
+              "description": "How a settled decision was settled: answers (it holds approval records), engine (the engine accepted it under the locked list, with no approval request), person (its proposer or decider withdrew it), or recorded (no approval record and no engine stamp: recorded as settled outside the engine, such as the seeded demo estate or an import). Null while the decision is proposed.",
+              "anyOf": [
+                {
+                  "enum": [
+                    "answers",
+                    "engine",
+                    "person",
+                    "recorded"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "evidenceLinkId",
+              "linkKind",
+              "url",
+              "label",
+              "evidenceLevel",
+              "capturedOn"
+            ],
+            "properties": {
+              "evidenceLinkId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O20 Evidence Link"
+              },
+              "linkKind": {
+                "$ref": "../common.schema.json#/$defs/labelledKey",
+                "description": "The Link Kind (C37)."
+              },
+              "url": {
+                "$ref": "../common.schema.json#/$defs/url"
+              },
+              "label": {
+                "type": "string",
+                "description": "The link label.",
+                "x-untrusted": true
+              },
+              "evidenceLevel": {
+                "description": "The evidence level value.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "capturedOn": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Evidence links of the decision, HTTPS only."
+        },
+        "gate": {
+          "description": "For a proposed decision whose type is a gate's decision type: that gate as the accept step reads it (OP-07, G-14). The engine accepts the decision only when the gate is ready, even once every approval is in. Null for a settled decision, or when no gate takes the type.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "gateKey",
+                "label",
+                "ready",
+                "unmet"
+              ],
+              "properties": {
+                "gateKey": {
+                  "$ref": "../common.schema.json#/$defs/key",
+                  "x-entity": "C13 Gate"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The gate label."
+                },
+                "ready": {
+                  "type": "boolean",
+                  "description": "True when every requirement of the gate is met."
+                },
+                "unmet": {
+                  "type": "array",
+                  "description": "The requirements not met yet, which hold the decision.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "requirementKey",
+                      "label",
+                      "requirementKind",
+                      "requiredOwnerRoleKey",
+                      "guideline"
+                    ],
+                    "properties": {
+                      "requirementKey": {
+                        "$ref": "../common.schema.json#/$defs/key",
+                        "x-entity": "C14 Gate Requirement"
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "The requirement label."
+                      },
+                      "requirementKind": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Such as owner-assigned, decision-accepted, document-current or review-done."
+                      },
+                      "requiredOwnerRoleKey": {
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/key",
+                            "x-entity": "C28 Owner Role"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "guideline": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The guideline number the requirement applies, such as G2."
+                      },
+                      "guidelineRef": {
+                        "description": "The guideline as a chip: key, number, title and link.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/guidelineRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "openUses": {
+                        "type": "array",
+                        "description": "For a data-uses-decided requirement: the open data uses of the application that are not decided yet, each with its state and the decision that would decide it (null when none is proposed). Empty for any other requirement.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["dataUseId", "recordNumber", "label", "state", "decisionId", "recordUrl"],
+                          "properties": {
+                            "dataUseId": { "$ref": "../common.schema.json#/$defs/id", "x-entity": "O27 Data Use" },
+                            "recordNumber": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+                            "label": { "type": "string", "description": "The domain path, with AI when the use reaches AI." },
+                            "state": { "type": "string", "description": "The OP-16 state, such as needed, proposed or no-one-to-ask." },
+                            "decisionId": { "anyOf": [{ "$ref": "../common.schema.json#/$defs/id" }, { "type": "null" }] },
+                            "recordUrl": { "$ref": "../common.schema.json#/$defs/recordUrl", "description": "The decision that would decide it, else the data use." }
+                          }
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "description": "For a decision about a data use, a copy, a data domain or a data location: the facts the decision page shows. Null for any other decision.",
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "What a data decision page shows (docs/architecture/data-taxonomy.md, Screens).",
+              "required": [
+                "subjectKind",
+                "domain",
+                "location",
+                "use",
+                "mapping",
+                "classification",
+                "governingRule",
+                "reachesAi",
+                "isDeidentified",
+                "state",
+                "approvalsNeeded",
+                "approvalsGiven",
+                "asked",
+                "configurationSetVersion"
+              ],
+              "properties": {
+                "subjectKind": {
+                  "enum": [
+                    "data-use",
+                    "data-mapping",
+                    "data-domain",
+                    "data-location"
+                  ]
+                },
+                "domain": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dataDomainRef"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "location": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dataLocationBrief"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "use": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "dataUseId",
+                        "recordNumber",
+                        "access",
+                        "purpose",
+                        "aiServiceAsSeen",
+                        "status"
+                      ],
+                      "properties": {
+                        "dataUseId": {
+                          "$ref": "../common.schema.json#/$defs/id",
+                          "x-entity": "O27 Data Use"
+                        },
+                        "recordNumber": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "access": {
+                          "$ref": "../common.schema.json#/$defs/dataAccess"
+                        },
+                        "purpose": {
+                          "type": "string",
+                          "x-untrusted": true
+                        },
+                        "aiServiceAsSeen": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "x-untrusted": true
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "status": {
+                          "$ref": "../common.schema.json#/$defs/statusValue"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "mapping": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "dataMappingId",
+                        "origin",
+                        "containers"
+                      ],
+                      "properties": {
+                        "dataMappingId": {
+                          "$ref": "../common.schema.json#/$defs/id",
+                          "x-entity": "O26 Data Mapping"
+                        },
+                        "origin": {
+                          "$ref": "../common.schema.json#/$defs/dataOrigin"
+                        },
+                        "containers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "x-untrusted": true
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "classification": {
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dataClassificationValue"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "governingRule": {
+                  "description": "The rule that governs the use or the copy, and where it is set.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dataGoverningRule"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reachesAi": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "isDeidentified": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "state": {
+                  "description": "The computed state of the use or the copy (OP-16).",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/dataUseState"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "approvalsNeeded": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "approvalsGiven": {
+                  "description": "For a proposed decision: \"1 of 2 approvals\".",
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "asked": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../common.schema.json#/$defs/dataApprover"
+                  },
+                  "description": "Everyone the decision asks, so a person sees who else is asked."
+                },
+                "configurationSetVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The configuration version the decision is stamped with."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "decisionId",
+        "recordNumber",
+        "decisionType",
+        "statement",
+        "context",
+        "optionsConsidered",
+        "confidence",
+        "outcome",
+        "reason",
+        "status",
+        "decider",
+        "decidedOn",
+        "supersedes",
+        "supersededBy",
+        "amends",
+        "amendedBy",
+        "configurationSetVersion",
+        "proposedBy",
+        "exception",
+        "slideBackSignal",
+        "proposedChanges",
+        "isAiCreated",
+        "performedBy",
+        "recordUrl"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey",
+          "description": "The Decision Type (C18)."
+        },
+        "statement": {
+          "type": "string",
+          "description": "One sentence: what is decided.",
+          "x-untrusted": true
+        },
+        "context": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The context the proposer gave.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "optionsConsidered": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The options considered, as the proposer gave them (stored as JSON text).",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confidence": {
+          "description": "The confidence value.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcome": {
+          "description": "The Decision Outcome (C19).",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Why.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The decision status by meaning."
+        },
+        "decider": {
+          "description": "Who decided. Null while proposed.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "supersededBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amends": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amendedBy": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/id",
+            "x-entity": "O09 Decision"
+          },
+          "description": "Later decisions that amend this one."
+        },
+        "configurationSetVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The configuration set version the decision is judged by."
+        },
+        "proposedBy": {
+          "description": "Who proposed it (Created By Principal): the person, also when their AI client drafted it. Null for a seeded decision.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "slideBackSignal": {
+          "description": "The slide-back signal this decision acts on (document 24, B24-22), as the Measures page names it. Null for a decision about no signal.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "number",
+                "key",
+                "label"
+              ],
+              "properties": {
+                "number": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "key": {
+                  "$ref": "../common.schema.json#/$defs/key"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "exception": {
+          "description": "For an exception decision: the standard and the review date. Null for other decisions.",
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "What an exception decision records besides its reason.",
+              "required": [
+                "standard",
+                "reviewOn"
+              ],
+              "properties": {
+                "standard": {
+                  "description": "The standard the exception departs from.",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reviewOn": {
+                  "description": "The date the exception is reviewed again.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proposedChanges": {
+          "description": "Null when the decision proposes no owner, tier or autonomy level change.",
+          "anyOf": [
+            {
+              "type": "object",
+              "description": "What the engine writes on the subject once the decision is accepted (Proposed Changes Json).",
+              "required": [
+                "owners",
+                "tier",
+                "autonomyLevel"
+              ],
+              "properties": {
+                "owners": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "ownerRole",
+                      "add",
+                      "isDeputy",
+                      "startOn",
+                      "endAssignmentId",
+                      "ends"
+                    ],
+                    "properties": {
+                      "ownerRole": {
+                        "description": "The owner role (C28).",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "add": {
+                        "description": "The person who starts in the role.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "isDeputy": {
+                        "type": "boolean"
+                      },
+                      "startOn": {
+                        "description": "When the new holder starts, when later than the acceptance.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/date"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "endAssignmentId": {
+                        "description": "The assignment that ends.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/id",
+                            "x-entity": "O06 Owner Assignment"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "ends": {
+                        "description": "The person whose assignment ends.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/principalRef"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "endsIsDeputy": {
+                        "type": "boolean",
+                        "description": "True when the assignment that ends is a deputy's (product review 2026-11-24)."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "tier": {
+                  "description": "The tier a tier decision sets.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "autonomyLevel": {
+                  "description": "The autonomy level an autonomy level decision agrees.",
+                  "anyOf": [
+                    {
+                      "$ref": "../common.schema.json#/$defs/labelledKey"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configurationChange": {
+          "description": "For a configuration change or gate policy change decision: what the draft changes, so the approver reads it before answering (product review 2026-11-24). Absent or null for any other decision.",
+          "anyOf": [
+            {
+              "type": "object",
+              "required": [
+                "configurationDraftId",
+                "changeSummary",
+                "baseVersionNumber",
+                "isValid",
+                "problems"
+              ],
+              "properties": {
+                "configurationDraftId": {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "C46 Configuration Draft"
+                },
+                "changeSummary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "One line per change, as OP-09 summarized the draft."
+                },
+                "baseVersionNumber": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The version the draft changes."
+                },
+                "isValid": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Whether OP-09 found no error when the draft was saved."
+                },
+                "problems": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The errors and warnings OP-09 reported, in words."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The tier decision is proposed. 1 approval(s) are still missing; only a person's answer counts.",
+      "data": {
+        "decision": {
+          "decisionId": "60000000-0000-4000-8000-000000000013",
+          "recordNumber": "DEC-0013",
+          "decisionType": {
+            "key": "tier",
+            "label": "Tier"
+          },
+          "statement": "Field visit planner is tier 2.",
+          "context": "It holds customer addresses.",
+          "optionsConsidered": null,
+          "confidence": null,
+          "outcome": {
+            "key": "accept",
+            "label": "Accept"
+          },
+          "reason": "Customer addresses",
+          "status": {
+            "label": "Proposed",
+            "meaning": "proposed"
+          },
+          "decider": null,
+          "decidedOn": null,
+          "supersedes": null,
+          "supersededBy": null,
+          "amends": null,
+          "amendedBy": [],
+          "configurationSetVersion": 3,
+          "proposedBy": {
+            "objectId": "20000000-0000-4000-8000-000000000001",
+            "displayLabel": "Requester (sample)"
+          },
+          "exception": null,
+          "slideBackSignal": null,
+          "proposedChanges": null,
+          "isAiCreated": true,
+          "performedBy": {
+            "actorKind": "ai-client-for-person",
+            "principal": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)"
+            },
+            "onBehalfOf": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)"
+            },
+            "clientAppLabel": "Claude Code",
+            "stampedOn": "2026-11-21T10:00:00Z",
+            "draftedBy": null
+          },
+          "recordUrl": "https://product.example.org/records/decision/60000000-0000-4000-8000-000000000013"
+        },
+        "subject": {
+          "subjectKind": "business-application",
+          "subjectId": "10000000-0000-4000-8000-000000000001",
+          "label": "Field visit planner",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "applicationName": "Field visit planner",
+          "recordUrl": "https://product.example.org/records/business-application/10000000-0000-4000-8000-000000000001"
+        },
+        "approvals": {
+          "decisionId": "60000000-0000-4000-8000-000000000013",
+          "evaluated": true,
+          "required": [
+            {
+              "approvalRuleKey": "tier-a",
+              "requiredRoleKey": "platform-admin",
+              "approvalMode": "first-to-respond",
+              "minimumCount": 1,
+              "received": 0,
+              "isConsultation": false
+            }
+          ],
+          "records": [
+            {
+              "approvalRecordId": "80000000-0000-4000-8000-000000000001",
+              "approvalRuleKey": "tier-a",
+              "approver": null,
+              "approverActorKind": null,
+              "approverPrincipalKind": null,
+              "outcome": {
+                "label": "Pending",
+                "meaning": "pending"
+              },
+              "typedReason": null,
+              "respondedOn": null,
+              "countsTowardRequirement": false,
+              "refusedBySeparationRuleKey": null,
+              "askedRole": {
+                "key": "platform-admin",
+                "label": "Platform admin"
+              },
+              "askedOwnerRole": null,
+              "askedPrincipal": null,
+              "isConsultation": false,
+              "requestedOn": "2026-11-21T10:05:00Z",
+              "expiresOn": "2026-11-28T10:05:00Z",
+              "canAnswer": false,
+              "cannotAnswer": null
+            }
+          ],
+          "missing": [
+            {
+              "approvalRuleKey": "tier-a",
+              "requiredRoleKey": "platform-admin",
+              "stillNeeded": 1
+            }
+          ],
+          "ready": false,
+          "settledBy": null
+        },
+        "evidence": [],
+        "gate": null
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "decision.statement",
+        "decision.context",
+        "decision.optionsConsidered",
+        "decision.reason",
+        "subject.label",
+        "approvals.records[].typedReason",
+        "evidence[].label"
+      ],
+      "nextSteps": [
+        {
+          "tool": "get_approval_status",
+          "inputs": {
+            "subjectKind": "decision",
+            "subjectId": "60000000-0000-4000-8000-000000000013"
+          }
+        }
+      ],
+      "correlationId": "corr-0001",
+      "links": {
+        "recordUrl": "https://product.example.org/records/decision/60000000-0000-4000-8000-000000000013"
+      }
+    }
+  ]
+}

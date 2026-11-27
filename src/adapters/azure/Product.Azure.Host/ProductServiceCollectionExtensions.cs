@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 using Product.Azure.Stores;
@@ -92,13 +93,21 @@ public static class ProductServiceCollectionExtensions
                 Playbook = sp.GetRequiredService<PlaybookIndex>(),
                 Directory = sp.GetService<IDirectoryReader>(),
                 Inventory = sp.GetService<IInventoryReader>(),
+                HostFacts = () => HostFactsReader.Read(sp, CallerFacts.Utc(sp.GetRequiredService<IEngineClock>().UtcNow)),
+
+                // The approval outbox, for the platform admin's retry (retry_approval_card; document 24, B24-22), when the
+                // store keeps one.
+                ApprovalOutbox = sp.GetService<IRecordStore>() is IApprovalOutboxStore outboxStore
+                    ? new ApprovalOutboxPort(sp.GetService<ApprovalOutbox>() ?? new ApprovalOutbox(outboxStore))
+                    : null,
             }));
         services.TryAddSingleton(sp => McpOptions(
             sp.GetRequiredService<IOptions<ProductHostOptions>>().Value,
             sp.GetRequiredService<IOptions<ProductAuthOptions>>().Value,
             sp.GetRequiredService<IHostEnvironment>(),
             sp.GetRequiredService<IEngineClock>(),
-            sp.GetRequiredService<IRequestCorrelation>()));
+            sp.GetRequiredService<IRequestCorrelation>(),
+            sp.GetRequiredService<ILoggerFactory>()));
         services.TryAddSingleton<ITelemetrySink, LoggerTelemetrySink>();
         services.TryAddSingleton<ICallerMapper, CallerMapper>();
         services.TryAddSingleton(sp => new CallerFacts(sp.GetRequiredService<IRecordStore>(), sp.GetRequiredService<IConfigurationStore>(), sp.GetRequiredService<EngineRuntime>()));
@@ -119,6 +128,7 @@ public static class ProductServiceCollectionExtensions
         services.AddProductMcpSdk();
         services.AddProductWebApp(configuration);
         services.AddProductApprovalRunner(configuration);
+        services.AddProductDueStateRefresh(configuration);
         services.AddProductDirectoryReads();
         services.AddProductHardening(configuration);
         return services;
@@ -214,15 +224,26 @@ public static class ProductServiceCollectionExtensions
             });
     }
 
-    private static McpServerOptions McpOptions(ProductHostOptions host, ProductAuthOptions auth, IHostEnvironment environment, IEngineClock clock, IRequestCorrelation correlation)
+    private static McpServerOptions McpOptions(ProductHostOptions host, ProductAuthOptions auth, IHostEnvironment environment, IEngineClock clock, IRequestCorrelation correlation, ILoggerFactory loggers)
     {
+        // Without a configured salt the telemetry lines named no caller at all (wave 3 QA: "caller ;"). The host then makes
+        // a salt for this process, random and kept only in memory: a caller's hash is the same on every line of this run,
+        // and means nothing after a restart or on another instance. The configured salt (a Key Vault reference on Azure)
+        // stays the way to correlate across instances.
+        string? salt = string.IsNullOrEmpty(host.TelemetrySalt) ? null : host.TelemetrySalt;
+        if (salt == null)
+        {
+            salt = ProcessTelemetrySalt.Value;
+            loggers.CreateLogger("Product.Azure.Host.Telemetry").LogWarning("No Product:TelemetrySalt is set, so telemetry hashes each caller with a salt made for this process: a caller's lines correlate within this run only.");
+        }
+
         return new McpServerOptions
         {
             ServerName = host.ServerName,
             ResourceUrl = string.IsNullOrWhiteSpace(host.PublicBaseUrl) ? "http://localhost" + "/" + host.McpPath.TrimStart('/') : host.McpResourceUrl,
             AuthorizationServer = auth.AuthorizationServer,
             Scope = auth.McpScope,
-            TelemetrySalt = string.IsNullOrEmpty(host.TelemetrySalt) ? null : host.TelemetrySalt,
+            TelemetrySalt = salt,
             ValidateOutputs = host.ValidateOutputs ?? environment.IsDevelopment(),
             UtcNow = () => CallerFacts.Utc(clock.UtcNow),
 
@@ -230,6 +251,18 @@ public static class ProductServiceCollectionExtensions
             CorrelationIds = correlation.Next,
         };
     }
+
+    // The salt of a process that has none configured: 32 random bytes as hex, made once.
+    private static readonly Lazy<string> ProcessTelemetrySalt = new(() =>
+    {
+        byte[] bytes = new byte[32];
+        using (var random = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            random.GetBytes(bytes);
+        }
+
+        return string.Concat(bytes.Select(b => b.ToString("x2", System.Globalization.CultureInfo.InvariantCulture)));
+    });
 
     private static string RecordUrlBase(ProductHostOptions host)
     {

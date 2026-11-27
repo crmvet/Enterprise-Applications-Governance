@@ -17,20 +17,32 @@
       "httpStatus": 403,
       "clientAction": "Tell the person which role or ownership the call needs. Do not retry.",
       "engineReasons": [
-        "config.not-configuration-admin"
+        "config.not-configuration-admin",
+        "decision.propose-not-allowed",
+        "approval.answer-not-asked",
+        "due-state.refresh-not-allowed"
       ]
+    },
+    {
+      "code": "step_up_required",
+      "meaning": "The call needs a fresh sign-in, and the token is older than the setting allows, or lacks the authentication context it names. Only answer_approval asks for one, and only when the step-up setting is on (D-38). The HTTP layer returns 401 with a claims challenge.",
+      "retryable": false,
+      "httpStatus": 401,
+      "clientAction": "Sign the person in again, with the claims challenge when the error carries one, then send the same answer again."
     },
     {
       "code": "ai_cannot_do_this",
       "meaning": "The write would set a state that only a person or the approval runner may set. AI never approves.",
       "retryable": false,
       "httpStatus": 403,
-      "clientAction": "Do not retry. Point the person to the approval card or to the page where a person acts.",
+      "clientAction": "Do not retry. Point the person to the decision page in the web app, or to the page where a person acts.",
       "engineReasons": [
         "decision.accept-by-engine-only",
         "approval.outcome-writer",
         "register.decision-required",
-        "config.activation-only"
+        "config.activation-only",
+        "approval.answer-person-only",
+        "ai.data-row-draft-only"
       ]
     },
     {
@@ -41,7 +53,10 @@
       "clientAction": "Explain the rule to the person. Change the input, or start the decision the rule needs.",
       "engineReasons": [
         "link.wrong-category",
-        "link.url-pattern"
+        "link.url-pattern",
+        "approval.answer-separation",
+        "data.rule-never",
+        "data.decision-cannot-allow"
       ]
     },
     {
@@ -51,7 +66,9 @@
       "httpStatus": 400,
       "clientAction": "Fix the field named in error.field, then call again.",
       "engineReasons": [
-        "input.*"
+        "input.*",
+        "data.use-duplicate",
+        "approval.answer-reason-required"
       ]
     },
     {
@@ -74,7 +91,10 @@
         "request.*",
         "audit.append-only",
         "config.base-moved",
-        "approval.outcome-final"
+        "approval.outcome-final",
+        "approval.answer-already-given",
+        "approval.answer-expired",
+        "approval.answer-closed"
       ]
     },
     {

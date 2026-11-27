@@ -32,9 +32,11 @@
         "deployment-record",
         "technical-component",
         "claim",
-        "review"
+        "review",
+        "data-use",
+        "data-mapping"
       ],
-      "description": "The kind of record the decision is about."
+      "description": "The kind of record the decision is about. data-use takes a data-use decision (one per use) or a data-retention decision (a use that writes, at retirement); data-mapping takes a data-use decision about a copy. Owner changes of a data domain or location start with propose_owner_change."
     },
     "subjectId": {
       "$ref": "../common.schema.json#/$defs/id",
@@ -84,13 +86,23 @@
     "proposedOutcomeKey": {
       "$ref": "../common.schema.json#/$defs/key",
       "x-entity": "C19 Decision Outcome",
-      "description": "The outcome proposed. It takes effect only when people accept the decision on cards."
+      "description": "The outcome proposed. It takes effect only when the decision is accepted through people's answers on the decision page."
     },
     "reason": {
       "type": "string",
       "minLength": 1,
       "maxLength": 2000,
       "description": "Why this outcome."
+    },
+    "tierKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C08 Tier",
+      "description": "For a tier decision: the tier it sets once accepted, when a person raises or lowers the computed tier. Leave out to confirm the tier the latest answers computed."
+    },
+    "autonomyLevelKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C07 List Value",
+      "description": "For an autonomy level decision: the level from the autonomy-level list it stores once accepted with outcome agree."
     },
     "confidenceKey": {
       "$ref": "../common.schema.json#/$defs/key",
@@ -107,6 +119,21 @@
       "x-entity": "O09 Decision",
       "description": "An accepted decision this one amends, once accepted."
     },
+    "slideBackSignalKey": {
+      "enum": [
+        "changes-wait-for-a-meeting",
+        "environments-by-ticket",
+        "gap-check-stale",
+        "registered-late",
+        "configuration-not-kept",
+        "unsanctioned-ai",
+        "tool-rebuilt",
+        "no-human-approver",
+        "documents-slipping",
+        "access-drift"
+      ],
+      "description": "The slide-back signal this decision acts on (playbook chapter 17; get_measures signals). The Measures page lists the decisions each signal led to."
+    },
     "evidence": {
       "type": "array",
       "minItems": 1,
@@ -122,6 +149,27 @@
     },
     "validateOnly": {
       "$ref": "../common.schema.json#/$defs/validateOnly"
+    },
+    "exception": {
+      "type": "object",
+      "description": "Required for an exception decision, and only there: the standard it departs from and the date it is reviewed again (document 23, P04 step 6).",
+      "required": [
+        "standard",
+        "reviewOn"
+      ],
+      "properties": {
+        "standard": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The standard, guideline or rule the exception departs from, in plain words."
+        },
+        "reviewOn": {
+          "$ref": "../common.schema.json#/$defs/date",
+          "description": "The date the exception is reviewed again: today or later."
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

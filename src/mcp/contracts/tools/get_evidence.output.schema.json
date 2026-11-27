@@ -1,0 +1,1276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_evidence output",
+  "description": "The response envelope. On success, data is the evidence pack: the subject, the configuration version in force and the versions stamped on the rows, and the decisions with their approvals, the changes, the deployments, the reviews, the documents and the evidence links. Lists stop at 500 rows each; truncated says so.",
+  "x-tool": "get_evidence",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "subject",
+        "configurationInForce",
+        "versionsStamped",
+        "decisions",
+        "changes",
+        "deployments",
+        "reviews",
+        "documents",
+        "evidenceLinks",
+        "counts",
+        "truncated"
+      ],
+      "properties": {
+        "subject": {
+          "type": "object",
+          "required": [
+            "subjectKind",
+            "subjectId",
+            "label",
+            "businessApplicationId",
+            "recordUrl"
+          ],
+          "properties": {
+            "subjectKind": {
+              "enum": [
+                "business-application",
+                "decision"
+              ]
+            },
+            "subjectId": {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O02 Business Application or O09 Decision"
+            },
+            "label": {
+              "type": "string",
+              "description": "The application name or the decision statement.",
+              "x-untrusted": true
+            },
+            "businessApplicationId": {
+              "anyOf": [
+                {
+                  "$ref": "../common.schema.json#/$defs/id",
+                  "x-entity": "O02 Business Application"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recordUrl": {
+              "$ref": "../common.schema.json#/$defs/recordUrl",
+              "description": "The record page in the product."
+            }
+          },
+          "additionalProperties": false
+        },
+        "configurationInForce": {
+          "type": "object",
+          "description": "The configuration version in force now and its content hash.",
+          "required": [
+            "configurationSetVersion",
+            "contentHash"
+          ],
+          "properties": {
+            "configurationSetVersion": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "contentHash": {
+              "$ref": "../common.schema.json#/$defs/contentHash"
+            }
+          },
+          "additionalProperties": false
+        },
+        "versionsStamped": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Every configuration version the rows in the pack were checked under."
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/change"
+          }
+        },
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deployment"
+          }
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/review"
+          }
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/document"
+          }
+        },
+        "evidenceLinks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceLink"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "decisions",
+            "approvalAnswers",
+            "changes",
+            "deployments",
+            "flaggedDeployments",
+            "reviews",
+            "documents",
+            "evidenceLinks",
+            "aiCreated"
+          ],
+          "properties": {
+            "decisions": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Decisions in the pack."
+            },
+            "approvalAnswers": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Approval requests answered."
+            },
+            "changes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Changes."
+            },
+            "deployments": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Deployment records."
+            },
+            "flaggedDeployments": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Deployment records with a flag."
+            },
+            "reviews": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Reviews."
+            },
+            "documents": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Document links."
+            },
+            "evidenceLinks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Evidence links."
+            },
+            "aiCreated": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Rows an AI client created among the decisions, changes, deployments and documents."
+            }
+          },
+          "additionalProperties": false
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "True when a list stopped at 500 rows."
+        }
+      },
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "approvalRecordId",
+        "askedRole",
+        "askedOwnerRole",
+        "isConsultation",
+        "approver",
+        "approverActorKind",
+        "outcome",
+        "typedReason",
+        "requestedOn",
+        "respondedOn",
+        "countsTowardRequirement",
+        "configurationSetVersion"
+      ],
+      "properties": {
+        "approvalRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O10 Approval Record"
+        },
+        "askedRole": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "askedOwnerRole": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isConsultation": {
+          "type": "boolean",
+          "description": "True for a consultation, which never counts."
+        },
+        "approver": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approverActorKind": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The actor kind of the answer. An AI actor's answer is a recommendation only."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcome": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "typedReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The reason the approver typed.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "respondedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "countsTowardRequirement": {
+          "type": "boolean",
+          "description": "True when the engine counted the answer."
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "decisionId",
+        "recordNumber",
+        "decisionType",
+        "statement",
+        "reason",
+        "outcome",
+        "status",
+        "proposedBy",
+        "decider",
+        "decidedOn",
+        "settledBy",
+        "approvals",
+        "isAiCreated",
+        "performedBy",
+        "configurationSetVersion",
+        "recordUrl"
+      ],
+      "properties": {
+        "decisionId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O09 Decision"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The decision number, such as DEC-0146."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "statement": {
+          "type": "string",
+          "description": "What was decided.",
+          "x-untrusted": true
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Why.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "proposedBy": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decider": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decidedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "settledBy": {
+          "description": "How a settled decision was settled. Null while proposed.",
+          "anyOf": [
+            {
+              "enum": [
+                "answers",
+                "engine",
+                "person",
+                "recorded"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/approval"
+          }
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client drafted it."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The record page in the product."
+        }
+      },
+      "additionalProperties": false
+    },
+    "change": {
+      "type": "object",
+      "required": [
+        "changeRequestId",
+        "recordNumber",
+        "title",
+        "changeType",
+        "status",
+        "result",
+        "windowStart",
+        "windowEnd",
+        "authorizationDecisionId",
+        "isAiCreated",
+        "performedBy",
+        "configurationSetVersion",
+        "recordUrl"
+      ],
+      "properties": {
+        "changeRequestId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O11 Change Request"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The change number, such as CHG-0031."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "The change title.",
+          "x-untrusted": true
+        },
+        "changeType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/statusValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "windowStart": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "windowEnd": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authorizationDecisionId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client drafted it."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The record page in the product."
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "reviewId",
+        "recordNumber",
+        "reviewType",
+        "status",
+        "dueOn",
+        "doneOn",
+        "reviewer",
+        "outcomeDecisionId",
+        "configurationSetVersion",
+        "recordUrl"
+      ],
+      "properties": {
+        "reviewId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O21 Review"
+        },
+        "recordNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The review number."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reviewType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "$ref": "../common.schema.json#/$defs/statusValue"
+        },
+        "dueOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "doneOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcomeDecisionId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O09 Decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The record page in the product."
+        }
+      },
+      "additionalProperties": false
+    },
+    "document": {
+      "type": "object",
+      "required": [
+        "documentLinkId",
+        "documentType",
+        "status",
+        "url",
+        "owner",
+        "lastCheckedOn",
+        "isAiCreated",
+        "configurationSetVersion",
+        "recordUrl"
+      ],
+      "properties": {
+        "documentLinkId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O19 Document Link"
+        },
+        "documentType": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/statusValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastCheckedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client recorded it."
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The record page in the product."
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceLink": {
+      "type": "object",
+      "required": [
+        "evidenceLinkId",
+        "subjectKind",
+        "subjectId",
+        "linkKind",
+        "url",
+        "label",
+        "evidenceLevel",
+        "capturedOn",
+        "isAiCreated",
+        "configurationSetVersion"
+      ],
+      "properties": {
+        "evidenceLinkId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O20 Evidence Link"
+        },
+        "subjectKind": {
+          "enum": [
+            "decision",
+            "approval-record",
+            "change-request",
+            "deployment-record",
+            "review"
+          ]
+        },
+        "subjectId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "The record the evidence supports"
+        },
+        "linkKind": {
+          "$ref": "../common.schema.json#/$defs/labelledKey"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "label": {
+          "type": "string",
+          "description": "The link label.",
+          "x-untrusted": true
+        },
+        "evidenceLevel": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/labelledKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "capturedOn": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client linked it."
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "description": "One deployment record.",
+      "required": [
+        "deploymentRecordId",
+        "businessApplicationId",
+        "applicationName",
+        "deploymentTargetId",
+        "targetLabel",
+        "targetStageKey",
+        "artifactName",
+        "artifactVersion",
+        "result",
+        "finishedOn",
+        "route",
+        "flags",
+        "gateLevelApplied",
+        "runUrl",
+        "correctsRecordId",
+        "changeRequestId",
+        "pipelineReferenceId",
+        "versionBefore",
+        "versionAfter",
+        "startedByAiClient",
+        "isAiCreated",
+        "performedBy",
+        "configurationSetVersion",
+        "recordUrl"
+      ],
+      "properties": {
+        "deploymentRecordId": {
+          "$ref": "../common.schema.json#/$defs/id",
+          "x-entity": "O14 Deployment Record"
+        },
+        "businessApplicationId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O02 Business Application"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applicationName": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The application name.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deploymentTargetId": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O15 Deployment Target"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetLabel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The target's name when last seen.",
+              "x-untrusted": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetStageKey": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/key",
+              "x-entity": "C34 Target Stage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifactName": {
+          "type": "string",
+          "description": "The artifact's name.",
+          "x-untrusted": true
+        },
+        "artifactVersion": {
+          "type": "string",
+          "description": "The artifact's version text."
+        },
+        "result": {
+          "$ref": "../common.schema.json#/$defs/statusValue",
+          "description": "The deployment result by meaning."
+        },
+        "finishedOn": {
+          "$ref": "../common.schema.json#/$defs/dateTime"
+        },
+        "route": {
+          "$ref": "../common.schema.json#/$defs/deploymentRoute"
+        },
+        "flags": {
+          "$ref": "../common.schema.json#/$defs/deploymentFlags"
+        },
+        "gateLevelApplied": {
+          "$ref": "../common.schema.json#/$defs/gateLevel"
+        },
+        "runUrl": {
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "correctsRecordId": {
+          "description": "Set when this record corrects an earlier one.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O14 Deployment Record"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "changeRequestId": {
+          "description": "The change the deployment was matched to.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O11 Change Request"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pipelineReferenceId": {
+          "description": "The pipeline that reported it.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/id",
+              "x-entity": "O16 Pipeline Reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "versionBefore": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The version the target ran before."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "versionAfter": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The version the target runs after."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "startedByAiClient": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The AI client that started the deployment, as reported."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAiCreated": {
+          "type": "boolean",
+          "description": "True when an AI client reported the record."
+        },
+        "performedBy": {
+          "description": "Who made the last engine-checked write, as the engine stamped it. Null for a row the engine never stamped, such as seeded data.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/stampedBy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configurationSetVersion": {
+          "description": "The configuration set version in force when the row was written, so the rules that applied can be traced. Null for a row with no stamp.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recordUrl": {
+          "$ref": "../common.schema.json#/$defs/recordUrl",
+          "description": "The record page in the product."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "The evidence pack of Field Inspections: 1 decision(s), 0 change(s), 1 deployment(s), 0 review(s), 0 document(s), 0 evidence link(s).",
+      "data": {
+        "subject": {
+          "subjectKind": "business-application",
+          "subjectId": "10000000-0000-4000-8000-000000000001",
+          "label": "Field Inspections",
+          "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+          "recordUrl": "https://product.example.org/app/records/business-application/10000000-0000-4000-8000-000000000001"
+        },
+        "configurationInForce": {
+          "configurationSetVersion": 3,
+          "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "versionsStamped": [
+          3
+        ],
+        "decisions": [
+          {
+            "decisionId": "50000000-0000-4000-8000-000000000001",
+            "recordNumber": "DEC-0146",
+            "decisionType": {
+              "key": "go-live",
+              "label": "Go-live"
+            },
+            "statement": "Go live on 24 November",
+            "reason": "Tests passed",
+            "outcome": {
+              "key": "approve",
+              "label": "Approve"
+            },
+            "status": {
+              "label": "Accepted",
+              "meaning": "accepted"
+            },
+            "proposedBy": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "decider": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)",
+              "principalKind": "user"
+            },
+            "decidedOn": "2026-11-23T15:00:00Z",
+            "settledBy": "answers",
+            "approvals": [
+              {
+                "approvalRecordId": "50000000-0000-4000-8000-000000000101",
+                "askedRole": null,
+                "askedOwnerRole": {
+                  "key": "business-owner",
+                  "label": "Business owner"
+                },
+                "isConsultation": false,
+                "approver": {
+                  "objectId": "20000000-0000-4000-8000-000000000001",
+                  "displayLabel": "Requester (sample)",
+                  "principalKind": "user"
+                },
+                "approverActorKind": "person",
+                "outcome": {
+                  "label": "Approved",
+                  "meaning": "approved"
+                },
+                "typedReason": null,
+                "requestedOn": "2026-11-23T09:00:00Z",
+                "respondedOn": "2026-11-23T15:00:00Z",
+                "countsTowardRequirement": true,
+                "configurationSetVersion": 3
+              }
+            ],
+            "isAiCreated": true,
+            "performedBy": {
+              "actorKind": "ai-client-for-person",
+              "principal": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)",
+                "principalKind": "user"
+              },
+              "onBehalfOf": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)",
+                "principalKind": "user"
+              },
+              "clientAppLabel": "Claude Code",
+              "stampedOn": "2026-11-24T08:00:00Z",
+              "draftedBy": null
+            },
+            "configurationSetVersion": 3,
+            "recordUrl": "https://product.example.org/app/records/decision/50000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "changes": [],
+        "deployments": [
+          {
+            "deploymentRecordId": "60000000-0000-4000-8000-000000000001",
+            "businessApplicationId": "10000000-0000-4000-8000-000000000001",
+            "applicationName": "Field Inspections",
+            "deploymentTargetId": "30000000-0000-4000-8000-000000000003",
+            "targetLabel": "Operations production",
+            "targetStageKey": "production",
+            "artifactName": "FieldInspections",
+            "artifactVersion": "1.0.0",
+            "result": {
+              "label": "Succeeded",
+              "meaning": "succeeded"
+            },
+            "finishedOn": "2026-11-24T06:40:00Z",
+            "route": {
+              "key": "pipeline-step",
+              "meaning": "pipeline-step"
+            },
+            "flags": {
+              "outsideWindow": false,
+              "otherPath": false,
+              "missingApproval": false,
+              "aiOnlyCodeApproval": true
+            },
+            "gateLevelApplied": "record",
+            "runUrl": null,
+            "correctsRecordId": null,
+            "changeRequestId": "70000000-0000-4000-8000-000000000011",
+            "pipelineReferenceId": null,
+            "versionBefore": "0.9.0",
+            "versionAfter": "1.0.0",
+            "startedByAiClient": null,
+            "isAiCreated": false,
+            "performedBy": null,
+            "configurationSetVersion": 3,
+            "recordUrl": "https://product.example.org/app/records/deployment-record/60000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "reviews": [],
+        "documents": [],
+        "evidenceLinks": [],
+        "counts": {
+          "decisions": 1,
+          "approvalAnswers": 1,
+          "changes": 0,
+          "deployments": 1,
+          "flaggedDeployments": 1,
+          "reviews": 0,
+          "documents": 0,
+          "evidenceLinks": 0,
+          "aiCreated": 1
+        },
+        "truncated": false
+      },
+      "links": {},
+      "asOf": "2026-11-24T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [],
+      "nextSteps": [],
+      "correlationId": "corr-0070"
+    }
+  ]
+}

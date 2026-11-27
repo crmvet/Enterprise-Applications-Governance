@@ -23,6 +23,38 @@ public interface IDirectoryReader
 
     // Direct app role assignments of the server's app, with the role each grants (for check_role_bindings).
     DirectoryAnswer<IReadOnlyList<DirectAssignment>> DirectAssignments(BackendCaller asPerson);
+
+    // The groups among groupObjectIds the member is in (list_teams with memberObjectId, the person page's "member of").
+    // A directory that can answers in one read for the person (Graph: the person's transitive groups), not one read
+    // per group (security review). By default: the members of each group, read one group at a time; a group
+    // that did not answer is left out and counted in notRead.
+    DirectoryAnswer<IReadOnlyList<string>> MemberGroups(BackendCaller asPerson, string memberObjectId, IReadOnlyList<string> groupObjectIds, out int notRead)
+    {
+        notRead = 0;
+        var found = new List<string>();
+        foreach (string group in groupObjectIds)
+        {
+            DirectoryAnswer<IReadOnlyList<DirectoryObject>> answer = GroupMembers(asPerson, group);
+            if (!answer.Answered)
+            {
+                notRead++;
+                continue;
+            }
+
+            if (answer.Value.Any(m => string.Equals(m.ObjectId, memberObjectId, StringComparison.OrdinalIgnoreCase)))
+            {
+                found.Add(group);
+            }
+        }
+
+        return DirectoryAnswer<IReadOnlyList<string>>.Of(found);
+    }
+}
+
+// Marks a directory reader that answers from the demo personas, not from Entra (a demo install or a local run): pages
+// then say where the holders come from.
+public interface IDemoDirectory
+{
 }
 
 // The Power Platform inventory as the admin (POST {PowerPlatformAPI url}/resourcequery/resources/query, delegated only).
@@ -111,7 +143,7 @@ public sealed class DirectAssignment
 
 public sealed class InventoryItem
 {
-    public InventoryItem(string externalId, string sourceType, string labelAsSeen, string? targetAsSeen = null, string? componentKindKey = null, string? suggestedClaimantObjectId = null)
+    public InventoryItem(string externalId, string sourceType, string labelAsSeen, string? targetAsSeen = null, string? componentKindKey = null, string? suggestedClaimantObjectId = null, string? url = null)
     {
         ExternalId = externalId;
         SourceType = sourceType;
@@ -119,6 +151,7 @@ public sealed class InventoryItem
         TargetAsSeen = targetAsSeen;
         ComponentKindKey = componentKindKey;
         SuggestedClaimantObjectId = suggestedClaimantObjectId;
+        Url = url;
     }
 
     public string ExternalId { get; }
@@ -132,6 +165,10 @@ public sealed class InventoryItem
     public string? ComponentKindKey { get; }
 
     public string? SuggestedClaimantObjectId { get; }
+
+    // A link that opens the item in its tool, when the source gives one (O23 Url). The Power Platform inventory gives
+    // none, so the live reader leaves it empty; an admin's own list may carry one (compare_inventory_list).
+    public string? Url { get; }
 }
 
 public sealed class InventoryPage

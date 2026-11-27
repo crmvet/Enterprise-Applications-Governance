@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MCP tool index",
-  "description": "Schema for tools.json, the index of the product's MCP tools. It also encodes two rules: a read tool has AI write state read-only and the read-only hint, and no tool name starts with a verb for an act that only people or the engine perform.",
+  "description": "Schema for tools.json, the index of the product's MCP tools. It also encodes four rules: a read tool has AI write state read-only and the read-only hint; a write tool whose only AI write state is read-only is served to an AI client for a validateOnly preview only; no tool name starts with a verb for an act that only people or the engine perform; and a tool served only to a person (AI write state person-only) names the person entry alone, so no AI client is ever served it (D-38).",
   "type": "object",
   "required": [
     "description",
@@ -169,7 +169,8 @@
         "documentation",
         "gapcheck",
         "configuration",
-        "links"
+        "links",
+        "data"
       ],
       "description": "The shipped toolset keys (the toolset value list)."
     },
@@ -182,9 +183,10 @@
         "as-reported",
         "link",
         "candidate",
-        "withdrawn"
+        "withdrawn",
+        "person-only"
       ],
-      "description": "Max AI State values (document 24, section 15), in kebab-case."
+      "description": "Max AI State values (document 24, section 15), in kebab-case, plus person-only: the tool is never served to an AI client, on any entry (D-38)."
     },
     "roleKey": {
       "enum": [
@@ -199,11 +201,12 @@
         "pmo",
         "ai-lead",
         "platform-admin",
+        "data-governance-lead",
         "configuration-admin",
         "auditor",
         "reader"
       ],
-      "description": "The 14 shipped human role keys (C29)."
+      "description": "The 15 shipped human role keys (C29). The data governance lead was added by the data taxonomy (D-41, question 4)."
     },
     "relation": {
       "enum": [
@@ -216,9 +219,13 @@
         "leaving-person",
         "owner-of-leaving-persons-application",
         "record-requester-or-creator",
-        "decision-right-responsible-or-consulted",
+        "decision-right-holder",
+        "asked-approver",
         "document-owner",
-        "writer-of-evidence-subject"
+        "writer-of-evidence-subject",
+        "reviewer-of-review",
+        "owner-of-data-domain",
+        "technical-owner-of-location"
       ],
       "description": "Access that depends on the caller's relation to the record, not on a role alone."
     },
@@ -307,6 +314,18 @@
           "type": "string",
           "minLength": 1,
           "description": "The AI write state as document 24, section 6.1 words it."
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "ai-client",
+              "person"
+            ]
+          },
+          "description": "The entries that serve the tool: ai-client (the MCP endpoint, and the REST API for an AI client) and person (the product's web app through its API). Absent means both, with each entry's own rules. A tool whose only entry is person is never listed for, nor served to, an AI client."
         },
         "aiMaySubmit": {
           "type": "object",
@@ -424,6 +443,53 @@
         }
       },
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "aiWriteStates": {
+                "contains": {
+                  "const": "person-only"
+                }
+              }
+            },
+            "required": [
+              "aiWriteStates"
+            ]
+          },
+          "then": {
+            "required": [
+              "entries"
+            ],
+            "properties": {
+              "aiWriteStates": {
+                "const": [
+                  "person-only"
+                ]
+              },
+              "entries": {
+                "const": [
+                  "person"
+                ]
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "required": [
+                "entries"
+              ],
+              "properties": {
+                "entries": {
+                  "const": [
+                    "person"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
       "if": {
         "properties": {
           "access": {
@@ -453,11 +519,21 @@
       "else": {
         "properties": {
           "aiWriteStates": {
-            "not": {
-              "contains": {
-                "const": "read-only"
+            "anyOf": [
+              {
+                "const": [
+                  "read-only"
+                ]
+              },
+              {
+                "not": {
+                  "contains": {
+                    "const": "read-only"
+                  }
+                }
               }
-            }
+            ],
+            "description": "A write tool either names the states an AI client may leave a record in, or names read-only alone: an AI client may then only preview the write with validateOnly, and a person makes it (move_data_references)."
           },
           "annotations": {
             "required": [

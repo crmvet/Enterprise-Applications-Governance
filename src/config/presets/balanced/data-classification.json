@@ -1,0 +1,55 @@
+{
+  "$comment": [
+    "C47 Data Classification (data taxonomy, D-37, settled by D-41; docs/architecture/data-taxonomy.md).",
+    "The labels are Purview's default sensitivity label names. Setup renames them to the tenant's labels; the C11 rows of vocabulary purview-sensitivity-label hold the label names and their source.",
+    "The handling rules follow D-41, question 6, option A: public data needs no decision, internal data needs one only when it reaches AI, confidential and restricted data need one for every use. Masked copies of confidential data go to test with a decision; restricted data never does.",
+    "Purview's Personal label (data that is not business data) is not mapped."
+  ],
+  "entity": "data-classification",
+  "rows": [
+    {
+      "key": "public",
+      "label": "Public",
+      "description": "Business data prepared and approved for public use.",
+      "rank": 1,
+      "impliedTierQuestionKey": "sensitivity",
+      "impliedAnswerKey": "none",
+      "defaultUseRule": "allowed",
+      "defaultAiUseRule": "allowed",
+      "defaultCopyToTestRule": "allowed"
+    },
+    {
+      "key": "internal",
+      "label": "General",
+      "description": "Business data not meant for the public, such as daily work product.",
+      "rank": 2,
+      "impliedTierQuestionKey": "sensitivity",
+      "impliedAnswerKey": "internal",
+      "defaultUseRule": "allowed",
+      "defaultAiUseRule": "decision",
+      "defaultCopyToTestRule": "allowed"
+    },
+    {
+      "key": "confidential",
+      "label": "Confidential",
+      "description": "Sensitive business data with limited distribution, such as personnel records or contracts.",
+      "rank": 3,
+      "impliedTierQuestionKey": "sensitivity",
+      "impliedAnswerKey": "restricted",
+      "defaultUseRule": "decision",
+      "defaultAiUseRule": "decision",
+      "defaultCopyToTestRule": "masked-only"
+    },
+    {
+      "key": "restricted",
+      "label": "Highly Confidential",
+      "description": "The most critical data, shared only with named people, such as payroll, health or bank details.",
+      "rank": 4,
+      "impliedTierQuestionKey": "sensitivity",
+      "impliedAnswerKey": "restricted",
+      "defaultUseRule": "decision",
+      "defaultAiUseRule": "decision",
+      "defaultCopyToTestRule": "never"
+    }
+  ]
+}

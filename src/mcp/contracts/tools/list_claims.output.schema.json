@@ -41,7 +41,13 @@
               "url",
               "suggestedClaimant",
               "foundOn",
-              "lastSeenOn"
+              "lastSeenOn",
+              "claimedBy",
+              "claimedOn",
+              "resultingComponentId",
+              "businessApplicationId",
+              "ownershipDecisionId",
+              "intakeRequestId"
             ],
             "properties": {
               "claimId": {
@@ -116,6 +122,76 @@
                     "type": "null"
                   }
                 ]
+              },
+              "claimedBy": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Who claimed it. Null until claimed."
+              },
+              "claimedOn": {
+                "description": "When it was claimed.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "resultingComponentId": {
+                "description": "The component the claim created.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O03 Technical Component"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessApplicationId": {
+                "description": "The application the claimed component belongs to.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ownershipDecisionId": {
+                "description": "The latest ownership decision about the claim, when one was opened.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "intakeRequestId": {
+                "description": "The intake request a claim for a new application started.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O07 Intake Request"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -153,7 +229,13 @@
               "displayLabel": "Maker (sample)"
             },
             "foundOn": "2026-11-22T08:30:00Z",
-            "lastSeenOn": "2026-11-22T08:30:00Z"
+            "lastSeenOn": "2026-11-22T08:30:00Z",
+            "claimedBy": null,
+            "claimedOn": null,
+            "resultingComponentId": null,
+            "businessApplicationId": null,
+            "ownershipDecisionId": null,
+            "intakeRequestId": null
           }
         ]
       },

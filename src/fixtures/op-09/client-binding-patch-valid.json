@@ -89,6 +89,18 @@
         },
         {
           "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "data-governance-leads",
+          "values": {
+            "label": "Data governance leads",
+            "roleKey": "data-governance-lead",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000006",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
           "entity": "workload-grant",
           "key": "release-pipeline",
           "values": {
@@ -99,6 +111,42 @@
             "usesFederatedCredential": true,
             "bindingDetail": "App role assignment on the product registration",
             "expiresOn": "2027-06-30"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "ai-leads",
+          "values": {
+            "label": "AI leads",
+            "roleKey": "ai-lead",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000071",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "platform-admins",
+          "values": {
+            "label": "Platform admins",
+            "roleKey": "platform-admin",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000072",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
+          }
+        },
+        {
+          "op": "upsert",
+          "entity": "role-group-binding",
+          "key": "pmo",
+          "values": {
+            "label": "PMO",
+            "roleKey": "pmo",
+            "entraGroupObjectId": "00000000-0000-4000-8000-000000000073",
+            "bindingMethod": "entra-app-role-assignment",
+            "bindingDetail": "App role on the product registration"
           }
         }
       ]
@@ -130,6 +178,10 @@
         "principalKind": "group"
       },
       {
+        "objectId": "00000000-0000-4000-8000-000000000006",
+        "principalKind": "group"
+      },
+      {
         "objectId": "00000000-0000-4000-8000-000000000009",
         "principalKind": "service-principal"
       }
@@ -147,10 +199,14 @@
       "isValid": true,
       "issues": [],
       "changeSummary": [
+        "Added Role Group Binding `ai-leads`.",
         "Added Role Group Binding `architects`.",
         "Added Role Group Binding `change-board`.",
         "Added Role Group Binding `change-managers`.",
         "Added Role Group Binding `configuration-admins`.",
+        "Added Role Group Binding `data-governance-leads`.",
+        "Added Role Group Binding `platform-admins`.",
+        "Added Role Group Binding `pmo`.",
         "Added Role Group Binding `security-reviewers`.",
         "Added Workload Grant `release-pipeline`."
       ]

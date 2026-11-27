@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "approval-already-counts-for-requirement-refused",
+  "description": "The person already approved another record of the same requirement, and that approval counts. One person counts once within a requirement, so a second approval would not count: it is refused, and the request waits for another person.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "retirement-approval",
+      "requiredOwnerRoleKey": "business-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "retirement",
+      "tierKey": "tier-2"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-9"
+    },
+    "ownerRoleKeys": [
+      "business-owner"
+    ],
+    "earlierAnswers": [
+      {
+        "approvalRecordId": "fixture-approval-0",
+        "ruleKey": "retirement-approval",
+        "responderPrincipalId": "fixture-person-1",
+        "outcome": "approved",
+        "countsTowardRequirement": true
+      }
+    ]
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-already-given",
+        "severity": "error",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

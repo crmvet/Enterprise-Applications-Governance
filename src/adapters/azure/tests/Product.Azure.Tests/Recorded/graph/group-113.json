@@ -1,0 +1,17 @@
+{
+  "description": "A role group of the demo binding, read by check_role_bindings and get_role_holders. Fictional.",
+  "request": {
+    "method": "GET",
+    "url": "https://graph.microsoft.com/v1.0/groups/00000000-0000-4000-8000-000000000113?$select=id,displayName"
+  },
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#groups(id,displayName)/$entity",
+        "id": "00000000-0000-4000-8000-000000000113",
+        "displayName": "AI leads"
+      }
+    }
+  ]
+}

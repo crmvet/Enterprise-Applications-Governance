@@ -22,6 +22,12 @@ public enum CallerEntry
 
     // An app-only token: a pipeline's workload identity or the approval runner (document 26, RA-07).
     Workload,
+
+    // The engine's own scheduled work inside the host, with no token: the daily due-state refresh (document 23, S2).
+    // Only the host builds such a caller, in process; no token and no request maps to it. It resolves
+    // to the actor kind engine, holds no role, and every write it makes is an engine-nested write (document 22, section
+    // 2.4: "The engine itself (flags, computed dates, reminders, derived links)").
+    Engine,
 }
 
 // What the adapter knows about the caller before the engine resolves roles: the object ID and kind from the token or the
@@ -48,7 +54,12 @@ public sealed class CallerIdentity
             throw new ArgumentException("An app-only token comes from a service principal, a managed identity or an agent identity.", nameof(principalKind));
         }
 
-        if (entry != CallerEntry.Workload && (workloadKind || principalKind == PrincipalKind.Group))
+        if (entry == CallerEntry.Engine && !workloadKind)
+        {
+            throw new ArgumentException("The engine's own caller is the host's service principal or managed identity.", nameof(principalKind));
+        }
+
+        if (entry != CallerEntry.Workload && entry != CallerEntry.Engine && (workloadKind || principalKind == PrincipalKind.Group))
         {
             throw new ArgumentException("A delegated token names a user, an agent user or an agent identity.", nameof(principalKind));
         }
@@ -88,6 +99,13 @@ public sealed class CallerIdentity
     public static CallerIdentity Workload(string principalId, PrincipalKind kind = PrincipalKind.ServicePrincipal, string? clientApp = null)
     {
         return new CallerIdentity(principalId, kind, CallerEntry.Workload, null, clientApp);
+    }
+
+    // The engine's own scheduled work (the due-state refresh), as the host runs it in process. principalId defaults to
+    // EngineKeys.EnginePrincipalId, the engine's fixed identity in stamps and audit entries.
+    public static CallerIdentity Engine(string? principalId = null, string? clientApp = null)
+    {
+        return new CallerIdentity(string.IsNullOrEmpty(principalId) ? EngineKeys.EnginePrincipalId : principalId!, PrincipalKind.ManagedIdentity, CallerEntry.Engine, null, clientApp ?? EngineKeys.EngineClientApp);
     }
 }
 
@@ -143,6 +161,12 @@ public static class CallerResolver
         if (caller.PrincipalKind == PrincipalKind.AgentIdentity || caller.PrincipalKind == PrincipalKind.AgentUser)
         {
             return Agent(caller);
+        }
+
+        if (caller.Entry == CallerEntry.Engine)
+        {
+            // The engine's own scheduled work: no role, no grant, the actor kind engine. Only the host builds this caller.
+            return new CallerResolution(new ActorInfo(caller.PrincipalId, caller.PrincipalKind, ActorKindMeaning.Engine), null, Enumerable.Empty<RuleTrace>());
         }
 
         var trace = new List<RuleTrace>();
@@ -216,7 +240,7 @@ public static class CallerResolver
             return Agent(caller);
         }
 
-        if (caller.Entry == CallerEntry.Workload)
+        if (caller.Entry == CallerEntry.Workload || caller.Entry == CallerEntry.Engine)
         {
             return new CallerResolution(
                 null,

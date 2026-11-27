@@ -219,7 +219,7 @@ export function renderAzureSql(bound) {
   para('Binding: document 22, section 11 (Azure SQL Database). Names: document 20, section 3.5. Batches are separated by GO, as sqlcmd and the usual migration runners read them; the runner decides transactions.');
   head.push('--');
   para(`Holds: ${stats.tables} tables, one per entity of the first release, adopted and proposed (${stats.temporal} temporal, ${stats['updatable-ledger']} updatable ledger, ${stats['append-only-ledger']} append-only ledger), ${stats.columns} columns, ${stats.uniqueConstraints} unique constraints, ${stats.filteredUniqueIndexes} filtered unique indexes, ${stats.checks} check constraints, ${stats.foreignKeys} foreign keys and ${stats.views} view.`);
-  para('Leaves out: row-level security predicates and security policies (document 22, section 11.3), database principals and permissions (section 11.1), ledger digest storage, the seed load and the migration runner, and the later entities L01 to L05.');
+  para('Leaves out: row-level security predicates and security policies (document 22, section 11.3), database principals and permissions (section 11.1), ledger digest storage, the seed load and the migration runner, and the later entities L02 to L05.');
   head.push('--');
   para('Rules applied:');
   item(1, 'Primary key Id uniqueidentifier with a NEWSEQUENTIALID() default. Created On and Modified On default to SYSUTCDATETIME(); the API sets Modified On on update (no trigger here).');

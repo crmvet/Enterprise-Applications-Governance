@@ -117,11 +117,95 @@ public sealed class PromotedColumn
     }
 }
 
+// A check on a row's subject columns (document 22, section 2.6): exactly one subject column holds a value, and the
+// row's Subject Kind names it. An empty Subject Kind means the first subject, the one every row had before the others
+// existed (O06 Owner Assignment: business-application, the only subject before the data taxonomy, D-37). The store makes
+// the check before a write reaches the database, on SQLite and Azure SQL alike, and Azure SQL also holds it as a CHECK
+// constraint on the row's JSON (sql/0008-data-taxonomy.sql), so the two agree: a column holds a value when it is a JSON
+// scalar other than null and the empty string, which is what JSON_VALUE and NULLIF give in the constraint.
+public sealed class SubjectCheck
+{
+    internal SubjectCheck(string name, string kindColumn, IEnumerable<KeyValuePair<string, string>> subjects)
+    {
+        Name = name;
+        KindColumn = kindColumn;
+        Subjects = new ReadOnlyCollection<KeyValuePair<string, string>>(subjects.ToList());
+        if (Subjects.Count < 2)
+        {
+            throw new InvalidOperationException("A subject check needs at least two subjects.");
+        }
+    }
+
+    // The constraint's name after the table, such as "OneSubject" in CK_OwnerAssignment_OneSubject.
+    public string Name { get; }
+
+    // The row JSON member that names the kind, such as "subjectKind".
+    public string KindColumn { get; }
+
+    // Each subject kind's wire value and the row JSON member that holds it. The first is the kind an empty Subject Kind
+    // means.
+    public IReadOnlyList<KeyValuePair<string, string>> Subjects { get; }
+
+    // Null when the row passes, else what is wrong, in one sentence.
+    public string? Problem(JsonTreeNode columns)
+    {
+        if (columns == null)
+        {
+            throw new ArgumentNullException(nameof(columns));
+        }
+
+        string[] set = Subjects.Where(s => HasValue(columns, s.Value)).Select(s => s.Value).ToArray();
+        if (set.Length != 1)
+        {
+            return "sets " + set.Length.ToString(CultureInfo.InvariantCulture) + " of the subject columns " + string.Join(", ", Subjects.Select(s => s.Value))
+                + ", and exactly one must hold a value.";
+        }
+
+        string expected = HasValue(columns, KindColumn) && columns.TryGetMember(KindColumn, out JsonTreeNode? kind) ? ScalarText(kind) : Subjects[0].Key;
+        KeyValuePair<string, string> match = Subjects.FirstOrDefault(s => string.Equals(s.Key, expected, StringComparison.Ordinal));
+        if (match.Value == null)
+        {
+            return "names the subject kind \"" + expected + "\", which is not one of " + string.Join(", ", Subjects.Select(s => s.Key)) + ".";
+        }
+
+        return string.Equals(match.Value, set[0], StringComparison.Ordinal)
+            ? null
+            : "has the subject kind \"" + expected + "\" but sets " + set[0] + " instead of " + match.Value + ".";
+    }
+
+    // True when the member is a JSON scalar other than null and the empty string.
+    internal static bool HasValue(JsonTreeNode columns, string member)
+    {
+        if (!columns.TryGetMember(member, out JsonTreeNode? value))
+        {
+            return false;
+        }
+
+        switch (value.Kind)
+        {
+            case JsonTreeKind.String:
+                return value.GetString().Length > 0;
+            case JsonTreeKind.Number:
+            case JsonTreeKind.True:
+            case JsonTreeKind.False:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static string ScalarText(JsonTreeNode value)
+    {
+        return value.Kind == JsonTreeKind.String ? value.GetString() : CanonicalJson.Write(value, CanonicalProfile.Request);
+    }
+}
+
 // One entity of the logical model as the stores keep it: its key, its table and its history class.
 public sealed class EntityInfo
 {
-    internal EntityInfo(string key, string modelId, string logicalName, string schema, string table, char historyClass, bool isConfiguration, string deletePolicy, EntityStorage storage, IEnumerable<PromotedColumn> promoted, IEnumerable<StoreKey>? storeKeys = null)
+    internal EntityInfo(string key, string modelId, string logicalName, string schema, string table, char historyClass, bool isConfiguration, string deletePolicy, EntityStorage storage, IEnumerable<PromotedColumn> promoted, IEnumerable<StoreKey>? storeKeys = null, SubjectCheck? subjectCheck = null)
     {
+        SubjectCheck = subjectCheck;
         Key = key;
         ModelId = modelId;
         LogicalName = logicalName;
@@ -176,6 +260,9 @@ public sealed class EntityInfo
     // The other keys of the model the store enforces for this entity, held in the store key table (StoreKeys.cs). The
     // keys the promoted unique columns hold are not repeated here.
     public IReadOnlyList<StoreKey> StoreKeys { get; }
+
+    // The check on the row's subject columns, or null when the store makes none (document 22, section 2.6).
+    public SubjectCheck? SubjectCheck { get; }
 
     public override string ToString()
     {
@@ -283,10 +370,34 @@ public sealed class EntityCatalog
                 entity.DeletePolicy,
                 StorageOf(id, historyClass[0]),
                 promoted,
-                StoreKeyCatalog.For(entity, key, promoted)));
+                StoreKeyCatalog.For(entity, key, promoted),
+                SubjectCheckFor(key)));
         }
 
         return new EntityCatalog(model.ModelVersion, entities);
+    }
+
+    // The subject checks the store makes (document 22, section 2.6). O06 Owner Assignment gained its data subjects with
+    // the data taxonomy (D-37; document 22, B22-14). O09 Decision's subjects stay the engine's to check: its tools also
+    // write Subject Application beside a subject of another kind, as the subject's application scope, and its rows sit
+    // frozen in an updatable ledger table that a failed check could never correct (document 22, B22-14).
+    private static SubjectCheck? SubjectCheckFor(string key)
+    {
+        switch (key)
+        {
+            case "owner-assignment":
+                return new SubjectCheck(
+                    "OneSubject",
+                    "subjectKind",
+                    new[]
+                    {
+                        new KeyValuePair<string, string>("business-application", "businessApplication"),
+                        new KeyValuePair<string, string>("data-domain", "subjectDataDomain"),
+                        new KeyValuePair<string, string>("data-location", "subjectDataLocation"),
+                    });
+            default:
+                return null;
+        }
     }
 
     private static EntityStorage StorageOf(string id, char historyClass)

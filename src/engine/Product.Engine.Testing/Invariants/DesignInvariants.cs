@@ -32,7 +32,7 @@ public sealed class DesignInvariant
 }
 
 // The eleven invariants of document 25, section 10, and the generator every invariant test runs over: each shipped full
-// preset alone and with each allowed overlay combination (22 selections today), the same set build-presets validates.
+// preset alone and with each allowed overlay combination (44 selections today), the same set build-presets validates.
 public static class DesignInvariants
 {
     public static readonly IReadOnlyList<DesignInvariant> All = new ReadOnlyCollection<DesignInvariant>(new[]

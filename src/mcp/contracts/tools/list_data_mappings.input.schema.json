@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_data_mappings input",
+  "description": "The data mappings (O26) across every domain in one list: where each domain's data is kept, its origin, and for a copy outside production its decision state under the copy rule (OP-16, computed when read). Open mappings by default. Filters by domain (with the domains below it), location, origin, copy state and words; dataMappingIds reads given mappings, ended ones too. Writes nothing.",
+  "x-tool": "list_data_mappings",
+  "type": "object",
+  "properties": {
+    "domainKey": {
+      "$ref": "../common.schema.json#/$defs/key",
+      "x-entity": "C49 Data Domain",
+      "description": "Only mappings of this domain and, unless includeSubtree is false, of the domains below it."
+    },
+    "includeSubtree": {
+      "type": "boolean",
+      "default": true,
+      "description": "False keeps the mappings of domainKey itself only."
+    },
+    "dataLocationId": {
+      "$ref": "../common.schema.json#/$defs/id",
+      "x-entity": "O25 Data Location",
+      "description": "Only mappings at this location."
+    },
+    "dataMappingIds": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/id",
+        "x-entity": "O26 Data Mapping"
+      },
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "description": "Only these mappings, whatever their end date (a mapping's record page). Each must exist."
+    },
+    "originKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/dataOrigin"
+      },
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "description": "Only mappings with these origins."
+    },
+    "copyStates": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/dataUseState"
+      },
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "description": "Only copies outside production in these decision states."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Words that must appear in the domain's path or the location's name."
+    },
+    "includeEnded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True adds the ended, retired and archived mappings."
+    },
+    "top": {
+      "$ref": "../common.schema.json#/$defs/top"
+    },
+    "skipToken": {
+      "$ref": "../common.schema.json#/$defs/skipToken"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "domainKey": "payroll"
+    },
+    {
+      "dataMappingIds": [
+        "00000000-0000-4000-8000-000000000591"
+      ]
+    }
+  ]
+}

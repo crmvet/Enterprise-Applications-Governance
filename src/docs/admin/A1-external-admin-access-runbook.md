@@ -2,14 +2,14 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 28, Q17 (working default, settled); document 21, sections 4.4, 5 and 6.8; document 26, sections 1.2, 3.5 (RR-05, RR-06), 4.2 and 4.5 (CHK-08, CHK-11).
+- **See also:** [admin.md](../admin.md#roles-and-access), [concepts.md](../concepts.md#product-roles-and-teams).
 - **Open design questions that touch this guide:** 1, 4 and 12 (markers below).
 
 ## Purpose
 
 An adopter may ask a person from outside its own organization, for example a contractor or another company's implementation team, to apply its configuration: the preset workshop, the client binding patch, documentation rules and later changes. This guide calls that person the external admin. The external admin needs the configuration admin role in the adopter's product for hours at a time, never standing access, and the adopter must approve and see every activation.
 
-The working default (28, Q17): the external admin is a guest in the adopter's tenant, an eligible member of a group that is PIM-eligible for the configuration admin role. Each activation needs the adopter's approval and is time-bound. For adopters without Entra ID P2 or ID Governance, the adopter's own staff run the tools while the external admin advises.
+The working default: the external admin is a guest in the adopter's tenant, an eligible member of a group that is PIM-eligible for the configuration admin role. Each activation needs the adopter's approval and is time-bound. For adopters without Entra ID P2 or ID Governance, the adopter's own staff run the tools while the external admin advises.
 
 ## Who
 
@@ -41,8 +41,8 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 ### A. Before the work starts (the adopter)
 
 1. **Invite the external admin as a guest.** One named guest account per person, never a shared account. The inviter becomes the guest's sponsor.
-2. **Allow guests on the role, by configuration.** The configuration admin role row's Allows Guests column is No by default (RR-05). The adopter's configuration admin changes it to Yes through a configuration change decision, accepted on a card. This is a protected change, judged by the active rules (document 21, section 4.4). Without it, CHK-11 flags the guest.
-3. **Put the role group under PIM for Groups.** In the Microsoft Entra admin center: ID Governance, Privileged Identity Management, Groups, Discover groups, then manage the configuration admin role group (`<product>-role-configuration-admin` in document 26's naming proposal).
+2. **Allow guests on the role, by configuration.** The configuration admin role row's Allows Guests column is No by default for every role. The adopter's configuration admin changes it to Yes on this role only, through a configuration change decision accepted on the decision page. This is a protected change, judged by the active rules. Without it, the designed guest check flags the guest.
+3. **Put the role group under PIM for Groups.** In the Microsoft Entra admin center: ID Governance, Privileged Identity Management, Groups, Discover groups, then manage the configuration admin role group (for example `<product>-role-configuration-admin`, the naming guide [S4](../setup/S4-prepare-entra-and-deploy.md) suggests).
 4. **Set the member role settings** (Settings, Member):
    - Activation maximum duration: 8 hours (Learn allows 1 to 24; see open point 4).
    - On activation, require Azure MFA, or a Conditional Access authentication context.
@@ -61,7 +61,7 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
    - [branch: Dataverse] Dataverse caches a user's group memberships at sign-in. The external admin signs out of every session against the environment and signs in again after activation, so the group team role applies.
    - [branch: Azure] The product reads the person's group IDs from the token and resolves the role from the bound groups. The external admin re-authenticates the server in Claude Code (`/mcp`, Re-authenticate), so the new token carries the activated group. The API's groups claim includes only groups assigned to the application in which the person is a direct member, so the PIM-managed group must be the bound role group itself, not a group nested inside it.
 4. **Connect and work.** Claude Code, signed in with the guest account in the adopter's tenant (guide [S2](../setup/S2-connect-claude-code.md)). The external admin instructs configuration drafts: `get_configuration` and `explain_rules` to read, `propose_configuration_change` with `validateOnly` to see the diff and the impact on live applications, then without it to store the draft, then `submit_record` (subject kind configuration draft). The record shows "AI client for a person", on behalf of the guest.
-5. **Acceptance.** The engine's diff goes to the configuration admin role on one card. The engine allows the instructing admin to accept their own AI's draft in Balanced, Starter and the CoE baseline; Regulated and `strict-separation` require a second configuration admin. WORKING DEFAULT (open design question 4). Runbook rule: the adopter's configuration admin accepts every draft the external admin instructed, so the decider on record is the adopter's own person. The external admin does not answer those cards.
+5. **Acceptance.** The engine's diff goes to the configuration admin role as one approval request, answered on the decision page. The engine allows the instructing admin to accept their own AI's draft in Balanced, Starter and the CoE baseline; Regulated and `strict-separation` require a second configuration admin. WORKING DEFAULT (open design question 4). Runbook rule: the adopter's configuration admin accepts every draft the external admin instructed, so the decider on record is the adopter's own person. The external admin does not answer those requests.
 6. **End the session.** The external admin deactivates the membership in PIM before it expires, and clears the server's authentication in Claude Code (`/mcp`, Clear authentication, or `claude mcp logout <server-name>`).
    - [branch: Dataverse] A removed membership reaches Dataverse only at the external admin's next sign-in or after 8 hours of continuous sign-in. Signing out of every session is part of ending the session.
    - [branch: Azure] A token already issued keeps its groups until it expires (60 to 90 minutes by default). The server does not honor continuous access evaluation in this release (guide [A2](A2-urgent-revoke-and-break-glass.md), open point 1).
@@ -71,7 +71,7 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 1. **Remove the eligible assignment** (or confirm it expired on the end date).
 2. **Turn Allows Guests back to No** on the configuration admin role, through a configuration change decision.
 3. **Disable the guest account and revoke its sessions** in Entra, or delete it if no further work is planned. On Dataverse, continuous access evaluation acts on disable and session revocation in near real time.
-4. **Run `check_role_bindings`** as the platform admin: no direct assignment exists (CHK-01). The guest check (CHK-11) is designed but not in `check_role_bindings` yet, so also look at the role group's members in Entra for any guest (guide [S7](../setup/S7-turn-on-directory-reads.md), open point 3).
+4. **Run `check_role_bindings`** as the platform admin: no role is assigned to a person directly. The guest check (a guest holding a role that does not allow guests) is designed but not in `check_role_bindings` yet, so also look at the role group's members in Entra for any guest (guide [S7](../setup/S7-turn-on-directory-reads.md), open point 3).
 5. **Keep the evidence.** Export the PIM audit history for the work period and link it as evidence (`save_link`, evidence category) to the configuration change decisions of that period.
 6. **Hand over.** The client binding patch and any configuration files stay in the adopter's private repository. The external admin keeps no copy of adopter facts.
 
@@ -79,13 +79,13 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 
 1. The external admin holds no role and no guest account in the product.
 2. The adopter's configuration admin runs Claude Code and is the instructing admin; the external admin advises in a shared session.
-3. Where useful, the external admin prepares a patch file in the seed format (document 21, section 5.3); the adopter's admin submits it through `propose_configuration_change` with `fileContent`, so the adopter is the instructing admin on record.
+3. Where useful, the external admin prepares a patch file in the seed format (as the preset patches use; [`config/presets/README.md`](../../config/presets/README.md)); the adopter's admin submits it through `propose_configuration_change` with `fileContent`, so the adopter is the instructing admin on record.
 4. Acceptance follows part B, step 5, with the adopter's people only.
 5. Later, an adopter that adds P2 can move to parts A to C.
 
 ### What the external admin never does
 
-- Answer an approval card for an adopter decision, or hold any role through a direct assignment.
+- Answer an approval request for an adopter decision, or hold any role through a direct assignment.
 - Write configuration rows directly (no person, role or tool can; drafts only).
 - Keep a binding patch, group object IDs or other adopter facts outside the adopter's repository.
 - Change the keys of fixed engine meanings, such as `configuration-admin`; labels are the adopter's to rename. WORKING DEFAULT (open design question 1)
@@ -95,18 +95,18 @@ The working default (28, Q17): the external admin is a guest in the adopter's te
 
 - Outside a session, PIM shows the guest as Eligible, never Active, on the role group.
 - A test activation without approval does not complete.
-- CHK-08 (role marked Requires Just In Time whose group has permanent members): none, where the adopter marked the role (RR-06; see guide S1, open point 3). Designed, not built: check the group's PIM assignments by hand.
-- CHK-11: no guest holds a role whose row says Allows Guests = No. Designed, not built: check the role groups' members by hand.
+- No role marked Requires Just In Time has a group with permanent members, where the adopter marked the role (see guide S1, open point 3). The check is designed, not built: check the group's PIM assignments by hand.
+- No guest holds a role whose row says Allows Guests = No. The check is designed, not built: check the role groups' members by hand.
 - Every configuration change decision of the work period shows the guest as instructing admin (performed by "AI client for a person") and an adopter's person as decider.
 - After part C: the guest is disabled or deleted, no eligible assignment remains, Allows Guests is No again, and `check_role_bindings` is clean.
 
 ## Open points
 
-1. **Dataverse group team membership type.** Guests are included only by the "Members and guests" or "Guests" types, and the type cannot change after creation. The binding (C30, platform detail) and the group team setup script must choose it when the team is created; documents 22 and 26 do not mention it.
+1. **Dataverse group team membership type.** Guests are included only by the "Members and guests" or "Guests" types, and the type cannot change after creation. The Role Group Binding's platform detail and the group team setup script must choose it when the team is created; the data model and the security design do not mention it yet.
 2. **The Dataverse cache stretches every PIM window.** An activation reaches Dataverse at the next sign-in, and its end is honored at the next sign-in or after up to 8 hours. The runbook relies on sign-out at session end and on disabling the guest when the work ends. A test in a real tenant could also time this for a PIM-managed group.
 3. **Guest license tenant.** Learn's "Create users" page says a guest needs a license from the environment's tenant; Learn's "Share a model-driven app" page says the license for a custom model-driven app may be in either the home or the hosting tenant. The two pages disagree. MCP-only use is UNVERIFIED either way.
 4. **PIM activation maximum.** The PIM for Groups settings page allows 1 to 24 hours; the Graph PIM for Groups API overview says activation is always time-bound for a maximum of eight hours. This runbook uses 8 hours, which fits both.
-5. **Who accepts.** The rule in part B, step 5 (the adopter accepts the external admin's drafts) is runbook guidance. The engine enforces it only under Regulated or `strict-separation`. A separation rule scoped to guest instructing admins would need a new rule kind (document 21, C40).
+5. **Who accepts.** The rule in part B, step 5 (the adopter accepts the external admin's drafts) is runbook guidance. The engine enforces it only under Regulated or `strict-separation`. A separation rule scoped to guest instructing admins would need a new kind of separation rule.
 
 ## Microsoft facts used
 

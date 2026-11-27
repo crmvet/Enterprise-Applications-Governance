@@ -9,7 +9,8 @@ import { listeners, SignInRequired, type AuthSession, type SignedInUser } from '
 
 export const DEV_IDENTITY_HEADER = 'X-Product-Dev-Identity';
 
-// Where the chosen persona is kept for the tab. A per-viewer convenience: losing it only shows the picker again.
+// Where the chosen persona is kept for the tab. A per-viewer convenience: losing it only shows the picker again. The
+// demo persona switch (app/demoPersona.ts) keeps its choice the same way, under its own key.
 export interface PersonaStore {
   get(): string | null;
   set(name: string | null): void;
@@ -17,12 +18,12 @@ export interface PersonaStore {
 
 const STORE_KEY = 'product.devPersona';
 
-export function sessionPersonaStore(storage: () => Storage): PersonaStore {
+export function sessionPersonaStore(storage: () => Storage, key: string = STORE_KEY): PersonaStore {
   let memory: string | null = null;
   return {
     get() {
       try {
-        return storage().getItem(STORE_KEY);
+        return storage().getItem(key);
       } catch {
         return memory;
       }
@@ -30,8 +31,8 @@ export function sessionPersonaStore(storage: () => Storage): PersonaStore {
     set(name) {
       memory = name;
       try {
-        if (name === null) storage().removeItem(STORE_KEY);
-        else storage().setItem(STORE_KEY, name);
+        if (name === null) storage().removeItem(key);
+        else storage().setItem(key, name);
       } catch {
         // Storage can be blocked; the in-memory copy still works for this page.
       }
@@ -71,6 +72,11 @@ export function createDevAuth(options: { personas: DevPersona[]; hostname: strin
     async headers() {
       if (!current) throw new SignInRequired('Choose a development persona to see this section.');
       return { [DEV_IDENTITY_HEADER]: current.name };
+    },
+    stepUp() {
+      // A development persona has no sign-in to refresh: the local server turns step-up off.
+      problem = 'This answer needs a fresh sign-in, which a development persona cannot give. Turn Product:WebApp:StepUp:Mode off on the local server.';
+      events.notify();
     },
     onUnauthorized() {
       if (!current) return;

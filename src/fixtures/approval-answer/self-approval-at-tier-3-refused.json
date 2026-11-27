@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "self-approval-at-tier-3-refused",
+  "description": "The business owner proposed the retirement of a tier 3 application and now answers its card. Balanced refuses self-approval at tier 3 (separation rule no-self-approval-tier-3; D-40 keeps it), so the answer would not count: it is refused and nothing is written. The refusal names the rule by its label, as a person reads it.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-person-1",
+      "principalKind": "user",
+      "actorKind": "person",
+      "roleKeys": [
+        "requester"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "approvalRuleKey": "retirement-approval",
+      "requiredOwnerRoleKey": "business-owner"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "retirement",
+      "tierKey": "tier-3"
+    },
+    "parties": {
+      "proposerPrincipalId": "fixture-person-1"
+    },
+    "ownerRoleKeys": [
+      "business-owner"
+    ]
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-separation",
+        "severity": "error",
+        "entity": "Separation Rule",
+        "ref": "no-self-approval-tier-3",
+        "messageContains": "The separation rule No self-approval at tier 3 keeps you from answering this approval request"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "OP-07",
+  "case": "data-uses-undeclared-not-ready",
+  "description": "A tier 2 application at the design gate with no data use, no Holds No Business Data and no data owner is not ready (docs/architecture/data-taxonomy.md, Gate requirements).",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-24T09:00:00Z"
+  },
+  "input": {
+    "gateKey": "design",
+    "tierKey": "tier-2",
+    "applicationKindKey": "power-platform-app"
+  },
+  "facts": {
+    "dataUses": {
+      "declaredCount": 0,
+      "holdsNoBusinessData": false,
+      "undecidedCount": 0,
+      "retentionOpenCount": 0
+    }
+  },
+  "expected": {
+    "outcome": "not-ready",
+    "payload": {
+      "ready": false
+    },
+    "reasons": [
+      {
+        "code": "gate.requirement-data-uses-undeclared",
+        "ref": "design-data-uses-declared-tier-2"
+      },
+      {
+        "code": "gate.not-ready"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

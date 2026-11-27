@@ -1,0 +1,509 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_intake_requests output",
+  "description": "The response envelope. On success, data lists intake requests (O07) with their status, requester, suggested tier, demand fields and decisions. Titles are text people typed.",
+  "x-tool": "list_intake_requests",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "intakeRequestId",
+              "recordNumber",
+              "title",
+              "status",
+              "requester",
+              "proposedKind",
+              "businessApplicationId",
+              "applicationName",
+              "duplicateOfId",
+              "usesAi",
+              "horizon",
+              "sizeBand",
+              "score",
+              "priority",
+              "businessOwner",
+              "portfolio",
+              "suggestedTier",
+              "triageDecision",
+              "decisions",
+              "isAiCreated",
+              "performedBy",
+              "recordUrl"
+            ],
+            "properties": {
+              "intakeRequestId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O07 Intake Request"
+              },
+              "recordNumber": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "The request's title.",
+                "x-untrusted": true
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue",
+                "description": "The record status by meaning."
+              },
+              "requester": {
+                "description": "Who asked.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "proposedKind": {
+                "description": "The proposed Application Kind (C15).",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessApplicationId": {
+                "description": "The application the request is about, if any.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "applicationName": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "duplicateOfId": {
+                "description": "The application this request duplicates, when triage found one.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O02 Business Application"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "usesAi": {
+                "description": "Whether the request says the app uses AI.",
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "horizon": {
+                "description": "The horizon value.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sizeBand": {
+                "description": "The size band value.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "score": {
+                "description": "The demand score, when one is recorded.",
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "priority": {
+                "description": "The request's priority decision, or null when none was proposed.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "description": "The latest priority decision on the request that is not withdrawn: its outcome and status. The outcome is the priority only once the decision is accepted.",
+                    "required": [
+                      "decisionId",
+                      "outcome",
+                      "status",
+                      "recordUrl"
+                    ],
+                    "properties": {
+                      "decisionId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O09 Decision"
+                      },
+                      "outcome": {
+                        "description": "The proposed or accepted outcome (C19), such as fund, defer or stop.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "status": {
+                        "$ref": "../common.schema.json#/$defs/statusValue",
+                        "description": "The decision status by meaning."
+                      },
+                      "recordUrl": {
+                        "$ref": "../common.schema.json#/$defs/recordUrl"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "businessOwner": {
+                "description": "The business owner the requester names (O07 Business Owner), or null.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/principalRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "portfolio": {
+                "description": "The portfolio the request is in: its own Portfolio (O07), else the portfolio of the application it is linked to (fromApplication true). Null when neither names one (document 24, B24-17).",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "portfolioId",
+                      "name",
+                      "fromApplication"
+                    ],
+                    "properties": {
+                      "portfolioId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O01 Portfolio"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "fromApplication": {
+                        "type": "boolean",
+                        "description": "True when the request names no portfolio and this is its linked application's."
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "suggestedTier": {
+                "description": "The tier the latest tier assessment suggests (O08 Computed Tier). A suggestion: only an accepted tier decision sets the tier.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/labelledKey"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "triageDecision": {
+                "description": "The intake (triage) decision submit_record opened, if any.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "description": "One decision, in brief.",
+                    "required": [
+                      "decisionId",
+                      "decisionType",
+                      "status",
+                      "outcome",
+                      "approvalsSummary"
+                    ],
+                    "properties": {
+                      "decisionId": {
+                        "$ref": "../common.schema.json#/$defs/id",
+                        "x-entity": "O09 Decision"
+                      },
+                      "decisionType": {
+                        "$ref": "../common.schema.json#/$defs/labelledKey",
+                        "description": "The Decision Type (C18)."
+                      },
+                      "status": {
+                        "$ref": "../common.schema.json#/$defs/statusValue",
+                        "description": "The decision status by meaning."
+                      },
+                      "outcome": {
+                        "description": "The Decision Outcome (C19). Null when none is set.",
+                        "anyOf": [
+                          {
+                            "$ref": "../common.schema.json#/$defs/labelledKey"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "approvalsSummary": {
+                        "$ref": "../common.schema.json#/$defs/approvalsSummary"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decisions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "One decision, in brief.",
+                  "required": [
+                    "decisionId",
+                    "decisionType",
+                    "status",
+                    "outcome",
+                    "approvalsSummary"
+                  ],
+                  "properties": {
+                    "decisionId": {
+                      "$ref": "../common.schema.json#/$defs/id",
+                      "x-entity": "O09 Decision"
+                    },
+                    "decisionType": {
+                      "$ref": "../common.schema.json#/$defs/labelledKey",
+                      "description": "The Decision Type (C18)."
+                    },
+                    "status": {
+                      "$ref": "../common.schema.json#/$defs/statusValue",
+                      "description": "The decision status by meaning."
+                    },
+                    "outcome": {
+                      "description": "The Decision Outcome (C19). Null when none is set.",
+                      "anyOf": [
+                        {
+                          "$ref": "../common.schema.json#/$defs/labelledKey"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "approvalsSummary": {
+                      "$ref": "../common.schema.json#/$defs/approvalsSummary"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "description": "The latest five decisions about the request, newest first, such as the triage and priority decisions."
+              },
+              "isAiCreated": {
+                "type": "boolean",
+                "description": "True when an AI client created the row (the engine's Is AI Created stamp). False for a seeded row."
+              },
+              "performedBy": {
+                "description": "Who made the last engine-checked write of the row, as the engine stamped it (document 24, section 4.5). Null for a row the engine never stamped, such as seeded or imported data.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/stampedBy"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordUrl": {
+                "$ref": "../common.schema.json#/$defs/recordUrl"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many requests match in all."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "ok": true,
+      "summary": "1 intake request(s) in the triage view.",
+      "data": {
+        "items": [
+          {
+            "intakeRequestId": "70000000-0000-4000-8000-000000000001",
+            "recordNumber": "IR-0001",
+            "title": "Crew overtime tracker",
+            "status": {
+              "label": "Submitted",
+              "meaning": "submitted"
+            },
+            "requester": {
+              "objectId": "20000000-0000-4000-8000-000000000001",
+              "displayLabel": "Requester (sample)"
+            },
+            "proposedKind": {
+              "key": "power-platform-app",
+              "label": "Power Platform app"
+            },
+            "businessApplicationId": null,
+            "applicationName": null,
+            "duplicateOfId": null,
+            "usesAi": false,
+            "horizon": null,
+            "sizeBand": null,
+            "score": null,
+            "priority": null,
+            "businessOwner": null,
+            "portfolio": null,
+            "suggestedTier": {
+              "key": "tier-1",
+              "label": "Tier 1"
+            },
+            "triageDecision": {
+              "decisionId": "60000000-0000-4000-8000-000000000013",
+              "decisionType": {
+                "key": "intake",
+                "label": "Intake"
+              },
+              "status": {
+                "label": "Proposed",
+                "meaning": "proposed"
+              },
+              "outcome": null,
+              "approvalsSummary": {
+                "required": 1,
+                "approved": 0,
+                "rejected": 0,
+                "pending": 1
+              }
+            },
+            "decisions": [
+              {
+                "decisionId": "60000000-0000-4000-8000-000000000013",
+                "decisionType": {
+                  "key": "intake",
+                  "label": "Intake"
+                },
+                "status": {
+                  "label": "Proposed",
+                  "meaning": "proposed"
+                },
+                "outcome": null,
+                "approvalsSummary": {
+                  "required": 1,
+                  "approved": 0,
+                  "rejected": 0,
+                  "pending": 1
+                }
+              }
+            ],
+            "isAiCreated": true,
+            "performedBy": {
+              "actorKind": "ai-client-for-person",
+              "principal": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)"
+              },
+              "onBehalfOf": {
+                "objectId": "20000000-0000-4000-8000-000000000001",
+                "displayLabel": "Requester (sample)"
+              },
+              "clientAppLabel": "Claude Code",
+              "stampedOn": "2026-11-21T10:00:00Z",
+              "draftedBy": null
+            },
+            "recordUrl": "https://product.example.org/records/intake-request/70000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "totalCount": 1
+      },
+      "asOf": "2026-11-22T09:00:00Z",
+      "configurationSetVersion": 3,
+      "couldNotRead": [],
+      "warnings": [],
+      "untrustedFields": [
+        "items[].title"
+      ],
+      "nextSteps": [],
+      "correlationId": "corr-0001"
+    }
+  ]
+}

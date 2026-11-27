@@ -2,15 +2,15 @@
 
 - **Status:** 0.2 draft, 2026-11-23. Nothing here was run against a tenant.
 - **Guide set:** setup guides S1 to S7 and admin guides A1 to A4. Index: [README](../README.md).
-- **Design sources:** document 26, sections 3.4, 4.3, 4.4, 4.5 (CHK-07, CHK-09, CHK-10, CHK-10b), 9.2 and 11; document 25, section 11.5; document 28, Q16 (working default, settled).
+- **See also:** [admin.md](../admin.md#roles-and-access), [install.md](../install.md).
 - **Open design questions that touch this guide:** 1 and 12 (markers below).
 
 ## Purpose
 
 Two procedures an adopter's admins must have ready before go-live:
 
-1. **Urgent revoke.** Cut a person or a workload off now. Removing someone from a bound Entra group is not fast enough: Dataverse caches group memberships until the next sign-in or for up to 8 hours, and on Azure an issued token keeps its roles until it expires (document 26, sections 4.3 and 4.4).
-2. **Break-glass accounts.** No design stops a platform's top administrator. On Dataverse a system administrator can send the bypass header and write past the engine; on Azure a database owner can write past the API. The product detects such writes; the guidance is to keep those top roles for break-glass accounts managed in Entra (working default, 28, Q16; document 25, section 11.5).
+1. **Urgent revoke.** Cut a person or a workload off now. Removing someone from a bound Entra group is not fast enough: Dataverse caches group memberships until the next sign-in or for up to 8 hours, and on Azure an issued token keeps its roles until it expires.
+2. **Break-glass accounts.** No design stops a platform's top administrator. On Dataverse a system administrator can send the bypass header and write past the engine; on Azure a database owner can write past the API. The product detects such writes; the guidance is to keep those top roles for break-glass accounts managed in Entra (a working default).
 
 ## Who
 
@@ -26,7 +26,7 @@ Two procedures an adopter's admins must have ready before go-live:
 
 ## Prerequisites
 
-- Every owner role and every approving role has a deputy, so work can move before access goes (document 26, RR-07 and I-59: name the successor first, then remove access).
+- Every owner role and every approving role has a deputy, so work can move before access goes: name the successor first, then remove access.
 - The adopter knows, per binding, how long a removal takes (table below), and has decided who may run each step out of hours.
 - At least two cloud-only emergency access accounts exist in Entra, as Microsoft describes (part B).
 
@@ -43,27 +43,27 @@ Two procedures an adopter's admins must have ready before go-live:
    - [branch: Dataverse] Continuous access evaluation ends Dataverse sessions in near real time. The product's MCP server can no longer get a new on-behalf-of token for the person. A Dataverse token the server already cached for the person may still be presented; whether Dataverse rejects it through continuous access evaluation depends on the server asking for CAE-capable tokens (UNVERIFIED, open point 1).
    - [branch: Azure] The person's access token to the product's server stays valid until it expires (60 to 90 minutes by default), and the API runs as the caller from that token. Treat the token lifetime as the worst case. The directory reads keep the downstream token they got for the person in an in-memory cache until it expires, but use it only inside a call that carries a valid incoming token, so the cache adds nothing to that worst case.
 2. **Remove the person from the bound groups.** This keeps them out when the account is re-enabled for other reasons.
-3. **Record the decision.** A decision of type exception or ownership with the reason. Document 26, section 9.2 designs an "urgent revoke recorded" product event in the audit trail; it is not built yet, so this decision is the product's record of the revoke.
-4. **Move their work.** Record the leave with `record_owner_leave` (stored as reported; the engine opens an owner check review for each application the person owns), and the successor with `propose_owner_change`, an ownership decision that changes nothing until it is accepted. Then no application is left without an owner, and the deputy is a current holder. Approval cards cannot be reassigned: the runner sends them with reassignment off, on purpose (guide [A4](A4-approval-runner-operations.md)). What happens to the person's open cards:
-   - A card for a product role went to every user member of the bound group, so the other members can still answer it.
-   - A card for an owner role asked the owners of that application. It waits until its Expires On; the engine then expires it and opens a restart that asks the current owners, so the deputy gets the next card. If the rule has no timeout, ask the requester to withdraw and submit again (guide A4, "A request failed").
-5. **Re-enable only after the reviewer decides** (I-91). Re-enabling is a new decision, not an undo.
+3. **Record the decision.** A decision of type exception or ownership with the reason. The security design has an "urgent revoke recorded" product event in the audit trail; it is not built yet, so this decision is the product's record of the revoke.
+4. **Move their work.** Record the leave with `record_owner_leave` (stored as reported; the engine opens an owner check review for each application the person owns), and the successor with `propose_owner_change`, an ownership decision that changes nothing until it is accepted. Then no application is left without an owner, and the deputy is a current holder. Approval cards cannot be reassigned: the runner sends them with reassignment off, on purpose (guide [A4](A4-approval-runner-operations.md)). What happens to the person's open approval requests:
+   - A request for a product role asks every user member of the bound group, so the other members can still answer it on the decision page.
+   - A request for an owner role asks the owners of that application. The deputy holds the owner role too, so they may answer it on the decision page. Unanswered, it waits until its Expires On; the engine then expires it and opens a restart that asks the current owners. If the rule has no timeout, ask the requester to withdraw and submit again (guide A4, "A request failed").
+5. **Re-enable only after the reviewer decides.** Re-enabling is a new decision, not an undo.
 
 ### Steps for a workload (a pipeline, the approval runner, the consistency check)
 
 1. **Stop it from getting tokens.** Disable the service principal (Enterprise applications, Properties, "Enabled for users to sign-in?" No, which sets `accountEnabled` to false and stops tokens for it), or remove its federated identity credential.
    - [branch: Dataverse] Also deactivate its application user in the Power Platform admin center (Environments, Settings, Users + permissions, Application users, Deactivate). Deactivating breaks every integration that uses that application user, which is the point.
    - [branch: Azure] Also remove its app role assignment on the product API (`Deployment.Record` or `Approval.Write`; guide [A3](A3-workload-grants.md), part D). For the approval runner, also turn its flows off, the parent first. Microsoft notes that Entra revocation does not end an already open SQL connection; the product's workloads reach the database only through the API's managed identity, so no product workload holds its own SQL session. If an attacker reached the data tier itself, block the identity before ending its sessions, or it reconnects.
-2. **End the workload grant.** Shorten or retire its Workload Grant through a configuration draft and an accepted decision. From Expires On the grant admits no app-only token, and CHK-09 flags it. WORKING DEFAULT (open design question 12)
+2. **End the workload grant.** Shorten or retire its Workload Grant through a configuration draft and an accepted decision. From Expires On the grant admits no app-only token, and `check_role_bindings` flags it as expired. WORKING DEFAULT (open design question 12)
 3. **Record the decision** with the reason, as for a person.
-4. **Expect soft failures.** A pipeline's record step fails soft: deployments continue, and the missing records show as flags later. The approval runner stops writing outcomes, so open cards wait and new requests stay in the approval outbox; a request in flight may fail and need a withdraw and a new submission (guide [A4](A4-approval-runner-operations.md)). Name the restart owner.
+4. **Expect soft failures.** A pipeline's record step fails soft: deployments continue, and the missing records show as flags later. The approval runner stops sending notices and relaying answers given in its cards, so new requests stay in the approval outbox; people can still answer on the decision page, and a request in flight may fail and need a withdraw and a new submission (guide [A4](A4-approval-runner-operations.md)). Name the restart owner.
 
 ### Checks
 
 - Entra sign-in logs show failed sign-ins for the account or the service principal after the revoke.
-- `check_role_bindings`: no binding, direct assignment or workload grant still covers the principal (CHK-01, CHK-02, CHK-09).
-- The owner check (CHK-07) shows the departed person on no tier 3 application without a deputy.
-- After the owner change is accepted and an owner role card restarts, the deputy's `get_my_queue` lists the approval that asks them.
+- `check_role_bindings`: no binding, direct assignment or workload grant still covers the principal.
+- The owner check (`run_owner_check`) shows the departed person on no tier 3 application without a deputy.
+- After the owner change is accepted and an owner role request restarts, the deputy's `get_my_queue` lists the approval that asks them.
 - [branch: Dataverse] The user is disabled in the environment, or the application user shows inactive.
 - [branch: Azure] The server's telemetry (with the telemetry salt set, it logs a salted hash of the caller's object ID, never the token) shows no successful call for the person after the token lifetime.
 
@@ -74,15 +74,15 @@ Two procedures an adopter's admins must have ready before go-live:
 1. **Create the emergency access accounts in Entra,** as Microsoft describes: at least two, cloud-only (not federated), on the `*.onmicrosoft.com` domain, not assigned to one person, with a permanent Global Administrator assignment (not PIM-eligible), strong phishing-resistant authentication not tied to a personal device, and at least one of them excluded from every Conditional Access policy, so a policy mistake cannot lock everyone out.
 2. **Alert on every use.** A high-priority alert on each sign-in, password change, role or permission change, and credential or method change for these accounts. Treat any use as a security incident unless it was approved in advance.
 3. **Keep the top data-store roles for break-glass only.**
-   - [branch: Dataverse] In the product's environment, the System Administrator role is held only by the break-glass accounts. `prvBypassCustomBusinessLogic` stays where Microsoft puts it by default, on System Administrator only; never add it to another role. Global, Power Platform and Dynamics 365 admins are no longer System Administrator automatically: they self-elevate when needed, each elevation is logged in Microsoft Purview, and with PIM the System Administrator role is removed when the PIM assignment expires. So make the Power Platform Administrator role PIM-eligible, not permanent. CHK-10 counts System Administrator holders and any other role with the bypass privilege.
-   - [branch: Azure] Turn on Microsoft Entra-only authentication for the database server (SQL authentication off; the generated `CloudSA` login is not a break-glass path). Set the server's Microsoft Entra admin to a group whose members are only the break-glass accounts. Keep the Azure Owner role on the product's resources to the break-glass accounts plus PIM-eligible owners. The API's managed identity stays the only principal with general write permission on the product's tables. CHK-10b counts database owner and Azure Owner holders; it is designed but not built, so count them by hand. Migrations need the SQL administrator, so decide who runs them once that group is break-glass only (guide [S4](../setup/S4-prepare-entra-and-deploy.md), open point 3).
+   - [branch: Dataverse] In the product's environment, the System Administrator role is held only by the break-glass accounts. `prvBypassCustomBusinessLogic` stays where Microsoft puts it by default, on System Administrator only; never add it to another role. Global, Power Platform and Dynamics 365 admins are no longer System Administrator automatically: they self-elevate when needed, each elevation is logged in Microsoft Purview, and with PIM the System Administrator role is removed when the PIM assignment expires. So make the Power Platform Administrator role PIM-eligible, not permanent. The designed bypass exposure check counts System Administrator holders and any other role with the bypass privilege.
+   - [branch: Azure] Turn on Microsoft Entra-only authentication for the database server (SQL authentication off; the generated `CloudSA` login is not a break-glass path). Set the server's Microsoft Entra admin to a group whose members are only the break-glass accounts. Keep the Azure Owner role on the product's resources to the break-glass accounts plus PIM-eligible owners. The API's managed identity stays the only principal with general write permission on the product's tables. The designed check that counts database owner and Azure Owner holders is not built, so count them by hand. Migrations need the SQL administrator, so decide who runs them once that group is break-glass only (guide [S4](../setup/S4-prepare-entra-and-deploy.md), open point 3).
 4. **Write the break-glass runbook** next to this guide: who may retrieve the credentials, how many people it takes, who is told, and how each use is justified and recorded.
 5. **After any use,** run the consistency check (designed, not built yet; until it is, review the SQL security audit events in Log Analytics for the period of use, which show sign-ins and schema and permission changes but not statement text): it finds product rows written after their Engine Checked On stamp and records each as an audit entry "write outside the engine". It runs under a read-only workload identity (the proposed `consistency-checker` role). WORKING DEFAULT (open design question 12). Then run `check_role_bindings` and record a decision with the reason for the use.
 6. **Drill at least every 90 days,** and after staff or license changes: confirm the accounts sign in, the alerts fire, the list of authorized people is current, and the MFA device is reachable.
 
 ### Checks
 
-- CHK-10 (Dataverse) or CHK-10b (Azure) lists exactly the break-glass accounts, plus time-bound elevations that match PIM activations.
+- The holders of System Administrator (Dataverse), or of database owner and Azure Owner (Azure), are exactly the break-glass accounts, plus time-bound elevations that match PIM activations. Count them by hand until the designed checks are built.
 - No role other than System Administrator holds `prvBypassCustomBusinessLogic` [branch: Dataverse].
 - A drill sign-in raised the alert within the agreed time.
 - The consistency check after a drill finds no unexplained "write outside the engine".
@@ -90,9 +90,9 @@ Two procedures an adopter's admins must have ready before go-live:
 
 ## Open points
 
-1. **Revocation through the product's server.** The incoming token lasts 60 to 90 minutes by default (document 26's SM18b says one hour; Learn now says variable), and the Azure server, as built, validates its signature and lifetime but does not honor continuous access evaluation. Its on-behalf-of cache keeps downstream tokens only for use inside calls that carry a valid incoming token. Proposal for documents 24 and 26: have the server request CAE-capable tokens and handle claim challenges, or state the token lifetime as the revoke window. A test in a real tenant should time a revoke through the server, not only on the store.
+1. **Revocation through the product's server.** The incoming token lasts 60 to 90 minutes by default (the security design assumed one hour; Learn now says variable), and the Azure server, as built, validates its signature and lifetime but does not honor continuous access evaluation. Its on-behalf-of cache keeps downstream tokens only for use inside calls that carry a valid incoming token. Proposal for the MCP and security designs: have the server request CAE-capable tokens and handle claim challenges, or state the token lifetime as the revoke window. A test in a real tenant should time a revoke through the server, not only on the store.
 2. **The consistency check identity** is the proposed `consistency-checker` workload role. It needs the product owner's yes and rests on open design question 12.
-3. **No "urgent revoke recorded" event yet.** Document 26, section 9.2 designs it as a product event in the audit trail; the product does not write it in this release, so part A relies on the decision record (step 3). Proposal: the engine writes the event when a decision records an urgent revoke.
+3. **No "urgent revoke recorded" event yet.** The security design has it as a product event in the audit trail; the product does not write it in this release, so part A relies on the decision record (step 3). Proposal: the engine writes the event when a decision records an urgent revoke.
 4. **Break-glass accounts and Dataverse licenses.** Learn says unlicensed Entra admins are added to Dataverse as a "Setup user" with administrative access only. Whether that is enough for a break-glass repair in the product's environment (for example a data fix under the bypass header) is not checked here.
 
 ## Microsoft facts used

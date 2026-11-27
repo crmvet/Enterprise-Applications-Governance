@@ -2,12 +2,19 @@
   "schemaVersion": "1.0",
   "operation": "OP-12",
   "case": "no-model-does-not-qualify",
-  "description": "Balanced ships no standard change model: a standard change of a client that has listed none is not standard, and the reason says so.",
+  "description": "A client that retired the shipped model and listed none of its own: a standard change is not standard, and the reason says so.",
   "workingDefaults": [
     8
   ],
   "snapshot": {
-    "presetKey": "balanced"
+    "presetKey": "balanced",
+    "operations": [
+      {
+        "op": "retire",
+        "entity": "standard-change-model",
+        "key": "routine-maintenance"
+      }
+    ]
   },
   "context": {
     "asOfUtc": "2026-11-22T09:00:00Z"

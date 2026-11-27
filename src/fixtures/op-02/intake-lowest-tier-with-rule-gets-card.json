@@ -38,6 +38,11 @@
           "source": "approval-rule",
           "ruleKey": "intake-approval",
           "approverRoleKey": "platform-admin"
+        },
+        {
+          "source": "approval-rule",
+          "ruleKey": "intake-business-owner-consent",
+          "approverProposedOwners": true
         }
       ]
     },

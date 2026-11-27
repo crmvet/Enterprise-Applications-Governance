@@ -1,28 +1,35 @@
 # ui
 
-The four pages: Overview, Application 360, the dependency map and the timeline. React 19 and shadcn/ui (Radix primitives, Tailwind CSS 4, lucide icons; D-32), in Microsoft's
-Fluent 2 shape and colors with navy text (D-35), light only. One source gives two builds:
+The web app: the four first page designs (Overview, Application 360, the dependency map and the timeline) plus the
+work and record pages (D-36). React 19 and shadcn/ui (Radix primitives, Tailwind CSS 4, lucide icons; D-32), in
+Microsoft's Fluent 2 shape and colors with navy text (D-35), light only. One source gives two builds:
 
-- **the harness**: the pages on fictional fixture JSON shaped by the MCP tool output schemas (`src/mcp/contracts/`),
+- **the harness**: the four first pages on fictional fixture JSON shaped by the MCP tool output schemas (`src/mcp/contracts/`),
   for design review and screenshots. No sign-in, no server;
-- **the web app**: the same pages on the product's REST API, with Entra ID sign-in, served by the product's host under
+- **the web app**: the same pages and the work and record pages on the product's REST API, with Entra ID sign-in, served by the product's host under
   `/app/` on the same origin as the API. For local runs it signs in as a fictional persona instead.
 
-The pages are read-only. Every write goes through an AI client and the engine; a person decides on an approval card.
+The web app acts (D-36): a signed-in person does their work in it. Every write path goes through the engine's write
+guard (OP-08): a person's write meets the same rules under the person's own roles, and an AI client's write also meets
+the AI rules. A person answers an approval on the decision page (D-38); AI drafts and a person accepts (D-28). Of the
+four first pages, the overview, the dependency map and the timeline only read; Application 360 also offers actions,
+such as declaring a data use. The work pages (My work, Approvals, decisions, intake, owners, reviews, changes, data,
+configuration and the others, with their record pages) act through side sheets that show the engine's answer.
 
-The web app is early work, not a release. It runs locally against the Azure adapter's local server with fictional
-personas; it has not been deployed, and its Microsoft Entra sign-in has not run against a real tenant yet.
+Built and tested; runs as a demo install with fictional data; no release yet. The web app runs locally against the
+Azure adapter's local server with fictional personas, and in the demo install on Azure, where a demo operator acts as
+the fictional personas (D-39). It has not run in an organization's own tenant.
 
 | Path | What |
 |---|---|
 | `design/pages.md` | The page specs: calls, panels, states, phone layout, fallbacks, working defaults, the web app, open points |
 | `harness/` | The one package: Vite, React 19, shadcn/ui on Tailwind CSS 4 and Radix, TypeScript, MSAL for the browser (web app only) |
-| `harness/src/pages/` | The four pages. They see only the `Host` and the `ToolClient`, so both builds render the same components |
-| `harness/src/components/` | `blocks.tsx`: panel, status badge, KPI tile, bar list, page header, links, the in-page switch; `rows.tsx`: list row |
+| `harness/src/pages/` | The four original pages (`Overview`, `Application360`, `DependencyMap`, `Timeline`). They see only the `Host` and the `ToolClient`, so both builds render the same components. The work pages run in the web app only, one file or folder per page group, such as `Work`, `Approvals`, `Decision`, `Intake`, `Owners`, `Reviews`, `Changes`, `Records`, `data/`, `configuration/`, `admin/` and `teams/` |
+| `harness/src/components/` | `blocks.tsx`: panel, status badge, KPI tile, bar list, page header, links, the in-page switch; `rows.tsx`: list row; `actions.tsx`: the one action pattern (the side sheet that runs a write and shows the engine's answer, form fields, the guideline chip, approve and reject); `stamps.tsx`: the AI mark and the stamp line |
 | `harness/src/components/ui/` | The shadcn/ui components, MIT source copied from the shadcn registry, with their license and the changes made (`README.md`) |
 | `harness/src/styles/` | `globals.css`: the theme tokens (Fluent 2 shape and colors, navy text; D-35), the `narrow:` and `medium:` breakpoints; `shadcn-tailwind.css`: shadcn's Tailwind helpers |
-| `harness/src/data/` | Contract types, the `ToolClient`, the fixture client (harness), the API client (web app), labels, meanings, formatting |
-| `harness/src/app/` | The web app: entry, shell and routes, `config.json` checks (including `demo`, which shows the "Demo, fictional data" badge on a demo install), sign-in pages, the applications list, dialogs |
+| `harness/src/data/` | Contract types (reads and writes), the `ToolClient` and the refresh after a write, the fixture client (harness), the API client (web app), `writes.ts` (the retry ID and the engine's answer), labels, meanings, formatting |
+| `harness/src/app/` | The web app: entry, shell, routes (`routes.ts`) and the top menu (`menu.ts`), links between pages (`links.ts`), `config.json` checks (including `demo`, which shows the "Demo, fictional data" badge, and `demoPersonas`), the demo persona switch (`demoPersona.ts`, `DemoPersonaMenu.tsx`; D-39), sign-in pages, the applications list, dialogs |
 | `harness/src/auth/` | Sign-in for the web app: Entra ID through MSAL (`msalAuth.ts`) and the development persona (`devAuth.ts`) |
 | `harness/src/main.tsx`, `App.tsx` | The harness entry and shell |
 | `harness/public/config.json` | The web app's settings for the Vite dev loop only (development sign-in). Never copied into a build |
@@ -43,7 +50,7 @@ You need Node 22 or later. Run everything in `src/ui/harness`.
 | `npm run build:app` | Typecheck, then the web app into `dist/app/`, with the base path `/app/` |
 | `npm run dev:app` | The web app on the Vite dev server at `http://127.0.0.1:4319/app/`, `/api` proxied to the local server |
 | `npm run preview` | Serves `dist/harness/` on `http://127.0.0.1:4318/` |
-| `npm test` | The unit tests (API client, sign-in guards, `config.json` checks, routes, time zones) |
+| `npm test` | The unit tests (API client, sign-in guards, `config.json` checks, routes, the menu, the demo persona switch, writes, stamps, time zones) |
 | `npm run lint` | The strict TypeScript check of both builds and the tests, then the package check |
 
 `dist/` is build output: git ignores it and the file checks skip it.
@@ -125,6 +132,13 @@ The demo estate has no deployments and no planned changes. To see the timeline f
 record endpoint with the `pipeline` persona (the example in the adapter's README), or ask an AI client connected as a
 persona to save a change request draft with a window.
 
+## Play the demo end to end
+
+The end-to-end suite is its own package, `src/tests/e2e` ([its README](../tests/e2e/README.md)): one Playwright Test
+spec per demo scenario, each presenter step one test, on a desktop and a phone width, against a running web app. It
+replaces the wave 3 story script `scripts/story-e2e.mjs` and its `npm run e2e`, which are retired. The package-free
+`scripts/a11y.mjs` and `scripts/screenshots.mjs` stay here.
+
 ## The web app against a tenant
 
 The product's host serves the web app under `/app/` on the API's own origin and writes `/app/config.json` from its
@@ -180,15 +194,11 @@ Pages call tools by their document 24 names through one `ToolClient` (`harness/s
 - on binding A a generative page would call the custom API `<prefix>_<ToolName>`.
 
 The web app also reads `GET /api/me` (the signed-in caller and roles) and `GET /api/info` (engine version, MCP
-endpoint, configuration in force). It reads the same tools an AI client reads, so a page and an AI client see the
-same answers.
+endpoint, configuration in force). It reads through the same tools an AI client reads.
 
 ## Not in this release
 
-- **No approval answer page.** People answer approval cards in Teams or Outlook through the approval runner. A page
-  where a person answers in the product itself needs its own design first: a page spec, a guarded engine path for a
-  person's answer on their own approval record, a matching database rule, and a stronger sign-in step. It is a
-  proposal for the next design pass.
-- **No writes.** The pages are read-only by design. "Propose" hands a request to an AI client.
-- Lists other than applications (owner gaps, overdue reviews, documents, old drafts) open a dialog with the request
+- **Step-up sign-in beyond approval answers.** Step-up sign-in covers a person's approval answer only (a host
+  setting, off by default and in the demo); step-up for tier 3 and configuration changes is not built.
+- In the harness build, lists other than applications (owner gaps, overdue reviews, documents, old drafts) open a dialog with the request
   for an AI client instead of a list.

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "approval-answer",
+  "case": "approval-runner-refused",
+  "description": "The approval runner calls the person path. It relays answers from cards on its own route and never answers here: refused.",
+  "snapshot": {
+    "presetKey": "balanced"
+  },
+  "context": {
+    "asOfUtc": "2026-11-23T09:00:00Z",
+    "actor": {
+      "principalId": "fixture-runner-1",
+      "principalKind": "service-principal",
+      "actorKind": "approval-runner",
+      "roleKeys": [
+        "approval-writer"
+      ]
+    }
+  },
+  "input": {
+    "approvalRecordId": "fixture-approval-1",
+    "answer": "approve",
+    "hasReason": false
+  },
+  "facts": {
+    "record": {
+      "outcome": "pending",
+      "decisionRightKey": "intake-a",
+      "requiredRoleKey": "platform-admin",
+      "expiresOnUtc": "2026-11-30T09:00:00Z"
+    },
+    "decisionStatus": "proposed",
+    "scope": {
+      "decisionTypeKey": "intake",
+      "tierKey": "tier-1"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "payload": {
+      "allowed": false
+    },
+    "reasons": [
+      {
+        "code": "approval.answer-person-only",
+        "severity": "error",
+        "entity": "Approval Record",
+        "ref": "fixture-approval-1"
+      }
+    ],
+    "reasonsMatch": "exact"
+  }
+}

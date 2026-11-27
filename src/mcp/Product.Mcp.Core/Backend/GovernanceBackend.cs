@@ -32,6 +32,46 @@ public interface IGovernanceBackend
 
     // The rate limit counter, kept in the backend's store, never in the server's memory.
     IRateLimitStore RateLimits { get; }
+
+    // Records a refused call as a product event in a separate transaction (document 26, sections 9.2 and 9.4; document 24,
+    // B24-11): who, through which client, which tool, on which record, and the code, rule and reason that refused it. The
+    // core calls it only for the refusals worth keeping (McpServerCore.RecordsRefusal). It never throws: a refusal that
+    // cannot be recorded still answers the caller.
+    void RecordRefusal(BackendSession session, RefusedCall refused);
+}
+
+// A refused tool call, as the core hands it to the backend to record. Never the arguments themselves.
+public sealed class RefusedCall
+{
+    public RefusedCall(string toolName, McpError error, string correlationId, string? rowId = null, string? reasonCode = null, IEnumerable<string>? ruleIds = null, bool knownTool = true)
+    {
+        ToolName = string.IsNullOrEmpty(toolName) ? throw new ArgumentException("A refused call names its tool.", nameof(toolName)) : toolName;
+        Error = error ?? throw new ArgumentNullException(nameof(error));
+        CorrelationId = correlationId ?? string.Empty;
+        RowId = rowId;
+        ReasonCode = reasonCode;
+        RuleIds = new ReadOnlyCollection<string>((ruleIds ?? Enumerable.Empty<string>()).ToList());
+        KnownTool = knownTool;
+    }
+
+    // The tool's name, or the name an AI client tried that no tool has.
+    public string ToolName { get; }
+
+    public McpError Error { get; }
+
+    public string CorrelationId { get; }
+
+    // The record the call named, when its arguments named one by ID.
+    public string? RowId { get; }
+
+    // The engine's reason code, when the engine refused.
+    public string? ReasonCode { get; }
+
+    // The rules the reason code stands for (G-08, RA-06 and so on), from the reason catalog.
+    public IReadOnlyList<string> RuleIds { get; }
+
+    // False when no tool has the name the caller tried.
+    public bool KnownTool { get; }
 }
 
 // The validated caller as the backend needs it. Never a token.
@@ -213,6 +253,12 @@ public sealed class ToolInvocation
     public IReadOnlyList<string> VisibleTools { get; }
 
     public IReadOnlyList<string> VisibleToolsets { get; }
+
+    // Where this request's record links point (McpServerOptions.RecordUrlBase), or null for the backend's own base.
+    public string? RecordUrlBase { get; set; }
+
+    // The caller's own calendar day as the caller sent it (McpServerOptions.CallerLocalDay), or null.
+    public string? CallerLocalDay { get; set; }
 }
 
 // A warning of the envelope: { message, code?, ref? }.
@@ -257,8 +303,12 @@ public sealed class ToolResult
         IEnumerable<ToolWarning>? warnings,
         IEnumerable<NextStep>? nextSteps,
         IEnumerable<KeyValuePair<string, int>>? couldNotRead,
-        int? configurationSetVersion)
+        int? configurationSetVersion,
+        string? refusalReasonCode = null,
+        IEnumerable<string>? refusalRuleIds = null)
     {
+        RefusalReasonCode = refusalReasonCode;
+        RefusalRuleIds = new ReadOnlyCollection<string>((refusalRuleIds ?? Enumerable.Empty<string>()).ToList());
         Data = data;
         Error = error;
         Summary = summary;
@@ -289,6 +339,11 @@ public sealed class ToolResult
     // The version the answer ran under, when it differs from the session's (a version activated by this very call).
     public int? ConfigurationSetVersion { get; }
 
+    // For an engine refusal: the first error reason's code and the rules it stands for, so the refusal can be recorded.
+    public string? RefusalReasonCode { get; }
+
+    public IReadOnlyList<string> RefusalRuleIds { get; }
+
     public static ToolResult Success(
         JsonTreeNode data,
         string summary,
@@ -301,9 +356,9 @@ public sealed class ToolResult
         return new ToolResult(data ?? throw new ArgumentNullException(nameof(data)), null, summary, recordUrl, warnings, nextSteps, couldNotRead, configurationSetVersion);
     }
 
-    public static ToolResult Failure(McpError error, string? summary = null, int? configurationSetVersion = null)
+    public static ToolResult Failure(McpError error, string? summary = null, int? configurationSetVersion = null, string? refusalReasonCode = null, IEnumerable<string>? refusalRuleIds = null)
     {
-        return new ToolResult(null, error ?? throw new ArgumentNullException(nameof(error)), summary ?? error.Message, null, null, null, null, configurationSetVersion);
+        return new ToolResult(null, error ?? throw new ArgumentNullException(nameof(error)), summary ?? error.Message, null, null, null, null, configurationSetVersion, refusalReasonCode, refusalRuleIds);
     }
 }
 

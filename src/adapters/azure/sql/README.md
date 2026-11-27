@@ -11,6 +11,9 @@ applied in file order by `SqlServerMigrations`, which records each one in `host.
 | `0004-host.sql` | By hand | `host.RateLimitCounter`, the Tool Policy call counters, and the app's read of `host.SchemaVersion` |
 | `0005-approval-outbox.sql` | By hand | `host.ApprovalOutbox`, the approval runner's work list: one row per Approval Record the engine opens, written in the same transaction as the engine's rows. IDs, states and times only. The app reads, inserts and updates it and never deletes from it |
 | `0006-store-keys.sql` | By hand | `host.StoreKey`, the keys the logical model asks the store to enforce beyond the unique indexes of 0001: one row per key value of an engine row, with the entity, the key's name and the value's SHA-256 as the primary key. Hashes and IDs only. The app reads, inserts and deletes its rows and never updates them. Runs only on a database whose engine tables are still empty |
+| `0007-record-numbers.sql` | By hand | `host.RecordNumber`, the last record number the engine gave per entity (document 25, B25-9). The store reserves the next number in a transaction of its own: it locks the entity's counter row, reads the highest number with the prefix that the entity's table holds, and moves the counter one above the larger. Entity keys and numbers only. The app reads, inserts and updates it and never deletes from it. Builds nothing from existing rows: the first number counts what the table holds |
+| `0008-data-taxonomy.sql` | Generated | The data taxonomy (D-37; document 22, B22-14): the seven tables of C47 to C50 and O25 to O27 as system-versioned temporal tables in the shape of `0001`; `CK_OwnerAssignment_OneSubject`, a check on the row's JSON that exactly one of Business Application, Subject Data Domain and Subject Data Location holds a value and Subject Kind names it (an empty kind means the application, so every existing row passes `WITH CHECK`); the one security policy dropped and created again over every table; and the app's reads of the new history tables denied, as `0003` does for the others. `SqlServerSchemaScript.LaterTables` says which migration creates each table that came after the first release |
+| `0009-location-key-in-service.sql` | By hand | The Data Location key (Data Platform and External Id) counts the locations in service: no Retired On, and not archived, as the engine counts them (wave 4b). Removes the key rows of archived locations, so a draft location withdrawn under an earlier build gives its External Id back. Changes no engine row |
 
 ## Who runs them
 
@@ -59,6 +62,10 @@ once, so a concurrent duplicate sees the first result (document 25, section 8). 
   and an active row may take them again.
 - Technical Component Link Kind and External Id counts components with no Retired On, as the engine's key of the entity
   does, so a resource registered again after its component retired is a new component.
+- Data Location Data Platform and External Id counts locations in service: no Retired On, and a status meaning other
+  than archived, as the engine counts them. A draft location that is withdrawn is archived with no Retired On, so it
+  gives its External Id back for a location added again (`0009-location-key-in-service.sql` removes the key rows that
+  an earlier build kept). Data Mapping Data Domain, Data Location and Data Origin counts mappings with no Ended On.
 - A string that is a GUID compares without regard to case, as the engine compares Microsoft IDs; other text compares
   exactly, trailing spaces included.
 - Within one commit the store removes every value it gives up before it adds any, so values that move between rows (two

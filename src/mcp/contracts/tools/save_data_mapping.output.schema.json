@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_data_mapping output",
+  "description": "The response envelope. On success, data is the write result for the first mapping and one result per item, with the copy state.",
+  "x-tool": "save_data_mapping",
+  "x-ai-write-states": [
+    "draft",
+    "proposed"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "$ref": "../envelope.schema.json#/$defs/writeResult",
+      "description": "The write result for the first mapping saved.",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "dataMappingId",
+              "created",
+              "matchedExisting",
+              "status",
+              "domain",
+              "dataLocationId",
+              "origin",
+              "copyState",
+              "decisionId",
+              "decisionSubmitted",
+              "approvalsNeeded",
+              "recordUrl"
+            ],
+            "properties": {
+              "dataMappingId": {
+                "description": "Null only for a validateOnly check of a new mapping.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O26 Data Mapping"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "created": {
+                "type": "boolean"
+              },
+              "matchedExisting": {
+                "type": "boolean",
+                "description": "True when the item named no ID and matched an open mapping of the same domain, location and origin."
+              },
+              "status": {
+                "$ref": "../common.schema.json#/$defs/statusValue"
+              },
+              "domain": {
+                "$ref": "../common.schema.json#/$defs/dataDomainRef"
+              },
+              "dataLocationId": {
+                "$ref": "../common.schema.json#/$defs/id",
+                "x-entity": "O25 Data Location"
+              },
+              "origin": {
+                "$ref": "../common.schema.json#/$defs/dataOrigin"
+              },
+              "copyState": {
+                "description": "For a copy outside production: its state under the copy rule.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/dataUseState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decisionId": {
+                "description": "The copy decision this save opened or sent.",
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/id",
+                    "x-entity": "O09 Decision"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decisionSubmitted": {
+                "type": "boolean",
+                "description": "True when a person's save sent the copy decision to its approvers. An AI client never sends one."
+              },
+              "approvalsNeeded": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "recordUrl": {
+                "anyOf": [
+                  {
+                    "$ref": "../common.schema.json#/$defs/recordUrl"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

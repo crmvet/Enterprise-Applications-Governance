@@ -103,6 +103,17 @@
         },
         "note": {
           "const": "A suggestion. The tier is set only by an accepted tier decision."
+        },
+        "impliedAnswer": {
+          "description": "The highest answer the application's declared data implies (docs/architecture/data-taxonomy.md, Data checks; DC-09), as a hint. A person answers; the hint never sets the answer.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/impliedAnswer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

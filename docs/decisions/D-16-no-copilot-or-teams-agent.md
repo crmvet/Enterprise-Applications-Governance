@@ -1,6 +1,6 @@
 # D-16 No Copilot or Teams agent: people use MCP clients, the app and approval cards
 
-- **Status:** Accepted. Supersedes in part D-02 (Microsoft 365 Copilot first).
+- **Status:** Accepted. Supersedes in part D-02 (Microsoft 365 Copilot first). Amended by D-38.
 - **Date:** 2026-11-21
 - **Decided by:** the product owner
 
@@ -41,6 +41,10 @@ In the product owner's words: "No agent in Copilot or Teams. People use other MC
 - Approval cards stay the way a person answers. They record a person's answer, and AI never approves.
 - D-17 and D-18 changed the package list again. D-18 settles what the first release contains.
 - D-26 moved the first release to Azure. The app is now a React web app in the organization's own subscription. This decision stands as written.
+
+## Amendment, 2026-11-23
+
+[D-38](D-38-a-person-answers-an-approval-on-the-decision-page.md) makes the product's decision page the default place a person answers an approval, and the person's own sign-in proves who answered. Teams and Outlook messages become notices that link to the page. Answering inside a card stays an option for each install, through the approval runner, while step-up sign-in is off. The rest of this decision stands.
 
 ## Related
 

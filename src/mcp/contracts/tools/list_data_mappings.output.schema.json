@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_data_mappings output",
+  "description": "The response envelope. On success, data lists the matching data mappings in tree order, then by location, with the copy state of each copy outside production.",
+  "x-tool": "list_data_mappings",
+  "x-ai-write-states": [
+    "read-only"
+  ],
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "../envelope.schema.json#/$defs/success",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/data"
+        }
+      }
+    },
+    {
+      "$ref": "../envelope.schema.json#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "data": {
+      "type": "object",
+      "required": [
+        "items",
+        "counts",
+        "totalCount"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/dataMappingItem"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "all",
+            "copies"
+          ],
+          "properties": {
+            "all": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The mappings the filters keep before the copy state filter."
+            },
+            "copies": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How many of those are copies outside production."
+            }
+          },
+          "additionalProperties": false
+        },
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many mappings match every filter."
+        },
+        "skipToken": {
+          "$ref": "../common.schema.json#/$defs/nextSkipToken"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -152,7 +152,8 @@
         },
         "decisionTypeKey": {
           "$ref": "../common.schema.json#/$defs/key",
-          "x-entity": "C18 Decision Type"
+          "x-entity": "C18 Decision Type",
+          "description": "For decision-accepted, the decision type; for data-uses-decided, data-use or data-retention."
         },
         "documentTypeKey": {
           "$ref": "../common.schema.json#/$defs/key",
@@ -176,6 +177,17 @@
         "met": {
           "type": "boolean",
           "description": "True when the application meets it. Only present when an application was given."
+        },
+        "guidelineRef": {
+          "description": "The guideline as a chip: key, number, title and link.",
+          "anyOf": [
+            {
+              "$ref": "../common.schema.json#/$defs/guidelineRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false,
@@ -208,6 +220,23 @@
           },
           "required": [
             "reviewTypeKey"
+          ]
+        },
+        {
+          "properties": {
+            "requirementKind": {
+              "const": "data-uses-declared"
+            }
+          }
+        },
+        {
+          "properties": {
+            "requirementKind": {
+              "const": "data-uses-decided"
+            }
+          },
+          "required": [
+            "decisionTypeKey"
           ]
         }
       ]

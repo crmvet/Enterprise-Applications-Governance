@@ -1,1 +1,19 @@
-{ "entity": "standard-change-model", "rows": [] }
+{
+  "$comment": [
+    "One standard change model ships, so a routine change has a pre-approved pattern to fit (P03; document 21, B21-9). It counts only once a person approved it: Approved By Decision is a working set field (class W), never in a preset (V44); activation names the accepted configuration change decision that lists or changes the model. Until then no change fits it. Clients add their own models beside it."
+  ],
+  "entity": "standard-change-model",
+  "rows": [
+    {
+      "key": "routine-maintenance",
+      "label": "Routine maintenance in a short window",
+      "description": "A tested, repeatable change to one application at tier 1 or 2: a connection or certificate renewal, a settings or content update, or an archive run, in a window of four hours or less.",
+      "changeTypeKey": "standard",
+      "tierKey": "tier-2",
+      "conditions": [
+        { "conditionKind": "max-affected-applications", "value": 1 },
+        { "conditionKind": "max-window-minutes", "value": 240 }
+      ]
+    }
+  ]
+}

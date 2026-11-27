@@ -23,7 +23,8 @@ public sealed class PresetTests
         Assert.Null(balanced.Extends);
         Assert.Null(balanced.Patch);
         Assert.Empty(balanced.LoadIssues);
-        Assert.Equal(34, balanced.EntityFiles.Count);
+        // 34 entity files, and three the data taxonomy adds (D-37): classifications, domain levels and platforms.
+        Assert.Equal(37, balanced.EntityFiles.Count);
         Assert.Empty(TestData.Catalog.Issues);
     }
 
@@ -44,7 +45,15 @@ public sealed class PresetTests
         ComposedConfiguration built = new ConfigurationComposer(TestData.Catalog).BuildPreset("balanced", issues);
 
         Assert.Empty(issues.Items);
-        Assert.Equal(494, built.Content.Rows.Count);
+        // 494 rows before the process alignment (document 21, B21-9) added 27, and 521 before the data taxonomy (D-37) added
+        // 73: 4 classifications, 3 domain levels, 20 platforms, 5 data location link kinds, 4 lists with 25 values, 4 more
+        // values in the vocabulary and tool lists, 4 label mappings, 2 settings, the data steward and the data governance lead.
+        // Data taxonomy slice 2 added 53: the data-retention decision type with 4 outcomes, 18 approval rules, 17 decision
+        // rights, 4 gate requirements and 9 statuses (draft, registered and archived for O25, O26 and O27). The leftovers
+        // slice added 1: the consent of the business owner an intake names (document 25, B25-18). Wave 4 added 2: the
+        // settings measure-targets and signal-thresholds (document 24, B24-22). Wave 4b added 1: the setting
+        // review-request-due-days (document 24, B24-23).
+        Assert.Equal(651, built.Content.Rows.Count);
 
         // Nine gate policy rows become 27: one per tier, change type and target stage (V23).
         ContentRow[] gates = built.Content.RowsFor("gate-policy").ToArray();

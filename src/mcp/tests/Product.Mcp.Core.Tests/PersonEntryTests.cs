@@ -42,7 +42,11 @@ public sealed class PersonEntryTests
         Assert.Equal(McpHarness.WebApp, McpHarness.Text(asPerson, "clientApp.appId"));
         Assert.Equal(McpHarness.WebAppLabel, McpHarness.Text(asPerson, "clientApp.label"));
         Assert.Equal(Js.Write(Js.Member(asAi, "productRoles")!), Js.Write(Js.Member(asPerson, "productRoles")!));
-        Assert.Equal(Js.Write(Js.Member(asAi, "tools")!), Js.Write(Js.Member(asPerson, "tools")!));
+        // The same tools, and on the person entry also the tools served only to a person: answer_approval (D-38),
+        // complete_change and complete_review (B24-10), and "Ask again" (renew_approval_request, B24-22).
+        string[] personOnly = { "answer_approval", "complete_change", "complete_review", "renew_approval_request" };
+        Assert.Equal(Js.Strings(asAi, "tools").Concat(personOnly).OrderBy(n => n, StringComparer.Ordinal), Js.Strings(asPerson, "tools").OrderBy(n => n, StringComparer.Ordinal));
+        Assert.All(personOnly, t => Assert.DoesNotContain(t, Js.Strings(asAi, "tools")));
     }
 
     [Fact]
@@ -120,8 +124,10 @@ public sealed class PersonEntryTests
         h.Ok(McpHarness.TokenOwner, "whoami");
     }
 
+    // No tool takes an approve verb on either entry. The person answers an approval request they were asked through
+    // answer_approval (D-38), which the person entry lists and the MCP endpoint never does.
     [Fact]
-    public void ThePersonEntryServesNoApproveTool()
+    public void ThePersonEntryServesNoApproveToolAndAnswersOnlyThroughAnswerApproval()
     {
         McpHarness h = McpHarness.Create();
         McpServerCore web = h.PersonServer();
@@ -131,6 +137,7 @@ public sealed class PersonEntryTests
             string[] names = Js.Items(response.Result, "tools").Select(t => Js.Text(t, "name")!).ToArray();
             Assert.NotEmpty(names);
             Assert.DoesNotContain(names, n => new[] { "approve", "accept", "reject", "authorize", "activate" }.Any(v => n.StartsWith(v + "_", StringComparison.Ordinal)));
+            Assert.Contains("answer_approval", names);
         }
 
         h.Fails(McpHarness.TokenOwnerWeb, "approve_decision", "{}", McpErrorCodes.NotFound, server: web);
@@ -142,21 +149,27 @@ public sealed class PersonEntryTests
         McpHarness h = McpHarness.Create();
         McpServerCore web = h.PersonServer();
 
-        // An intake decision proposing the accept outcome: the decision is still only proposed.
-        string intake = McpHarness.Text(McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "save_intake_draft", Intake, server: web)), "recordId");
-        JsonTreeNode accept = McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "save_decision_proposal", "{\"decisionTypeKey\":\"intake\",\"subjectKind\":\"intake-request\",\"subjectId\":\"" + intake
-            + "\",\"statement\":\"Accept the travel requests intake\",\"context\":\"A shared spreadsheet today\",\"proposedOutcomeKey\":\"accept\",\"reason\":\"Clear need\"}", server: web));
+        // A risk acceptance proposing the accept outcome, by the business owner (who holds its accountable letter): the
+        // decision is still only proposed.
+        JsonTreeNode accept = McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "save_decision_proposal", "{\"decisionTypeKey\":\"risk-acceptance\",\"subjectKind\":\"business-application\",\"subjectId\":\"" + McpHarness.Travel
+            + "\",\"statement\":\"Accept the booking risk\",\"context\":\"A supplier outage\",\"proposedOutcomeKey\":\"accept\",\"reason\":\"Low impact\"}", server: web));
         Assert.Equal("proposed", McpHarness.Text(accept, "status.meaning"));
         Assert.Equal("person", McpHarness.Text(accept, "performedBy.actorKind"));
         Assert.Equal("proposed", h.Store.Get("decision", McpHarness.Text(accept, "recordId"))!.Text("statusMeaning"));
 
+        // An intake decision is the platform admin's to propose in Balanced (intake-a); submitting the intake opens it.
+        // The engine refuses the requester on this entry as on the MCP endpoint (document 24, tool 17; B24-5).
+        string intake = McpHarness.Text(McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "save_intake_draft", Intake, server: web)), "recordId");
+        h.Fails(McpHarness.TokenOwnerWeb, "save_decision_proposal", "{\"decisionTypeKey\":\"intake\",\"subjectKind\":\"intake-request\",\"subjectId\":\"" + intake
+            + "\",\"statement\":\"Accept the travel requests intake\",\"context\":\"A shared spreadsheet today\",\"proposedOutcomeKey\":\"accept\",\"reason\":\"Clear need\"}", McpErrorCodes.NotAuthorized, server: web);
+
         // No input carries a status, on this entry too.
         h.Fails(McpHarness.TokenOwnerWeb, "save_decision_proposal", "{\"decisionTypeKey\":\"retirement\",\"subjectKind\":\"business-application\",\"subjectId\":\"" + McpHarness.Travel
-            + "\",\"statement\":\"Retire the travel planner\",\"context\":\"Replaced\",\"proposedOutcomeKey\":\"retire\",\"reason\":\"A duplicate\",\"status\":\"accepted\"}", McpErrorCodes.Validation, server: web);
+            + "\",\"statement\":\"Retire the travel planner\",\"context\":\"Replaced\",\"proposedOutcomeKey\":\"complete\",\"reason\":\"A duplicate\",\"status\":\"accepted\"}", McpErrorCodes.Validation, server: web);
 
         // Submitted by the person, a decision that needs cards stays proposed until people answer them.
         JsonTreeNode retire = McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "save_decision_proposal", "{\"decisionTypeKey\":\"retirement\",\"subjectKind\":\"business-application\",\"subjectId\":\"" + McpHarness.Travel
-            + "\",\"statement\":\"Retire the travel planner\",\"context\":\"Replaced\",\"proposedOutcomeKey\":\"retire\",\"reason\":\"A duplicate\"}", server: web));
+            + "\",\"statement\":\"Retire the travel planner\",\"context\":\"Replaced\",\"proposedOutcomeKey\":\"complete\",\"reason\":\"A duplicate\"}", server: web));
         string decision = McpHarness.Text(retire, "recordId");
         JsonTreeNode submitted = McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "submit_record", "{\"subjectKind\":\"decision\",\"subjectId\":\"" + decision + "\"}", server: web));
         Assert.Equal("proposed", McpHarness.Text(submitted, "status.meaning"));
@@ -164,6 +177,20 @@ public sealed class PersonEntryTests
         Assert.NotEmpty(Js.Items(submitted, "approvalsRequested"));
         Assert.Equal("proposed", h.Store.Get("decision", decision)!.Text("statusMeaning"));
         Assert.All(h.Store.Query(RowQuery.For("approval-record").Where("decision", decision)), r => Assert.Equal("pending", r.Text("outcomeMeaning")));
+    }
+
+    // QA 2026-11-24: a person who records a deployment by hand in the web app gets the person-in-app route, and the answer
+    // passes the output schema (it allowed only ai-tool before, so the person saw HTTP 500 for a write that happened).
+    [Fact]
+    public void APersonRecordsADeploymentByHandAndTheAnswerPassesItsSchema()
+    {
+        McpHarness h = McpHarness.Create();
+        McpServerCore web = h.PersonServer();
+        JsonTreeNode check = McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "record_deployment", Scenarios.DeploymentArguments("by-hand").TrimEnd('}') + ",\"validateOnly\":true}", server: web));
+        Assert.Equal("person-in-app", McpHarness.Text(check, "route.meaning"));
+        JsonTreeNode recorded = McpHarness.Data(h.Ok(McpHarness.TokenOwnerWeb, "record_deployment", Scenarios.DeploymentArguments("by-hand"), server: web));
+        Assert.Equal("person-in-app", McpHarness.Text(recorded, "route.meaning"));
+        Assert.NotNull(h.Store.Get("deployment-record", McpHarness.Text(recorded, "deploymentRecordId")));
     }
 
     [Fact]
